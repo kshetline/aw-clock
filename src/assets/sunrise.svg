@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg id="Layer_1" data-name="Layer 1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>.cls-1{fill:#f83;}.cls-2{fill:#ffb92f;}</style>
+  </defs>
+  <title>Artboard 33</title>
+  <g id="_Group_" data-name="&lt;Group&gt;">
+    <path id="_Compound_Path_" data-name="&lt;Compound Path&gt;" class="cls-1" d="M 39.53 100 L 4 70.46 L 51.1 66.47 L 40.72 22.56 L 81 45.31 L 99.8 4.2 L 118.16 45.31 L 158.88 22.55 L 148.5 66.46 L 195.6 70.46 L 160.07 100 L 160.231 100.132 L 151.69 100.132 C 151.69 100.088 151.69 100.044 151.69 100 C 151.69 90.891 149.292 81.943 144.738 74.055 C 124.766 39.462 74.834 39.462 54.862 74.055 C 49.995 82.484 47.797 91.427 47.833 100.132 L 39.371 100.132 Z"/>
+    <path id="_Path_" data-name="&lt;Path&gt;" class="cls-2" d="M 143.71 100 C 143.71 100.044 143.71 100.088 143.71 100.132 L 55.825 100.132 C 55.79 77.171 74.144 56.09 99.8 56.09 C 124.081 56.018 143.782 75.719 143.71 100 Z"/>
+  </g>
+  <rect x="19.711" y="83.049" width="191.59" height="8.673" transform="matrix(1, 0, 0, 0.999999, -15.191857, 17.083317)" style="fill: rgb(153, 153, 153);"/>
+</svg>

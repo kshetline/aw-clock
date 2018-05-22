@@ -1,0 +1,99 @@
+$std-font: Verdana, sans-serif;
+$clock-face-font: Arial, sans-serif;
+
+html {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: white;
+  background: midnightblue;
+  font-family: $std-font;
+}
+
+#message {
+  position: fixed;
+  left: 0;
+  right: 125px;
+  bottom: 0;
+  background: midnightblue;
+  font-size: 14px;
+  padding: 0 1em;
+  overflow: hidden;
+}
+
+.darksky {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+}
+
+#clock-container {
+  display: inline-block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: calc(1.556 * (100vh - 2em));
+  padding: 1em;
+  vertical-align: middle;
+  overflow: hidden;
+  background: midnightblue;
+}
+
+#clock {
+  font-family: $std-font;
+  fill: white;
+}
+
+.clock-face-font {
+  font-family: $clock-face-font;
+  font-size: 10px;
+}
+
+#face {
+  stroke-width: 2px;
+  fill: black;
+  stroke: white;
+}
+
+#hour-hand, #min-hand, #sec-hand {
+  stroke-width: 1px;
+  fill: #339;
+  stroke: #66F;
+}
+
+#sec-hand { stroke: #f55; }
+
+#hub { fill: #f55; }
+
+#day-of-week, #date, #month {
+  font-size: 10px;
+}
+
+#year {
+  font-size: 8px;
+}
+
+#time {
+  font-size: 6.5px;
+}
+
+#current-temp {
+  font-size: 24px;
+}
+
+#feels-like {
+  font-size: 6px;
+}
+
+.daily-caption {
+  font-size: 2.5px;
+}
