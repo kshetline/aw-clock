@@ -21,12 +21,17 @@ body {
 #message {
   position: fixed;
   left: 0;
-  right: 125px;
+  right: 170px;
   bottom: 0;
   background: midnightblue;
   font-size: 14px;
-  padding: 0 1em;
+  padding: 2px 1em;
   overflow: hidden;
+}
+
+#settings-btn {
+  position: relative;
+  top: -4px;
 }
 
 .darksky {
@@ -96,4 +101,86 @@ body {
 
 .daily-caption {
   font-size: 2.5px;
+}
+
+.dialog-wrapper {
+  display: none;
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.67);
+  margin: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+.dialog-buttons {
+  position: absolute;
+  bottom: 1em;
+  right: 1em;
+
+  & button {
+    // width: 80px; // TODO: Needed now to keep Chrome happy. Remove when there's a better solution.
+    min-width: 80px;
+  }
+}
+
+#settings-dialog > div {
+  position: absolute;
+  margin: auto;
+  top: 0; left: 0; bottom: 0; right: 0;
+  width: 640px;
+  height: 480px;
+  padding: 1em;
+  background-color: white;
+  color: black;
+}
+
+input, input[type=submit], input[type=button], button, select, textarea, optgroup, option {
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-weight: inherit;
+}
+
+#atlas-message {
+  margin-bottom: 12pt;
+}
+
+.city-table-wrapper {
+  max-height: 304px;
+  overflow: auto;
+  border: darkgray 1px solid;
+}
+
+#city-table {
+  border-spacing: 0;
+  width: 100%;
+
+  & td, th {
+    padding: 2px 2px 2px 10px;
+
+    &:first-child {
+      text-align: center;
+    }
+
+    &:nth-child(2) {
+      text-align: left;
+    }
+
+    &:nth-child(3) {
+      text-align: right;
+    }
+
+    &:nth-child(4) {
+      text-align: right;
+      padding-right: 10px;
+    }
+  }
+}
+
+.rowguide {
+  background-color: #F2F8FF;
 }

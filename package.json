@@ -14,6 +14,7 @@
   "dependencies": {
     "core-js": "^2.4.1",
     "jquery": "^3.3.1",
+    "js-cookie": "^2.2.0",
     "ks-date-time-zone": "^1.4.0",
     "rxjs": "^6.1.0",
     "zone.js": "^0.8.19"
@@ -22,6 +23,7 @@
     "@types/jasmine": "~2.8.3",
     "@types/jasminewd2": "~2.0.2",
     "@types/jquery": "^3.3.2",
+    "@types/js-cookie": "^2.1.0",
     "@types/node": "~6.0.60",
     "autoprefixer": "^7.2.3",
     "circular-dependency-plugin": "^4.2.1",

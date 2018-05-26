@@ -12,10 +12,10 @@
     <div id="clock-container">
       <svg id="clock" viewBox="0 0 168 108">
         <!-- <rect x="0" y="0" width="168" height="108" stroke-width="1" stroke="black" fill="none"></rect> -->
-        <text id="day-of-week" x="1" y="1" alignment-baseline="hanging">---</text>
-        <text id="month" x="1" y="99" alignment-baseline="baseline">--</text>
-        <text id="date" x="99" y="1" alignment-baseline="hanging" text-anchor="end">---</text>
-        <text id="year" x="99" y="99" alignment-baseline="baseline" text-anchor="end">----</text>
+        <text id="day-of-week" x="1" y="1" dominant-baseline="hanging">---</text>
+        <text id="month" x="1" y="99" dominant-baseline="auto">--</text>
+        <text id="date" x="99" y="1" dominant-baseline="hanging" text-anchor="end">---</text>
+        <text id="year" x="99" y="99" dominant-baseline="auto" text-anchor="end">----</text>
         <circle id="face" cx="50" cy="50" r="45"/>
         <g id="hands">
           <polygon id="hour-hand" points="47.5,52.5 48.5,25.5 50,23 51.5,25.5 52.5,52.5"/>
@@ -33,37 +33,52 @@
         <circle id="hub" cx="50" cy="50" r="1.5"/>
         <text id="time" x="50" y="105" text-anchor="middle">--:--:--</text>
 
-        <text id="current-temp" x="134" y="1" alignment-baseline="hanging" text-anchor="middle"> --°</text>
-        <text id="feels-like" x="134" y="25" alignment-baseline="hanging" text-anchor="middle">Feels like --°</text>
+        <text id="current-temp" x="134" y="1" dominant-baseline="hanging" text-anchor="middle"> --°</text>
+        <text id="feels-like" x="134" y="25" dominant-baseline="hanging" text-anchor="middle">Feels like --°</text>
         <image id="current-icon" href="assets/unknown.svg" x="121.5" y="31" width="25" height="25"/>
 
-        <text x="121" y="59"  class="daily-caption" alignment-baseline="baseline" text-anchor="middle">Today</text>
+        <text x="121" y="59"  class="daily-caption" dominant-baseline="auto" text-anchor="middle">Today</text>
         <image id="today-icon" href="assets/unknown.svg" x="115" y="60" width="12" height="12"/>
-        <text id="today-low-high" x="121" y="72" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--°/--°</text>
-        <text id="today-sunrise" x="121" y="78" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--:--</text>
-        <text id="today-sunset" x="121" y="81" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--:--</text>
+        <text id="today-low-high" x="121" y="72" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--°/--°</text>
+        <text id="today-sunrise" x="121" y="78" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--:--</text>
+        <text id="today-sunset" x="121" y="81" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--:--</text>
         <image id="today-moon" href="assets/empty.svg" x="116" y="86" width="10" height="10"/>
 
-        <text x="134" y="59" class="daily-caption" alignment-baseline="baseline" text-anchor="middle">Tomorrow</text>
+        <text x="134" y="59" class="daily-caption" dominant-baseline="auto" text-anchor="middle">Tomorrow</text>
         <image id="tomorrow-icon" href="assets/unknown.svg" x="128" y="60" width="12" height="12"/>
-        <text id="tomorrow-low-high" x="134" y="72" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--°/--°</text>
-        <text id="tomorrow-sunrise" x="134" y="78" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--:--</text>
-        <text id="tomorrow-sunset" x="134" y="81" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--:--</text>
+        <text id="tomorrow-low-high" x="134" y="72" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--°/--°</text>
+        <text id="tomorrow-sunrise" x="134" y="78" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--:--</text>
+        <text id="tomorrow-sunset" x="134" y="81" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--:--</text>
         <image id="tomorrow-moon" href="assets/empty.svg" x="129" y="86" width="10" height="10"/>
 
-        <text id="next-day-caption" x="147" y="59" class="daily-caption" alignment-baseline="baseline" text-anchor="middle">---</text>
+        <text id="next-day-caption" x="147" y="59" class="daily-caption" dominant-baseline="auto" text-anchor="middle">---</text>
         <image id="next-day-icon" href="assets/unknown.svg" x="141" y="60" width="12" height="12"/>
-        <text id="next-day-low-high" x="147" y="72" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--°/--°</text>
-        <text id="next-day-sunrise" x="147" y="78" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--:--</text>
-        <text id="next-day-sunset" x="147" y="81" class="daily-caption" alignment-baseline="hanging" text-anchor="middle">--:--</text>
+        <text id="next-day-low-high" x="147" y="72" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--°/--°</text>
+        <text id="next-day-sunrise" x="147" y="78" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--:--</text>
+        <text id="next-day-sunset" x="147" y="81" class="daily-caption" dominant-baseline="hanging" text-anchor="middle">--:--</text>
         <image id="next-day-moon" href="assets/empty.svg" x="142" y="86" width="10" height="10"/>
 
         <image id="current-icon" href="assets/sunrise.svg" x="110" y="79" width="6" height="6"/>
       </svg>
     </div>
     <div id="message">&nbsp;</div>
-    <div class="darksky">
-      <a href="https://darksky.net/poweredby/" target="_blank"><img src="assets/dark-sky-logo.png" width="125" height="50" alt="Powered by Dark Sky"></a>
+    <div class="darksky"><img id="settings-btn" src="assets/gear.svg" width="35" height="40" alt="Powered by Dark Sky"><a href="https://darksky.net/poweredby/" target="_blank"><img src="assets/dark-sky-logo.png" width="125" height="50" alt="Powered by Dark Sky"></a></div>
+    <div id="settings-dialog" class="dialog-wrapper">
+      <div>
+        <form action="#" method="get" id="search">
+          <label for="city">City:</label> <input type="text" id="city" name="city">
+          <input type="submit" value="Search" id="submit">
+        </form>
+
+        <div id="atlas-message">&nbsp;</div>
+        <div class="city-table-wrapper">
+          <table id="city-table"></table>
+        </div>
+        <div class="dialog-buttons">
+          <button id="settings-cancel">Cancel</button>
+          <button id="settings-ok">OK</button>
+        </div>
+      </div>
     </div>
   </body>
 </html>

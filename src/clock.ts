@@ -1,4 +1,4 @@
-// Adapted from https://codepen.io/dudleystorey/pen/HLBki
+// Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown quite a bit from there.
 
 import { getDayOfWeek, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 
@@ -86,12 +86,7 @@ export function initClock() {
 }
 
 export function updateTimezone(newZone: KsTimeZone) {
-  if (zone !== newZone) {
-    setTimeout(() => {
-      zone = newZone;
-      lastMinute = -1;
-    });
-  }
+  zone = newZone;
 }
 
 function tick() {
