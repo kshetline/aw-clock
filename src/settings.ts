@@ -8,10 +8,11 @@ let longitude: JQuery;
 let userId: JQuery;
 let searchCity: JQuery;
 let searchFocused = false;
+let submitSearch: JQuery;
+let searching: JQuery;
 let searchMessage: JQuery;
 let cityTableWrapper: JQuery;
 let cityTable: JQuery;
-let submitSearch: JQuery;
 let okButton: JQuery;
 let cancelButton: JQuery;
 
@@ -52,8 +53,9 @@ export function initSettings() {
   longitude = $('#longitude');
   userId = $('#user-id');
   searchCity = $('#search-city');
-  searchMessage = $('#search-message');
   submitSearch = $('#submit-search');
+  searching = $('.searching');
+  searchMessage = $('#search-message');
   cityTableWrapper = $('.city-table-wrapper');
   cityTable = $('#city-table');
   okButton = $('#settings-ok');
@@ -71,7 +73,9 @@ export function initSettings() {
     else {
       (searchCity as any).enable(false);
       (submitSearch as any).enable(false);
+      searching.css('visibility', 'visible');
       searchMessage.html('&nbsp;');
+      searchMessage.css('background-color', 'white');
       cityTableWrapper.hide();
       cityTable.html('');
 
@@ -93,6 +97,20 @@ export function initSettings() {
         cityTableWrapper.show();
         (submitSearch as any).enable(true);
         (searchCity as any).enable(true);
+        searching.css('visibility', 'hidden');
+
+        if (response.error) {
+          searchMessage.text(response.error);
+          searchMessage.css('background-color', '#FCC');
+        }
+        else if (response.warning) {
+          searchMessage.text(response.warning);
+          searchMessage.css('background-color', '#FFC');
+        }
+        else if (response.limitReached) {
+          searchMessage.text('Some matches are not displayed because the result limit was exceeded.');
+          searchMessage.css('background-color', '#FC9');
+        }
 
         cityTable.find('tr').each(function(index) {
           if (index !== 0) {
@@ -110,7 +128,10 @@ export function initSettings() {
           }
         });
       }).catch(reason => {
-        alert(reason);
+        (submitSearch as any).enable(true);
+        (searchCity as any).enable(true);
+        searching.css('visibility', 'hidden');
+        domAlert(reason || 'Unable to access geographic database.');
       });
     }
   });
@@ -121,8 +142,13 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
   latitude.val(previousSettings.latitude);
   longitude.val(previousSettings.longitude);
   userId.val(previousSettings.userId);
+  (submitSearch as any).enable(true);
+  (searchCity as any).enable(true);
   searchCity.val('');
+  searchMessage.html('&nbsp;');
+  searchMessage.css('background-color', 'white');
   cityTableWrapper.hide();
+  searching.css('visibility', 'hidden');
   dialog.css('display', 'block');
 
   pushKeydownListener((event: KeyboardEvent) => {
@@ -175,7 +201,7 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
 }
 
 function doSearch(query: string): Promise<SearchResults> {
-  const url = 'http://skyviewcafe.com/atlasdb/atlas';
+  const url = 'https://weather.shetline.com/atlasdb/atlas';
 
   return new Promise((resolve, reject) => {
     $.ajax({

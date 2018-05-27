@@ -189,11 +189,16 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 .search-section {
   position: absolute;
   width: calc(100% - 2em);
-  top: 12em;
+  top: 11.5em;
 
   & label, input {
     margin-right: 0.5em;
   }
+}
+
+#search-message {
+  margin: 4px 0;
+  padding: 2px;
 }
 
 #atlas-message {
@@ -237,4 +242,34 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 
 .rowguide {
   background-color: #F2F8FF;
+}
+
+.searching {
+  position: relative;
+  top: 5px;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.searching:after {
+  content: " ";
+  display: block;
+  width: 15px;
+  height: 15px;
+  margin: 1px;
+  border-radius: 50%;
+  border-width: 2px;
+  border-style: solid;
+  border-color: #0AF transparent #0AF transparent;
+  animation: searching 1.2s linear infinite;
+}
+
+@keyframes searching {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
