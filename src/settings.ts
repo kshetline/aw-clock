@@ -150,6 +150,7 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
   cityTableWrapper.hide();
   searching.css('visibility', 'hidden');
   dialog.css('display', 'block');
+  setTimeout(() => searchCity.trigger('focus'));
 
   pushKeydownListener((event: KeyboardEvent) => {
     if (event.code === 'Escape') {

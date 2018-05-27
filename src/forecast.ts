@@ -64,6 +64,7 @@ export interface Forecast {
 
 let currentTemp: JQuery;
 let feelsLike: JQuery;
+let humidity: JQuery;
 let currentIcon: JQuery;
 
 let todayIcon: JQuery;
@@ -85,12 +86,14 @@ let nextDaySunset: JQuery;
 let nextDayMoon: JQuery;
 
 let message: JQuery;
+let timezone: JQuery;
 
 let lastForecast: Forecast;
 
 export function initForecast() {
   currentTemp = $('#current-temp');
   feelsLike = $('#feels-like');
+  humidity = $('#humidity');
   currentIcon = $('#current-icon');
 
   todayIcon = $('#today-icon');
@@ -112,6 +115,7 @@ export function initForecast() {
   nextDayMoon = $('#next-day-moon');
 
   message = $('#message');
+  timezone = $('#timezone');
 }
 
 export function getForecast(latitude: number, longitude: number): Promise<Forecast> {
@@ -145,20 +149,7 @@ function getIcon(conditions: CommonConditions, ignorePrecipProbability = false) 
                      'rain', 'sleet', 'snow'].indexOf(icon);
   const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
   const precipIntensityMax = (conditions as any).precipIntensityMax || 0;
-/*
-  if (!ignorePrecipProbability &&
-      conditions.precipProbability >= 0.3 && precipIntensityMax >= 0.01 && iconIndex >= 0 && iconIndex <= 6) {
-    if (conditions.precipType === 'snow') {
-      icon = 'snow';
-    }
-    else if (conditions.precipType === 'sleet') {
-      icon = 'sleet';
-    }
-    else {
-      icon = 'rain';
-    }
-  }
-*/
+
   if (icon === 'rain' && summary.indexOf('thunder') >= 0) {
     icon = 'thunderstorm';
 
@@ -196,7 +187,8 @@ function formatTime(zone: KsTimeZone, unixSeconds: number) {
 export function showUnknown(error?: string) {
   setSvgHref(currentIcon, UNKNOWN_ICON);
   currentTemp.text('\u00A0--°');
-  feelsLike.text('Feels like --°');
+  feelsLike.text('--°');
+  humidity.text('--%');
 
   setSvgHref(todayIcon, UNKNOWN_ICON);
   todayLowHigh.text('--°/--°');
@@ -217,6 +209,7 @@ export function showUnknown(error?: string) {
   setSvgHref(nextDayMoon, EMPTY_ICON);
 
   message.text(error || '\u00A0');
+  timezone.text('');
 
   if (error) {
     message.css('background-color', '#CCC');
@@ -251,13 +244,15 @@ export function displayForecast(forecast: Forecast) {
   const todayIndex = forecast.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, zone).wallTime.d === today);
 
   updateTimezone(zone);
+  timezone.text(forecast.timezone);
 
   if (todayIndex < 0) {
     showUnknown('Missing data');
   } else {
     setSvgHref(currentIcon, getIcon(forecast.currently, true));
     currentTemp.text(`\u00A0${Math.round(forecast.currently.temperature)}°`);
-    feelsLike.text(`Feels like ${Math.round(forecast.currently.apparentTemperature)}°`);
+    feelsLike.text(`${Math.round(forecast.currently.apparentTemperature)}°`);
+    humidity.text(`${Math.round(forecast.currently.humidity * 100)}%`);
 
     setSvgHref(todayIcon, getIcon(forecast.daily.data[todayIndex]));
     low = Math.round(forecast.daily.data[todayIndex].temperatureLow);

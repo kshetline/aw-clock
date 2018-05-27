@@ -17,6 +17,7 @@ let userId;
 $(() => {
   let lastForecast = 0;
   const dialogWrapper = $('.dialog-wrapper');
+  const cityLabel = $('#city');
 
   latitude = Number(Cookies.get('latitude')) || 42.75;
   longitude = Number(Cookies.get('longitude')) || -71.48;
@@ -26,6 +27,7 @@ $(() => {
   initClock();
   initForecast();
   initSettings();
+  cityLabel.text(city);
 
   startClock((hour, minute, forceRefresh) => {
     const now = Date.now();
@@ -47,6 +49,7 @@ $(() => {
         Cookies.set('latitude', latitude, {expires: 36525});
         Cookies.set('longitude', longitude, {expires: 36525});
         Cookies.set('id', userId, {expires: 36525});
+        cityLabel.text(city);
         triggerRefresh();
       }
     });

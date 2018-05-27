@@ -93,16 +93,25 @@ body {
   font-size: 6.5px;
 }
 
-#current-temp {
-  font-size: 24px;
+#city {
+  font-size: 3px;
 }
 
-#feels-like {
+#current-temp {
+  font-size: 22px;
+}
+
+#feels-like, #humidity {
   font-size: 6px;
 }
 
-.daily-caption {
+.small-caption {
   font-size: 2.5px;
+}
+
+#timezone {
+  @extend .small-caption;
+  fill: #888;
 }
 
 .dialog-wrapper {
@@ -209,6 +218,16 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   max-height: 244px;
   overflow: auto;
   border: darkgray 1px solid;
+}
+
+@media only screen and (max-height: 479px) {
+  #settings-dialog > div {
+    height: 320px;
+  }
+
+  .city-table-wrapper {
+    max-height: 84px;
+  }
 }
 
 #city-table {

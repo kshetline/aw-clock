@@ -12,6 +12,7 @@
     <div id="clock-container">
       <svg id="clock" viewBox="0 0 168 108">
         <!-- <rect x="0" y="0" width="168" height="108" stroke-width="1" stroke="black" fill="none"></rect> -->
+        <text id="timezone" x="50" y="2.5" text-anchor="middle"></text>
         <text id="day-of-week" x="1" y="9">---</text>
         <text id="month" x="1" y="99">--</text>
         <text id="date" x="99" y="9" text-anchor="end">---</text>
@@ -33,30 +34,41 @@
         <circle id="hub" cx="50" cy="50" r="1.5"/>
         <text id="time" x="50" y="105" text-anchor="middle">--:--:--</text>
 
-        <text id="current-temp" x="134" y="20" text-anchor="middle"> --°</text>
+        <text id="city" x="134" y="4" text-anchor="middle"></text>
+        <text id="current-temp" x="134" y="22" text-anchor="middle"> --°</text>
 
-        <text id="feels-like" x="134" y="30" text-anchor="middle">Feels like --°</text>
+        <g transform="translate(110,27.5)">
+          <text x="0" y="0" class="small-caption" text-anchor="start">
+            <tspan x="0" y="0">Feels</tspan>
+            <tspan x="0" dy="1em">like</tspan>
+          </text>
+        </g>
+        <text id="feels-like" x="118" y="30" text-anchor="start">--°</text>
+
+        <text x="134" y="28.75" class="small-caption" text-anchor="start">Hum.</text>
+        <text id="humidity" x="143" y="30" class="small-caption" text-anchor="start">--%</text>
+
         <image id="current-icon" href="assets/unknown.svg" x="121.5" y="31" width="25" height="25"/>
 
-        <text x="121" y="59"  class="daily-caption" text-anchor="middle">Today</text>
+        <text x="121" y="59"  class="small-caption" text-anchor="middle">Today</text>
         <image id="today-icon" href="assets/unknown.svg" x="115" y="60" width="12" height="12"/>
-        <text id="today-low-high" x="121" y="74.5" class="daily-caption" text-anchor="middle">--°/--°</text>
-        <text id="today-sunrise" x="121" y="80" class="daily-caption" text-anchor="middle">--:--</text>
-        <text id="today-sunset" x="121" y="83" class="daily-caption" text-anchor="middle">--:--</text>
+        <text id="today-low-high" x="121" y="74.5" class="small-caption" text-anchor="middle">--°/--°</text>
+        <text id="today-sunrise" x="121" y="80" class="small-caption" text-anchor="middle">--:--</text>
+        <text id="today-sunset" x="121" y="83" class="small-caption" text-anchor="middle">--:--</text>
         <image id="today-moon" href="assets/empty.svg" x="116" y="86" width="10" height="10"/>
 
-        <text x="134" y="59" class="daily-caption" text-anchor="middle">Tomorrow</text>
+        <text x="134" y="59" class="small-caption" text-anchor="middle">Tomorrow</text>
         <image id="tomorrow-icon" href="assets/unknown.svg" x="128" y="60" width="12" height="12"/>
-        <text id="tomorrow-low-high" x="134" y="74.5" class="daily-caption" text-anchor="middle">--°/--°</text>
-        <text id="tomorrow-sunrise" x="134" y="80" class="daily-caption" text-anchor="middle">--:--</text>
-        <text id="tomorrow-sunset" x="134" y="83" class="daily-caption" text-anchor="middle">--:--</text>
+        <text id="tomorrow-low-high" x="134" y="74.5" class="small-caption" text-anchor="middle">--°/--°</text>
+        <text id="tomorrow-sunrise" x="134" y="80" class="small-caption" text-anchor="middle">--:--</text>
+        <text id="tomorrow-sunset" x="134" y="83" class="small-caption" text-anchor="middle">--:--</text>
         <image id="tomorrow-moon" href="assets/empty.svg" x="129" y="86" width="10" height="10"/>
 
-        <text id="next-day-caption" x="147" y="59" class="daily-caption" text-anchor="middle">---</text>
+        <text id="next-day-caption" x="147" y="59" class="small-caption" text-anchor="middle">---</text>
         <image id="next-day-icon" href="assets/unknown.svg" x="141" y="60" width="12" height="12"/>
-        <text id="next-day-low-high" x="147" y="74.5" class="daily-caption" text-anchor="middle">--°/--°</text>
-        <text id="next-day-sunrise" x="147" y="80" class="daily-caption" text-anchor="middle">--:--</text>
-        <text id="next-day-sunset" x="147" y="83" class="daily-caption" text-anchor="middle">--:--</text>
+        <text id="next-day-low-high" x="147" y="74.5" class="small-caption" text-anchor="middle">--°/--°</text>
+        <text id="next-day-sunrise" x="147" y="80" class="small-caption" text-anchor="middle">--:--</text>
+        <text id="next-day-sunset" x="147" y="83" class="small-caption" text-anchor="middle">--:--</text>
         <image id="next-day-moon" href="assets/empty.svg" x="142" y="86" width="10" height="10"/>
 
         <image id="current-icon" xlink:href="assets/sunrise.svg" href="assets/sunrise.svg" x="110" y="79" width="6" height="6"/>
