@@ -1,6 +1,7 @@
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { updateTimezone } from './clock';
+import { setSvgHref } from './util';
 
 interface CommonConditions {
   time: number;
@@ -144,7 +145,7 @@ function getIcon(conditions: CommonConditions, ignorePrecipProbability = false) 
                      'rain', 'sleet', 'snow'].indexOf(icon);
   const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
   const precipIntensityMax = (conditions as any).precipIntensityMax || 0;
-
+/*
   if (!ignorePrecipProbability &&
       conditions.precipProbability >= 0.3 && precipIntensityMax >= 0.01 && iconIndex >= 0 && iconIndex <= 6) {
     if (conditions.precipType === 'snow') {
@@ -157,7 +158,7 @@ function getIcon(conditions: CommonConditions, ignorePrecipProbability = false) 
       icon = 'rain';
     }
   }
-
+*/
   if (icon === 'rain' && summary.indexOf('thunder') >= 0) {
     icon = 'thunderstorm';
 
@@ -192,32 +193,39 @@ function formatTime(zone: KsTimeZone, unixSeconds: number) {
   return pad(date.hrs) + ':' + pad(date.min);
 }
 
-function showUnknown(error: string) {
-  currentIcon.attr('href', UNKNOWN_ICON);
+export function showUnknown(error?: string) {
+  setSvgHref(currentIcon, UNKNOWN_ICON);
   currentTemp.text('\u00A0--°');
   feelsLike.text('Feels like --°');
 
-  todayIcon.attr('href', UNKNOWN_ICON);
+  setSvgHref(todayIcon, UNKNOWN_ICON);
   todayLowHigh.text('--°/--°');
   todaySunrise.text('--:--');
   todaySunset.text('--:--');
-  todayMoon.attr('href', EMPTY_ICON);
+  setSvgHref(todayMoon, EMPTY_ICON);
 
-  tomorrowIcon.attr('href', UNKNOWN_ICON);
+  setSvgHref(tomorrowIcon, UNKNOWN_ICON);
   tomorrowLowHigh.text('--°/--°');
   tomorrowSunrise.text('--:--');
   tomorrowSunset.text('--:--');
-  tomorrowMoon.attr('href', EMPTY_ICON);
+  setSvgHref(tomorrowMoon, EMPTY_ICON);
 
-  nextDayIcon.attr('href', UNKNOWN_ICON);
+  setSvgHref(nextDayIcon, UNKNOWN_ICON);
   nextDayLowHigh.text('--°/--°');
   nextDaySunrise.text('--:--');
   nextDaySunset.text('--:--');
-  nextDayMoon.attr('href', EMPTY_ICON);
+  setSvgHref(nextDayMoon, EMPTY_ICON);
 
   message.text(error || '\u00A0');
-  message.css('background-color', '#CCC');
-  message.css('color', 'black');
+
+  if (error) {
+    message.css('background-color', '#CCC');
+    message.css('color', 'black');
+  }
+  else {
+    message.css('background-color', 'midnightblue');
+    message.css('color', 'white');
+  }
 }
 
 export function updateForecast(latitude: number, longitude: number) {
@@ -247,48 +255,49 @@ export function displayForecast(forecast: Forecast) {
   if (todayIndex < 0) {
     showUnknown('Missing data');
   } else {
-    currentIcon.attr('href', getIcon(forecast.currently, true));
+    setSvgHref(currentIcon, getIcon(forecast.currently, true));
     currentTemp.text(`\u00A0${Math.round(forecast.currently.temperature)}°`);
     feelsLike.text(`Feels like ${Math.round(forecast.currently.apparentTemperature)}°`);
 
-    todayIcon.attr('href', getIcon(forecast.daily.data[todayIndex]));
+    setSvgHref(todayIcon, getIcon(forecast.daily.data[todayIndex]));
     low = Math.round(forecast.daily.data[todayIndex].temperatureLow);
     high = Math.round(forecast.daily.data[todayIndex].temperatureHigh);
     todayLowHigh.text(`${high}°/${low}°`);
     todaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex].sunriseTime));
     todaySunset.text(formatTime(zone, forecast.daily.data[todayIndex].sunsetTime));
-    todayMoon.attr('href', getMoonPhaseIcon(forecast.daily.data[todayIndex].moonPhase));
+    setSvgHref(todayMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex].moonPhase));
 
     if (forecast.daily.data.length > todayIndex + 1) {
-      tomorrowIcon.attr('href', getIcon(forecast.daily.data[todayIndex + 1]));
+      setSvgHref(tomorrowIcon, getIcon(forecast.daily.data[todayIndex + 1]));
       low = Math.round(forecast.daily.data[todayIndex + 1].temperatureLow);
       high = Math.round(forecast.daily.data[todayIndex + 1].temperatureHigh);
       tomorrowLowHigh.text(`${high}°/${low}°`);
       tomorrowSunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunriseTime));
       tomorrowSunset.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunsetTime));
-      tomorrowMoon.attr('href', getMoonPhaseIcon(forecast.daily.data[todayIndex + 1].moonPhase));
+      setSvgHref(tomorrowMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex + 1].moonPhase));
     } else {
-      tomorrowIcon.attr('href', UNKNOWN_ICON);
+      setSvgHref(tomorrowIcon, UNKNOWN_ICON);
       tomorrowLowHigh.text('--°/--°');
       tomorrowSunrise.text('--:--');
       tomorrowSunset.text('--:--');
-      tomorrowMoon.attr('href', EMPTY_ICON);
+      setSvgHref(tomorrowMoon, EMPTY_ICON);
     }
 
     if (forecast.daily.data.length > todayIndex + 2) {
-      nextDayIcon.attr('href', getIcon(forecast.daily.data[todayIndex + 2]));
+      setSvgHref(nextDayIcon, getIcon(forecast.daily.data[todayIndex + 2]));
       low = Math.round(forecast.daily.data[todayIndex + 2].temperatureLow);
       high = Math.round(forecast.daily.data[todayIndex + 2].temperatureHigh);
       nextDayLowHigh.text(`${high}°/${low}°`);
       nextDaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunriseTime));
       nextDaySunset.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunsetTime));
-      nextDayMoon.attr('href', getMoonPhaseIcon(forecast.daily.data[todayIndex + 2].moonPhase));
-    } else {
-      nextDayIcon.attr('href', UNKNOWN_ICON);
+      setSvgHref(nextDayMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex + 2].moonPhase));
+    }
+    else {
+      setSvgHref(nextDayIcon, UNKNOWN_ICON);
       nextDayLowHigh.text('--°/--°');
       nextDaySunrise.text('--:--');
       nextDaySunset.text('--:--');
-      nextDayMoon.attr('href', EMPTY_ICON);
+      setSvgHref(nextDayMoon, EMPTY_ICON);
     }
 
     let alertText = '';

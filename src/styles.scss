@@ -27,6 +27,8 @@ body {
   font-size: 14px;
   padding: 2px 1em;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 #settings-btn {
@@ -112,7 +114,7 @@ body {
   right: 0;
   top: 0;
   bottom: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Arial, sans-serif;
   font-size: 14px;
 }
 
@@ -122,8 +124,23 @@ body {
   right: 1em;
 
   & button {
-    // width: 80px; // TODO: Needed now to keep Chrome happy. Remove when there's a better solution.
-    min-width: 80px;
+    min-width: 80px; // Ignored by macOS Chrome
+  }
+}
+
+.alert-buttons {
+  position: absolute;
+  bottom: 1em;
+  left: auto;
+  right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  width: calc(100% - 2em);
+
+  & button {
+    min-width: 80px; // Ignored by macOS Chrome
   }
 }
 
@@ -138,11 +155,45 @@ body {
   color: black;
 }
 
-input, input[type=submit], input[type=button], button, select, textarea, optgroup, option {
+.user-options {
+  display: table;
+  border-spacing: 0.5em 2px;
+
+  &>div {
+    display: table-row;
+
+    &>label, input, span {
+      display: table-cell;
+    }
+  }
+}
+
+#alert-dialog > div {
+  position: absolute;
+  margin: auto;
+  top: 0; left: 0; bottom: 0; right: 0;
+  width: 320px;
+  height: 240px;
+  padding: 1em;
+  background-color: white;
+  color: black;
+}
+
+input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome for input[type=submit]
   font-family: inherit;
   font-size: inherit;
   font-style: inherit;
   font-weight: inherit;
+}
+
+.search-section {
+  position: absolute;
+  width: calc(100% - 2em);
+  top: 12em;
+
+  & label, input {
+    margin-right: 0.5em;
+  }
 }
 
 #atlas-message {
@@ -150,7 +201,7 @@ input, input[type=submit], input[type=button], button, select, textarea, optgrou
 }
 
 .city-table-wrapper {
-  max-height: 304px;
+  max-height: 244px;
   overflow: auto;
   border: darkgray 1px solid;
 }
@@ -158,6 +209,9 @@ input, input[type=submit], input[type=button], button, select, textarea, optgrou
 #city-table {
   border-spacing: 0;
   width: 100%;
+  &>tr:not(:first-child) {
+    cursor: pointer;
+  }
 
   & td, th {
     padding: 2px 2px 2px 10px;

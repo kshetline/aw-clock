@@ -149,3 +149,7 @@ export function startClock(callback?: NewMinuteCallback) {
   addTickMarks();
   tick();
 }
+
+export function triggerRefresh() {
+  lastMinute = -1;
+}

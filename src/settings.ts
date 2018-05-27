@@ -1,12 +1,17 @@
 import * as $ from 'jquery';
-import { htmlEncode } from './util';
+import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
 let dialog: JQuery;
-let message: JQuery;
+let currentCity: JQuery;
+let latitude: JQuery;
+let longitude: JQuery;
+let userId: JQuery;
+let searchCity: JQuery;
+let searchFocused = false;
+let searchMessage: JQuery;
 let cityTableWrapper: JQuery;
 let cityTable: JQuery;
-let cityField: JQuery;
-let submit: JQuery;
+let submitSearch: JQuery;
 let okButton: JQuery;
 let cancelButton: JQuery;
 
@@ -37,29 +42,36 @@ export interface Settings {
   latitude: number;
   longitude: number;
   city: string;
-  id: string;
+  userId?: string;
 }
 
 export function initSettings() {
   dialog = $('#settings-dialog');
-  message = $('#atlas-message');
+  currentCity = $('#current-city');
+  latitude = $('#latitude');
+  longitude = $('#longitude');
+  userId = $('#user-id');
+  searchCity = $('#search-city');
+  searchMessage = $('#search-message');
+  submitSearch = $('#submit-search');
   cityTableWrapper = $('.city-table-wrapper');
   cityTable = $('#city-table');
-  cityField = $('#city');
-  submit = $('#submit');
   okButton = $('#settings-ok');
   cancelButton = $('#settings-cancel');
 
+  searchCity.on('focus', () => searchFocused = true);
+  searchCity.on('blur', () => searchFocused = false);
+
   $('#search').on('submit', event => {
     event.preventDefault();
-    const query = $.trim(cityField.val() as string);
+    const query = $.trim(searchCity.val() as string);
 
     if (query.length === 0)
-      alert('Please enter a city or partial city name.');
+      domAlert('Please enter a city or partial city name.');
     else {
-      (cityField as any).enable(false);
-      (submit as any).enable(false);
-      message.html('&nbsp;');
+      (searchCity as any).enable(false);
+      (submitSearch as any).enable(false);
+      searchMessage.html('&nbsp;');
       cityTableWrapper.hide();
       cityTable.html('');
 
@@ -69,7 +81,7 @@ export function initSettings() {
         response.matches.forEach((city, index) => {
           rows += '<tr data-lat="' + city.latitude +
              '" data-lon="' + city.longitude + '"' +
-            (response.matches.length > 6 && Math.floor(index / 3) % 2 === 1 ? ' class=rowguide' : '') +
+            (response.matches.length > 6 && Math.floor(index / 3) % 2 === 0 ? ' class=rowguide' : '') +
             '><td>' + city.rank +
             '</td><td class="name">' + htmlEncode(city.displayName) +
             '</td><td class="coordinates">' + formatDegrees(city.latitude, 'NS', 2) +
@@ -79,8 +91,24 @@ export function initSettings() {
 
         cityTable.html(rows);
         cityTableWrapper.show();
-        (submit as any).enable(true);
-        (cityField as any).enable(true);
+        (submitSearch as any).enable(true);
+        (searchCity as any).enable(true);
+
+        cityTable.find('tr').each(function(index) {
+          if (index !== 0) {
+            const $this = $(this);
+
+            $this.on('click', () => {
+              currentCity.val($this.find('td.name').text().replace(/ \([^)]+\)/g, ''));
+              latitude.val($this.data('lat'));
+              longitude.val($this.data('lon'));
+            });
+
+            $this.on('dblclick', () => {
+              okButton.trigger('click');
+            });
+          }
+        });
       }).catch(reason => {
         alert(reason);
       });
@@ -88,11 +116,59 @@ export function initSettings() {
   });
 }
 
-export function openSettings(callback: (Settings) => void) {
-  dialog.css('display', 'block');
+export function openSettings(previousSettings: Settings, callback: (Settings) => void) {
+  currentCity.val(previousSettings.city);
+  latitude.val(previousSettings.latitude);
+  longitude.val(previousSettings.longitude);
+  userId.val(previousSettings.userId);
+  searchCity.val('');
   cityTableWrapper.hide();
+  dialog.css('display', 'block');
 
-  cancelButton.on('click', () => {
+  pushKeydownListener((event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
+      event.preventDefault();
+      cancelButton.trigger('click');
+    }
+    else if (event.code === 'Enter' && !searchFocused) {
+      event.preventDefault();
+      okButton.trigger('click');
+    }
+  });
+
+  const doOK = () => {
+    const newSettings: Settings = {
+      city: (currentCity.val() as string).trim(),
+      latitude: Number(latitude.val()),
+      longitude: Number(longitude.val()),
+      userId: userId.val() as string
+    };
+
+    if (!newSettings.city) {
+      domAlert('Current city must be specified.');
+      currentCity.trigger('focus');
+    }
+    else if (isNaN(newSettings.latitude) || newSettings.latitude < -90 || newSettings.latitude > 90) {
+      domAlert('A valid latitude must be provided from -90 to 90 degrees.');
+      latitude.trigger('focus');
+    }
+    else if (isNaN(newSettings.longitude) || newSettings.longitude < -180 || newSettings.longitude > 180) {
+      domAlert('A valid longitude must be provided from -180 to 180 degrees.');
+      longitude.trigger('focus');
+    }
+    else {
+      popKeydownListener();
+      okButton.off('click', doOK);
+      dialog.css('display', 'none');
+      callback(newSettings);
+    }
+  };
+
+  okButton.on('click', doOK);
+
+  cancelButton.one('click', () => {
+    popKeydownListener();
+    okButton.off('click', doOK);
     dialog.css('display', 'none');
     callback(null);
   });
