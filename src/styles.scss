@@ -18,17 +18,21 @@ body {
   font-family: $std-font;
 }
 
-#message {
+#marquee {
   position: fixed;
   left: 0;
   right: 170px;
   bottom: 0;
-  background: midnightblue;
+  background-color: midnightblue;
   font-size: 14px;
   padding: 2px 1em;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
+  animation: none;
+}
+
+#marquee:hover {
+  animation-play-state: paused;
 }
 
 #settings-btn {

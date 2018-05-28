@@ -27,7 +27,7 @@
     "label-position": true,
     "max-line-length": [
       true,
-      140
+      200
     ],
     "member-access": false,
     "member-ordering": [
@@ -52,7 +52,7 @@
       "trace"
     ],
     "no-construct": true,
-    "no-debugger": true,
+    "no-debugger": false,
     "no-duplicate-super": true,
     "no-empty": false,
     "no-empty-interface": true,

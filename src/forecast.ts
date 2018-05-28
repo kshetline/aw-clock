@@ -1,7 +1,7 @@
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { updateTimezone } from './clock';
-import { setSvgHref } from './util';
+import { getTextWidth, setSvgHref } from './util';
 
 interface CommonConditions {
   time: number;
@@ -85,7 +85,7 @@ let nextDaySunrise: JQuery;
 let nextDaySunset: JQuery;
 let nextDayMoon: JQuery;
 
-let message: JQuery;
+let marquee: JQuery;
 let timezone: JQuery;
 
 let lastForecast: Forecast;
@@ -114,8 +114,10 @@ export function initForecast() {
   nextDaySunset = $('#next-day-sunset');
   nextDayMoon = $('#next-day-moon');
 
-  message = $('#message');
+  marquee = $('#marquee');
   timezone = $('#timezone');
+
+  window.addEventListener('resize', updateMarqueeAnimation);
 }
 
 export function getForecast(latitude: number, longitude: number): Promise<Forecast> {
@@ -208,17 +210,19 @@ export function showUnknown(error?: string) {
   nextDaySunset.text('--:--');
   setSvgHref(nextDayMoon, EMPTY_ICON);
 
-  message.text(error || '\u00A0');
+  marquee.text(error || '\u00A0');
   timezone.text('');
 
   if (error) {
-    message.css('background-color', '#CCC');
-    message.css('color', 'black');
+    marquee.css('background-color', '#CCC');
+    marquee.css('color', 'black');
   }
   else {
-    message.css('background-color', 'midnightblue');
-    message.css('color', 'white');
+    marquee.css('background-color', 'midnightblue');
+    marquee.css('color', 'white');
   }
+
+  updateMarqueeAnimation(null);
 }
 
 export function updateForecast(latitude: number, longitude: number) {
@@ -248,7 +252,8 @@ export function displayForecast(forecast: Forecast) {
 
   if (todayIndex < 0) {
     showUnknown('Missing data');
-  } else {
+  }
+  else {
     setSvgHref(currentIcon, getIcon(forecast.currently, true));
     currentTemp.text(`\u00A0${Math.round(forecast.currently.temperature)}°`);
     feelsLike.text(`${Math.round(forecast.currently.apparentTemperature)}°`);
@@ -307,7 +312,7 @@ export function displayForecast(forecast: Forecast) {
         if (expires >= now) {
           const severities = ['advisory', 'watch', 'warning'];
           maxSeverity = Math.max(severities.indexOf(alert.severity) + 1, maxSeverity);
-          alerts.push(alert.title);
+          alerts.push(alert.title + ': ' + alert.description);
         }
       });
 
@@ -335,14 +340,54 @@ export function displayForecast(forecast: Forecast) {
         break;
       }
 
-      message.text(alertText);
-      message.css('background-color', background);
-      message.css('color', color);
+      marquee.text(alertText);
+      marquee.css('background-color', background);
+      marquee.css('color', color);
     }
     else {
-      message.text(forecast.daily.summary || '\u00A0');
-      message.css('background-color', 'midnightblue');
-      message.css('color', 'white');
+      marquee.text(forecast.daily.summary || '\u00A0');
+      marquee.css('background-color', 'midnightblue');
+      marquee.css('color', 'white');
     }
+
+    updateMarqueeAnimation(null);
   }
+}
+
+let animationStyleSheet: CSSStyleSheet;
+let keyframesIndex = 0;
+let lastMarqueeText = '';
+
+function updateMarqueeAnimation(event?: Event) {
+  const newText = marquee.text();
+
+  if (event === null && lastMarqueeText === newText)
+    return;
+
+  lastMarqueeText = newText;
+  marquee.css('animation', 'none');
+
+  const element = marquee[0];
+  const textWidth = getTextWidth(newText, element, '14px Verdana, sans-serif'); // Explicit font needed as backup to handle Firefox bug.
+  const padding = Number(window.getComputedStyle(element).getPropertyValue('padding-left').replace('px', '')) +
+                  Number(window.getComputedStyle(element).getPropertyValue('padding-right').replace('px', ''));
+  const offsetWidth = element.offsetWidth;
+
+  if (textWidth + padding <= offsetWidth)
+    return;
+
+  if (!animationStyleSheet) {
+    $('head').append('<style id="marquee-animations" type="text/css"></style>');
+    animationStyleSheet = ($('#marquee-animations').get(0) as HTMLStyleElement).sheet as CSSStyleSheet;
+  }
+
+  if (animationStyleSheet.cssRules.length > 0)
+    animationStyleSheet.deleteRule(0);
+
+  const keyframesName = 'marquee-' + keyframesIndex++;
+  const keyframesRule = `@keyframes ${keyframesName} { 0% { text-indent: ${offsetWidth}px } 100% { text-indent: -${textWidth}px; } }`;
+  const seconds = (textWidth + offsetWidth) / 100;
+
+  animationStyleSheet.insertRule(keyframesRule, 0);
+  marquee.css('animation', `${keyframesName} ${seconds}s linear infinite`);
 }
