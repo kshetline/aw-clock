@@ -368,7 +368,7 @@ function updateMarqueeAnimation(event?: Event) {
   marquee.css('animation', 'none');
 
   const element = marquee[0];
-  const textWidth = getTextWidth(newText, element, '14px Verdana, sans-serif'); // Explicit font needed as backup to handle Firefox bug.
+  const textWidth = getTextWidth(newText, element);
   const padding = Number(window.getComputedStyle(element).getPropertyValue('padding-left').replace('px', '')) +
                   Number(window.getComputedStyle(element).getPropertyValue('padding-right').replace('px', ''));
   const offsetWidth = element.offsetWidth;

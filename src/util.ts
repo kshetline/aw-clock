@@ -104,14 +104,27 @@ export function getTextWidth(items: string | string[], font: string | HTMLElemen
   if (typeof font === 'string')
     context.font = (font ? font : 'normal 12px sans-serif');
   else if (typeof font === 'object') {
-    const elementFont = window.getComputedStyle(font).getPropertyValue('font');
+    let elementFont = window.getComputedStyle(font).getPropertyValue('font');
 
     if (elementFont)
       context.font = elementFont;
-    else if (fallbackFont)
-      context.font = fallbackFont;
-    else
-      context.font = 'normal 12px sans-serif';
+    else {
+      const fontStyle = window.getComputedStyle(font).getPropertyValue('font-style');
+      const fontVariant = window.getComputedStyle(font).getPropertyValue('font-variant');
+      const fontWeight = window.getComputedStyle(font).getPropertyValue('font-weight');
+      const fontSize = window.getComputedStyle(font).getPropertyValue('font-size');
+      const fontFamily = window.getComputedStyle(font).getPropertyValue('font-family');
+
+      elementFont = (fontStyle + ' ' + fontVariant + ' ' + fontWeight + ' ' + fontSize + ' ' + fontFamily)
+        .replace(/ +/g, ' ').trim();
+
+      if (elementFont)
+        context.font = elementFont;
+      else if (fallbackFont)
+        context.font = fallbackFont;
+      else
+        context.font = 'normal 12px sans-serif';
+    }
   }
 
   if (!Array.isArray(items))
