@@ -7,7 +7,8 @@ let latitude: JQuery;
 let longitude: JQuery;
 let userId: JQuery;
 let searchCity: JQuery;
-let searchFocused = false;
+let searchFieldFocused = false;
+let searchButtonFocused = false;
 let submitSearch: JQuery;
 let searching: JQuery;
 let searchMessage: JQuery;
@@ -61,8 +62,10 @@ export function initSettings() {
   okButton = $('#settings-ok');
   cancelButton = $('#settings-cancel');
 
-  searchCity.on('focus', () => searchFocused = true);
-  searchCity.on('blur', () => searchFocused = false);
+  searchCity.on('focus', () => searchFieldFocused = true);
+  searchCity.on('blur', () => searchFieldFocused = false);
+  submitSearch.on('focus', () => searchButtonFocused = true);
+  submitSearch.on('blur', () => searchButtonFocused = false);
 
   $('#search').on('submit', event => {
     event.preventDefault();
@@ -157,7 +160,7 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
       event.preventDefault();
       cancelButton.trigger('click');
     }
-    else if (event.code === 'Enter' && !searchFocused) {
+    else if (event.code === 'Enter' && !searchFieldFocused && !searchButtonFocused) {
       event.preventDefault();
       okButton.trigger('click');
     }

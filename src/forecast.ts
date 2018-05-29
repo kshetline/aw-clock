@@ -60,6 +60,7 @@ export interface Forecast {
   daily?: DailySummaryConditions;
   alerts?: Alert[];
   flags?: Flags;
+  frequent?: boolean;
 }
 
 let currentTemp: JQuery;
@@ -120,14 +121,26 @@ export function initForecast() {
   window.addEventListener('resize', updateMarqueeAnimation);
 }
 
-export function getForecast(latitude: number, longitude: number): Promise<Forecast> {
-  const url = `https://weather.shetline.com/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
+export function getForecast(latitude: number, longitude: number, userId?: string): Promise<Forecast> {
+  let url = `https://weather.shetline.com/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
+
+  if (userId)
+    url += '&id=' + encodeURI(userId);
 
   return new Promise((resolve, reject) => {
     $.ajax({
       url: url,
       dataType: 'json',
-      success: (data: Forecast) => {
+      success: (data: Forecast, textStatus: string, jqXHR: JQueryXHR) => {
+        const cacheControl = jqXHR.getResponseHeader('cache-control');
+
+        if (cacheControl) {
+          const match = /max-age=(\d+)/.exec(cacheControl);
+
+          if (match && Number(match[1]) <= 300)
+            data.frequent = true;
+        }
+
         if (data.flags['darksky-unavailable'])
           reject('Dark Sky unavailable');
         else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
@@ -225,12 +238,16 @@ export function showUnknown(error?: string) {
   updateMarqueeAnimation(null);
 }
 
-export function updateForecast(latitude: number, longitude: number) {
-  getForecast(latitude, longitude).then(forecast => {
+export function updateForecast(latitude: number, longitude: number, userId?: string): Promise<boolean> {
+  return getForecast(latitude, longitude, userId).then(forecast => {
     lastForecast = forecast;
     displayForecast(forecast);
+
+    return !!forecast.frequent;
   }).catch(error => {
     showUnknown(error);
+
+    return undefined;
   });
 }
 
