@@ -61,6 +61,8 @@ export interface Forecast {
   alerts?: Alert[];
   flags?: Flags;
   frequent?: boolean;
+  celsius?: boolean;
+  amPm?: boolean;
 }
 
 let currentTemp: JQuery;
@@ -121,8 +123,11 @@ export function initForecast() {
   window.addEventListener('resize', updateMarqueeAnimation);
 }
 
-export function getForecast(latitude: number, longitude: number, userId?: string): Promise<Forecast> {
+export function getForecast(latitude: number, longitude: number, celsius: boolean, userId?: string): Promise<Forecast> {
   let url = `https://weather.shetline.com/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
+
+  if (celsius)
+    url += '&units=ca';
 
   if (userId)
     url += '&id=' + encodeURI(userId);
@@ -132,6 +137,8 @@ export function getForecast(latitude: number, longitude: number, userId?: string
       url: url,
       dataType: 'json',
       success: (data: Forecast, textStatus: string, jqXHR: JQueryXHR) => {
+        data.celsius = celsius;
+
         const cacheControl = jqXHR.getResponseHeader('cache-control');
 
         if (cacheControl) {
@@ -158,20 +165,27 @@ export function getForecast(latitude: number, longitude: number, userId?: string
 const UNKNOWN_ICON = 'assets/unknown.svg';
 const EMPTY_ICON = 'assets/empty.svg';
 
-function getIcon(conditions: CommonConditions, ignorePrecipProbability = false) {
+function getIcon(conditions: CommonConditions, celsius: boolean, ignorePrecipProbability = false) {
   let icon = conditions.icon;
   const iconIndex = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night', 'cloudy',
                      'rain', 'sleet', 'snow'].indexOf(icon);
   const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
-  const precipIntensityMax = (conditions as any).precipIntensityMax || 0;
+  let precipIntensityMax = (conditions as any).precipIntensityMax || 0;
+  let precipIntensity = conditions.precipIntensity;
 
-  if (icon === 'rain' && summary.indexOf('thunder') >= 0) {
+  // When temperature units are Celsius, precipitation is in mm/hr, and needs to be converted to inches/hr.
+  if (celsius) {
+    precipIntensityMax /= 25.4;
+    precipIntensity /= 25.4;
+  }
+
+  if (icon === 'rain' && (summary.indexOf('thunder') >= 0 || summary.indexOf('lightning') >= 0)) {
     icon = 'thunderstorm';
 
     if (summary.indexOf('scattered') >= 0 || summary.indexOf('isolated') >= 0)
       icon = 'scattered-thunderstorms-day';
   }
-  else if (icon === 'rain' && (precipIntensityMax < 0.1 || precipIntensityMax === 0 && conditions.precipIntensity < 0.1)) {
+  else if (icon === 'rain' && (precipIntensityMax < 0.1 || (precipIntensityMax === 0 && precipIntensity < 0.1))) {
     icon = 'light-rain';
   }
 
@@ -193,10 +207,21 @@ function getMoonPhaseIcon(phase: number) {
   return `assets/moon/phase-${pad(Math.round(phase * 28) % 28)}.svg`;
 }
 
-function formatTime(zone: KsTimeZone, unixSeconds: number) {
+function formatTime(zone: KsTimeZone, unixSeconds: number, amPm: boolean) {
   const date = new KsDateTime(unixSeconds * 1000, zone).wallTime;
+  let hours = date.hrs;
+  let suffix = '';
 
-  return pad(date.hrs) + ':' + pad(date.min);
+  if (amPm) {
+    if (hours === 0)
+      hours = 12;
+    else if (hours > 12)
+      hours -= 12;
+
+    suffix = (date.hrs < 12 ? 'am' : 'pm');
+  }
+
+  return pad(hours) + ':' + pad(date.min) + suffix;
 }
 
 export function showUnknown(error?: string) {
@@ -238,8 +263,9 @@ export function showUnknown(error?: string) {
   updateMarqueeAnimation(null);
 }
 
-export function updateForecast(latitude: number, longitude: number, userId?: string): Promise<boolean> {
-  return getForecast(latitude, longitude, userId).then(forecast => {
+export function updateForecast(latitude: number, longitude: number, celsius: boolean, amPm: boolean, userId?: string): Promise<boolean> {
+  return getForecast(latitude, longitude, celsius, userId).then(forecast => {
+    forecast.amPm = amPm;
     lastForecast = forecast;
     displayForecast(forecast);
 
@@ -276,21 +302,21 @@ export function displayForecast(forecast: Forecast) {
     feelsLike.text(`${Math.round(forecast.currently.apparentTemperature)}°`);
     humidity.text(`${Math.round(forecast.currently.humidity * 100)}%`);
 
-    setSvgHref(todayIcon, getIcon(forecast.daily.data[todayIndex]));
+    setSvgHref(todayIcon, getIcon(forecast.daily.data[todayIndex], forecast.celsius));
     low = Math.round(forecast.daily.data[todayIndex].temperatureLow);
     high = Math.round(forecast.daily.data[todayIndex].temperatureHigh);
     todayLowHigh.text(`${high}°/${low}°`);
-    todaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex].sunriseTime));
-    todaySunset.text(formatTime(zone, forecast.daily.data[todayIndex].sunsetTime));
+    todaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex].sunriseTime, forecast.amPm));
+    todaySunset.text(formatTime(zone, forecast.daily.data[todayIndex].sunsetTime, forecast.amPm));
     setSvgHref(todayMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex].moonPhase));
 
     if (forecast.daily.data.length > todayIndex + 1) {
-      setSvgHref(tomorrowIcon, getIcon(forecast.daily.data[todayIndex + 1]));
+      setSvgHref(tomorrowIcon, getIcon(forecast.daily.data[todayIndex + 1], forecast.celsius));
       low = Math.round(forecast.daily.data[todayIndex + 1].temperatureLow);
       high = Math.round(forecast.daily.data[todayIndex + 1].temperatureHigh);
       tomorrowLowHigh.text(`${high}°/${low}°`);
-      tomorrowSunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunriseTime));
-      tomorrowSunset.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunsetTime));
+      tomorrowSunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunriseTime, forecast.amPm));
+      tomorrowSunset.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunsetTime, forecast.amPm));
       setSvgHref(tomorrowMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex + 1].moonPhase));
     } else {
       setSvgHref(tomorrowIcon, UNKNOWN_ICON);
@@ -301,12 +327,12 @@ export function displayForecast(forecast: Forecast) {
     }
 
     if (forecast.daily.data.length > todayIndex + 2) {
-      setSvgHref(nextDayIcon, getIcon(forecast.daily.data[todayIndex + 2]));
+      setSvgHref(nextDayIcon, getIcon(forecast.daily.data[todayIndex + 2], forecast.celsius));
       low = Math.round(forecast.daily.data[todayIndex + 2].temperatureLow);
       high = Math.round(forecast.daily.data[todayIndex + 2].temperatureHigh);
       nextDayLowHigh.text(`${high}°/${low}°`);
-      nextDaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunriseTime));
-      nextDaySunset.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunsetTime));
+      nextDaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunriseTime, forecast.amPm));
+      nextDaySunset.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunsetTime, forecast.amPm));
       setSvgHref(nextDayMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex + 2].moonPhase));
     }
     else {

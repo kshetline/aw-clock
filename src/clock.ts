@@ -21,6 +21,7 @@ let sweep: SVGAnimationElement;
 let minHand: HTMLElement;
 let hourHand: HTMLElement;
 let hands: HTMLElement;
+let hub: HTMLElement;
 let dayOfWeekCaption: HTMLElement;
 let dateCaption: HTMLElement;
 let monthCaption: HTMLElement;
@@ -29,6 +30,8 @@ let timeCaption: HTMLElement;
 let nextDayCaption: HTMLElement;
 
 let newMinuteCallback: NewMinuteCallback = null;
+let amPm = false;
+let hideseconds = false;
 
 function pad(n) {
   return (n < 10 ? '0' : '') + n;
@@ -77,12 +80,30 @@ export function initClock() {
   minHand = document.getElementById('min-hand');
   hourHand = document.getElementById('hour-hand');
   hands = document.getElementById('hands');
+  hub = document.getElementById('hub');
   dayOfWeekCaption = document.getElementById('day-of-week');
   dateCaption = document.getElementById('date');
   monthCaption = document.getElementById('month');
   yearCaption = document.getElementById('year');
   timeCaption = document.getElementById('time');
   nextDayCaption = document.getElementById('next-day-caption');
+}
+
+export function setAmPm(doAmPm: boolean) {
+  amPm = doAmPm;
+}
+
+export function setHideSeconds(hide: boolean) {
+  hideseconds = hide;
+
+  if (hide) {
+    secHand.style.visibility = 'hidden';
+    hub.style.visibility = 'hidden';
+  }
+  else {
+    secHand.style.visibility = 'visible';
+    hub.style.visibility = 'visible';
+  }
 }
 
 export function updateTimezone(newZone: KsTimeZone) {
@@ -128,10 +149,21 @@ function tick() {
     yearCaption.textContent = date.y.toString();
     nextDayCaption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
 
+    let displayHour = hour;
+    let suffix = '';
+
+    if (amPm) {
+      if (displayHour === 0)
+        displayHour = 12;
+      else if (displayHour > 12)
+        displayHour -= 12;
+
+      suffix = (hour < 12 ? ' AM' : ' PM');
+    }
+
     timeCaption.textContent =
-      pad(hour) + ':' +
-      pad(mins) + ':' +
-      pad(secs);
+      pad(displayHour) + ':' +
+      pad(mins) + (hideseconds ? '' : ':' + pad(secs)) + suffix;
 
     if (mins !== lastMinute || lastTick + 60000 <= now) {
       if (newMinuteCallback) {

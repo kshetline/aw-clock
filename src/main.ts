@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import * as Cookies from 'js-cookie';
 
-import { initClock, startClock, triggerRefresh } from './clock';
+import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds } from './clock';
 import { initForecast, updateForecast, showUnknown, refreshForecastFromCache } from './forecast';
 import { initSettings, openSettings } from './settings';
 import './util';
@@ -13,6 +13,9 @@ let latitude;
 let longitude;
 let city;
 let userId;
+let celsius;
+let amPm;
+let hideSeconds;
 
 let frequent = false;
 let lastHour = -1;
@@ -30,8 +33,13 @@ $(() => {
   longitude = Number(Cookies.get('longitude')) || -71.48;
   city = Cookies.get('city') || 'Nashua, NH';
   userId = Cookies.get('id') || '';
+  celsius = Cookies.get('celsius') === 'true';
+  amPm = Cookies.get('ampm') === 'true';
+  hideSeconds =  Cookies.get('hides') === 'true';
 
   initClock();
+  setAmPm(amPm);
+  setHideSeconds(hideSeconds);
   initForecast();
   initSettings();
   cityLabel.text(city);
@@ -53,7 +61,7 @@ $(() => {
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {
       const doUpdate = () => {
-        updateForecast(latitude, longitude, userId).then(isFrequent => {
+        updateForecast(latitude, longitude, celsius, amPm, userId).then(isFrequent => {
           if (isFrequent !== undefined)
             frequent = isFrequent;
         });
@@ -69,17 +77,24 @@ $(() => {
   });
 
   $('#settings-btn').on('click', () => {
-    const previousSettings = {city, latitude, longitude, userId};
+    const previousSettings = {city, latitude, longitude, userId, celsius, amPm, hideSeconds};
 
     openSettings(previousSettings, newSettings => {
       if (newSettings) {
         showUnknown();
-        ({city, latitude, longitude, userId} = newSettings);
-        Cookies.set('city', city, {expires: 36525});
-        Cookies.set('latitude', latitude, {expires: 36525});
-        Cookies.set('longitude', longitude, {expires: 36525});
-        Cookies.set('id', userId, {expires: 36525});
+        ({city, latitude, longitude, userId, celsius, amPm, hideSeconds} = newSettings);
+        const expiration = 36525;
+
+        Cookies.set('city', city, {expires: expiration});
+        Cookies.set('latitude', latitude, {expires: expiration});
+        Cookies.set('longitude', longitude, {expires: expiration});
+        Cookies.set('id', userId, {expires: expiration});
+        Cookies.set('celsius', celsius, {expires: expiration});
+        Cookies.set('ampm', amPm, {expires: expiration});
+        Cookies.set('hides', hideSeconds, {expires: expiration});
         cityLabel.text(city);
+        setAmPm(amPm);
+        setHideSeconds(hideSeconds);
         triggerRefresh();
       }
     });

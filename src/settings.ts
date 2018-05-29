@@ -6,6 +6,9 @@ let currentCity: JQuery;
 let latitude: JQuery;
 let longitude: JQuery;
 let userId: JQuery;
+let temperature: JQuery;
+let hours: JQuery;
+let seconds: JQuery;
 let searchCity: JQuery;
 let searchFieldFocused = false;
 let searchButtonFocused = false;
@@ -45,6 +48,9 @@ export interface Settings {
   longitude: number;
   city: string;
   userId?: string;
+  celsius: boolean;
+  amPm: boolean;
+  hideSeconds: boolean;
 }
 
 export function initSettings() {
@@ -52,6 +58,9 @@ export function initSettings() {
   currentCity = $('#current-city');
   latitude = $('#latitude');
   longitude = $('#longitude');
+  temperature = $('#temperature-option');
+  hours = $('#hours-option');
+  seconds = $('#seconds-option');
   userId = $('#user-id');
   searchCity = $('#search-city');
   submitSearch = $('#submit-search');
@@ -145,6 +154,9 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
   latitude.val(previousSettings.latitude);
   longitude.val(previousSettings.longitude);
   userId.val(previousSettings.userId);
+  temperature.val(previousSettings.celsius ? 'C' : 'F');
+  hours.val(previousSettings.amPm ? 'AMPM' : '24');
+  seconds.val(previousSettings.hideSeconds ? 'N' : 'S');
   (submitSearch as any).enable(true);
   (searchCity as any).enable(true);
   searchCity.val('');
@@ -171,7 +183,10 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
       city: (currentCity.val() as string).trim(),
       latitude: Number(latitude.val()),
       longitude: Number(longitude.val()),
-      userId: userId.val() as string
+      userId: userId.val() as string,
+      celsius: (temperature.val() as string) === 'C',
+      amPm: (hours.val() as string) === 'AMPM',
+      hideSeconds: (seconds.val() as string) === 'N'
     };
 
     if (!newSettings.city) {
