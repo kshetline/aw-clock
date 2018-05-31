@@ -167,8 +167,8 @@ const EMPTY_ICON = 'assets/empty.svg';
 
 function getIcon(conditions: CommonConditions, celsius: boolean, ignorePrecipProbability = false) {
   let icon = conditions.icon;
-  const iconIndex = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night', 'cloudy',
-                     'rain', 'sleet', 'snow'].indexOf(icon);
+  // const iconIndex = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night', 'cloudy',
+  //                    'rain', 'sleet', 'snow'].indexOf(icon);
   const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
   let precipIntensityMax = (conditions as any).precipIntensityMax || 0;
   let precipIntensity = conditions.precipIntensity;
@@ -412,8 +412,9 @@ function updateMarqueeAnimation(event?: Event) {
 
   const element = marquee[0];
   const textWidth = getTextWidth(newText, element);
-  const padding = Number(window.getComputedStyle(element).getPropertyValue('padding-left').replace('px', '')) +
-                  Number(window.getComputedStyle(element).getPropertyValue('padding-right').replace('px', ''));
+  const style = window.getComputedStyle(element);
+  const padding = Number(style.getPropertyValue('padding-left').replace('px', '')) +
+                  Number(style.getPropertyValue('padding-right').replace('px', ''));
   const offsetWidth = element.offsetWidth;
 
   if (textWidth + padding <= offsetWidth)

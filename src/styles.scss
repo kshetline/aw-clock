@@ -1,5 +1,6 @@
 $std-font: Verdana, sans-serif;
 $clock-face-font: Arial, sans-serif;
+$planet-grid: #369;
 
 html {
   width: 100%;
@@ -64,9 +65,11 @@ body {
   fill: white;
 }
 
-.clock-face-font {
+.clock-face {
   font-family: $clock-face-font;
   font-size: 10px;
+  text-anchor: middle;
+  fill: white;
 }
 
 #face {
@@ -297,4 +300,17 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   100% {
     transform: rotate(360deg);
   }
+}
+
+.planet-track {
+  stroke: $planet-grid;
+  stroke-width: 0.25;
+  fill: none;
+}
+
+.constellation {
+  font-family: "Apple Symbols", "Arial Unicode MS", "MS Gothic", sans-serif;
+  font-size: 2.5px;
+  text-anchor: middle;
+  fill: $planet-grid;
 }

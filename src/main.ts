@@ -2,10 +2,11 @@ import * as $ from 'jquery';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import * as Cookies from 'js-cookie';
 
-import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds } from './clock';
+import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds, getTimezone } from './clock';
 import { initForecast, updateForecast, showUnknown, refreshForecastFromCache } from './forecast';
 import { initSettings, openSettings } from './settings';
 import './util';
+import { initEphemeris, setHidePlanets, updateEphemeris } from './ephemeris';
 
 initTimeZoneSmall();
 
@@ -16,6 +17,7 @@ let userId;
 let celsius;
 let amPm;
 let hideSeconds;
+let hidePlanets;
 
 let frequent = false;
 let lastHour = -1;
@@ -35,17 +37,23 @@ $(() => {
   userId = Cookies.get('id') || '';
   celsius = Cookies.get('celsius') === 'true';
   amPm = Cookies.get('ampm') === 'true';
-  hideSeconds =  Cookies.get('hides') === 'true';
+  hideSeconds = Cookies.get('hides') === 'true';
+  hidePlanets = Cookies.get('hidep') === 'true';
 
   initClock();
   setAmPm(amPm);
   setHideSeconds(hideSeconds);
   initForecast();
+  initEphemeris();
   initSettings();
   cityLabel.text(city);
 
+  let lastZone = getTimezone();
+
   startClock((hour, minute, forceRefresh) => {
     const now = Date.now();
+
+    updateEphemeris(latitude, longitude, now, lastZone);
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
@@ -64,6 +72,13 @@ $(() => {
         updateForecast(latitude, longitude, celsius, amPm, userId).then(isFrequent => {
           if (isFrequent !== undefined)
             frequent = isFrequent;
+
+          const currentZone = getTimezone();
+
+          if (lastZone !== currentZone) {
+            lastZone = currentZone;
+            updateEphemeris(latitude, longitude, now, currentZone);
+          }
         });
 
         lastForecast = now;
@@ -77,12 +92,12 @@ $(() => {
   });
 
   $('#settings-btn').on('click', () => {
-    const previousSettings = {city, latitude, longitude, userId, celsius, amPm, hideSeconds};
+    const previousSettings = {city, latitude, longitude, userId, celsius, amPm, hideSeconds, hidePlanets};
 
     openSettings(previousSettings, newSettings => {
       if (newSettings) {
         showUnknown();
-        ({city, latitude, longitude, userId, celsius, amPm, hideSeconds} = newSettings);
+        ({city, latitude, longitude, userId, celsius, amPm, hideSeconds, hidePlanets} = newSettings);
         const expiration = 36525;
 
         Cookies.set('city', city, {expires: expiration});
@@ -92,9 +107,11 @@ $(() => {
         Cookies.set('celsius', celsius, {expires: expiration});
         Cookies.set('ampm', amPm, {expires: expiration});
         Cookies.set('hides', hideSeconds, {expires: expiration});
+        Cookies.set('hidep', hidePlanets, {expires: expiration});
         cityLabel.text(city);
         setAmPm(amPm);
         setHideSeconds(hideSeconds);
+        setHidePlanets(hidePlanets);
         triggerRefresh();
       }
     });

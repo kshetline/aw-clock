@@ -9,6 +9,7 @@ let userId: JQuery;
 let temperature: JQuery;
 let hours: JQuery;
 let seconds: JQuery;
+let planets: JQuery;
 let searchCity: JQuery;
 let searchFieldFocused = false;
 let searchButtonFocused = false;
@@ -51,6 +52,7 @@ export interface Settings {
   celsius: boolean;
   amPm: boolean;
   hideSeconds: boolean;
+  hidePlanets: boolean;
 }
 
 export function initSettings() {
@@ -61,6 +63,7 @@ export function initSettings() {
   temperature = $('#temperature-option');
   hours = $('#hours-option');
   seconds = $('#seconds-option');
+  planets = $('#planets-option');
   userId = $('#user-id');
   searchCity = $('#search-city');
   submitSearch = $('#submit-search');
@@ -156,7 +159,8 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
   userId.val(previousSettings.userId);
   temperature.val(previousSettings.celsius ? 'C' : 'F');
   hours.val(previousSettings.amPm ? 'AMPM' : '24');
-  seconds.val(previousSettings.hideSeconds ? 'N' : 'S');
+  seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
+  planets.val(previousSettings.hidePlanets ? 'H' : 'S');
   (submitSearch as any).enable(true);
   (searchCity as any).enable(true);
   searchCity.val('');
@@ -186,7 +190,8 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
       userId: userId.val() as string,
       celsius: (temperature.val() as string) === 'C',
       amPm: (hours.val() as string) === 'AMPM',
-      hideSeconds: (seconds.val() as string) === 'N'
+      hideSeconds: (seconds.val() as string) === 'H',
+      hidePlanets: (planets.val() as string) === 'H'
     };
 
     if (!newSettings.city) {

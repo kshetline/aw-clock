@@ -41,8 +41,10 @@ function addTickMarks() {
   const svgns = 'http://www.w3.org/2000/svg';
   const radius = 41;
   const textRadius = 33.5;
+  const constellationRadius = 24;
   const center = 50;
   const clock = document.getElementById('clock');
+  const planetTracks = document.getElementById('planet-tracks');
 
   for (let i = 0; i < 360; i += 6) {
     const x1 = center + radius * Math.cos(Math.PI * i / 180);
@@ -60,16 +62,25 @@ function addTickMarks() {
       const h = (i === 270 ? 12 : ((i + 90) % 360) / 30);
       const x2 = center + textRadius * Math.cos(Math.PI * i / 180);
       const y2 = center + textRadius * Math.sin(Math.PI * i / 180);
-      const text = document.createElementNS(svgns, 'text');
+      const text2 = document.createElementNS(svgns, 'text');
 
-      text.setAttributeNS(null, 'x', x2.toString());
-      text.setAttributeNS(null, 'y', y2.toString());
-      text.setAttributeNS(null, 'dy', '3.5');
-      text.classList.add('clock-face-font');
-      text.setAttributeNS(null, 'text-anchor', 'middle');
-      text.setAttributeNS(null, 'fill', 'white');
-      text.textContent = h.toString();
-      clock.insertBefore(text, hands);
+      text2.setAttributeNS(null, 'x', x2.toString());
+      text2.setAttributeNS(null, 'y', y2.toString());
+      text2.setAttributeNS(null, 'dy', '3.5');
+      text2.classList.add('clock-face');
+      text2.textContent = h.toString();
+      clock.insertBefore(text2, hands);
+
+      const x3 = center + constellationRadius * Math.cos(Math.PI * (-i - 15) / 180);
+      const y3 = center + constellationRadius * Math.sin(Math.PI * (-i - 15) / 180);
+      const text3 = document.createElementNS(svgns, 'text');
+
+      text3.setAttributeNS(null, 'x', x3.toString());
+      text3.setAttributeNS(null, 'y', y3.toString());
+      text3.setAttributeNS(null, 'dy', '1');
+      text3.classList.add('constellation');
+      text3.textContent = String.fromCodePoint(0x2648 + i / 30);
+      planetTracks.appendChild(text3);
     }
   }
 }
@@ -110,8 +121,12 @@ export function updateTimezone(newZone: KsTimeZone) {
   zone = newZone;
 }
 
+export function getTimezone(): KsTimeZone {
+  return zone;
+}
+
 function tick() {
-  function rotate(elem, deg) {
+  function rotate(elem: HTMLElement, deg: number) {
     elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
   }
 

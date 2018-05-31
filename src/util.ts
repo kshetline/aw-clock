@@ -104,16 +104,17 @@ export function getTextWidth(items: string | string[], font: string | HTMLElemen
   if (typeof font === 'string')
     context.font = (font ? font : 'normal 12px sans-serif');
   else if (typeof font === 'object') {
-    let elementFont = window.getComputedStyle(font).getPropertyValue('font');
+    const style = window.getComputedStyle(font);
+    let elementFont = style.getPropertyValue('font');
 
     if (elementFont)
       context.font = elementFont;
     else {
-      const fontStyle = window.getComputedStyle(font).getPropertyValue('font-style');
-      const fontVariant = window.getComputedStyle(font).getPropertyValue('font-variant');
-      const fontWeight = window.getComputedStyle(font).getPropertyValue('font-weight');
-      const fontSize = window.getComputedStyle(font).getPropertyValue('font-size');
-      const fontFamily = window.getComputedStyle(font).getPropertyValue('font-family');
+      const fontStyle = style.getPropertyValue('font-style');
+      const fontVariant = style.getPropertyValue('font-variant');
+      const fontWeight = style.getPropertyValue('font-weight');
+      const fontSize = style.getPropertyValue('font-size');
+      const fontFamily = style.getPropertyValue('font-family');
 
       elementFont = (fontStyle + ' ' + fontVariant + ' ' + fontWeight + ' ' + fontSize + ' ' + fontFamily)
         .replace(/ +/g, ' ').trim();

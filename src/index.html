@@ -18,6 +18,28 @@
         <text id="date" x="99" y="9" text-anchor="end">---</text>
         <text id="year" x="99" y="99" text-anchor="end">----</text>
         <circle id="face" cx="50" cy="50" r="45"/>
+        <g id="planet-tracks">
+          <circle cx="50" cy="50" r="22" class="planet-track"/>
+          <circle cx="50" cy="50" r="20" class="planet-track"/>
+          <circle cx="50" cy="50" r="18" class="planet-track"/>
+          <circle cx="50" cy="50" r="16" class="planet-track"/>
+          <circle cx="50" cy="50" r="14" class="planet-track"/>
+          <circle cx="50" cy="50" r="12" class="planet-track"/>
+          <circle cx="50" cy="50" r="10" class="planet-track"/>
+
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate( 30, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate( 60, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate( 90, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(120, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(150, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(180, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(210, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(240, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(270, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(300, 50, 50)"/>
+          <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(330, 50, 50)"/>
+        </g>
         <g id="hands">
           <polygon id="hour-hand" points="47.5,52.5 48.5,25.5 50,23 51.5,25.5 52.5,52.5"/>
           <polygon id="min-hand" points="48.5,52.5 49,15 50,13 51,15 51.5,52.5"/>
@@ -30,6 +52,15 @@
                               keyTimes="0; 0.75; 1" keySplines="0.5 0 1 0.5; 0 0.5 0.5 1"
                               repeatCount="1"/>
           </line>
+        </g>
+        <g id="planets">
+          <circle id="saturn"  cx="72" cy="50" r="0.75" stroke="black" stroke-width="0" fill="#FF8"/>
+          <circle id="jupiter" cx="70" cy="50" r="0.75" stroke="black" stroke-width="0" fill="orange"/>
+          <circle id="mars"    cx="68" cy="50" r="0.75" stroke="black" stroke-width="0" fill="red"/>
+          <circle id="venus"   cx="66" cy="50" r="0.75" stroke="black" stroke-width="0" fill="#FFF"/>
+          <circle id="mercury" cx="64" cy="50" r="0.75" stroke="black" stroke-width="0" fill="#BBB"/>
+          <circle id="moon"    cx="62" cy="50" r="0.75" stroke="black" stroke-width="0" fill="#BDF"/>
+          <circle id="sun"     cx="60" cy="50" r="0.75" stroke="black" stroke-width="0" fill="yellow"/>
         </g>
         <circle id="subhub" cx="50" cy="50" r="1.5"/>
         <circle id="hub" cx="50" cy="50" r="1.5"/>
@@ -97,7 +128,13 @@
               </select>
               <select id="seconds-option">
                 <option value="S">Show seconds</option>
-                <option value="N">Hide seconds</option>
+                <option value="H">Hide seconds</option>
+              </select>
+            </span>
+            <span>
+              <select id="planets-option">
+                <option value="S">Show planets</option>
+                <option value="H">Hide planets</option>
               </select>
             </span>
           </div>
