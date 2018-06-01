@@ -53,7 +53,7 @@ $(() => {
   startClock((hour, minute, forceRefresh) => {
     const now = Date.now();
 
-    updateEphemeris(latitude, longitude, now, lastZone);
+    updateEphemeris(latitude, longitude, now, lastZone, amPm);
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
@@ -77,7 +77,7 @@ $(() => {
 
           if (lastZone !== currentZone) {
             lastZone = currentZone;
-            updateEphemeris(latitude, longitude, now, currentZone);
+            updateEphemeris(latitude, longitude, now, currentZone, amPm);
           }
         });
 

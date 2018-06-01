@@ -8,7 +8,6 @@ interface CommonConditions {
   summary: string;
   icon: string;
   humidity: number;
-  pressure: number;
   cloudCover: number;
   precipProbability: number;
   precipIntensity: number;
@@ -25,9 +24,6 @@ export interface DailyConditions extends CommonConditions {
   temperatureLow: number;
   precipIntensityMax: number;
   precipAccumulation: number;
-  sunriseTime: number;
-  sunsetTime: number;
-  moonPhase: number;
 }
 
 export interface DailySummaryConditions {
@@ -73,21 +69,12 @@ let currentIcon: JQuery;
 
 let todayIcon: JQuery;
 let todayLowHigh: JQuery;
-let todaySunrise: JQuery;
-let todaySunset: JQuery;
-let todayMoon: JQuery;
 
 let tomorrowIcon: JQuery;
 let tomorrowLowHigh: JQuery;
-let tomorrowSunrise: JQuery;
-let tomorrowSunset: JQuery;
-let tomorrowMoon: JQuery;
 
 let nextDayIcon: JQuery;
 let nextDayLowHigh: JQuery;
-let nextDaySunrise: JQuery;
-let nextDaySunset: JQuery;
-let nextDayMoon: JQuery;
 
 let marquee: JQuery;
 let timezone: JQuery;
@@ -102,21 +89,12 @@ export function initForecast() {
 
   todayIcon = $('#today-icon');
   todayLowHigh = $('#today-low-high');
-  todaySunrise = $('#today-sunrise');
-  todaySunset = $('#today-sunset');
-  todayMoon = $('#today-moon');
 
   tomorrowIcon = $('#tomorrow-icon');
   tomorrowLowHigh = $('#tomorrow-low-high');
-  tomorrowSunrise = $('#tomorrow-sunrise');
-  tomorrowSunset = $('#tomorrow-sunset');
-  tomorrowMoon = $('#tomorrow-moon');
 
   nextDayIcon = $('#next-day-icon');
   nextDayLowHigh = $('#next-day-low-high');
-  nextDaySunrise = $('#next-day-sunrise');
-  nextDaySunset = $('#next-day-sunset');
-  nextDayMoon = $('#next-day-moon');
 
   marquee = $('#marquee');
   timezone = $('#timezone');
@@ -164,7 +142,6 @@ export function getForecast(latitude: number, longitude: number, celsius: boolea
 }
 
 const UNKNOWN_ICON = 'assets/unknown.svg';
-const EMPTY_ICON = 'assets/empty.svg';
 
 function getIcon(conditions: CommonConditions, celsius: boolean, ignorePrecipProbability = false) {
   let icon = conditions.icon;
@@ -222,31 +199,6 @@ function getIcon(conditions: CommonConditions, celsius: boolean, ignorePrecipPro
   return `assets/${icon}.svg`;
 }
 
-function pad(n) {
-  return (n < 10 ? '0' : '') + n;
-}
-
-function getMoonPhaseIcon(phase: number) {
-  return `assets/moon/phase-${pad(Math.round(phase * 28) % 28)}.svg`;
-}
-
-function formatTime(zone: KsTimeZone, unixSeconds: number, amPm: boolean) {
-  const date = new KsDateTime(unixSeconds * 1000, zone).wallTime;
-  let hours = date.hrs;
-  let suffix = '';
-
-  if (amPm) {
-    if (hours === 0)
-      hours = 12;
-    else if (hours > 12)
-      hours -= 12;
-
-    suffix = (date.hrs < 12 ? 'am' : 'pm');
-  }
-
-  return pad(hours) + ':' + pad(date.min) + suffix;
-}
-
 export function showUnknown(error?: string) {
   setSvgHref(currentIcon, UNKNOWN_ICON);
   currentTemp.text('\u00A0--°');
@@ -255,21 +207,12 @@ export function showUnknown(error?: string) {
 
   setSvgHref(todayIcon, UNKNOWN_ICON);
   todayLowHigh.text('--°/--°');
-  todaySunrise.text('--:--');
-  todaySunset.text('--:--');
-  setSvgHref(todayMoon, EMPTY_ICON);
 
   setSvgHref(tomorrowIcon, UNKNOWN_ICON);
   tomorrowLowHigh.text('--°/--°');
-  tomorrowSunrise.text('--:--');
-  tomorrowSunset.text('--:--');
-  setSvgHref(tomorrowMoon, EMPTY_ICON);
 
   setSvgHref(nextDayIcon, UNKNOWN_ICON);
   nextDayLowHigh.text('--°/--°');
-  nextDaySunrise.text('--:--');
-  nextDaySunset.text('--:--');
-  setSvgHref(nextDayMoon, EMPTY_ICON);
 
   marquee.text(error || '\u00A0');
   timezone.text('');
@@ -329,24 +272,15 @@ export function displayForecast(forecast: Forecast) {
     low = Math.round(forecast.daily.data[todayIndex].temperatureLow);
     high = Math.round(forecast.daily.data[todayIndex].temperatureHigh);
     todayLowHigh.text(`${high}°/${low}°`);
-    todaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex].sunriseTime, forecast.amPm));
-    todaySunset.text(formatTime(zone, forecast.daily.data[todayIndex].sunsetTime, forecast.amPm));
-    setSvgHref(todayMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex].moonPhase));
 
     if (forecast.daily.data.length > todayIndex + 1) {
       setSvgHref(tomorrowIcon, getIcon(forecast.daily.data[todayIndex + 1], forecast.celsius));
       low = Math.round(forecast.daily.data[todayIndex + 1].temperatureLow);
       high = Math.round(forecast.daily.data[todayIndex + 1].temperatureHigh);
       tomorrowLowHigh.text(`${high}°/${low}°`);
-      tomorrowSunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunriseTime, forecast.amPm));
-      tomorrowSunset.text(formatTime(zone, forecast.daily.data[todayIndex + 1].sunsetTime, forecast.amPm));
-      setSvgHref(tomorrowMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex + 1].moonPhase));
     } else {
       setSvgHref(tomorrowIcon, UNKNOWN_ICON);
       tomorrowLowHigh.text('--°/--°');
-      tomorrowSunrise.text('--:--');
-      tomorrowSunset.text('--:--');
-      setSvgHref(tomorrowMoon, EMPTY_ICON);
     }
 
     if (forecast.daily.data.length > todayIndex + 2) {
@@ -354,16 +288,10 @@ export function displayForecast(forecast: Forecast) {
       low = Math.round(forecast.daily.data[todayIndex + 2].temperatureLow);
       high = Math.round(forecast.daily.data[todayIndex + 2].temperatureHigh);
       nextDayLowHigh.text(`${high}°/${low}°`);
-      nextDaySunrise.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunriseTime, forecast.amPm));
-      nextDaySunset.text(formatTime(zone, forecast.daily.data[todayIndex + 2].sunsetTime, forecast.amPm));
-      setSvgHref(nextDayMoon, getMoonPhaseIcon(forecast.daily.data[todayIndex + 2].moonPhase));
     }
     else {
       setSvgHref(nextDayIcon, UNKNOWN_ICON);
       nextDayLowHigh.text('--°/--°');
-      nextDaySunrise.text('--:--');
-      nextDaySunset.text('--:--');
-      setSvgHref(nextDayMoon, EMPTY_ICON);
     }
 
     let alertText = '';
