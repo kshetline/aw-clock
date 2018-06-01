@@ -19,14 +19,17 @@ let planetSymbols: JQuery;
 let todaySunrise: JQuery;
 let todaySunset: JQuery;
 let todayMoon: JQuery;
+let todayPhaseTime: JQuery;
 
 let tomorrowSunrise: JQuery;
 let tomorrowSunset: JQuery;
 let tomorrowMoon: JQuery;
+let tomorrowPhaseTime: JQuery;
 
 let nextDaySunrise: JQuery;
 let nextDaySunset: JQuery;
 let nextDayMoon: JQuery;
+let nextDayPhaseTime: JQuery;
 
 
 export function initEphemeris(): void {
@@ -40,14 +43,17 @@ export function initEphemeris(): void {
   todaySunrise = $('#today-sunrise');
   todaySunset = $('#today-sunset');
   todayMoon = $('#today-moon');
+  todayPhaseTime = $('#today-phase-time');
 
   tomorrowSunrise = $('#tomorrow-sunrise');
   tomorrowSunset = $('#tomorrow-sunset');
   tomorrowMoon = $('#tomorrow-moon');
+  tomorrowPhaseTime = $('#tomorrow-phase-time');
 
   nextDaySunrise = $('#next-day-sunrise');
   nextDaySunset = $('#next-day-sunset');
   nextDayMoon = $('#next-day-moon');
+  nextDayPhaseTime = $('#next-day-phase-time');
 }
 
 export function setHidePlanets(hide: boolean) {
@@ -89,6 +95,7 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
   const sunrise = [todaySunrise, tomorrowSunrise, nextDaySunrise];
   const sunset = [todaySunset, tomorrowSunset, nextDaySunset];
   const moon = [todayMoon, tomorrowMoon, nextDayMoon];
+  const phaseTime = [todayPhaseTime, tomorrowPhaseTime, nextDayPhaseTime];
 
   eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 3, observer, timezone).then(daysOfEvents => {
     daysOfEvents.forEach((events, dayOffset) => {
@@ -113,8 +120,12 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
     const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
     const noon_JDE = UT_to_TDB(noon_JDU);
     const phase = solarSystem.getLunarPhase(noon_JDE);
+    const event = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
 
     setSvgHref(moon[dayIndex], getMoonPhaseIcon(phase));
+
+    if (event)
+      phaseTime[dayIndex].text(formatTime(event.eventTime, amPm));
   }
 }
 
