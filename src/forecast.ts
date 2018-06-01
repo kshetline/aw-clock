@@ -24,6 +24,7 @@ export interface DailyConditions extends CommonConditions {
   temperatureHigh: number;
   temperatureLow: number;
   precipIntensityMax: number;
+  precipAccumulation: number;
   sunriseTime: number;
   sunsetTime: number;
   moonPhase: number;
@@ -167,18 +168,40 @@ const EMPTY_ICON = 'assets/empty.svg';
 
 function getIcon(conditions: CommonConditions, celsius: boolean, ignorePrecipProbability = false) {
   let icon = conditions.icon;
-  // const iconIndex = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night', 'cloudy',
-  //                    'rain', 'sleet', 'snow'].indexOf(icon);
+  const iconIndex = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night', 'cloudy',
+                     'rain', 'sleet', 'snow'].indexOf(icon);
   const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
-  let precipIntensityMax = (conditions as any).precipIntensityMax || 0;
+  let precipIntensityMax = (conditions as DailyConditions).precipIntensityMax || 0;
   let precipIntensity = conditions.precipIntensity;
+  let precipAccumulation = (conditions as DailyConditions).precipAccumulation || 0;
 
-  // When temperature units are Celsius, precipitation is in mm/hr, and needs to be converted to inches/hr.
+  // When temperature units are Celsius, precipitation rate is in mm/hr, and needs to be converted to inches/hr.
+  // Accumulated precipitation is in cm, and needs to be converted to inches.
   if (celsius) {
     precipIntensityMax /= 25.4;
     precipIntensity /= 25.4;
+    precipAccumulation /= 2.54;
   }
 
+  // Sometimes the icon says "cloudy" or the like, but the numbers look more like rain or snow.
+  // Change the icon if conditions look less favorable.
+  if (!ignorePrecipProbability &&
+      conditions.precipProbability >= 0.3 &&
+      (precipIntensityMax >= 0.01 || precipAccumulation >= 0.1) &&
+      iconIndex >= 0 && iconIndex <= 6) {
+    if (conditions.precipType === 'snow') {
+      icon = 'snow';
+    }
+    else if (conditions.precipType === 'sleet') {
+      icon = 'sleet';
+    }
+    else {
+      icon = 'rain';
+    }
+  }
+
+  // Dark Sky currently doesn't report thunderstorms as a condition by icon value. We'll try to make
+  // up for that by looking at the summary.
   if (icon === 'rain' && (summary.indexOf('thunder') >= 0 || summary.indexOf('lightning') >= 0)) {
     icon = 'thunderstorm';
 

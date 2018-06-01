@@ -1,5 +1,5 @@
-$std-font: Verdana, sans-serif;
-$clock-face-font: Arial, sans-serif;
+$std-font: Verdana, "DejaVu Sans", sans-serif;
+$clock-face-font: Arial, Helvetica, sans-serif;
 $planet-grid: #369;
 
 html {
@@ -70,6 +70,7 @@ body {
   font-size: 10px;
   text-anchor: middle;
   fill: white;
+  user-select: none;
 }
 
 #face {
@@ -182,6 +183,12 @@ body {
 
     &>label, input, span {
       display: table-cell;
+    }
+
+    &>span.colspan {
+      max-width: 1px;
+      white-space: nowrap;
+      overflow: visible;
     }
   }
 }
@@ -313,4 +320,5 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   font-size: 2.5px;
   text-anchor: middle;
   fill: $planet-grid;
+  user-select: none;
 }
