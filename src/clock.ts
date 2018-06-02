@@ -102,6 +102,7 @@ export function initClock() {
 
 export function setAmPm(doAmPm: boolean) {
   amPm = doAmPm;
+  timeCaption.style['font-size'] = (doAmPm ? '7.5' : '10');
 }
 
 export function setHideSeconds(hide: boolean) {

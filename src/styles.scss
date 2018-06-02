@@ -3,6 +3,7 @@ $clock-face-font: "Arial Unicode MS", Arial, Helvetica, sans-serif;
 $constellation-font: "Apple Symbols", "Arial Unicode MS", "MS Gothic", sans-serif;
 $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
+$clock-border: #69C;
 
 html {
   width: 100%;
@@ -76,9 +77,9 @@ body {
 }
 
 #face {
-  stroke-width: 2px;
+  stroke-width: 1px;
   fill: black;
-  stroke: white;
+  stroke: $clock-border;
 }
 
 #hour-hand, #min-hand, #sec-hand {
@@ -102,7 +103,7 @@ body {
 }
 
 #time {
-  font-size: 6.5px;
+  font-size: 10px;
 }
 
 #city {
