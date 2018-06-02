@@ -109,6 +109,7 @@ export function initSettings() {
         });
 
         cityTable.html(rows);
+        setTimeout(() => cityTableWrapper.scrollTop(0));
         cityTableWrapper.show();
         (submitSearch as any).enable(true);
         (searchCity as any).enable(true);

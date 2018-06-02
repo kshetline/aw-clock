@@ -51,10 +51,12 @@ $(() => {
   cityLabel.text(city);
 
   document.addEventListener('keydown', event => {
-    if (event.code === 'KeyF')
-      setFullScreen(true);
-    else if (event.code === 'KeyN')
-      setFullScreen(false);
+    if (!event.repeat && event.srcElement === document.body) {
+      if (event.code === 'KeyF')
+        setFullScreen(true);
+      else if (event.code === 'KeyN')
+        setFullScreen(false);
+    }
   });
 
   document.addEventListener('mousemove', event => {
