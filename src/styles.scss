@@ -20,6 +20,7 @@ body {
   color: white;
   background: midnightblue;
   font-family: $std-font;
+  cursor: none;
 }
 
 #marquee {
@@ -138,6 +139,7 @@ body {
   bottom: 0;
   font-family: $dialog-font;
   font-size: 14px;
+  cursor: auto;
 }
 
 .dialog-buttons {

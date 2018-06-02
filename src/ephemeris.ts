@@ -1,6 +1,6 @@
 import {
-  AVG_SUN_MOON_RADIUS, EventFinder, JUPITER, MARS, MERCURY, MOON, RISE_EVENT, SATURN, SET_EVENT, SkyObserver, SolarSystem, SUN,
-  UT_to_TDB, VENUS
+  AVG_SUN_MOON_RADIUS, EventFinder, JUPITER, MARS, MERCURY, MOON, REFRACTION, RISE_EVENT, SATURN, SET_EVENT, SkyObserver,
+  SolarSystem, SUN, UT_to_TDB, VENUS
 } from 'ks-astronomy';
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import * as $ from 'jquery';
@@ -82,7 +82,7 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
 
   planets.forEach((planet, index) => {
     const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
-    let altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
+    let altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer, REFRACTION).altitude.degrees;
     const elem = planetElems[index];
 
     if (planet === SUN || planet === MOON)

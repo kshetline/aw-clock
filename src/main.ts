@@ -28,8 +28,10 @@ const pollingMillis = Math.floor(Math.random() * 60000);
 
 $(() => {
   let lastForecast = 0;
+  let lastCursorMove = 0;
   const dialogWrapper = $('.dialog-wrapper');
   const cityLabel = $('#city');
+  const body = $('body');
 
   latitude = Number(Cookies.get('latitude')) || 42.75;
   longitude = Number(Cookies.get('longitude')) || -71.48;
@@ -55,10 +57,18 @@ $(() => {
       setFullScreen(false);
   });
 
+  document.addEventListener('mousemove', event => {
+    body.css('cursor', 'auto');
+    lastCursorMove = Date.now();
+  });
+
   let lastZone = getTimezone();
 
   startClock((hour, minute, forceRefresh) => {
     const now = Date.now();
+
+    if (now > lastCursorMove + 120000)
+      body.css('cursor', 'none');
 
     updateEphemeris(latitude, longitude, now, lastZone, amPm);
 
