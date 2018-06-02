@@ -1,5 +1,7 @@
 $std-font: Verdana, "DejaVu Sans", sans-serif;
-$clock-face-font: Arial, Helvetica, sans-serif;
+$clock-face-font: "Arial Unicode MS", Arial, Helvetica, sans-serif;
+$constellation-font: "Apple Symbols", "Arial Unicode MS", "MS Gothic", sans-serif;
+$dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 
 html {
@@ -133,7 +135,7 @@ body {
   right: 0;
   top: 0;
   bottom: 0;
-  font-family: Arial, sans-serif;
+  font-family: $dialog-font;
   font-size: 14px;
 }
 
@@ -316,7 +318,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .constellation {
-  font-family: "Apple Symbols", "Arial Unicode MS", "MS Gothic", sans-serif;
+  font-family: $constellation-font;
   font-size: 2.5px;
   text-anchor: middle;
   fill: $planet-grid;

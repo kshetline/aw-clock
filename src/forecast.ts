@@ -296,9 +296,12 @@ export function displayForecast(forecast: Forecast) {
 
     let alertText = '';
     let maxSeverity = 0;
+    const alerts: string[] = [];
+
+    if (forecast.daily.summary)
+      alerts.push(forecast.daily.summary);
 
     if (forecast.alerts) {
-      const alerts: string[] = [];
 
       forecast.alerts.forEach(alert => {
         const expires = alert.expires * 1000;
@@ -309,15 +312,20 @@ export function displayForecast(forecast: Forecast) {
           alerts.push(alert.title + ': ' + alert.description);
         }
       });
-
-      alertText = alerts.join(' \u2022 '); // Bullet
     }
 
-    if (alertText && maxSeverity > 0) {
+    alertText = alerts.join(' \u2022 '); // Bullet
+
+    if (alertText) {
       let background;
       let color;
 
       switch (maxSeverity) {
+        case 0:
+          background = 'midnightblue';
+          color = 'white';
+        break;
+
         case 1:
           background = 'cyan';
           color = 'black';
@@ -339,7 +347,7 @@ export function displayForecast(forecast: Forecast) {
       marquee.css('color', color);
     }
     else {
-      marquee.text(forecast.daily.summary || '\u00A0');
+      marquee.text('\u00A0');
       marquee.css('background-color', 'midnightblue');
       marquee.css('color', 'white');
     }

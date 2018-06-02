@@ -5,7 +5,7 @@ import * as Cookies from 'js-cookie';
 import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds, getTimezone } from './clock';
 import { initForecast, updateForecast, showUnknown, refreshForecastFromCache } from './forecast';
 import { initSettings, openSettings } from './settings';
-import './util';
+import { setFullScreen } from './util';
 import { initEphemeris, setHidePlanets, updateEphemeris } from './ephemeris';
 
 initTimeZoneSmall();
@@ -47,6 +47,13 @@ $(() => {
   initEphemeris();
   initSettings();
   cityLabel.text(city);
+
+  document.addEventListener('keydown', event => {
+    if (event.code === 'KeyF')
+      setFullScreen(true);
+    else if (event.code === 'KeyN')
+      setFullScreen(false);
+  });
 
   let lastZone = getTimezone();
 
