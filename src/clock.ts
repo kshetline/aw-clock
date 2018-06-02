@@ -83,6 +83,34 @@ function addTickMarks() {
       planetTracks.appendChild(text3);
     }
   }
+
+  const planetSymbols = [0x263C, 0x263D, 0x0263F, 0x2640, 0x2642, 0x2643, 0x2644]; // Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn
+
+  planetSymbols.forEach((planet, index) => {
+    const x = (center + 10 + index * 2).toString();
+    const y = center.toString();
+    const dy = (0.75 + (index % 2) * 2).toString();
+    const textOutside = document.createElementNS(svgns, 'text');
+    const textInside = document.createElementNS(svgns, 'text');
+    const symbol = String.fromCodePoint(planet);
+
+    textOutside.setAttributeNS(null, 'x', x);
+    textOutside.setAttributeNS(null, 'y', y);
+    textOutside.setAttributeNS(null, 'dy', dy);
+    textOutside.classList.add('constellation');
+    textOutside.setAttributeNS(null, 'fill', 'black');
+    textOutside.setAttributeNS(null, 'stroke', 'black');
+    textOutside.setAttributeNS(null, 'stroke-width', '1.2');
+    textOutside.textContent = symbol;
+    planetTracks.appendChild(textOutside);
+
+    textInside.setAttributeNS(null, 'x', x.toString());
+    textInside.setAttributeNS(null, 'y', y.toString());
+    textInside.setAttributeNS(null, 'dy', dy);
+    textInside.classList.add('constellation');
+    textInside.textContent = symbol;
+    planetTracks.appendChild(textInside);
+  });
 }
 
 export function initClock() {
@@ -100,13 +128,18 @@ export function initClock() {
   nextDayCaption = document.getElementById('next-day-caption');
 }
 
+function adjustTimeFontSize() {
+  timeCaption.style['font-size'] = (amPm && !hideseconds ? '7.5' : '10');
+}
+
 export function setAmPm(doAmPm: boolean) {
   amPm = doAmPm;
-  timeCaption.style['font-size'] = (doAmPm ? '7.5' : '10');
+  adjustTimeFontSize();
 }
 
 export function setHideSeconds(hide: boolean) {
   hideseconds = hide;
+  adjustTimeFontSize();
 
   if (hide) {
     secHand.style.visibility = 'hidden';

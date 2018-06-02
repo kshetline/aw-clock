@@ -253,11 +253,11 @@ export function displayForecast(forecast: Forecast) {
   let high: number;
   const now = Date.now();
   const zone = KsTimeZone.getTimeZone(forecast.timezone);
-  const today = new KsDateTime(now, zone).wallTime.d;
-  const todayIndex = forecast.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, zone).wallTime.d === today);
+  const today = new KsDateTime(now, zone);
+  const todayIndex = forecast.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, zone).wallTime.d === today.wallTime.d);
 
   updateTimezone(zone);
-  timezone.text(forecast.timezone);
+  timezone.text(forecast.timezone + ' UTC' + KsTimeZone.formatUtcOffset(today.utcOffsetSeconds));
 
   if (todayIndex < 0) {
     showUnknown('Missing data');
