@@ -27,7 +27,8 @@ let dateCaption: HTMLElement;
 let monthCaption: HTMLElement;
 let yearCaption: HTMLElement;
 let timeCaption: HTMLElement;
-let nextDayCaption: HTMLElement;
+let day2Caption: HTMLElement;
+let day3Caption: HTMLElement;
 
 let newMinuteCallback: NewMinuteCallback = null;
 let amPm = false;
@@ -120,7 +121,8 @@ export function initClock() {
   monthCaption = document.getElementById('month');
   yearCaption = document.getElementById('year');
   timeCaption = document.getElementById('time');
-  nextDayCaption = document.getElementById('next-day-caption');
+  day2Caption = document.getElementById('day2-caption');
+  day3Caption = document.getElementById('day3-caption');
 }
 
 function adjustTimeFontSize() {
@@ -191,7 +193,8 @@ function tick() {
     dateCaption.textContent = pad(date.d);
     monthCaption.textContent = months[date.m - 1].toUpperCase();
     yearCaption.textContent = date.y.toString();
-    nextDayCaption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
+    day2Caption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
+    day3Caption.textContent = daysOfWeek[(dayOfTheWeek + 3) % 7];
 
     let displayHour = hour;
     let suffix = '';

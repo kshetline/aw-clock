@@ -16,21 +16,10 @@ let hidePlanets = false;
 let planetTracks: JQuery;
 let planetSymbols: JQuery;
 
-let todaySunrise: JQuery;
-let todaySunset: JQuery;
-let todayMoon: JQuery;
-let todayPhaseTime: JQuery;
-
-let tomorrowSunrise: JQuery;
-let tomorrowSunset: JQuery;
-let tomorrowMoon: JQuery;
-let tomorrowPhaseTime: JQuery;
-
-let nextDaySunrise: JQuery;
-let nextDaySunset: JQuery;
-let nextDayMoon: JQuery;
-let nextDayPhaseTime: JQuery;
-
+const sunrises: JQuery[] = [];
+const sunsets: JQuery[] = [];
+const moons: JQuery[] = [];
+const phaseTimes: JQuery[] = [];
 
 export function initEphemeris(): void {
   planetIds.forEach((planet, index) => {
@@ -40,20 +29,12 @@ export function initEphemeris(): void {
   planetTracks = $('#planet-tracks');
   planetSymbols = $('#planets');
 
-  todaySunrise = $('#today-sunrise');
-  todaySunset = $('#today-sunset');
-  todayMoon = $('#today-moon');
-  todayPhaseTime = $('#today-phase-time');
-
-  tomorrowSunrise = $('#tomorrow-sunrise');
-  tomorrowSunset = $('#tomorrow-sunset');
-  tomorrowMoon = $('#tomorrow-moon');
-  tomorrowPhaseTime = $('#tomorrow-phase-time');
-
-  nextDaySunrise = $('#next-day-sunrise');
-  nextDaySunset = $('#next-day-sunset');
-  nextDayMoon = $('#next-day-moon');
-  nextDayPhaseTime = $('#next-day-phase-time');
+  for (let i = 0; i < 4; ++i) {
+    sunrises[i] = $('#day' + i + '-sunrise');
+    sunsets[i] = $('#day' + i + '-sunset');
+    moons[i] = $('#day' + i + '-moon');
+    phaseTimes[i] = $('#day' + i + '-phase-time');
+  }
 }
 
 export function setHidePlanets(hide: boolean) {
@@ -92,12 +73,7 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
     elem.css('stroke-width', altitude < 0 ? '0.5' : '0');
   });
 
-  const sunrise = [todaySunrise, tomorrowSunrise, nextDaySunrise];
-  const sunset = [todaySunset, tomorrowSunset, nextDaySunset];
-  const moon = [todayMoon, tomorrowMoon, nextDayMoon];
-  const phaseTime = [todayPhaseTime, tomorrowPhaseTime, nextDayPhaseTime];
-
-  eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 3, observer, timezone).then(daysOfEvents => {
+  eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {
     daysOfEvents.forEach((events, dayOffset) => {
       let rise = '--:--';
       let set = '--:--';
@@ -109,12 +85,12 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
           set = formatTime(event.eventTime, amPm);
       });
 
-      sunrise[dayOffset].text(rise);
-      sunset[dayOffset].text(set);
+      sunrises[dayOffset].text(rise);
+      sunsets[dayOffset].text(set);
     });
   });
 
-  for (let dayIndex = 0; dayIndex < 3; ++dayIndex) {
+  for (let dayIndex = 0; dayIndex < 4; ++dayIndex) {
     const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
     const noon = new KsDateTime({y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0}, timezone);
     const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
@@ -122,10 +98,10 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
     const phase = solarSystem.getLunarPhase(noon_JDE);
     const event = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
 
-    setSvgHref(moon[dayIndex], getMoonPhaseIcon(phase));
+    setSvgHref(moons[dayIndex], getMoonPhaseIcon(phase));
 
     if (event)
-      phaseTime[dayIndex].text(formatTime(event.eventTime, amPm));
+      phaseTimes[dayIndex].text(formatTime(event.eventTime, amPm));
   }
 }
 
@@ -147,7 +123,7 @@ function formatTime(date: KsDateTime, amPm: boolean) {
     else if (hours > 12)
       hours -= 12;
 
-    suffix = (date.wallTime.hrs < 12 ? 'am' : 'pm');
+    suffix = (date.wallTime.hrs < 12 ? 'a' : 'p');
   }
 
   return pad(hours) + ':' + pad(date.wallTime.min) + suffix;

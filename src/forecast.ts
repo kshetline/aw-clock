@@ -67,14 +67,8 @@ let feelsLike: JQuery;
 let humidity: JQuery;
 let currentIcon: JQuery;
 
-let todayIcon: JQuery;
-let todayLowHigh: JQuery;
-
-let tomorrowIcon: JQuery;
-let tomorrowLowHigh: JQuery;
-
-let nextDayIcon: JQuery;
-let nextDayLowHigh: JQuery;
+const dayIcons: JQuery[] = [];
+const dayLowHighs: JQuery[] = [];
 
 let marquee: JQuery;
 let timezone: JQuery;
@@ -87,14 +81,10 @@ export function initForecast() {
   humidity = $('#humidity');
   currentIcon = $('#current-icon');
 
-  todayIcon = $('#today-icon');
-  todayLowHigh = $('#today-low-high');
-
-  tomorrowIcon = $('#tomorrow-icon');
-  tomorrowLowHigh = $('#tomorrow-low-high');
-
-  nextDayIcon = $('#next-day-icon');
-  nextDayLowHigh = $('#next-day-low-high');
+  for (let i = 0; i < 4; ++i) {
+    dayIcons[i] = $('#day' + i + '-icon');
+    dayLowHighs[i] = $('#day' + i + '-low-high');
+  }
 
   marquee = $('#marquee');
   timezone = $('#timezone');
@@ -205,14 +195,10 @@ export function showUnknown(error?: string) {
   feelsLike.text('--°');
   humidity.text('--%');
 
-  setSvgHref(todayIcon, UNKNOWN_ICON);
-  todayLowHigh.text('--°/--°');
-
-  setSvgHref(tomorrowIcon, UNKNOWN_ICON);
-  tomorrowLowHigh.text('--°/--°');
-
-  setSvgHref(nextDayIcon, UNKNOWN_ICON);
-  nextDayLowHigh.text('--°/--°');
+  dayIcons.forEach((dayIcon, index) => {
+    setSvgHref(dayIcon, UNKNOWN_ICON);
+    dayLowHighs[index].text('--°/--°');
+  });
 
   marquee.text(error || '\u00A0');
   timezone.text('');
@@ -268,31 +254,18 @@ export function displayForecast(forecast: Forecast) {
     feelsLike.text(`${Math.round(forecast.currently.apparentTemperature)}°`);
     humidity.text(`${Math.round(forecast.currently.humidity * 100)}%`);
 
-    setSvgHref(todayIcon, getIcon(forecast.daily.data[todayIndex], forecast.celsius));
-    low = Math.round(forecast.daily.data[todayIndex].temperatureLow);
-    high = Math.round(forecast.daily.data[todayIndex].temperatureHigh);
-    todayLowHigh.text(`${high}°/${low}°`);
-
-    if (forecast.daily.data.length > todayIndex + 1) {
-      setSvgHref(tomorrowIcon, getIcon(forecast.daily.data[todayIndex + 1], forecast.celsius));
-      low = Math.round(forecast.daily.data[todayIndex + 1].temperatureLow);
-      high = Math.round(forecast.daily.data[todayIndex + 1].temperatureHigh);
-      tomorrowLowHigh.text(`${high}°/${low}°`);
-    } else {
-      setSvgHref(tomorrowIcon, UNKNOWN_ICON);
-      tomorrowLowHigh.text('--°/--°');
-    }
-
-    if (forecast.daily.data.length > todayIndex + 2) {
-      setSvgHref(nextDayIcon, getIcon(forecast.daily.data[todayIndex + 2], forecast.celsius));
-      low = Math.round(forecast.daily.data[todayIndex + 2].temperatureLow);
-      high = Math.round(forecast.daily.data[todayIndex + 2].temperatureHigh);
-      nextDayLowHigh.text(`${high}°/${low}°`);
-    }
-    else {
-      setSvgHref(nextDayIcon, UNKNOWN_ICON);
-      nextDayLowHigh.text('--°/--°');
-    }
+    dayIcons.forEach((dayIcon, index) => {
+      if (forecast.daily.data.length > todayIndex + index) {
+        setSvgHref(dayIcon, getIcon(forecast.daily.data[todayIndex + index], forecast.celsius));
+        low = Math.round(forecast.daily.data[todayIndex + index].temperatureLow);
+        high = Math.round(forecast.daily.data[todayIndex + index].temperatureHigh);
+        dayLowHighs[index].text(`${high}°/${low}°`);
+      }
+      else {
+        setSvgHref(dayIcon, UNKNOWN_ICON);
+        dayLowHighs[index].text('--°/--°');
+      }
+    });
 
     let alertText = '';
     let maxSeverity = 0;
