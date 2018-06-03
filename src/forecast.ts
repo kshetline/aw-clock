@@ -58,7 +58,7 @@ export interface Forecast {
   alerts?: Alert[];
   flags?: Flags;
   frequent?: boolean;
-  celsius?: boolean;
+  isMetric?: boolean;
   amPm?: boolean;
 }
 
@@ -69,6 +69,8 @@ let currentIcon: JQuery;
 
 const dayIcons: JQuery[] = [];
 const dayLowHighs: JQuery[] = [];
+const dayChancePrecips: JQuery[] = [];
+const dayPrecipAccums: JQuery[] = [];
 
 let marquee: JQuery;
 let timezone: JQuery;
@@ -84,6 +86,8 @@ export function initForecast() {
   for (let i = 0; i < 4; ++i) {
     dayIcons[i] = $('#day' + i + '-icon');
     dayLowHighs[i] = $('#day' + i + '-low-high');
+    dayChancePrecips[i] = $('#day' + i + '-chance-precip');
+    dayPrecipAccums[i] = $('#day' + i + '-precip-accum');
   }
 
   marquee = $('#marquee');
@@ -92,10 +96,10 @@ export function initForecast() {
   window.addEventListener('resize', updateMarqueeAnimation);
 }
 
-export function getForecast(latitude: number, longitude: number, celsius: boolean, userId?: string): Promise<Forecast> {
+export function getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<Forecast> {
   let url = `https://weather.shetline.com/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
 
-  if (celsius)
+  if (isMetric)
     url += '&units=ca';
 
   if (userId)
@@ -106,7 +110,7 @@ export function getForecast(latitude: number, longitude: number, celsius: boolea
       url: url,
       dataType: 'json',
       success: (data: Forecast, textStatus: string, jqXHR: JQueryXHR) => {
-        data.celsius = celsius;
+        data.isMetric = isMetric;
 
         const cacheControl = jqXHR.getResponseHeader('cache-control');
 
@@ -133,29 +137,26 @@ export function getForecast(latitude: number, longitude: number, celsius: boolea
 
 const UNKNOWN_ICON = 'assets/unknown.svg';
 
-function getIcon(conditions: CommonConditions, celsius: boolean, ignorePrecipProbability = false) {
+function getIcon(conditions: CommonConditions, isMetric: boolean, ignorePrecipProbability = false) {
   let icon = conditions.icon;
   const iconIndex = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night', 'cloudy',
                      'rain', 'sleet', 'snow'].indexOf(icon);
   const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
-  let precipIntensityMax = (conditions as DailyConditions).precipIntensityMax || 0;
   let precipIntensity = conditions.precipIntensity;
   let precipAccumulation = (conditions as DailyConditions).precipAccumulation || 0;
 
-  // When temperature units are Celsius, precipitation rate is in mm/hr, and needs to be converted to inches/hr.
+  // Metric precipitation rate is in mm/hr, and needs to be converted to inches/hr.
   // Accumulated precipitation is in cm, and needs to be converted to inches.
-  if (celsius) {
-    precipIntensityMax /= 25.4;
+  if (isMetric) {
     precipIntensity /= 25.4;
     precipAccumulation /= 2.54;
   }
 
   // Sometimes the icon says "cloudy" or the like, but the numbers look more like rain or snow.
   // Change the icon if conditions look less favorable.
-  if (!ignorePrecipProbability &&
-      conditions.precipProbability >= 0.3 &&
-      (precipIntensityMax >= 0.01 || precipAccumulation >= 0.1) &&
-      iconIndex >= 0 && iconIndex <= 6) {
+  if (!ignorePrecipProbability && iconIndex >= 0 && iconIndex <= 6 &&
+      conditions.precipProbability >= 0.25 &&
+      (precipIntensity >= 0.01 || (conditions.precipProbability >= 0.5 && precipIntensity > 0.0025) || precipAccumulation >= 0.25)) {
     if (conditions.precipType === 'snow') {
       icon = 'snow';
     }
@@ -175,7 +176,7 @@ function getIcon(conditions: CommonConditions, celsius: boolean, ignorePrecipPro
     if (summary.indexOf('scattered') >= 0 || summary.indexOf('isolated') >= 0)
       icon = 'scattered-thunderstorms-day';
   }
-  else if (icon === 'rain' && (precipIntensityMax < 0.1 || (precipIntensityMax === 0 && precipIntensity < 0.1))) {
+  else if (icon === 'rain' && precipIntensity < 0.01) {
     icon = 'light-rain';
   }
 
@@ -198,6 +199,8 @@ export function showUnknown(error?: string) {
   dayIcons.forEach((dayIcon, index) => {
     setSvgHref(dayIcon, UNKNOWN_ICON);
     dayLowHighs[index].text('--°/--°');
+    dayChancePrecips[index].text('--%');
+    dayPrecipAccums[index].text('--');
   });
 
   marquee.text(error || '\u00A0');
@@ -215,8 +218,8 @@ export function showUnknown(error?: string) {
   updateMarqueeAnimation(null);
 }
 
-export function updateForecast(latitude: number, longitude: number, celsius: boolean, amPm: boolean, userId?: string): Promise<boolean> {
-  return getForecast(latitude, longitude, celsius, userId).then(forecast => {
+export function updateForecast(latitude: number, longitude: number, isMetric: boolean, amPm: boolean, userId?: string): Promise<boolean> {
+  return getForecast(latitude, longitude, isMetric, userId).then(forecast => {
     forecast.amPm = amPm;
     lastForecast = forecast;
     displayForecast(forecast);
@@ -235,8 +238,6 @@ export function refreshForecastFromCache() {
 }
 
 export function displayForecast(forecast: Forecast) {
-  let low: number;
-  let high: number;
   const now = Date.now();
   const zone = KsTimeZone.getTimeZone(forecast.timezone);
   const today = new KsDateTime(now, zone);
@@ -256,18 +257,44 @@ export function displayForecast(forecast: Forecast) {
 
     dayIcons.forEach((dayIcon, index) => {
       if (forecast.daily.data.length > todayIndex + index) {
-        setSvgHref(dayIcon, getIcon(forecast.daily.data[todayIndex + index], forecast.celsius));
-        low = Math.round(forecast.daily.data[todayIndex + index].temperatureLow);
-        high = Math.round(forecast.daily.data[todayIndex + index].temperatureHigh);
+        const daily = forecast.daily.data[todayIndex + index];
+
+        setSvgHref(dayIcon, getIcon(daily, forecast.isMetric));
+
+        const low = Math.round(daily.temperatureLow);
+        const high = Math.round(daily.temperatureHigh);
+
         dayLowHighs[index].text(`${high}°/${low}°`);
+
+        let chancePrecip = Math.round(daily.precipProbability * 100) + '%';
+
+        if (daily.precipType === 'snow')
+          chancePrecip += '\u2744'; // snowflake
+        else
+          chancePrecip += '\u2614'; // umbrella with rain
+
+        dayChancePrecips[index].text(chancePrecip);
+
+        let accum = daily.precipAccumulation || 0;
+
+        if (!accum) {
+          if (forecast.isMetric)
+            accum = daily.precipIntensity * 2.4; // mm/hr -> cm/day
+          else
+            accum = daily.precipIntensity * 24; // in/hr -> in/day
+        }
+
+        dayPrecipAccums[index].text(accum.toFixed(2) + (forecast.isMetric ? ' cm' : ' in'));
       }
       else {
         setSvgHref(dayIcon, UNKNOWN_ICON);
         dayLowHighs[index].text('--°/--°');
+        dayChancePrecips[index].text('--%');
+        dayPrecipAccums[index].text('--');
       }
     });
 
-    let alertText = '';
+    let alertText: string;
     let maxSeverity = 0;
     const alerts: string[] = [];
 

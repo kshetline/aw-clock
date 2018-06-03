@@ -59,7 +59,7 @@ $(() => {
     }
   });
 
-  document.addEventListener('mousemove', event => {
+  document.addEventListener('mousemove', () => {
     body.css('cursor', 'auto');
     lastCursorMove = Date.now();
   });

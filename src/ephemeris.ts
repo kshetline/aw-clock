@@ -1,5 +1,5 @@
 import {
-  AVG_SUN_MOON_RADIUS, EventFinder, JUPITER, MARS, MERCURY, MOON, REFRACTION, RISE_EVENT, SATURN, SET_EVENT, SkyObserver,
+  AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MOON, REFRACTION, RISE_EVENT, SATURN, SET_EVENT, SkyObserver,
   SolarSystem, SUN, UT_to_TDB, VENUS
 } from 'ks-astronomy';
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
@@ -57,7 +57,7 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
 
   const dateTime = new KsDateTime(time, timezone);
   const wallTime = dateTime.wallTime;
-  const time_JDU = KsDateTime.julianDay(time);
+  const time_JDU = KsDateTime.julianDay(time) + HALF_MINUTE; // Round up half a minute for consistency with rounding of event times.
   const time_JDE = UT_to_TDB(time_JDU);
   const observer = new SkyObserver(longitude, latitude);
 
