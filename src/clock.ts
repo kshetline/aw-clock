@@ -87,29 +87,24 @@ function addTickMarks() {
   const planetSymbols = [0x263C, 0x263D, 0x0263F, 0x2640, 0x2642, 0x2643, 0x2644]; // Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn
 
   planetSymbols.forEach((planet, index) => {
-    const x = (center + 10 + index * 2).toString();
-    const y = center.toString();
-    const dy = (0.75 + (index % 2) * 2).toString();
-    const textOutside = document.createElementNS(svgns, 'text');
-    const textInside = document.createElementNS(svgns, 'text');
-    const symbol = String.fromCodePoint(planet);
+    const x = center + 10 + index * 2;
+    const dy = 0.75 + (index % 2) * 2;
+    const rect = document.createElementNS(svgns, 'rect');
+    const text = document.createElementNS(svgns, 'text');
 
-    textOutside.setAttributeNS(null, 'x', x);
-    textOutside.setAttributeNS(null, 'y', y);
-    textOutside.setAttributeNS(null, 'dy', dy);
-    textOutside.classList.add('constellation');
-    textOutside.setAttributeNS(null, 'fill', 'black');
-    textOutside.setAttributeNS(null, 'stroke', 'black');
-    textOutside.setAttributeNS(null, 'stroke-width', '1.2');
-    textOutside.textContent = symbol;
-    planetTracks.appendChild(textOutside);
+    rect.setAttributeNS(null, 'x', (x - 0.9).toString());
+    rect.setAttributeNS(null, 'y', (center + dy - 2).toString());
+    rect.setAttributeNS(null, 'width', '1.8');
+    rect.setAttributeNS(null, 'height', '2.7');
+    rect.setAttributeNS(null, 'fill', 'black');
+    planetTracks.appendChild(rect);
 
-    textInside.setAttributeNS(null, 'x', x.toString());
-    textInside.setAttributeNS(null, 'y', y.toString());
-    textInside.setAttributeNS(null, 'dy', dy);
-    textInside.classList.add('constellation');
-    textInside.textContent = symbol;
-    planetTracks.appendChild(textInside);
+    text.setAttributeNS(null, 'x', x.toString());
+    text.setAttributeNS(null, 'y', center.toString());
+    text.setAttributeNS(null, 'dy', dy.toString());
+    text.classList.add('constellation');
+    text.textContent = String.fromCodePoint(planet);
+    planetTracks.appendChild(text);
   });
 }
 
