@@ -51,6 +51,16 @@ body {
   bottom: 0;
 }
 
+@media only screen and (max-height: 600px) {
+  #marquee {
+    right: 128px;
+  }
+
+  .darksky {
+    zoom: 0.75;
+  }
+}
+
 #clock-container {
   display: inline-block;
   position: absolute;

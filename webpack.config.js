@@ -421,7 +421,7 @@ module.exports = {
       "template": "./src/index.html",
       "filename": "./index.html",
       "hash": false,
-      "inject": true,
+      "inject": 'head',
       "compile": true,
       "favicon": false,
       "minify": false,

@@ -21,6 +21,7 @@ let sweep: SVGAnimationElement;
 let minHand: HTMLElement;
 let hourHand: HTMLElement;
 let hands: HTMLElement;
+let zoneCaption:  HTMLElement;
 let hub: HTMLElement;
 let dayOfWeekCaption: HTMLElement;
 let dateCaption: HTMLElement;
@@ -115,6 +116,7 @@ export function initClock() {
   minHand = document.getElementById('min-hand');
   hourHand = document.getElementById('hour-hand');
   hands = document.getElementById('hands');
+  zoneCaption = document.getElementById('timezone');
   hub = document.getElementById('hub');
   dayOfWeekCaption = document.getElementById('day-of-week');
   dateCaption = document.getElementById('date');
@@ -173,28 +175,30 @@ function tick() {
   }
 
   const now = Date.now() + 200;
-  const date = new KsDateTime(now, zone).wallTime;
-  const secs = date.sec;
+  const date = new KsDateTime(now, zone);
+  const walltime = date.wallTime;
+  const secs = walltime.sec;
   const secRotation = 6 * secs;
-  const mins = date.min;
-  const hour = date.hrs;
+  const mins = walltime.min;
+  const hour = walltime.hrs;
 
   sweepSecondHand(lastSecRotation, secRotation);
   rotate(secHand, secRotation);
   lastSecRotation = secRotation;
   rotate(minHand, 6 * mins + 0.1 * secs);
   rotate(hourHand, 30 * (hour % 12) + mins / 2 + secs / 120);
-  setTimeout(tick, 1000 - date.millis);
+  setTimeout(tick, 1000 - walltime.millis);
 
   setTimeout(() => {
-    const dayOfTheWeek = getDayOfWeek(date.n);
+    const dayOfTheWeek = getDayOfWeek(walltime.n);
 
     dayOfWeekCaption.textContent = daysOfWeek[dayOfTheWeek].toUpperCase();
-    dateCaption.textContent = pad(date.d);
-    monthCaption.textContent = months[date.m - 1].toUpperCase();
-    yearCaption.textContent = date.y.toString();
+    dateCaption.textContent = pad(walltime.d);
+    monthCaption.textContent = months[walltime.m - 1].toUpperCase();
+    yearCaption.textContent = walltime.y.toString();
     day2Caption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
     day3Caption.textContent = daysOfWeek[(dayOfTheWeek + 3) % 7];
+    zoneCaption.textContent = zone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
 
     let displayHour = hour;
     let suffix = '';

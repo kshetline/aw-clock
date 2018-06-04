@@ -99,9 +99,7 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
     const event = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
 
     setSvgHref(moons[dayIndex], getMoonPhaseIcon(phase));
-
-    if (event)
-      phaseTimes[dayIndex].text(formatTime(event.eventTime, amPm));
+    phaseTimes[dayIndex].text(event ? formatTime(event.eventTime, amPm) : '');
   }
 }
 

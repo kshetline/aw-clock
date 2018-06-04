@@ -73,7 +73,6 @@ const dayChancePrecips: JQuery[] = [];
 const dayPrecipAccums: JQuery[] = [];
 
 let marquee: JQuery;
-let timezone: JQuery;
 
 let lastForecast: Forecast;
 
@@ -91,7 +90,6 @@ export function initForecast() {
   }
 
   marquee = $('#marquee');
-  timezone = $('#timezone');
 
   window.addEventListener('resize', updateMarqueeAnimation);
 }
@@ -204,7 +202,6 @@ export function showUnknown(error?: string) {
   });
 
   marquee.text(error || '\u00A0');
-  timezone.text('');
 
   if (error) {
     marquee.css('background-color', '#CCC');
@@ -244,7 +241,6 @@ export function displayForecast(forecast: Forecast) {
   const todayIndex = forecast.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, zone).wallTime.d === today.wallTime.d);
 
   updateTimezone(zone);
-  timezone.text(forecast.timezone + ' UTC' + KsTimeZone.formatUtcOffset(today.utcOffsetSeconds));
 
   if (todayIndex < 0) {
     showUnknown('Missing data');
@@ -278,13 +274,23 @@ export function displayForecast(forecast: Forecast) {
         let accum = daily.precipAccumulation || 0;
 
         if (!accum) {
-          if (forecast.isMetric)
+          if (forecast.isMetric) {
             accum = daily.precipIntensity * 2.4; // mm/hr -> cm/day
-          else
+
+            if (daily.precipType === 'snow' && accum < 0.5 || accum < 0.05)
+              accum = 0;
+          }
+          else {
             accum = daily.precipIntensity * 24; // in/hr -> in/day
+
+            if (daily.precipType === 'snow' && accum < 0.2 || accum < 0.02)
+              accum = 0;
+          }
         }
 
-        dayPrecipAccums[index].text(accum.toFixed(2) + (forecast.isMetric ? ' cm' : ' in'));
+        const precision = (accum < 0.995 ? 2 : (accum < 9.95 ? 1 : 0));
+
+        dayPrecipAccums[index].text(accum > 0 ? accum.toFixed(precision) + (forecast.isMetric ? ' cm' : ' in') : '--');
       }
       else {
         setSvgHref(dayIcon, UNKNOWN_ICON);
