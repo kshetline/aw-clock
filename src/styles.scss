@@ -51,7 +51,7 @@ body {
   bottom: 0;
 }
 
-@media only screen and (max-height: 600px) {
+@media only screen and (max-height: 600px), only screen and (max-device-height: 600px) {
   #marquee {
     right: 128px;
   }
