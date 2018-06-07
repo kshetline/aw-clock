@@ -50,11 +50,11 @@ $(() => {
   initSettings();
   cityLabel.text(city);
 
-  document.addEventListener('keydown', event => {
+  document.addEventListener('keypress', event => {
     if (!event.repeat && event.srcElement === document.body) {
-      if (event.code === 'KeyF')
+      if (event.code === 'KeyF' || event.key === 'F' || event.key === 'f')
         setFullScreen(true);
-      else if (event.code === 'KeyN')
+      else if (event.code === 'KeyN' || event.key === 'N' || event.key === 'n')
         setFullScreen(false);
     }
   });

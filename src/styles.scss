@@ -74,6 +74,12 @@ body {
   background: midnightblue;
 }
 
+@media only screen and (max-aspect-ratio: 42/27) {
+  #clock-container {
+    width: calc(100vw - 3em);
+  }
+}
+
 #clock {
   font-family: $std-font;
   fill: white;
@@ -134,7 +140,7 @@ body {
 }
 
 #timezone {
-  @extend .small-caption;
+  font-size: 2px;
   fill: #888;
 }
 
