@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import * as Cookies from 'js-cookie';
 
-import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds, getTimezone } from './clock';
+import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds, getTimezone, currentTime } from './clock';
 import { initForecast, updateForecast, showUnknown, refreshForecastFromCache } from './forecast';
 import { initSettings, openSettings } from './settings';
 import { setFullScreen } from './util';
@@ -61,13 +61,13 @@ $(() => {
 
   document.addEventListener('mousemove', () => {
     body.css('cursor', 'auto');
-    lastCursorMove = Date.now();
+    lastCursorMove = currentTime();
   });
 
   let lastZone = getTimezone();
 
   startClock((hour, minute, forceRefresh) => {
-    const now = Date.now();
+    const now = currentTime();
 
     if (now > lastCursorMove + 120000)
       body.css('cursor', 'none');

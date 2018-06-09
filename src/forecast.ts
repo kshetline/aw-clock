@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { updateTimezone } from './clock';
+import { currentTime, updateTimezone } from './clock';
 import { getTextWidth, setSvgHref } from './util';
 
 interface CommonConditions {
@@ -235,7 +235,7 @@ export function refreshForecastFromCache() {
 }
 
 export function displayForecast(forecast: Forecast) {
-  const now = Date.now();
+  const now = currentTime();
   const zone = KsTimeZone.getTimeZone(forecast.timezone);
   const today = new KsDateTime(now, zone);
   const todayIndex = forecast.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, zone).wallTime.d === today.wallTime.d);

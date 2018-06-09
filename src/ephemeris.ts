@@ -55,9 +55,11 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
     elem.attr('transform', 'rotate(' + deg + ' 50 50)');
   }
 
+  time = Math.floor(time / 60000) * 60000; // Make sure time is in whole minutes.
+
   const dateTime = new KsDateTime(time, timezone);
   const wallTime = dateTime.wallTime;
-  const time_JDU = KsDateTime.julianDay(time) - HALF_MINUTE; // Round down half a minute for consistency with rounding of event times.
+  const time_JDU = KsDateTime.julianDay(time) + HALF_MINUTE; // Round up half a minute for consistency with rounding of event times.
   const time_JDE = UT_to_TDB(time_JDU);
   const observer = new SkyObserver(longitude, latitude);
 

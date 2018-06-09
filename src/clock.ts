@@ -127,6 +127,16 @@ export function initClock() {
   day3Caption = document.getElementById('day3-caption');
 }
 
+const baseTime = Date.now();
+const debugTime = 0; // +new Date(2018, 5, 13, 20, 23, 50, 0);
+
+export function currentTime() {
+  if (debugTime)
+    return debugTime + Date.now() - baseTime;
+  else
+    return Date.now();
+}
+
 function adjustTimeFontSize() {
   timeCaption.style['font-size'] = (amPm && !hideseconds ? '7.5' : '10');
 }
@@ -174,7 +184,7 @@ function tick() {
     sweep.beginElement();
   }
 
-  const now = Date.now() + 200;
+  const now = currentTime() + 200;
   const date = new KsDateTime(now, zone);
   const walltime = date.wallTime;
   const secs = walltime.sec;
