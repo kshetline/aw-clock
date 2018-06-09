@@ -1,6 +1,6 @@
 import {
-  AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MOON, REFRACTION, RISE_EVENT, SATURN, SET_EVENT, SkyObserver,
-  SolarSystem, SUN, UT_to_TDB, VENUS
+  AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MOON, REFRACTION_AT_HORIZON, RISE_EVENT, SATURN,
+  SET_EVENT, SkyObserver, SolarSystem, SUN, UT_to_TDB, VENUS
 } from 'ks-astronomy';
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import * as $ from 'jquery';
@@ -57,20 +57,21 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
 
   const dateTime = new KsDateTime(time, timezone);
   const wallTime = dateTime.wallTime;
-  const time_JDU = KsDateTime.julianDay(time) + HALF_MINUTE; // Round up half a minute for consistency with rounding of event times.
+  const time_JDU = KsDateTime.julianDay(time) - HALF_MINUTE; // Round down half a minute for consistency with rounding of event times.
   const time_JDE = UT_to_TDB(time_JDU);
   const observer = new SkyObserver(longitude, latitude);
 
   planets.forEach((planet, index) => {
     const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
-    let altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer, REFRACTION).altitude.degrees;
+    const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
     const elem = planetElems[index];
+    let targetAltitude = -REFRACTION_AT_HORIZON;
 
     if (planet === SUN || planet === MOON)
-      altitude += AVG_SUN_MOON_RADIUS;
+      targetAltitude -= AVG_SUN_MOON_RADIUS;
 
     rotate(elem, -eclipticLongitude);
-    elem.css('stroke-width', altitude < 0 ? '0.5' : '0');
+    elem.css('stroke-width', altitude < targetAltitude ? '0.5' : '0');
   });
 
   eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {
