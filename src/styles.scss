@@ -202,7 +202,7 @@ body {
   &>div {
     display: table-row;
 
-    &>label, input, span {
+    &>label,>input,>span {
       display: table-cell;
     }
 
@@ -235,7 +235,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 .search-section {
   position: absolute;
   width: calc(100% - 2em);
-  top: 11.5em;
+  top: 12.5em;
 
   & label, input {
     margin-right: 0.5em;
@@ -252,7 +252,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .city-table-wrapper {
-  max-height: 244px;
+  max-height: 224px;
   overflow: auto;
   border: darkgray 1px solid;
 }
@@ -263,7 +263,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   }
 
   .city-table-wrapper {
-    max-height: 84px;
+    max-height: 64px;
   }
 }
 
@@ -354,4 +354,5 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   top: 0;
   bottom: 0;
   pointer-events: none;
+  transition: opacity 5s ease-in;
 }

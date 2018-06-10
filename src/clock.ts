@@ -2,6 +2,16 @@
 
 import { getDayOfWeek, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 
+const baseTime = Date.now();
+const debugTime = 0; // +new Date(2018, 5, 10, 5, 6, 30, 0);
+
+export function currentTime() {
+  if (debugTime)
+    return debugTime + Date.now() - baseTime;
+  else
+    return Date.now();
+}
+
 interface SVGAnimationElement extends HTMLElement {
   beginElement: () => void;
 }
@@ -125,16 +135,6 @@ export function initClock() {
   timeCaption = document.getElementById('time');
   day2Caption = document.getElementById('day2-caption');
   day3Caption = document.getElementById('day3-caption');
-}
-
-const baseTime = Date.now();
-const debugTime = 0; // +new Date(2018, 5, 13, 20, 23, 50, 0);
-
-export function currentTime() {
-  if (debugTime)
-    return debugTime + Date.now() - baseTime;
-  else
-    return Date.now();
 }
 
 function adjustTimeFontSize() {

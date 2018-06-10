@@ -134,6 +134,30 @@
           <div><label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative for south)</span></div>
           <div><label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative for west)</span></div>
           <div><label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span></div>
+          <div><label for="dimming">Dimming:</label>
+            <span class="colspan">
+              <select id="dimming">
+                <option value="0">None</option>
+                <option value="25">25%</option>
+                <option value="30">30%</option>
+                <option value="35">35%</option>
+                <option value="40">40%</option>
+                <option value="45">45%</option>
+                <option value="50">50%</option>
+                <option value="55">55%</option>
+                <option value="60">60%</option>
+                <option value="65">65%</option>
+                <option value="70">70%</option>
+                <option value="75">75%</option>
+              </select>
+              &nbsp;
+              <select id="dimming-start">
+              </select>
+              <span id="dimming-to">&nbsp;to&nbsp;</span>
+              <select id="dimming-end">
+              </select>
+            </span>
+          </div>
           <div>
             <span></span>
             <span class="colspan">

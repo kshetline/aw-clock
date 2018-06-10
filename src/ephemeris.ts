@@ -50,7 +50,8 @@ export function setHidePlanets(hide: boolean) {
   }
 }
 
-export function updateEphemeris(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean) {
+export function updateEphemeris(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean,
+                                riseSetCallback?: (rise, set) => void): void {
   function rotate(elem: JQuery, deg: number) {
     elem.attr('transform', 'rotate(' + deg + ' 50 50)');
   }
@@ -77,20 +78,34 @@ export function updateEphemeris(latitude: number, longitude: number, time: numbe
   });
 
   eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {
+    let todayRise: string = null;
+    let todaySet: string = null;
+
     daysOfEvents.forEach((events, dayOffset) => {
       let rise = '--:--';
       let set = '--:--';
 
       events.forEach(event => {
-        if (event.eventType === RISE_EVENT)
+        if (event.eventType === RISE_EVENT) {
           rise = formatTime(event.eventTime, amPm);
-        else if (event.eventType === SET_EVENT)
+
+          if (dayOffset === 0)
+            todayRise = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
+        }
+        else if (event.eventType === SET_EVENT) {
           set = formatTime(event.eventTime, amPm);
+
+          if (dayOffset === 0)
+            todaySet = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
+        }
       });
 
       sunrises[dayOffset].text(rise);
       sunsets[dayOffset].text(set);
     });
+
+    if (riseSetCallback)
+      riseSetCallback(todayRise, todaySet);
   });
 
   for (let dayIndex = 0; dayIndex < 4; ++dayIndex) {

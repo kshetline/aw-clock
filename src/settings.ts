@@ -6,6 +6,10 @@ let currentCity: JQuery;
 let latitude: JQuery;
 let longitude: JQuery;
 let userId: JQuery;
+let dimming: JQuery;
+let dimmingStart: JQuery;
+let dimmingTo: JQuery;
+let dimmingEnd: JQuery;
 let temperature: JQuery;
 let hours: JQuery;
 let seconds: JQuery;
@@ -49,6 +53,9 @@ export interface Settings {
   longitude: number;
   city: string;
   userId?: string;
+  dimming: number;
+  dimmingStart: string;
+  dimmingEnd: string;
   celsius: boolean;
   amPm: boolean;
   hideSeconds: boolean;
@@ -60,11 +67,15 @@ export function initSettings() {
   currentCity = $('#current-city');
   latitude = $('#latitude');
   longitude = $('#longitude');
+  userId = $('#user-id');
+  dimming = $('#dimming');
+  dimmingStart = $('#dimming-start');
+  dimmingTo = $('#dimming-to');
+  dimmingEnd = $('#dimming-end');
   temperature = $('#temperature-option');
   hours = $('#hours-option');
   seconds = $('#seconds-option');
   planets = $('#planets-option');
-  userId = $('#user-id');
   searchCity = $('#search-city');
   submitSearch = $('#submit-search');
   searching = $('.searching');
@@ -78,6 +89,17 @@ export function initSettings() {
   searchCity.on('blur', () => searchFieldFocused = false);
   submitSearch.on('focus', () => searchButtonFocused = true);
   submitSearch.on('blur', () => searchButtonFocused = false);
+
+  dimming.on('change', () => {
+    enableDimmingRange(dimming.val() !== '0');
+  });
+
+  hours.on('change', () => {
+    const amPm = hours.val() === 'AMPM';
+
+    fillInTimeChoices(dimmingStart, amPm);
+    fillInTimeChoices(dimmingEnd, amPm);
+  });
 
   $('#search').on('submit', event => {
     event.preventDefault();
@@ -153,6 +175,50 @@ export function initSettings() {
   });
 }
 
+function fillInTimeChoices(selectElem: JQuery, amPm: boolean) {
+  const savedValue = selectElem.val();
+
+  selectElem.empty();
+
+  let options = '<option value="SR">Sunrise</option><option value="SS">Sunset</option>';
+
+  for (let i = 0; i < 48; ++i) {
+    const hour = Math.floor(i / 2);
+    const minute = (i % 2 === 0 ? '00' : '30');
+    let displayHour = hour.toString();
+    let suffix = '';
+
+    if (amPm) {
+      if (hour < 12) {
+        displayHour = (hour === 0 ? 12 : hour).toString();
+        suffix = ' AM';
+      }
+      else {
+        displayHour = (hour === 12 ? 12 : hour - 12).toString();
+        suffix = ' PM';
+      }
+    }
+
+    options += `<option value="${hour}:${minute}">${displayHour}:${minute}${suffix}</option>`;
+  }
+
+  selectElem.html(options);
+  selectElem.val(savedValue);
+}
+
+function enableDimmingRange(enable: boolean) {
+  if (enable) {
+    dimmingStart.removeAttr('disabled');
+    dimmingTo.css('opacity', '1');
+    dimmingEnd.removeAttr('disabled');
+  }
+  else {
+    dimmingStart.attr('disabled', 'disabled');
+    dimmingTo.css('opacity', '0.33');
+    dimmingEnd.attr('disabled', 'disabled');
+  }
+}
+
 export function openSettings(previousSettings: Settings, callback: (Settings) => void) {
   currentCity.val(previousSettings.city);
   latitude.val(previousSettings.latitude);
@@ -172,6 +238,13 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
   dialog.css('display', 'block');
   setTimeout(() => searchCity.trigger('focus'));
 
+  fillInTimeChoices(dimmingStart, previousSettings.amPm);
+  fillInTimeChoices(dimmingEnd, previousSettings.amPm);
+  enableDimmingRange(!!previousSettings.dimming);
+  dimming.val(previousSettings.dimming.toString());
+  dimmingStart.val(previousSettings.dimmingStart);
+  dimmingEnd.val(previousSettings.dimmingEnd);
+
   pushKeydownListener((event: KeyboardEvent) => {
     if (event.code === 'Escape') {
       event.preventDefault();
@@ -189,6 +262,9 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
       latitude: Number(latitude.val()),
       longitude: Number(longitude.val()),
       userId: userId.val() as string,
+      dimming: +dimming.val(),
+      dimmingStart: dimmingStart.val() as string,
+      dimmingEnd: dimmingEnd.val() as string,
       celsius: (temperature.val() as string) === 'C',
       amPm: (hours.val() as string) === 'AMPM',
       hideSeconds: (seconds.val() as string) === 'H',
