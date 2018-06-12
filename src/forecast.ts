@@ -95,7 +95,9 @@ export function initForecast() {
 }
 
 export function getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<Forecast> {
-  let url = `https://weather.shetline.com/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
+  const runningDev = (document.location.port === '4200');
+  const site = (runningDev ? 'https://weather.shetline.com' : '');
+  let url = `${site}/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
 
   if (isMetric)
     url += '&units=ca';
