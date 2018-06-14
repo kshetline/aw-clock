@@ -8,6 +8,7 @@ import { initSettings, openSettings } from './settings';
 import { setFullScreen } from './util';
 import { initEphemeris, setHidePlanets, updateEphemeris } from './ephemeris';
 import { KsDateTime } from 'ks-date-time-zone';
+import { initIndoor, updateIndoor } from './indoor';
 
 initTimeZoneSmall();
 
@@ -25,6 +26,7 @@ let hidePlanets: boolean;
 
 let frequent = false;
 let lastHour = -1;
+let hasIndoor = false;
 
 let dimmer: JQuery;
 
@@ -58,6 +60,7 @@ $(() => {
   setAmPm(amPm);
   setHideSeconds(hideSeconds);
   initForecast();
+  hasIndoor = initIndoor();
   initEphemeris();
   initSettings();
   cityLabel.text(city);
@@ -72,8 +75,9 @@ $(() => {
   });
 
   document.addEventListener('mousemove', () => {
+    // Reveal cursor when moved.
     body.css('cursor', 'auto');
-    lastCursorMove = currentTime();
+    lastCursorMove = performance.now();
   });
 
   let lastZone = getTimezone();
@@ -81,7 +85,8 @@ $(() => {
   startClock((hour, minute, forceRefresh) => {
     const now = currentTime();
 
-    if (now > lastCursorMove + 120000)
+    // Hide cursor if it hasn't been moved in the last two minutes.
+    if (performance.now() > lastCursorMove + 120000)
       body.css('cursor', 'none');
 
     updateEphemeris(latitude, longitude, now, lastZone, amPm, (rise, set) => {
@@ -92,6 +97,9 @@ $(() => {
     // even if we aren't polling for new weather data right now.
     if (hour < lastHour || hour === 0 && minute === 0)
       refreshForecastFromCache();
+
+    if (hasIndoor)
+      updateIndoor(celsius);
 
     lastHour = hour;
 

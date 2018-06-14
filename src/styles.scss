@@ -74,9 +74,9 @@ body {
   background: midnightblue;
 }
 
-@media only screen and (max-aspect-ratio: 42/27) {
+@media only screen and (max-aspect-ratio: 43/27) {
   #clock-container {
-    width: calc(100vw - 3em);
+    width: calc(100vw - 4em);
   }
 }
 
@@ -127,12 +127,20 @@ body {
   font-size: 3px;
 }
 
-#current-temp {
+#current-temp, #curr-temp-balance-space {
   font-size: 16px;
+}
+
+#indoor-temp {
+  font-size: 10px;
 }
 
 #feels-like, #humidity {
   font-size: 6px;
+}
+
+#indoor-humidity {
+  font-size: 3px;
 }
 
 .small-caption {

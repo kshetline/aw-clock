@@ -10,8 +10,8 @@
   </head>
   <body>
     <div id="clock-container">
-      <svg id="clock" viewBox="0 0 168 108">
-        <!-- <rect x="0" y="0" width="168" height="108" stroke-width="1" stroke="black" fill="none"></rect> -->
+      <svg id="clock" viewBox="0 0 172 108">
+        <!-- <rect x="0" y="0" width="172" height="108" stroke-width="1" stroke="black" fill="none"></rect> -->
         <text id="timezone" x="50" y="2.5" text-anchor="middle"></text>
         <text id="day-of-week" x="1" y="9">---</text>
         <text id="month" x="1" y="99">--</text>
@@ -67,7 +67,7 @@
         <text id="time" x="50" y="105" text-anchor="middle">--:--:--</text>
 
         <text id="city" x="134.5" y="4" text-anchor="middle"></text>
-        <text id="current-temp" x="134.5" y="19" text-anchor="middle"> --°</text>
+        <text x="134.5" y="19" text-anchor="middle"><tspan id="curr-temp-balance-space">&nbsp;</tspan><tspan id="current-temp">--°</tspan><tspan id="indoor-temp" dy="-2"></tspan></text>
 
         <g transform="translate(110, 24.25)">
           <text x="0" y="0" class="small-caption" text-anchor="start">
@@ -78,7 +78,7 @@
         <text id="feels-like" x="118.5" y="27" text-anchor="start">--°</text>
 
         <text x="134.5" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
-        <text id="humidity" x="143.5" y="27" class="small-caption" text-anchor="start">--%</text>
+        <text x="143" y="27" class="small-caption" text-anchor="start"><tspan id="humidity">--%</tspan><tspan id="indoor-humidity" dy="-1"></tspan></text>
 
         <image id="current-icon" href="assets/unknown.svg" x="122" y="30" width="25" height="25"/>
 
