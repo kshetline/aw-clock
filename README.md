@@ -34,3 +34,33 @@ the - lead needs to be connected to ground (I chose pin 6).
 
 The web client only displays the indoor temperature and humidity values when connected to the
 web server on `localhost:8080`.
+
+I can't guarantee that I'm recalling every important step I took to create my own set-up, but
+hopefully the following is a more-or-less complete guide to setting up a Raspberry Pi to
+automatically boot up as a full-screen astronomy/weather clock:
+
+1) Install the Chromium browser if it's not already installed:
+`sudo apt-get install chromium-browser`
+2) Install unclutter (this will hide your mouse cursor after 30 seconds of inactivity so it doesn't
+obscure the display): `sudo apt-get install unclutter`
+3) Install an up-to-date node.js. (You can find instructions for this step here: https://www.w3schools.com/nodejs/nodejs_raspberrypi.asp.)
+4) Copy the contents of this project's `server` folder to `/home/pi/weather`.
+5) If you wish to use an indoor temperature/humidity sensor, follow the previously mentioned
+steps to install the BCM 2835 library and connect the sensor.
+6) `cd /home/pi/weather`
+7) `npm install`
+8) Build the client project as described above, and copy the contents of the `dist` directory to
+`/home/pi/weather/public`.
+9) Copy the included file `weatherService` to `/etc/init.d/`. Make sure the file is owned by
+`root` is set to be executable. Follow the instructions listed inside that file to set up
+the necessary environment variables, including setting `HAS_INDOOR_SENSOR` to `true` if you're
+connecting an indoor temperature/humidity sensor.
+10) Use the command `sudo update-rc.d weatherService defaults` to establish the service that
+starts up the weather server.
+11) Copy the included files `autostart` and `autostart_extra.sh` to
+`/home/pi/.config/lxsession/LXDE-pi/` and make sure they're executable. This launches the
+ astronomy/weather clock client in Chromium, in kiosk mode (full screen, no toolbars). It also
+ makes sure Chromium doesn't launch complaining that it was shut down improperly.
+12) I'm not sure about the current copyright disposition of these fonts, but for improved
+appearance I'd recommend finding and installing the fonts "Arial Unicode MS" and "Verdana".
+These appear to be freely available for download without licensing restrictions.
