@@ -1,6 +1,6 @@
 {
-  "name": "my-app",
-  "version": "0.0.0",
+  "name": "aw-clock",
+  "version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "start": "webpack-dev-server --port=4200",
@@ -12,13 +12,13 @@
   },
   "private": true,
   "dependencies": {
-    "core-js": "^2.4.1",
+    "classlist-polyfill": "^1.2.0",
+    "es6-shim": "^0.35.3",
     "jquery": "^3.3.1",
     "js-cookie": "^2.2.0",
     "ks-astronomy": "^1.0.1",
     "ks-date-time-zone": "^1.4.0",
-    "rxjs": "^6.1.0",
-    "zone.js": "^0.8.19"
+    "rxjs": "^6.1.0"
   },
   "devDependencies": {
     "@types/jasmine": "~2.8.3",

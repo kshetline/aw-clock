@@ -5,7 +5,7 @@ import * as Cookies from 'js-cookie';
 import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds, getTimezone, currentTime } from './clock';
 import { initForecast, updateForecast, showUnknown, refreshForecastFromCache } from './forecast';
 import { initSettings, openSettings } from './settings';
-import { setFullScreen } from './util';
+import { isIE, setFullScreen } from './util';
 import { initEphemeris, setHidePlanets, updateEphemeris } from './ephemeris';
 import { KsDateTime } from 'ks-date-time-zone';
 import { initIndoor, updateIndoor } from './indoor';
@@ -55,6 +55,9 @@ $(() => {
   hidePlanets = Cookies.get('hidep') === 'true';
 
   dimmer = $('#dimmer');
+
+  if (isIE())
+    $('#clock-container').addClass('clock-container-ie-fix');
 
   initClock();
   setAmPm(amPm);

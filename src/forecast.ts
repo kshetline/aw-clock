@@ -1,7 +1,7 @@
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { currentTime, updateTimezone } from './clock';
-import { getTextWidth, setSvgHref } from './util';
+import { currentTime, setMarqueeIsAnimated, updateTimezone } from './clock';
+import { getTextWidth, isEdge, isIE, isRaspbian, setSvgHref } from './util';
 
 interface CommonConditions {
   time: number;
@@ -76,6 +76,8 @@ let marquee: JQuery;
 
 let lastForecast: Forecast;
 
+let weather_server;
+
 export function initForecast() {
   currentTemp = $('#current-temp');
   feelsLike = $('#feels-like');
@@ -91,12 +93,17 @@ export function initForecast() {
 
   marquee = $('#marquee');
 
+  if (!isIE() && !isEdge())
+    weather_server = new URL(window.location.href).searchParams.get('weather_server') || 'http://localhost:8080';
+  else
+    weather_server = '';
+
   window.addEventListener('resize', updateMarqueeAnimation);
 }
 
 export function getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<Forecast> {
   const runningDev = (document.location.port === '4200');
-  const site = (runningDev ? 'https://weather.shetline.com' : '');
+  const site = (runningDev ? weather_server || '' : '');
   let url = `${site}/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
 
   if (isMetric)
@@ -310,7 +317,6 @@ export function displayForecast(forecast: Forecast) {
       alerts.push(forecast.daily.summary);
 
     if (forecast.alerts) {
-
       forecast.alerts.forEach(alert => {
         const expires = alert.expires * 1000;
 
@@ -367,6 +373,7 @@ export function displayForecast(forecast: Forecast) {
 let animationStyleSheet: CSSStyleSheet;
 let keyframesIndex = 0;
 let lastMarqueeText = '';
+const slowerFrameRate = isRaspbian();
 
 function updateMarqueeAnimation(event?: Event) {
   const newText = marquee.text();
@@ -384,8 +391,12 @@ function updateMarqueeAnimation(event?: Event) {
                   Number(style.getPropertyValue('padding-right').replace('px', ''));
   const offsetWidth = element.offsetWidth;
 
-  if (textWidth + padding <= offsetWidth)
+  if (textWidth + padding <= offsetWidth) {
+    setMarqueeIsAnimated(false);
     return;
+  }
+
+  setMarqueeIsAnimated(true);
 
   if (!animationStyleSheet) {
     $('head').append('<style id="marquee-animations" type="text/css"></style>');
@@ -398,7 +409,10 @@ function updateMarqueeAnimation(event?: Event) {
   const keyframesName = 'marquee-' + keyframesIndex++;
   const keyframesRule = `@keyframes ${keyframesName} { 0% { text-indent: ${offsetWidth}px } 100% { text-indent: -${textWidth}px; } }`;
   const seconds = (textWidth + offsetWidth) / 100;
+  // When the Raspberry Pi tries to scroll the marquee as fast as it can, the result is very jerky. It will be better
+  // to have a slow but steady frame rate the Raspberry Pi can keep up with.
+  const linearOrSteps = (slowerFrameRate ? `steps(${Math.round(seconds * 30)})` : 'linear');
 
   animationStyleSheet.insertRule(keyframesRule, 0);
-  marquee.css('animation', `${keyframesName} ${seconds}s linear infinite`);
+  marquee.css('animation', `${keyframesName} ${seconds}s infinite ${linearOrSteps}`);
 }

@@ -24,6 +24,7 @@ let cityTableWrapper: JQuery;
 let cityTable: JQuery;
 let okButton: JQuery;
 let cancelButton: JQuery;
+let reloadButton: JQuery;
 
 interface SearchLocation {
   city: string;
@@ -84,6 +85,7 @@ export function initSettings() {
   cityTable = $('#city-table');
   okButton = $('#settings-ok');
   cancelButton = $('#settings-cancel');
+  reloadButton = $('#settings-reload');
 
   searchCity.on('focus', () => searchFieldFocused = true);
   searchCity.on('blur', () => searchFieldFocused = false);
@@ -298,6 +300,10 @@ export function openSettings(previousSettings: Settings, callback: (Settings) =>
     okButton.off('click', doOK);
     dialog.css('display', 'none');
     callback(null);
+  });
+
+  reloadButton.one('click', () => {
+    window.location.reload(true);
   });
 }
 

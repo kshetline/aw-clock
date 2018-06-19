@@ -1,6 +1,7 @@
 // Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown quite a bit from there.
 
 import { getDayOfWeek, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+import { isRaspbian } from './util';
 
 const baseTime = Date.now();
 const debugTime = 0; // +new Date(2018, 5, 10, 5, 6, 30, 0);
@@ -28,6 +29,7 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 let secHand: HTMLElement;
 let sweep: SVGAnimationElement;
+let hasBeginElement = false;
 let minHand: HTMLElement;
 let hourHand: HTMLElement;
 let hands: HTMLElement;
@@ -123,6 +125,7 @@ function addTickMarks() {
 export function initClock() {
   secHand = document.getElementById('sec-hand');
   sweep = document.getElementById('sweep') as SVGAnimationElement;
+  hasBeginElement = !!sweep.beginElement;
   minHand = document.getElementById('min-hand');
   hourHand = document.getElementById('hour-hand');
   hands = document.getElementById('hands');
@@ -168,6 +171,12 @@ export function getTimezone(): KsTimeZone {
   return zone;
 }
 
+let marqueeIsAnimated = false;
+
+export function setMarqueeIsAnimated(isAnimated: boolean) {
+  marqueeIsAnimated = isAnimated;
+}
+
 function tick() {
   function rotate(elem: HTMLElement, deg: number) {
     elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
@@ -184,7 +193,9 @@ function tick() {
     sweep.beginElement();
   }
 
-  const now = currentTime() + 200;
+  const doMechanicalSecondHandEffect = hasBeginElement && (!isRaspbian() || !marqueeIsAnimated);
+  const animationTime = (doMechanicalSecondHandEffect ? 200 : 0);
+  const now = currentTime() + animationTime;
   const date = new KsDateTime(now, zone);
   const walltime = date.wallTime;
   const secs = walltime.sec;
@@ -192,7 +203,9 @@ function tick() {
   const mins = walltime.min;
   const hour = walltime.hrs;
 
-  sweepSecondHand(lastSecRotation, secRotation);
+  if (doMechanicalSecondHandEffect)
+    sweepSecondHand(lastSecRotation, secRotation);
+
   rotate(secHand, secRotation);
   lastSecRotation = secRotation;
   rotate(minHand, 6 * mins + 0.1 * secs);
@@ -234,7 +247,7 @@ function tick() {
       lastMinute = mins;
       lastTick = now;
     }
-  }, 200);
+  }, animationTime);
 }
 
 export function startClock(callback?: NewMinuteCallback) {

@@ -85,10 +85,14 @@ export function isWindows(): boolean {
   return navigator.appVersion.includes('Windows') || navigator.platform.startsWith('Win');
 }
 
+export function isRaspbian(): boolean {
+  return navigator.userAgent.includes('Raspbian');
+}
+
 export function setSvgHref(elem: JQuery, href: string) {
   elem.attr('href', href);
 
-  if (isSafari()) {
+  if (isSafari() || isEdge()) {
     elem.each(function() {
       this.setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     });

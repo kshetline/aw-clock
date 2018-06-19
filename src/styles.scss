@@ -74,6 +74,10 @@ body {
   background: midnightblue;
 }
 
+.clock-container-ie-fix {
+  height: 100%;
+}
+
 @media only screen and (max-aspect-ratio: 43/27) {
   #clock-container {
     width: calc(100vw - 4em);
