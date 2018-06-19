@@ -1,4 +1,4 @@
-##Astronomy/Weather Clock
+## Astronomy/Weather Clock
 
 To test and build the web client project, you can use the following commands:
    - "`npm run build`" to build.
