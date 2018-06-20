@@ -57,10 +57,11 @@ the necessary environment variables, including setting `HAS_INDOOR_SENSOR` to `t
 connecting an indoor temperature/humidity sensor.
 10) Use the command `sudo update-rc.d weatherService defaults` to establish the service that
 starts up the weather server.
-11) Copy the included files `autostart` and `autostart_extra.sh` to
+11) `npm install -g forever`
+12) Copy the included files `autostart` and `autostart_extra.sh` to
 `/home/pi/.config/lxsession/LXDE-pi/` and make sure they're executable. This launches the
  astronomy/weather clock client in Chromium, in kiosk mode (full screen, no toolbars). It also
  makes sure Chromium doesn't launch complaining that it was shut down improperly.
-12) I'm not sure about the current copyright disposition of these fonts, but for improved
+13) I'm not sure about the current copyright disposition of these fonts, but for improved
 appearance I'd recommend finding and installing the fonts "Arial Unicode MS" and "Verdana".
 These appear to be freely available for download without licensing restrictions.
