@@ -5,7 +5,7 @@ export class AppPage {
     return browser.get('/');
   }
 
-  getDateText() {
-    return element(by.css('#date')).getText();
+  getTimeText() {
+    return element(by.css('#time')).getText();
   }
 }

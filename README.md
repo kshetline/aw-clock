@@ -1,10 +1,11 @@
 ## Astronomy/Weather Clock
 
 To test and build the web client project, you can use the following commands:
+   - "`npm run lint`" to inspect the code with TSLint.
    - "`npm run build`" to build.
    - "`npm test`" to run unit tests.
    - "`npm start`" to serve the app using webpack-dev-server.
-   - "`npm run e2e`" to run Protractor.
+   - "`npm run e2e`" to run Protractor for end-to-end tests.
 
 To run the weather server, use "`npm start`" from within the server directory.
 
