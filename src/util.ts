@@ -209,3 +209,17 @@ export function setFullScreen(full: boolean): void {
   if (full !== isFullScreen())
     toggleFullScreen();
 }
+
+export function toBoolean(str, defaultValue?: boolean) {
+  if (/^(true|t|yes|y)$/i.test(str))
+    return true;
+  else if (/^(false|f|no|n)$/i.test(str))
+    return false;
+
+  const n = Number(str);
+
+  if (!isNaN(n))
+    return n !== 0;
+
+  return defaultValue;
+}

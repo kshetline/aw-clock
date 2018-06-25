@@ -17,264 +17,248 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-// Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown quite a bit from there.
+// Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed quite a bit from there.
 
 import { getDayOfWeek, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { isRaspbian } from './util';
+import { AppService } from './app.service';
 
-const baseTime = Date.now();
-const debugTime = 0; // +new Date(2018, 5, 10, 5, 6, 30, 0);
-
-export function currentTime() {
-  if (debugTime)
-    return debugTime + Date.now() - baseTime;
-  else
-    return Date.now();
-}
-
-interface SVGAnimationElement extends HTMLElement {
-  beginElement: () => void;
-}
-
-type NewMinuteCallback = (hour: number, minute: number, forceRefresh: boolean) => void;
-
-let zone = KsTimeZone.OS_ZONE;
-
-let lastSecRotation = 0;
-let lastMinute = -1;
-let lastTick = -1;
-const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-let secHand: HTMLElement;
-let sweep: SVGAnimationElement;
-let hasBeginElement = false;
-let minHand: HTMLElement;
-let hourHand: HTMLElement;
-let hands: HTMLElement;
-let zoneCaption:  HTMLElement;
-let hub: HTMLElement;
-let dayOfWeekCaption: HTMLElement;
-let dateCaption: HTMLElement;
-let monthCaption: HTMLElement;
-let yearCaption: HTMLElement;
-let timeCaption: HTMLElement;
-let day2Caption: HTMLElement;
-let day3Caption: HTMLElement;
-
-let newMinuteCallback: NewMinuteCallback = null;
-let amPm = false;
-let hideseconds = false;
+const SVC_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 function pad(n) {
   return (n < 10 ? '0' : '') + n;
 }
 
-function addTickMarks() {
-  const svgns = 'http://www.w3.org/2000/svg';
-  const radius = 41;
-  const textRadius = 33.5;
-  const constellationRadius = 24;
-  const center = 50;
-  const clock = document.getElementById('clock');
-  const planetTracks = document.getElementById('planet-tracks');
+const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  for (let i = 0; i < 360; i += 6) {
-    const x1 = center + radius * Math.cos(Math.PI * i / 180);
-    const y1 = center + radius * Math.sin(Math.PI * i / 180);
-    const tickMark = document.createElementNS(svgns, 'circle');
+interface SVGAnimationElement extends HTMLElement {
+  beginElement: () => void;
+}
 
-    tickMark.setAttributeNS(null, 'cx', x1.toString());
-    tickMark.setAttributeNS(null, 'cy', y1.toString());
-    tickMark.setAttributeNS(null, 'r', (i % 30 === 0 ? 1 : 0.333).toString());
-    tickMark.setAttributeNS(null, 'fill', 'white');
-    tickMark.setAttributeNS(null, 'fill-opacity', '1');
-    clock.appendChild(tickMark);
+export class Clock {
+  private secHand: HTMLElement;
+  private sweep: SVGAnimationElement;
+  private minHand: HTMLElement;
+  private hourHand: HTMLElement;
+  private hands: HTMLElement;
+  private zoneCaption:  HTMLElement;
+  private hub: HTMLElement;
+  private dayOfWeekCaption: HTMLElement;
+  private dateCaption: HTMLElement;
+  private monthCaption: HTMLElement;
+  private yearCaption: HTMLElement;
+  private timeCaption: HTMLElement;
+  private day2Caption: HTMLElement;
+  private day3Caption: HTMLElement;
 
-    if (i % 30 === 0) {
-      const h = (i === 270 ? 12 : ((i + 90) % 360) / 30);
-      const x2 = center + textRadius * Math.cos(Math.PI * i / 180);
-      const y2 = center + textRadius * Math.sin(Math.PI * i / 180);
-      const text2 = document.createElementNS(svgns, 'text');
+  private hasBeginElement = false;
 
-      text2.setAttributeNS(null, 'x', x2.toString());
-      text2.setAttributeNS(null, 'y', y2.toString());
-      text2.setAttributeNS(null, 'dy', '3.5');
-      text2.classList.add('clock-face');
-      text2.textContent = h.toString();
-      clock.insertBefore(text2, hands);
+  private lastSecRotation = 0;
+  private lastMinute = -1;
+  private lastTick = -1;
 
-      const x3 = center + constellationRadius * Math.cos(Math.PI * (-i - 15) / 180);
-      const y3 = center + constellationRadius * Math.sin(Math.PI * (-i - 15) / 180);
-      const text3 = document.createElementNS(svgns, 'text');
+  private _amPm = false;
+  private _hideSeconds = false;
 
-      text3.setAttributeNS(null, 'x', x3.toString());
-      text3.setAttributeNS(null, 'y', y3.toString());
-      text3.setAttributeNS(null, 'dy', '1');
-      text3.classList.add('constellation');
-      text3.textContent = String.fromCodePoint(0x2648 + i / 30);
-      planetTracks.appendChild(text3);
+  public timezone = KsTimeZone.OS_ZONE;
+  public hasCompletingAnimation;
+
+  constructor(private appService: AppService) {
+    this.secHand = document.getElementById('sec-hand');
+    this.sweep = document.getElementById('sweep') as SVGAnimationElement;
+    this.minHand = document.getElementById('min-hand');
+    this.hourHand = document.getElementById('hour-hand');
+    this.hands = document.getElementById('hands');
+    this.zoneCaption = document.getElementById('timezone');
+    this.hub = document.getElementById('hub');
+    this.dayOfWeekCaption = document.getElementById('day-of-week');
+    this.dateCaption = document.getElementById('date');
+    this.monthCaption = document.getElementById('month');
+    this.yearCaption = document.getElementById('year');
+    this.timeCaption = document.getElementById('time');
+    this.day2Caption = document.getElementById('day2-caption');
+    this.day3Caption = document.getElementById('day3-caption');
+
+    this.hasBeginElement = !!this.sweep.beginElement;
+
+    this.decorateClockFace();
+  }
+
+  public start(): void {
+    this.tick();
+  }
+
+  public triggerRefresh(): void {
+    this.lastMinute = -1;
+  }
+
+  get amPm(): boolean { return this._amPm; }
+  set amPm(value: boolean) {
+    if (this._amPm !== value) {
+      this._amPm = value;
+      this.adjustTimeFontSize();
     }
   }
 
-  const planetSymbols = [0x263C, 0x263D, 0x0263F, 0x2640, 0x2642, 0x2643, 0x2644]; // Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn
+  get hideSeconds(): boolean { return this._hideSeconds; }
+  set hideSeconds(value: boolean) {
+    if (this._hideSeconds !== value) {
+      this._hideSeconds = value;
+      this.adjustTimeFontSize();
 
-  planetSymbols.forEach((planet, index) => {
-    const x = center + 10 + index * 2;
-    const dy = 0.75 + (index % 2) * 2;
-    const rect = document.createElementNS(svgns, 'rect');
-    const text = document.createElementNS(svgns, 'text');
-
-    rect.setAttributeNS(null, 'x', (x - 0.9).toString());
-    rect.setAttributeNS(null, 'y', (center + dy - 2).toString());
-    rect.setAttributeNS(null, 'width', '1.8');
-    rect.setAttributeNS(null, 'height', '2.7');
-    rect.setAttributeNS(null, 'fill', 'black');
-    planetTracks.appendChild(rect);
-
-    text.setAttributeNS(null, 'x', x.toString());
-    text.setAttributeNS(null, 'y', center.toString());
-    text.setAttributeNS(null, 'dy', dy.toString());
-    text.classList.add('constellation');
-    text.textContent = String.fromCodePoint(planet);
-    planetTracks.appendChild(text);
-  });
-}
-
-export function initClock() {
-  secHand = document.getElementById('sec-hand');
-  sweep = document.getElementById('sweep') as SVGAnimationElement;
-  hasBeginElement = !!sweep.beginElement;
-  minHand = document.getElementById('min-hand');
-  hourHand = document.getElementById('hour-hand');
-  hands = document.getElementById('hands');
-  zoneCaption = document.getElementById('timezone');
-  hub = document.getElementById('hub');
-  dayOfWeekCaption = document.getElementById('day-of-week');
-  dateCaption = document.getElementById('date');
-  monthCaption = document.getElementById('month');
-  yearCaption = document.getElementById('year');
-  timeCaption = document.getElementById('time');
-  day2Caption = document.getElementById('day2-caption');
-  day3Caption = document.getElementById('day3-caption');
-}
-
-function adjustTimeFontSize() {
-  timeCaption.style['font-size'] = (amPm && !hideseconds ? '7.5' : '10');
-}
-
-export function setAmPm(doAmPm: boolean) {
-  amPm = doAmPm;
-  adjustTimeFontSize();
-}
-
-export function setHideSeconds(hide: boolean) {
-  hideseconds = hide;
-  adjustTimeFontSize();
-
-  if (hide) {
-    secHand.style.visibility = 'hidden';
-    hub.style.visibility = 'hidden';
-  }
-  else {
-    secHand.style.visibility = 'visible';
-    hub.style.visibility = 'visible';
-  }
-}
-
-export function updateTimezone(newZone: KsTimeZone) {
-  zone = newZone;
-}
-
-export function getTimezone(): KsTimeZone {
-  return zone;
-}
-
-let marqueeIsAnimated = false;
-
-export function setMarqueeIsAnimated(isAnimated: boolean) {
-  marqueeIsAnimated = isAnimated;
-}
-
-function tick() {
-  function rotate(elem: HTMLElement, deg: number) {
-    elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
+      if (value) {
+        this.secHand.style.visibility = 'hidden';
+        this.hub.style.visibility = 'hidden';
+      }
+      else {
+        this.secHand.style.visibility = 'visible';
+        this.hub.style.visibility = 'visible';
+      }
+    }
   }
 
-  function sweepSecondHand(start, end) {
-    if (end < start) {
-      end += 360;
+  private decorateClockFace(): void {
+    const radius = 41;
+    const textRadius = 33.5;
+    const constellationRadius = 24;
+    const center = 50;
+    const clock = document.getElementById('clock');
+    const planetTracks = document.getElementById('planet-tracks');
+
+    for (let i = 0; i < 360; i += 6) {
+      const x1 = center + radius * Math.cos(Math.PI * i / 180);
+      const y1 = center + radius * Math.sin(Math.PI * i / 180);
+      const tickMark = document.createElementNS(SVC_NAMESPACE, 'circle');
+
+      tickMark.setAttributeNS(null, 'cx', x1.toString());
+      tickMark.setAttributeNS(null, 'cy', y1.toString());
+      tickMark.setAttributeNS(null, 'r', (i % 30 === 0 ? 1 : 0.333).toString());
+      tickMark.setAttributeNS(null, 'fill', 'white');
+      tickMark.setAttributeNS(null, 'fill-opacity', '1');
+      clock.appendChild(tickMark);
+
+      if (i % 30 === 0) {
+        const h = (i === 270 ? 12 : ((i + 90) % 360) / 30);
+        const x2 = center + textRadius * Math.cos(Math.PI * i / 180);
+        const y2 = center + textRadius * Math.sin(Math.PI * i / 180);
+        const text2 = document.createElementNS(SVC_NAMESPACE, 'text');
+
+        text2.setAttributeNS(null, 'x', x2.toString());
+        text2.setAttributeNS(null, 'y', y2.toString());
+        text2.setAttributeNS(null, 'dy', '3.5');
+        text2.classList.add('clock-face');
+        text2.textContent = h.toString();
+        clock.insertBefore(text2, this.hands);
+
+        const x3 = center + constellationRadius * Math.cos(Math.PI * (-i - 15) / 180);
+        const y3 = center + constellationRadius * Math.sin(Math.PI * (-i - 15) / 180);
+        const text3 = document.createElementNS(SVC_NAMESPACE, 'text');
+
+        text3.setAttributeNS(null, 'x', x3.toString());
+        text3.setAttributeNS(null, 'y', y3.toString());
+        text3.setAttributeNS(null, 'dy', '1');
+        text3.classList.add('constellation');
+        text3.textContent = String.fromCodePoint(0x2648 + i / 30);
+        planetTracks.appendChild(text3);
+      }
     }
 
-    sweep.setAttribute('from', start + ' 50 50');
-    sweep.setAttribute('to', end + ' 50 50');
-    sweep.setAttribute('values', start + ' 50 50; ' + (end + 2) + ' 50 50; ' + end + ' 50 50');
-    sweep.beginElement();
+    const planetSymbols = [0x263C, 0x263D, 0x0263F, 0x2640, 0x2642, 0x2643, 0x2644]; // Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn
+
+    planetSymbols.forEach((planet, index) => {
+      const x = center + 10 + index * 2;
+      const dy = 0.75 + (index % 2) * 2;
+      const rect = document.createElementNS(SVC_NAMESPACE, 'rect');
+      const text = document.createElementNS(SVC_NAMESPACE, 'text');
+
+      rect.setAttributeNS(null, 'x', (x - 0.9).toString());
+      rect.setAttributeNS(null, 'y', (center + dy - 2).toString());
+      rect.setAttributeNS(null, 'width', '1.8');
+      rect.setAttributeNS(null, 'height', '2.7');
+      rect.setAttributeNS(null, 'fill', 'black');
+      planetTracks.appendChild(rect);
+
+      text.setAttributeNS(null, 'x', x.toString());
+      text.setAttributeNS(null, 'y', center.toString());
+      text.setAttributeNS(null, 'dy', dy.toString());
+      text.classList.add('constellation');
+      text.textContent = String.fromCodePoint(planet);
+      planetTracks.appendChild(text);
+    });
   }
 
-  const doMechanicalSecondHandEffect = hasBeginElement && (!isRaspbian() || !marqueeIsAnimated);
-  const animationTime = (doMechanicalSecondHandEffect ? 200 : 0);
-  const now = currentTime() + animationTime;
-  const date = new KsDateTime(now, zone);
-  const walltime = date.wallTime;
-  const secs = walltime.sec;
-  const secRotation = 6 * secs;
-  const mins = walltime.min;
-  const hour = walltime.hrs;
+  private adjustTimeFontSize(): void {
+    this.timeCaption.style['font-size'] = (this._amPm && !this._hideSeconds ? '7.5' : '10');
+  }
 
-  if (doMechanicalSecondHandEffect)
-    sweepSecondHand(lastSecRotation, secRotation);
-
-  rotate(secHand, secRotation);
-  lastSecRotation = secRotation;
-  rotate(minHand, 6 * mins + 0.1 * secs);
-  rotate(hourHand, 30 * (hour % 12) + mins / 2 + secs / 120);
-  setTimeout(tick, 1000 - walltime.millis);
-
-  setTimeout(() => {
-    const dayOfTheWeek = getDayOfWeek(walltime.n);
-
-    dayOfWeekCaption.textContent = daysOfWeek[dayOfTheWeek].toUpperCase();
-    dateCaption.textContent = pad(walltime.d);
-    monthCaption.textContent = months[walltime.m - 1].toUpperCase();
-    yearCaption.textContent = walltime.y.toString();
-    day2Caption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
-    day3Caption.textContent = daysOfWeek[(dayOfTheWeek + 3) % 7];
-    zoneCaption.textContent = zone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
-
-    let displayHour = hour;
-    let suffix = '';
-
-    if (amPm) {
-      if (displayHour === 0)
-        displayHour = 12;
-      else if (displayHour > 12)
-        displayHour -= 12;
-
-      suffix = (hour < 12 ? ' AM' : ' PM');
+  private tick(): void {
+    function rotate(elem: HTMLElement, deg: number) {
+      elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
 
-    timeCaption.textContent =
-      pad(displayHour) + ':' +
-      pad(mins) + (hideseconds ? '' : ':' + pad(secs)) + suffix;
-
-    if (mins !== lastMinute || lastTick + 60000 <= now) {
-      if (newMinuteCallback) {
-        newMinuteCallback(hour, mins, lastMinute < 0);
+    const sweepSecondHand = (start, end) => {
+      if (end < start) {
+        end += 360;
       }
 
-      lastMinute = mins;
-      lastTick = now;
-    }
-  }, animationTime);
-}
+      this.sweep.setAttribute('from', start + ' 50 50');
+      this.sweep.setAttribute('to', end + ' 50 50');
+      this.sweep.setAttribute('values', start + ' 50 50; ' + (end + 2) + ' 50 50; ' + end + ' 50 50');
+      this.sweep.beginElement();
+    };
 
-export function startClock(callback?: NewMinuteCallback) {
-  newMinuteCallback = callback;
-  addTickMarks();
-  tick();
-}
+    const doMechanicalSecondHandEffect = this.hasBeginElement && (!isRaspbian() || !this.hasCompletingAnimation);
+    const animationTime = (doMechanicalSecondHandEffect ? 200 : 0);
+    const now = this.appService.getCurrentTime() + animationTime;
+    const date = new KsDateTime(now, this.timezone);
+    const walltime = date.wallTime;
+    const secs = walltime.sec;
+    const secRotation = 6 * secs;
+    const mins = walltime.min;
+    const hour = walltime.hrs;
 
-export function triggerRefresh() {
-  lastMinute = -1;
+    if (doMechanicalSecondHandEffect)
+      sweepSecondHand(this.lastSecRotation, secRotation);
+
+    rotate(this.secHand, secRotation);
+    this.lastSecRotation = secRotation;
+    rotate(this.minHand, 6 * mins + 0.1 * secs);
+    rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + secs / 120);
+    setTimeout(() => this.tick(), 1000 - walltime.millis);
+
+    setTimeout(() => {
+      const dayOfTheWeek = getDayOfWeek(walltime.n);
+
+      this.dayOfWeekCaption.textContent = daysOfWeek[dayOfTheWeek].toUpperCase();
+      this.dateCaption.textContent = pad(walltime.d);
+      this.monthCaption.textContent = months[walltime.m - 1].toUpperCase();
+      this.yearCaption.textContent = walltime.y.toString();
+      this.day2Caption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
+      this.day3Caption.textContent = daysOfWeek[(dayOfTheWeek + 3) % 7];
+      this.zoneCaption.textContent = this.timezone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
+
+      let displayHour = hour;
+      let suffix = '';
+
+      if (this.amPm) {
+        if (displayHour === 0)
+          displayHour = 12;
+        else if (displayHour > 12)
+          displayHour -= 12;
+
+        suffix = (hour < 12 ? ' AM' : ' PM');
+      }
+
+      this.timeCaption.textContent =
+        pad(displayHour) + ':' +
+        pad(mins) + (this._hideSeconds ? '' : ':' + pad(secs)) + suffix;
+
+      if (mins !== this.lastMinute || this.lastTick + 60000 <= now) {
+        this.appService.updateTime(hour, mins, this.lastMinute < 0);
+        this.lastMinute = mins;
+        this.lastTick = now;
+      }
+    }, animationTime);
+  }
 }

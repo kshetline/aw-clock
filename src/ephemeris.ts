@@ -24,121 +24,13 @@ import {
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import * as $ from 'jquery';
 import { setSvgHref } from './util';
+import { AppService } from './app.service';
 
 const solarSystem = new SolarSystem();
 const eventFinder = new EventFinder();
 const planets = [SUN, MOON, MERCURY, VENUS, MARS, JUPITER, SATURN];
 const planetIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
 const planetElems: JQuery[] = [];
-
-let hidePlanets = false;
-let planetTracks: JQuery;
-let planetSymbols: JQuery;
-
-const sunrises: JQuery[] = [];
-const sunsets: JQuery[] = [];
-const moons: JQuery[] = [];
-const phaseTimes: JQuery[] = [];
-
-export function initEphemeris(): void {
-  planetIds.forEach((planet, index) => {
-    planetElems[index] = $('#' + planetIds[index]);
-  });
-
-  planetTracks = $('#planet-tracks');
-  planetSymbols = $('#planets');
-
-  for (let i = 0; i < 4; ++i) {
-    sunrises[i] = $('#day' + i + '-sunrise');
-    sunsets[i] = $('#day' + i + '-sunset');
-    moons[i] = $('#day' + i + '-moon');
-    phaseTimes[i] = $('#day' + i + '-phase-time');
-  }
-}
-
-export function setHidePlanets(hide: boolean) {
-  hidePlanets = hide;
-
-  if (hide) {
-    planetTracks.css('visibility', 'hidden');
-    planetSymbols.css('visibility', 'hidden');
-  }
-  else {
-    planetTracks.css('visibility', 'visible');
-    planetSymbols.css('visibility', 'visible');
-  }
-}
-
-export function updateEphemeris(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean,
-                                riseSetCallback?: (rise, set) => void): void {
-  function rotate(elem: JQuery, deg: number) {
-    elem.attr('transform', 'rotate(' + deg + ' 50 50)');
-  }
-
-  time = Math.floor(time / 60000) * 60000; // Make sure time is in whole minutes.
-
-  const dateTime = new KsDateTime(time, timezone);
-  const wallTime = dateTime.wallTime;
-  const time_JDU = KsDateTime.julianDay(time) + HALF_MINUTE; // Round up half a minute for consistency with rounding of event times.
-  const time_JDE = UT_to_TDB(time_JDU);
-  const observer = new SkyObserver(longitude, latitude);
-
-  planets.forEach((planet, index) => {
-    const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
-    const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
-    const elem = planetElems[index];
-    let targetAltitude = -REFRACTION_AT_HORIZON;
-
-    if (planet === SUN || planet === MOON)
-      targetAltitude -= AVG_SUN_MOON_RADIUS;
-
-    rotate(elem, -eclipticLongitude);
-    elem.css('stroke-width', altitude < targetAltitude ? '0.5' : '0');
-  });
-
-  eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {
-    let todayRise: string = null;
-    let todaySet: string = null;
-
-    daysOfEvents.forEach((events, dayOffset) => {
-      let rise = '--:--';
-      let set = '--:--';
-
-      events.forEach(event => {
-        if (event.eventType === RISE_EVENT) {
-          rise = formatTime(event.eventTime, amPm);
-
-          if (dayOffset === 0)
-            todayRise = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
-        }
-        else if (event.eventType === SET_EVENT) {
-          set = formatTime(event.eventTime, amPm);
-
-          if (dayOffset === 0)
-            todaySet = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
-        }
-      });
-
-      sunrises[dayOffset].text(rise);
-      sunsets[dayOffset].text(set);
-    });
-
-    if (riseSetCallback)
-      riseSetCallback(todayRise, todaySet);
-  });
-
-  for (let dayIndex = 0; dayIndex < 4; ++dayIndex) {
-    const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
-    const noon = new KsDateTime({y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0}, timezone);
-    const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
-    const noon_JDE = UT_to_TDB(noon_JDU);
-    const phase = solarSystem.getLunarPhase(noon_JDE);
-    const event = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
-
-    setSvgHref(moons[dayIndex], getMoonPhaseIcon(phase));
-    phaseTimes[dayIndex].text(event ? formatTime(event.eventTime, amPm) : '');
-  }
-}
 
 function pad(n) {
   return (n < 10 ? '0' : '') + n;
@@ -162,4 +54,116 @@ function formatTime(date: KsDateTime, amPm: boolean) {
   }
 
   return pad(hours) + ':' + pad(date.wallTime.min) + suffix;
+}
+
+export class Ephemeris {
+  private planetTracks: JQuery;
+  private planetSymbols: JQuery;
+  private sunrises: JQuery[] = [];
+  private sunsets: JQuery[] = [];
+  private moons: JQuery[] = [];
+  private phaseTimes: JQuery[] = [];
+
+  private _hidePlanets = false;
+
+  constructor(private appService: AppService) {
+    planetIds.forEach((planet, index) => {
+      planetElems[index] = $('#' + planetIds[index]);
+    });
+
+    this.planetTracks = $('#planet-tracks');
+    this.planetSymbols = $('#planets');
+
+    for (let i = 0; i < 4; ++i) {
+      this.sunrises[i] = $('#day' + i + '-sunrise');
+      this.sunsets[i] = $('#day' + i + '-sunset');
+      this.moons[i] = $('#day' + i + '-moon');
+      this.phaseTimes[i] = $('#day' + i + '-phase-time');
+    }
+  }
+
+  get hidePlanets() { return this._hidePlanets; }
+  set hidePlanets(newValue: boolean) {
+    if (this._hidePlanets !== newValue) {
+      this._hidePlanets = newValue;
+
+      if (newValue) {
+        this.planetTracks.css('visibility', 'hidden');
+        this.planetSymbols.css('visibility', 'hidden');
+      }
+      else {
+        this.planetTracks.css('visibility', 'visible');
+        this.planetSymbols.css('visibility', 'visible');
+      }
+    }
+  }
+
+  public update(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean): void {
+    function rotate(elem: JQuery, deg: number) {
+      elem.attr('transform', 'rotate(' + deg + ' 50 50)');
+    }
+
+    time = Math.floor(time / 60000) * 60000; // Make sure time is in whole minutes.
+
+    const dateTime = new KsDateTime(time, timezone);
+    const wallTime = dateTime.wallTime;
+    const time_JDU = KsDateTime.julianDay(time) + HALF_MINUTE; // Round up half a minute for consistency with rounding of event times.
+    const time_JDE = UT_to_TDB(time_JDU);
+    const observer = new SkyObserver(longitude, latitude);
+
+    planets.forEach((planet, index) => {
+      const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
+      const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
+      const elem = planetElems[index];
+      let targetAltitude = -REFRACTION_AT_HORIZON;
+
+      if (planet === SUN || planet === MOON)
+        targetAltitude -= AVG_SUN_MOON_RADIUS;
+
+      rotate(elem, -eclipticLongitude);
+      elem.css('stroke-width', altitude < targetAltitude ? '0.5' : '0');
+    });
+
+    eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {
+      let todayRise: string = null;
+      let todaySet: string = null;
+
+      daysOfEvents.forEach((events, dayOffset) => {
+        let rise = '--:--';
+        let set = '--:--';
+
+        events.forEach(event => {
+          if (event.eventType === RISE_EVENT) {
+            rise = formatTime(event.eventTime, amPm);
+
+            if (dayOffset === 0)
+              todayRise = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
+          }
+          else if (event.eventType === SET_EVENT) {
+            set = formatTime(event.eventTime, amPm);
+
+            if (dayOffset === 0)
+              todaySet = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
+          }
+        });
+
+        this.sunrises[dayOffset].text(rise);
+        this.sunsets[dayOffset].text(set);
+      });
+
+      this.appService.updateSunriseAndSunset(todayRise, todaySet);
+    });
+
+    for (let dayIndex = 0; dayIndex < 4; ++dayIndex) {
+      const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
+      const noon = new KsDateTime({y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0}, timezone);
+      const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
+      const noon_JDE = UT_to_TDB(noon_JDU);
+      const phase = solarSystem.getLunarPhase(noon_JDE);
+      const event = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
+
+      setSvgHref(this.moons[dayIndex], getMoonPhaseIcon(phase));
+      this.phaseTimes[dayIndex].text(event ? formatTime(event.eventTime, amPm) : '');
+    }
+  }
 }

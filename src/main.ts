@@ -19,134 +19,137 @@
 
 import * as $ from 'jquery';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
-import * as Cookies from 'js-cookie';
-
-import { initClock, startClock, triggerRefresh, setAmPm, setHideSeconds, getTimezone, currentTime } from './clock';
-import { initForecast, updateForecast, showUnknown, refreshForecastFromCache } from './forecast';
-import { initSettings, openSettings } from './settings';
+import { Clock } from './clock';
+import { AppService } from './app.service';
+import { Forecast } from './forecast';
+import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { isIE, setFullScreen } from './util';
-import { initEphemeris, setHidePlanets, updateEphemeris } from './ephemeris';
-import { KsDateTime } from 'ks-date-time-zone';
-import { initIndoor, updateIndoor } from './indoor';
+import { Settings } from './settings';
+import { SettingsDialog } from './settings-dialog';
+import { Ephemeris } from './ephemeris';
+import { Indoor } from './indoor';
 
 initTimeZoneSmall();
 
-let latitude: number;
-let longitude: number;
-let city: string;
-let userId: string;
-let dimming: number;
-let dimmingStart: string;
-let dimmingEnd: string;
-let celsius: boolean;
-let amPm: boolean;
-let hideSeconds: boolean;
-let hidePlanets: boolean;
+const baseTime = Date.now();
+const debugTime = 0; // +new Date(2018, 5, 25, 5, 8, 40, 0);
 
-let frequent = false;
-let lastHour = -1;
-let hasIndoor = false;
+function parseTime(s: string): number {
+  const parts = s.split(':');
 
-let dimmer: JQuery;
-
-// Make sure most clients stagger their polling so that the weather server isn't likely
-// to get lots of simultaneous requests.
-const pollingMinute = Math.floor(Math.random() * 15);
-const pollingMillis = Math.floor(Math.random() * 60000);
+  return Number(parts[0]) * 60 + Number(parts[1]);
+}
 
 $(() => {
-  let lastForecast = 0;
-  let lastCursorMove = 0;
-  const dialogWrapper = $('.dialog-wrapper');
-  const cityLabel = $('#city');
-  const body = $('body');
+  new AwClockApp().start();
+});
 
-  latitude = Number(Cookies.get('latitude')) || 42.75;
-  longitude = Number(Cookies.get('longitude')) || -71.48;
-  city = Cookies.get('city') || 'Nashua, NH';
-  userId = Cookies.get('id') || '';
-  dimming = Number(Cookies.get('dimming')) || 0;
-  dimmingStart = Cookies.get('dimming_start') || '23:00';
-  dimmingEnd = Cookies.get('dimming_end') || '7:00';
-  celsius = Cookies.get('celsius') === 'true';
-  amPm = Cookies.get('ampm') === 'true';
-  hideSeconds = Cookies.get('hides') === 'true';
-  hidePlanets = Cookies.get('hidep') === 'true';
+export class AwClockApp implements AppService {
+  private clock: Clock;
+  private forecast: Forecast;
+  private ephemeris: Ephemeris;
+  private indoor: Indoor;
+  private settingsDialog: SettingsDialog;
 
-  dimmer = $('#dimmer');
+  private body: JQuery;
+  private cityLabel: JQuery;
+  private dimmer: JQuery;
 
-  if (isIE())
-    $('#clock-container').addClass('clock-container-ie-fix');
+  // Make sure most clients stagger their polling so that the weather server isn't likely
+  // to get lots of simultaneous requests.
+  private readonly pollingMinute = Math.floor(Math.random() * 15);
+  private readonly pollingMillis = Math.floor(Math.random() * 60000);
 
-  initClock();
-  setAmPm(amPm);
-  setHideSeconds(hideSeconds);
-  initForecast();
-  hasIndoor = initIndoor();
-  initEphemeris();
-  initSettings();
-  cityLabel.text(city);
+  private lastCursorMove = 0;
+  private lastForecast = 0;
+  private lastTimezone = KsTimeZone.OS_ZONE;
+  private lastHour = -1;
+  private frequent = false;
 
-  document.addEventListener('keypress', event => {
-    if (!event.repeat && event.srcElement === document.body) {
-      if (event.code === 'KeyF' || event.key === 'F' || event.key === 'f')
-        setFullScreen(true);
-      else if (event.code === 'KeyN' || event.key === 'N' || event.key === 'n')
-        setFullScreen(false);
-    }
-  });
+  private settings = new Settings();
 
-  document.addEventListener('mousemove', () => {
-    // Reveal cursor when moved.
-    body.css('cursor', 'auto');
-    lastCursorMove = performance.now();
-  });
+  constructor() {
+    this.settings.load();
 
-  let lastZone = getTimezone();
+    this.clock = new Clock(this);
+    this.clock.amPm = this.settings.amPm;
+    this.clock.hideSeconds = this.settings.hideSeconds;
 
-  startClock((hour, minute, forceRefresh) => {
-    const now = currentTime();
+    this.forecast = new Forecast(this);
+
+    this.ephemeris = new Ephemeris(this);
+    this.ephemeris.hidePlanets = this.settings.hidePlanets;
+
+    this.indoor = new Indoor();
+
+    this.settingsDialog = new SettingsDialog(this);
+
+    this.body = $('body');
+    this.cityLabel = $('#city');
+    this.dimmer = $('#dimmer');
+
+    if (isIE())
+      $('#clock-container').addClass('clock-container-ie-fix');
+
+    this.cityLabel.text(this.settings.city);
+
+    document.addEventListener('keypress', event => {
+      if (!event.repeat && event.srcElement === document.body) {
+        if (event.code === 'KeyF' || event.key === 'F' || event.key === 'f')
+          setFullScreen(true);
+        else if (event.code === 'KeyN' || event.key === 'N' || event.key === 'n')
+          setFullScreen(false);
+      }
+    });
+
+    document.addEventListener('mousemove', () => {
+      // Reveal cursor when moved.
+      this.body.css('cursor', 'auto');
+      this.lastCursorMove = performance.now();
+    });
+
+    $('#settings-btn').on('click', () => this.settingsDialog.openSettings(this.settings));
+  }
+
+  getCurrentTime(): number {
+    if (debugTime)
+      return debugTime + Date.now() - baseTime;
+    else
+      return Date.now();
+  }
+
+  public start() {
+    this.clock.start();
+  }
+
+  public updateTime(hour: number, minute: number, forceRefresh: boolean): void {
+    const now = this.getCurrentTime();
 
     // Hide cursor if it hasn't been moved in the last two minutes.
-    if (performance.now() > lastCursorMove + 120000)
-      body.css('cursor', 'none');
+    if (performance.now() > this.lastCursorMove + 120000)
+      this.body.css('cursor', 'none');
 
-    updateEphemeris(latitude, longitude, now, lastZone, amPm, (rise, set) => {
-      updateDimming(now, rise, set);
-    });
+    this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone, this.settings.amPm);
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
-    if (hour < lastHour || hour === 0 && minute === 0)
-      refreshForecastFromCache();
+    if (hour < this.lastHour || hour === 0 && minute === 0)
+      this.forecast.refreshForecastFromCache();
 
-    if (hasIndoor)
-      updateIndoor(celsius);
+    if (this.indoor.available)
+      this.indoor.update(this.settings.celsius);
 
-    lastHour = hour;
+    this.lastHour = hour;
 
-    const interval = (frequent ? 5 : 15);
-    const runningLate = (lastForecast + interval * 60000 <= now);
-    const minuteOffset = (frequent ? 0 : pollingMinute);
-    const millisOffset = (frequent || forceRefresh || runningLate ? 0 : pollingMillis);
+    const interval = (this.frequent ? 5 : 15);
+    const runningLate = (this.lastForecast + interval * 60000 <= now);
+    const minuteOffset = (this.frequent ? 0 : this.pollingMinute);
+    const millisOffset = (this.frequent || forceRefresh || runningLate ? 0 : this.pollingMillis);
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {
       const doUpdate = () => {
-        updateForecast(latitude, longitude, celsius, amPm, userId).then(isFrequent => {
-          if (isFrequent !== undefined)
-            frequent = isFrequent;
-
-          const currentZone = getTimezone();
-
-          if (lastZone !== currentZone) {
-            lastZone = currentZone;
-            updateEphemeris(latitude, longitude, now, lastZone, amPm, (rise, set) => {
-              updateDimming(now, rise, set);
-            });
-          }
-        });
-
-        lastForecast = now;
+        this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius,
+                             this.settings.amPm, this.settings.userId);
       };
 
       if (millisOffset === 0)
@@ -154,80 +157,68 @@ $(() => {
       else
         setTimeout(doUpdate, millisOffset);
     }
-  });
+  }
 
-  $('#settings-btn').on('click', () => {
-    const previousSettings = {city, latitude, longitude, userId, dimming, dimmingStart, dimmingEnd, celsius, amPm, hideSeconds, hidePlanets};
+  public forecastHasBeenUpdated(): void {
+    const currentZone = this.forecast.getTimezone();
 
-    openSettings(previousSettings, newSettings => {
-      if (newSettings) {
-        showUnknown();
-        ({city, latitude, longitude, userId, dimming, dimmingStart, dimmingEnd, celsius, amPm, hideSeconds, hidePlanets} = newSettings);
-        const expiration = 36525;
+    if (this.lastTimezone !== currentZone) {
+      this.lastTimezone = currentZone;
+      this.clock.timezone = currentZone;
+      this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone, this.settings.amPm);
+    }
 
-        Cookies.set('city', city, {expires: expiration});
-        Cookies.set('latitude', latitude.toString(), {expires: expiration});
-        Cookies.set('longitude', longitude.toString(), {expires: expiration});
-        Cookies.set('id', userId, {expires: expiration});
-        Cookies.set('dimming', dimming.toString(), {expires: expiration});
-        Cookies.set('dimming_start', dimmingStart, {expires: expiration});
-        Cookies.set('dimming_end', dimmingEnd, {expires: expiration});
-        Cookies.set('celsius', celsius.toString(), {expires: expiration});
-        Cookies.set('ampm', amPm.toString(), {expires: expiration});
-        Cookies.set('hides', hideSeconds.toString(), {expires: expiration});
-        Cookies.set('hidep', hidePlanets.toString(), {expires: expiration});
-        cityLabel.text(city);
-        setAmPm(amPm);
-        setHideSeconds(hideSeconds);
-        setHidePlanets(hidePlanets);
-        triggerRefresh();
-      }
-    });
-  });
+    this.frequent = this.forecast.getFrequent();
+    this.lastForecast = this.getCurrentTime();
+  }
 
-  dialogWrapper.on('click', event => {
-    if (event.shiftKey)
-      dialogWrapper.css('display', 'none');
-  });
-});
+  public updateSettings(newSettings: Settings): void {
+    this.settings = newSettings;
+    newSettings.save();
+    this.forecast.showUnknown();
+    this.cityLabel.text(newSettings.city);
+    this.clock.amPm = newSettings.amPm;
+    this.clock.hideSeconds = newSettings.hideSeconds;
+    // this.ephemeris.hidePlanets = newSettings.hidePlanets;
+    this.clock.triggerRefresh();
+  }
 
-function updateDimming(now: number, todayRise: string, todaySet: string) {
-  if (dimming) {
-    let start = dimmingStart;
-    let end = dimmingEnd;
+  public updateSunriseAndSunset(rise: string, set: string): void {
+    this.updateDimming(this.getCurrentTime(), rise, set);
+  }
 
-    if (start === 'SR')
-      start = todayRise;
-    else if (start === 'SS')
-      start = todaySet;
+  private updateDimming(now: number, todayRise: string, todaySet: string): void {
+    if (this.settings.dimming) {
+      let start = this.settings.dimmingStart;
+      let end = this.settings.dimmingEnd;
 
-    if (end === 'SR')
-      end = todayRise;
-    else if (end === 'SS')
-      end = todaySet;
+      if (start === 'SR')
+        start = todayRise;
+      else if (start === 'SS')
+        start = todaySet;
 
-    if (start && end) {
-      const startMinute = parseTime(start);
-      const endMinute = parseTime(end);
+      if (end === 'SR')
+        end = todayRise;
+      else if (end === 'SS')
+        end = todaySet;
 
-      if (startMinute !== endMinute) {
-        const time = new KsDateTime(now, getTimezone());
-        const currentMinute = time.wallTime.hrs * 60 + time.wallTime.min;
+      if (start && end) {
+        const startMinute = parseTime(start);
+        const endMinute = parseTime(end);
 
-        if ((startMinute > endMinute && (startMinute <= currentMinute || currentMinute < endMinute)) ||
-            (startMinute < endMinute && startMinute <= currentMinute && currentMinute < endMinute)) {
-          dimmer.css('opacity', (dimming / 100).toString());
-          return;
+        if (startMinute !== endMinute) {
+          const time = new KsDateTime(now, this.lastTimezone);
+          const currentMinute = time.wallTime.hrs * 60 + time.wallTime.min;
+
+          if ((startMinute > endMinute && (startMinute <= currentMinute || currentMinute < endMinute)) ||
+              (startMinute < endMinute && startMinute <= currentMinute && currentMinute < endMinute)) {
+            this.dimmer.css('opacity', (this.settings.dimming / 100).toString());
+            return;
+          }
         }
       }
     }
+
+    this.dimmer.css('opacity', '0');
   }
-
-  dimmer.css('opacity', '0');
-}
-
-function parseTime(s: string): number {
-  const parts = s.split(':');
-
-  return Number(parts[0]) * 60 + Number(parts[1]);
 }

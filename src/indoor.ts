@@ -19,55 +19,60 @@
 
 import * as $ from 'jquery';
 
-let currentTempBalanceSpace: JQuery;
-let indoorTemp: JQuery;
-let indoorHumidity: JQuery;
-
 interface IndoorConditions {
   temperature: number;
   humidity: number;
   error?: any;
 }
 
-export function initIndoor(): boolean {
-  currentTempBalanceSpace = $('#curr-temp-balance-space');
-  indoorTemp = $('#indoor-temp');
-  indoorHumidity = $('#indoor-humidity');
+export class Indoor {
+  private indoorTemp: JQuery;
+  private indoorHumidity: JQuery;
 
-  if (document.location.port === '4200' || document.location.port === '8080') {
-    currentTempBalanceSpace.css('display', 'none');
+  private readonly _available: boolean;
 
-    return true;
+  constructor() {
+    const currentTempBalanceSpace = $('#curr-temp-balance-space');
+
+    this.indoorTemp = $('#indoor-temp');
+    this.indoorHumidity = $('#indoor-humidity');
+
+    if (document.location.port === '4200' || document.location.port === '8080') {
+      currentTempBalanceSpace.css('display', 'none');
+      this._available = true;
+    }
+    else
+      this._available = false;
   }
 
-  return false;
-}
+  get available() { return this._available; }
 
-export function updateIndoor(celsius: boolean) {
-  const runningDev = (document.location.port === '4200');
-  const site = (runningDev ? 'http://192.168.42.92:8080' : '');
-  const url = `${site}/indoor`;
+  public update(celsius: boolean) {
+    const runningDev = (document.location.port === '4200');
+    const site = (runningDev ? 'http://192.168.42.92:8080' : '');
+    const url = `${site}/indoor`;
 
-  $.ajax({
-    url: url,
-    dataType: 'json',
-    success: (data: IndoorConditions) => {
-      if (data.error) {
-        console.error('Error reading temp/humidity: ' + data.error);
-        indoorTemp.text('‣--°');
-        indoorHumidity.text('‣--%');
+    $.ajax({
+      url: url,
+      dataType: 'json',
+      success: (data: IndoorConditions) => {
+        if (data.error) {
+          console.error('Error reading temp/humidity: ' + data.error);
+          this.indoorTemp.text('‣--°');
+          this.indoorHumidity.text('‣--%');
+        }
+        else {
+          const temp = (celsius ? data.temperature : data.temperature * 1.8 + 32);
+
+          this.indoorTemp.text(`‣${Math.round(temp)}°`);
+          this.indoorHumidity.text(`‣${Math.round(data.humidity)}%`);
+        }
+      },
+      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+        console.error('Error reading temp/humidity: ' + textStatus + ' - ' + errorThrown);
+        this.indoorTemp.text('‣--°');
+        this.indoorHumidity.text('‣--%');
       }
-      else {
-        const temp = (celsius ? data.temperature : data.temperature * 1.8 + 32);
-
-        indoorTemp.text(`‣${Math.round(temp)}°`);
-        indoorHumidity.text(`‣${Math.round(data.humidity)}%`);
-      }
-    },
-    error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-      console.error('Error reading temp/humidity: ' + textStatus + ' - ' + errorThrown);
-      indoorTemp.text('‣--°');
-      indoorHumidity.text('‣--%');
-    }
-  });
+    });
+  }
 }
