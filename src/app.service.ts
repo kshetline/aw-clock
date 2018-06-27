@@ -6,4 +6,5 @@ export interface AppService {
   updateSettings(newSettings: Settings);
   forecastHasBeenUpdated(): void;
   updateSunriseAndSunset(rise: string, set: string);
+  updateMarqueeState(isScrolling: boolean);
 }

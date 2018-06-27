@@ -18,6 +18,7 @@
 */
 
 import * as $ from 'jquery';
+import { isEdge, isSafari } from 'ks-util';
 
 export type KeyListener = (KeyboardEvent) => void;
 
@@ -84,30 +85,6 @@ export function domAlert(message: string): void {
   });
 }
 
-export function isSafari(): boolean {
-  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent) && !isEdge();
-}
-
-export function isFirefox(): boolean {
-  return /firefox/i.test(navigator.userAgent) && !/seamonkey/i.test(navigator.userAgent);
-}
-
-export function isIE(): boolean {
-  return /(?:\b(MS)?IE\s+|\bTrident\/7\.0;.*\s+rv:)(\d+)/.test(navigator.userAgent);
-}
-
-export function isEdge(): boolean {
-  return /\bedge\b/i.test(navigator.userAgent) && isWindows();
-}
-
-export function isWindows(): boolean {
-  return navigator.appVersion.includes('Windows') || navigator.platform.startsWith('Win');
-}
-
-export function isRaspbian(): boolean {
-  return navigator.userAgent.includes('Raspbian');
-}
-
 export function setSvgHref(elem: JQuery, href: string) {
   elem.attr('href', href);
 
@@ -116,110 +93,4 @@ export function setSvgHref(elem: JQuery, href: string) {
       this.setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     });
   }
-}
-
-export function getTextWidth(items: string | string[], font: string | HTMLElement, fallbackFont?: string): number {
-  const canvas = ((getTextWidth as any).canvas as HTMLCanvasElement ||
-                  ((getTextWidth as any).canvas = document.createElement('canvas') as HTMLCanvasElement));
-  const context = canvas.getContext('2d');
-  let maxWidth = 0;
-
-  if (typeof font === 'string')
-    context.font = (font ? font : 'normal 12px sans-serif');
-  else if (typeof font === 'object') {
-    const style = window.getComputedStyle(font);
-    let elementFont = style.getPropertyValue('font');
-
-    if (elementFont)
-      context.font = elementFont;
-    else {
-      const fontStyle = style.getPropertyValue('font-style');
-      const fontVariant = style.getPropertyValue('font-variant');
-      const fontWeight = style.getPropertyValue('font-weight');
-      const fontSize = style.getPropertyValue('font-size');
-      const fontFamily = style.getPropertyValue('font-family');
-
-      elementFont = (fontStyle + ' ' + fontVariant + ' ' + fontWeight + ' ' + fontSize + ' ' + fontFamily)
-        .replace(/ +/g, ' ').trim();
-
-      if (elementFont)
-        context.font = elementFont;
-      else if (fallbackFont)
-        context.font = fallbackFont;
-      else
-        context.font = 'normal 12px sans-serif';
-    }
-  }
-
-  if (!Array.isArray(items))
-    items = [items];
-
-  for (const item of items) {
-    const width = context.measureText(item).width;
-    maxWidth = Math.max(maxWidth, width);
-  }
-
-  return maxWidth;
-}
-
-interface FsDocument extends HTMLDocument {
-  mozFullScreenElement?: Element;
-  msFullscreenElement?: Element;
-  msExitFullscreen?: () => void;
-  mozCancelFullScreen?: () => void;
-}
-
-export function isFullScreen(): boolean {
-  const fsDoc = <FsDocument> document;
-
-  return !!(fsDoc.fullscreenElement || fsDoc.mozFullScreenElement || fsDoc.webkitFullscreenElement || fsDoc.msFullscreenElement);
-}
-
-interface FsDocumentElement extends HTMLElement {
-  msRequestFullscreen?: () => void;
-  mozRequestFullScreen?: () => void;
-}
-
-export function toggleFullScreen(): void {
-  const fsDoc = <FsDocument> document;
-
-  if (!isFullScreen()) {
-    const fsDocElem = <FsDocumentElement> document.documentElement;
-
-    if (fsDocElem.requestFullscreen)
-      fsDocElem.requestFullscreen();
-    else if (fsDocElem.msRequestFullscreen)
-      fsDocElem.msRequestFullscreen();
-    else if (fsDocElem.mozRequestFullScreen)
-      fsDocElem.mozRequestFullScreen();
-    else if (fsDocElem.webkitRequestFullscreen)
-      fsDocElem.webkitRequestFullscreen();
-  }
-  else if (fsDoc.exitFullscreen)
-    fsDoc.exitFullscreen();
-  else if (fsDoc.msExitFullscreen)
-    fsDoc.msExitFullscreen();
-  else if (fsDoc.mozCancelFullScreen)
-    fsDoc.mozCancelFullScreen();
-  else if (fsDoc.webkitExitFullscreen)
-    fsDoc.webkitExitFullscreen();
-}
-
-export function setFullScreen(full: boolean): void {
-  if (full !== isFullScreen())
-    toggleFullScreen();
-}
-
-export function toBoolean(str, defaultValue?: boolean) {
-  if (/^(true|t|yes|y)$/i.test(str))
-    return true;
-  else if (/^(false|f|no|n)$/i.test(str))
-    return false;
-
-  const n = Number(str);
-
-  if (!isNaN(n))
-    return n !== 0;
-
-  return defaultValue;
 }

@@ -23,7 +23,7 @@ import { Clock } from './clock';
 import { AppService } from './app.service';
 import { Forecast } from './forecast';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { isIE, setFullScreen } from './util';
+import { setFullScreen } from 'ks-util';
 import { Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
@@ -62,7 +62,7 @@ export class AwClockApp implements AppService {
 
   private lastCursorMove = 0;
   private lastForecast = 0;
-  private lastTimezone = KsTimeZone.OS_ZONE;
+  private lastTimezone: KsTimeZone;
   private lastHour = -1;
   private frequent = false;
 
@@ -74,6 +74,7 @@ export class AwClockApp implements AppService {
     this.clock = new Clock(this);
     this.clock.amPm = this.settings.amPm;
     this.clock.hideSeconds = this.settings.hideSeconds;
+    this.lastTimezone = this.clock.timezone;
 
     this.forecast = new Forecast(this);
 
@@ -87,9 +88,6 @@ export class AwClockApp implements AppService {
     this.body = $('body');
     this.cityLabel = $('#city');
     this.dimmer = $('#dimmer');
-
-    if (isIE())
-      $('#clock-container').addClass('clock-container-ie-fix');
 
     this.cityLabel.text(this.settings.city);
 
@@ -134,7 +132,7 @@ export class AwClockApp implements AppService {
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
     if (hour < this.lastHour || hour === 0 && minute === 0)
-      this.forecast.refreshForecastFromCache();
+      this.forecast.refreshFromCache();
 
     if (this.indoor.available)
       this.indoor.update(this.settings.celsius);
@@ -179,12 +177,16 @@ export class AwClockApp implements AppService {
     this.cityLabel.text(newSettings.city);
     this.clock.amPm = newSettings.amPm;
     this.clock.hideSeconds = newSettings.hideSeconds;
-    // this.ephemeris.hidePlanets = newSettings.hidePlanets;
+    this.ephemeris.hidePlanets = newSettings.hidePlanets;
     this.clock.triggerRefresh();
   }
 
   public updateSunriseAndSunset(rise: string, set: string): void {
     this.updateDimming(this.getCurrentTime(), rise, set);
+  }
+
+  public updateMarqueeState(isScrolling: boolean) {
+    this.clock.hasCompletingAnimation = isScrolling;
   }
 
   private updateDimming(now: number, todayRise: string, todaySet: string): void {

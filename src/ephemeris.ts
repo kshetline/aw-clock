@@ -25,19 +25,15 @@ import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-z
 import * as $ from 'jquery';
 import { setSvgHref } from './util';
 import { AppService } from './app.service';
+import { padLeft } from 'ks-util';
 
 const solarSystem = new SolarSystem();
 const eventFinder = new EventFinder();
 const planets = [SUN, MOON, MERCURY, VENUS, MARS, JUPITER, SATURN];
 const planetIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-const planetElems: JQuery[] = [];
-
-function pad(n) {
-  return (n < 10 ? '0' : '') + n;
-}
 
 function getMoonPhaseIcon(phase: number) {
-  return `assets/moon/phase-${pad(Math.round(phase / 360 * 28) % 28)}.svg`;
+  return `assets/moon/phase-${padLeft(Math.round(phase / 360 * 28) % 28, 2, '0')}.svg`;
 }
 
 function formatTime(date: KsDateTime, amPm: boolean) {
@@ -53,7 +49,7 @@ function formatTime(date: KsDateTime, amPm: boolean) {
     suffix = (date.wallTime.hrs < 12 ? 'a' : 'p');
   }
 
-  return pad(hours) + ':' + pad(date.wallTime.min) + suffix;
+  return padLeft(hours, 2, '0') + ':' + padLeft(date.wallTime.min, 2, '0') + suffix;
 }
 
 export class Ephemeris {
@@ -63,12 +59,13 @@ export class Ephemeris {
   private sunsets: JQuery[] = [];
   private moons: JQuery[] = [];
   private phaseTimes: JQuery[] = [];
+  private planetElems: JQuery[] = [];
 
   private _hidePlanets = false;
 
   constructor(private appService: AppService) {
     planetIds.forEach((planet, index) => {
-      planetElems[index] = $('#' + planetIds[index]);
+      this.planetElems[index] = $('#' + planetIds[index]);
     });
 
     this.planetTracks = $('#planet-tracks');
@@ -114,7 +111,7 @@ export class Ephemeris {
     planets.forEach((planet, index) => {
       const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
       const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
-      const elem = planetElems[index];
+      const elem = this.planetElems[index];
       let targetAltitude = -REFRACTION_AT_HORIZON;
 
       if (planet === SUN || planet === MOON)

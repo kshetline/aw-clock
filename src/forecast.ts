@@ -19,7 +19,8 @@
 
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { getTextWidth, isEdge, isIE, isRaspbian, setSvgHref } from './util';
+import { getTextWidth, isEdge, isIE, isRaspbian } from 'ks-util';
+import { setSvgHref } from './util';
 import { AppService } from './app.service';
 
 interface CommonConditions {
@@ -143,7 +144,7 @@ export class Forecast {
     });
   }
 
-  public refreshForecastFromCache(): void {
+  public refreshFromCache(): void {
     if (this.lastForecastData)
       this.displayForecast(this.lastForecastData);
   }
@@ -421,11 +422,11 @@ export class Forecast {
     const offsetWidth = element.offsetWidth;
 
     if (textWidth + padding <= offsetWidth) {
-      // setMarqueeIsAnimated(false);
+      this.appService.updateMarqueeState(false);
       return;
     }
 
-    // setMarqueeIsAnimated(true);
+    this.appService.updateMarqueeState(true);
 
     if (this.animationStyleSheet.cssRules.length > 0)
       this.animationStyleSheet.deleteRule(0);

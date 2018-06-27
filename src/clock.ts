@@ -20,14 +20,11 @@
 // Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed quite a bit from there.
 
 import { getDayOfWeek, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { isRaspbian } from './util';
+import { isIE, isRaspbian, padLeft } from 'ks-util';
 import { AppService } from './app.service';
+import * as $ from 'jquery';
 
 const SVC_NAMESPACE = 'http://www.w3.org/2000/svg';
-
-function pad(n) {
-  return (n < 10 ? '0' : '') + n;
-}
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -62,7 +59,7 @@ export class Clock {
   private _hideSeconds = false;
 
   public timezone = KsTimeZone.OS_ZONE;
-  public hasCompletingAnimation;
+  public hasCompletingAnimation = false;
 
   constructor(private appService: AppService) {
     this.secHand = document.getElementById('sec-hand');
@@ -83,6 +80,9 @@ export class Clock {
     this.hasBeginElement = !!this.sweep.beginElement;
 
     this.decorateClockFace();
+
+    if (isIE())
+      $('#clock-container').addClass('clock-container-ie-fix');
   }
 
   public start(): void {
@@ -212,11 +212,11 @@ export class Clock {
     const animationTime = (doMechanicalSecondHandEffect ? 200 : 0);
     const now = this.appService.getCurrentTime() + animationTime;
     const date = new KsDateTime(now, this.timezone);
-    const walltime = date.wallTime;
-    const secs = walltime.sec;
+    const wallTime = date.wallTime;
+    const secs = wallTime.sec;
     const secRotation = 6 * secs;
-    const mins = walltime.min;
-    const hour = walltime.hrs;
+    const mins = wallTime.min;
+    const hour = wallTime.hrs;
 
     if (doMechanicalSecondHandEffect)
       sweepSecondHand(this.lastSecRotation, secRotation);
@@ -225,15 +225,15 @@ export class Clock {
     this.lastSecRotation = secRotation;
     rotate(this.minHand, 6 * mins + 0.1 * secs);
     rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + secs / 120);
-    setTimeout(() => this.tick(), 1000 - walltime.millis);
+    setTimeout(() => this.tick(), 1000 - wallTime.millis);
 
     setTimeout(() => {
-      const dayOfTheWeek = getDayOfWeek(walltime.n);
+      const dayOfTheWeek = getDayOfWeek(wallTime.n);
 
       this.dayOfWeekCaption.textContent = daysOfWeek[dayOfTheWeek].toUpperCase();
-      this.dateCaption.textContent = pad(walltime.d);
-      this.monthCaption.textContent = months[walltime.m - 1].toUpperCase();
-      this.yearCaption.textContent = walltime.y.toString();
+      this.dateCaption.textContent = padLeft(wallTime.d, 2, '0');
+      this.monthCaption.textContent = months[wallTime.m - 1].toUpperCase();
+      this.yearCaption.textContent = wallTime.y.toString();
       this.day2Caption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
       this.day3Caption.textContent = daysOfWeek[(dayOfTheWeek + 3) % 7];
       this.zoneCaption.textContent = this.timezone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
@@ -251,8 +251,8 @@ export class Clock {
       }
 
       this.timeCaption.textContent =
-        pad(displayHour) + ':' +
-        pad(mins) + (this._hideSeconds ? '' : ':' + pad(secs)) + suffix;
+        padLeft(displayHour, 2, '0') + ':' +
+        padLeft(mins, 2, '0') + (this._hideSeconds ? '' : ':' + padLeft(secs, 2, '0')) + suffix;
 
       if (mins !== this.lastMinute || this.lastTick + 60000 <= now) {
         this.appService.updateTime(hour, mins, this.lastMinute < 0);

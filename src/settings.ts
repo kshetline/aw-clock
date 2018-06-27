@@ -18,7 +18,7 @@
 */
 
 import * as Cookies from 'js-cookie';
-import { toBoolean } from './util';
+import { toBoolean } from 'ks-util';
 
 export class Settings {
   latitude = 42.75;
