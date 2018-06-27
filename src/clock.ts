@@ -26,6 +26,8 @@ import * as $ from 'jquery';
 
 const SVC_NAMESPACE = 'http://www.w3.org/2000/svg';
 
+const SECOND_HAND_ANIMATION_TIME = 200;
+
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -209,7 +211,7 @@ export class Clock {
     };
 
     const doMechanicalSecondHandEffect = this.hasBeginElement && (!isRaspbian() || !this.hasCompletingAnimation);
-    const animationTime = (doMechanicalSecondHandEffect ? 200 : 0);
+    const animationTime = (doMechanicalSecondHandEffect ? SECOND_HAND_ANIMATION_TIME : 0);
     const now = this.appService.getCurrentTime() + animationTime;
     const date = new KsDateTime(now, this.timezone);
     const wallTime = date.wallTime;

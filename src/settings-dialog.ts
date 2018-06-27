@@ -22,6 +22,10 @@ import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from '.
 import { Settings } from './settings';
 import { AppService } from './app.service';
 
+const ERROR_BACKGROUND = '#FCC';
+const WARNING_BACKGROUND = '#FFC';
+const LIMIT_REACHED_BACKGROUND = '#FC9';
+
 interface SearchLocation {
   city: string;
   displayName: string;
@@ -165,15 +169,15 @@ export class SettingsDialog {
 
         if (response.error) {
           this.searchMessage.text(response.error);
-          this.searchMessage.css('background-color', '#FCC');
+          this.searchMessage.css('background-color', ERROR_BACKGROUND);
         }
         else if (response.warning) {
           this.searchMessage.text(response.warning);
-          this.searchMessage.css('background-color', '#FFC');
+          this.searchMessage.css('background-color', WARNING_BACKGROUND);
         }
         else if (response.limitReached) {
           this.searchMessage.text('Some matches are not displayed because the result limit was exceeded.');
-          this.searchMessage.css('background-color', '#FC9');
+          this.searchMessage.css('background-color', LIMIT_REACHED_BACKGROUND);
         }
 
         const self = this;

@@ -23,6 +23,22 @@ import { getTextWidth, isEdge, isIE, isRaspbian } from 'ks-util';
 import { setSvgHref } from './util';
 import { AppService } from './app.service';
 
+const DEFAULT_BACKGROUND = 'midnightblue';
+const DEFAULT_FOREGROUND = 'white';
+const ERROR_BACKGROUND = '#CCC';
+const ERROR_FOREGROUND = 'black';
+const ADVISORY_BACKGROUND = 'cyan';
+const ADVISORY_FOREGROUND = 'black';
+const WATCH_BACKGROUND = 'orange';
+const WATCH_FOREGROUND = 'black';
+const WARNING_BACKGROUND = 'red';
+const WARNING_FOREGROUND = 'white';
+
+const MARQUEE_SPEED = 100; // pixels per second
+const RASPBIAN_MARQUEE_FRAMERATE = 30; // frames per second
+
+const FREQUENT_THRESHOLD = 300;
+
 interface CommonConditions {
   time: number;
   summary: string;
@@ -88,15 +104,15 @@ export class Forecast {
   private currentTemp: JQuery;
   private feelsLike: JQuery;
   private humidity: JQuery;
-  private currentIcon: JQuery;
-  private marquee: JQuery;
+  private readonly currentIcon: JQuery;
+  private readonly marquee: JQuery;
 
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
   private dayChancePrecips: JQuery[] = [];
   private dayPrecipAccums: JQuery[] = [];
 
-  private weatherServer = '';
+  private readonly weatherServer;
 
   private lastForecastData: ForecastData;
   private timezone = KsTimeZone.OS_ZONE;
@@ -104,7 +120,7 @@ export class Forecast {
   private animationStyleSheet: CSSStyleSheet;
   private keyframesIndex = 0;
   private lastMarqueeText = '';
-  private slowerFrameRate = false;
+  private readonly slowerFrameRate = isRaspbian();
 
   constructor(private appService: AppService) {
     this.currentTemp = $('#current-temp');
@@ -123,13 +139,12 @@ export class Forecast {
 
     if (!isIE() && !isEdge())
       this.weatherServer = new URL(window.location.href).searchParams.get('weather_server') || 'http://localhost:8080';
+    else
+      this.weatherServer = '';
 
     window.addEventListener('resize', () => this.updateMarqueeAnimation());
     $('head').append('<style id="marquee-animations" type="text/css"></style>');
     this.animationStyleSheet = ($('#marquee-animations').get(0) as HTMLStyleElement).sheet as CSSStyleSheet;
-
-    if (isRaspbian())
-      this.slowerFrameRate = true;
   }
 
   public update(latitude: number, longitude: number, isMetric: boolean, amPm: boolean, userId?: string): void {
@@ -165,12 +180,12 @@ export class Forecast {
     this.marquee.text(error || '\u00A0');
 
     if (error) {
-      this.marquee.css('background-color', '#CCC');
-      this.marquee.css('color', 'black');
+      this.marquee.css('background-color', ERROR_BACKGROUND);
+      this.marquee.css('color', ERROR_FOREGROUND);
     }
     else {
-      this.marquee.css('background-color', 'midnightblue');
-      this.marquee.css('color', 'white');
+      this.marquee.css('background-color', DEFAULT_BACKGROUND);
+      this.marquee.css('color', DEFAULT_FOREGROUND);
     }
 
     this.updateMarqueeAnimation(null);
@@ -207,7 +222,7 @@ export class Forecast {
           if (cacheControl) {
             const match = /max-age=(\d+)/.exec(cacheControl);
 
-            if (match && Number(match[1]) <= 300)
+            if (match && Number(match[1]) <= FREQUENT_THRESHOLD)
               data.frequent = true;
           }
 
@@ -371,23 +386,23 @@ export class Forecast {
 
         switch (maxSeverity) {
           case 0:
-            background = 'midnightblue';
-            color = 'white';
+            background = DEFAULT_BACKGROUND;
+            color = DEFAULT_FOREGROUND;
           break;
 
           case 1:
-            background = 'cyan';
-            color = 'black';
+            background = ADVISORY_BACKGROUND;
+            color = ADVISORY_FOREGROUND;
           break;
 
           case 2:
-            background = 'orange';
-            color = 'black';
+            background = WATCH_BACKGROUND;
+            color = WATCH_FOREGROUND;
           break;
 
           case 3:
-            background = 'red';
-            color = 'white';
+            background = WARNING_BACKGROUND;
+            color = WARNING_FOREGROUND;
           break;
         }
 
@@ -397,8 +412,8 @@ export class Forecast {
       }
       else {
         this.marquee.text('\u00A0');
-        this.marquee.css('background-color', 'midnightblue');
-        this.marquee.css('color', 'white');
+        this.marquee.css('background-color', DEFAULT_BACKGROUND);
+        this.marquee.css('color', DEFAULT_FOREGROUND);
       }
 
       this.updateMarqueeAnimation(null);
@@ -433,10 +448,10 @@ export class Forecast {
 
     const keyframesName = 'marquee-' + this.keyframesIndex++;
     const keyframesRule = `@keyframes ${keyframesName} { 0% { text-indent: ${offsetWidth}px } 100% { text-indent: -${textWidth}px; } }`;
-    const seconds = (textWidth + offsetWidth) / 100;
+    const seconds = (textWidth + offsetWidth) / MARQUEE_SPEED;
     // When the Raspberry Pi tries to scroll the marquee as fast as it can, the result is very jerky. It will be better
     // to have a slow but steady frame rate the Raspberry Pi can keep up with.
-    const linearOrSteps = (this.slowerFrameRate ? `steps(${Math.round(seconds * 30)})` : 'linear');
+    const linearOrSteps = (this.slowerFrameRate ? `steps(${Math.round(seconds * RASPBIAN_MARQUEE_FRAMERATE)})` : 'linear');
 
     this.animationStyleSheet.insertRule(keyframesRule, 0);
     this.marquee.css('animation', `${keyframesName} ${seconds}s infinite ${linearOrSteps}`);
