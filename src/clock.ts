@@ -24,7 +24,7 @@ import { isIE, isRaspbian, padLeft } from 'ks-util';
 import { AppService } from './app.service';
 import * as $ from 'jquery';
 
-const SVC_NAMESPACE = 'http://www.w3.org/2000/svg';
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 const SECOND_HAND_ANIMATION_TIME = 200;
 
@@ -131,7 +131,7 @@ export class Clock {
     for (let i = 0; i < 360; i += 6) {
       const x1 = center + radius * Math.cos(Math.PI * i / 180);
       const y1 = center + radius * Math.sin(Math.PI * i / 180);
-      const tickMark = document.createElementNS(SVC_NAMESPACE, 'circle');
+      const tickMark = document.createElementNS(SVG_NAMESPACE, 'circle');
 
       tickMark.setAttributeNS(null, 'cx', x1.toString());
       tickMark.setAttributeNS(null, 'cy', y1.toString());
@@ -144,7 +144,7 @@ export class Clock {
         const h = (i === 270 ? 12 : ((i + 90) % 360) / 30);
         const x2 = center + textRadius * Math.cos(Math.PI * i / 180);
         const y2 = center + textRadius * Math.sin(Math.PI * i / 180);
-        const text2 = document.createElementNS(SVC_NAMESPACE, 'text');
+        const text2 = document.createElementNS(SVG_NAMESPACE, 'text');
 
         text2.setAttributeNS(null, 'x', x2.toString());
         text2.setAttributeNS(null, 'y', y2.toString());
@@ -155,7 +155,7 @@ export class Clock {
 
         const x3 = center + constellationRadius * Math.cos(Math.PI * (-i - 15) / 180);
         const y3 = center + constellationRadius * Math.sin(Math.PI * (-i - 15) / 180);
-        const text3 = document.createElementNS(SVC_NAMESPACE, 'text');
+        const text3 = document.createElementNS(SVG_NAMESPACE, 'text');
 
         text3.setAttributeNS(null, 'x', x3.toString());
         text3.setAttributeNS(null, 'y', y3.toString());
@@ -171,8 +171,8 @@ export class Clock {
     planetSymbols.forEach((planet, index) => {
       const x = center + 10 + index * 2;
       const dy = 0.75 + (index % 2) * 2;
-      const rect = document.createElementNS(SVC_NAMESPACE, 'rect');
-      const text = document.createElementNS(SVC_NAMESPACE, 'text');
+      const rect = document.createElementNS(SVG_NAMESPACE, 'rect');
+      const text = document.createElementNS(SVG_NAMESPACE, 'text');
 
       rect.setAttributeNS(null, 'x', (x - 0.9).toString());
       rect.setAttributeNS(null, 'y', (center + dy - 2).toString());

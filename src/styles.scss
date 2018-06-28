@@ -174,10 +174,23 @@ body {
   position: absolute;
   bottom: 1em;
   right: 1em;
+  left: 1em;
+  display: flex;
+  align-items: center;
 
   & button {
     min-width: 80px; // Ignored by macOS Chrome
   }
+
+  & button:not(:first-child), span:not(:first-child) {
+    margin-left: 0.5em;
+  }
+}
+
+.version-number {
+  flex-grow: 1;
+  color: #CCC;
+  font-size: smaller;
 }
 
 .alert-buttons {
