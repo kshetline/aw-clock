@@ -32,7 +32,8 @@ import { Indoor } from './indoor';
 initTimeZoneSmall();
 
 const baseTime = Date.now();
-const debugTime = 0; // +new Date(2018, 5, 25, 5, 8, 40, 0);
+const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
+const debugTimeRate = 60;
 
 function parseTime(s: string): number {
   const parts = s.split(':');
@@ -111,9 +112,13 @@ export class AwClockApp implements AppService {
 
   getCurrentTime(): number {
     if (debugTime)
-      return debugTime + Date.now() - baseTime;
+      return debugTime + (Date.now() - baseTime) * debugTimeRate;
     else
       return Date.now();
+  }
+
+  isTimeAccelerated(): boolean {
+    return (!!debugTime && debugTimeRate > 1);
   }
 
   public start() {
@@ -139,7 +144,11 @@ export class AwClockApp implements AppService {
 
     this.lastHour = hour;
 
-    const interval = (this.frequent ? 5 : 15);
+    let interval = (this.frequent ? 5 : 15);
+
+    if (this.isTimeAccelerated())
+      interval *= debugTimeRate;
+
     const runningLate = (this.lastForecast + interval * 60000 <= now);
     const minuteOffset = (this.frequent ? 0 : this.pollingMinute);
     const millisOffset = (this.frequent || forceRefresh || runningLate ? 0 : this.pollingMillis);

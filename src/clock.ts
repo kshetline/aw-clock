@@ -125,8 +125,10 @@ export class Clock {
     const textRadius = 33.5;
     const constellationRadius = 24;
     const center = 50;
+    const centerStr = center.toString();
     const clock = document.getElementById('clock');
     const planetTracks = document.getElementById('planet-tracks');
+    const risenTracks = document.getElementById('risen-tracks');
 
     for (let i = 0; i < 360; i += 6) {
       const x1 = center + radius * Math.cos(Math.PI * i / 180);
@@ -166,13 +168,15 @@ export class Clock {
       }
     }
 
-    const planetSymbols = [0x263C, 0x263D, 0x0263F, 0x2640, 0x2642, 0x2643, 0x2644]; // Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn
+    const planetSymbols = [0x263C, 0x263D, 0x0263F, 0x2640, 0x2642, 0x2643, 0x2644];
+    const planetIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
 
     planetSymbols.forEach((planet, index) => {
       const x = center + 10 + index * 2;
       const dy = 0.75 + (index % 2) * 2;
       const rect = document.createElementNS(SVG_NAMESPACE, 'rect');
       const text = document.createElementNS(SVG_NAMESPACE, 'text');
+      const path = document.createElementNS(SVG_NAMESPACE, 'path');
 
       rect.setAttributeNS(null, 'x', (x - 0.9).toString());
       rect.setAttributeNS(null, 'y', (center + dy - 2).toString());
@@ -182,11 +186,17 @@ export class Clock {
       planetTracks.appendChild(rect);
 
       text.setAttributeNS(null, 'x', x.toString());
-      text.setAttributeNS(null, 'y', center.toString());
+      text.setAttributeNS(null, 'y', centerStr);
       text.setAttributeNS(null, 'dy', dy.toString());
       text.classList.add('constellation');
       text.textContent = String.fromCodePoint(planet);
       planetTracks.appendChild(text);
+
+      path.setAttributeNS(null, 'fill', 'none');
+      path.setAttributeNS(null, 'visibility', 'inherited');
+      path.classList.add('risen-track');
+      path.id = `risen-${planetIds[index]}`;
+      risenTracks.appendChild(path);
     });
   }
 
@@ -210,7 +220,8 @@ export class Clock {
       this.sweep.beginElement();
     };
 
-    const doMechanicalSecondHandEffect = this.hasBeginElement && (!isRaspbian() || !this.hasCompletingAnimation);
+    const doMechanicalSecondHandEffect = this.hasBeginElement && !this.appService.isTimeAccelerated() &&
+            (!isRaspbian() || !this.hasCompletingAnimation);
     const animationTime = (doMechanicalSecondHandEffect ? SECOND_HAND_ANIMATION_TIME : 0);
     const now = this.appService.getCurrentTime() + animationTime;
     const date = new KsDateTime(now, this.timezone);

@@ -19,6 +19,7 @@
 
 import * as $ from 'jquery';
 import { isEdge, isSafari } from 'ks-util';
+import { cos_deg, Point, sin_deg } from 'ks-math';
 
 export type KeyListener = (KeyboardEvent) => void;
 
@@ -93,4 +94,22 @@ export function setSvgHref(elem: JQuery, href: string) {
       this.setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     });
   }
+}
+
+export function polarToRectangular(cx: number, cy: number, radius: number, angleInDegrees: number): Point {
+  return {
+    x: cx + radius * cos_deg(angleInDegrees),
+    y: cy + radius * sin_deg(angleInDegrees)
+  };
+}
+
+export function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number): string {
+  const start = polarToRectangular(x, y, radius, startAngle);
+  const end = polarToRectangular(x, y, radius, endAngle);
+  const largeArcFlag = (endAngle - startAngle <= 180 ? 0 : 1);
+
+  return [
+    'M', start.x, start.y,
+    'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y
+  ].join(' ');
 }

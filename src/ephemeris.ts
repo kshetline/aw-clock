@@ -23,9 +23,10 @@ import {
 } from 'ks-astronomy';
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import * as $ from 'jquery';
-import { setSvgHref } from './util';
+import { describeArc, setSvgHref } from './util';
 import { AppService } from './app.service';
 import { padLeft } from 'ks-util';
+import { mod } from 'ks-math';
 
 const solarSystem = new SolarSystem();
 const eventFinder = new EventFinder();
@@ -55,6 +56,7 @@ function formatTime(date: KsDateTime, amPm: boolean) {
 export class Ephemeris {
   private planetTracks: JQuery;
   private planetSymbols: JQuery;
+  private risenTracks: JQuery;
   private sunrises: JQuery[] = [];
   private sunsets: JQuery[] = [];
   private moons: JQuery[] = [];
@@ -70,6 +72,7 @@ export class Ephemeris {
 
     this.planetTracks = $('#planet-tracks');
     this.planetSymbols = $('#planets');
+    this.risenTracks = $('#risen-tracks');
 
     for (let i = 0; i < 4; ++i) {
       this.sunrises[i] = $('#day' + i + '-sunrise');
@@ -87,10 +90,12 @@ export class Ephemeris {
       if (newValue) {
         this.planetTracks.css('visibility', 'hidden');
         this.planetSymbols.css('visibility', 'hidden');
+        this.risenTracks.css('visibility', 'hidden');
       }
       else {
         this.planetTracks.css('visibility', 'visible');
         this.planetSymbols.css('visibility', 'visible');
+        this.risenTracks.css('visibility', 'visible');
       }
     }
   }
@@ -118,7 +123,32 @@ export class Ephemeris {
         targetAltitude -= AVG_SUN_MOON_RADIUS;
 
       rotate(elem, -eclipticLongitude);
-      elem.css('stroke-width', altitude < targetAltitude ? '0.5' : '0');
+      elem.css('stroke-width', altitude < targetAltitude ? '0.25' : '0');
+      elem[0].setAttributeNS(null, 'r', altitude < targetAltitude ? '0.625' : '0.75');
+
+      const risenTrack = $('#risen-' + planetIds[index]);
+      const rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU + 5 / 1400, observer, timezone, null, true);
+      const set = eventFinder.findEvent(planet, SET_EVENT, time_JDU - 5 / 1440, observer, timezone);
+
+      if (rise && rise.ut > time_JDU - 1.1 && set && set.ut < time_JDU + 1.1) {
+        const currentAngle = mod(-eclipticLongitude, 360);
+        const radius = 10 + index * 2;
+        let riseAngle = currentAngle + (time_JDU - rise.ut) * 360;
+        let setAngle = currentAngle + (time_JDU - set.ut) * 360;
+
+        while (setAngle + 360 < riseAngle)
+          setAngle += 360;
+
+        while (riseAngle < setAngle)
+          riseAngle += 360;
+
+        const arc = describeArc(50, 50, radius, setAngle, riseAngle);
+
+        risenTrack[0].setAttributeNS(null, 'd', arc);
+        risenTrack.css('visibility', 'inherited');
+      }
+      else
+        risenTrack.css('visibility', 'hidden');
     });
 
     eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {

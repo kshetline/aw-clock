@@ -4,6 +4,7 @@ $constellation-font: "Apple Symbols", "Arial Unicode MS", "MS Gothic", sans-seri
 $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 $clock-border: #69C;
+$risen-track: rgba(102, 204, 153, 0.5);
 
 html {
   width: 100%;
@@ -359,6 +360,11 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   stroke: $planet-grid;
   stroke-width: 0.25;
   fill: none;
+}
+
+.risen-track {
+  stroke: $risen-track;
+  stroke-width: 0.5;
 }
 
 .constellation {
