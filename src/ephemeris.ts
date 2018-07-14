@@ -18,6 +18,7 @@
 */
 
 import {
+  AstroEvent,
   AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MOON, REFRACTION_AT_HORIZON, RISE_EVENT, SATURN,
   SET_EVENT, SkyObserver, SolarSystem, SUN, UT_to_TDB, VENUS
 } from 'ks-astronomy';
@@ -122,13 +123,27 @@ export class Ephemeris {
       if (planet === SUN || planet === MOON)
         targetAltitude -= AVG_SUN_MOON_RADIUS;
 
+      const risen = (altitude >= targetAltitude);
+      const risenTrack = $('#risen-' + planetIds[index]);
+      let rise: AstroEvent;
+      let set: AstroEvent;
+
       rotate(elem, -eclipticLongitude);
-      elem.css('stroke-width', altitude < targetAltitude ? '0.25' : '0');
+      elem.css('stroke-width', risen ? '0' : '0.25');
       elem[0].setAttributeNS(null, 'r', altitude < targetAltitude ? '0.625' : '0.75');
 
-      const risenTrack = $('#risen-' + planetIds[index]);
-      const rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU + 5 / 1400, observer, timezone, null, true);
-      const set = eventFinder.findEvent(planet, SET_EVENT, time_JDU - 5 / 1440, observer, timezone);
+      if (risen) {
+        rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU + 2 / 1400, observer, timezone, null, true);
+
+        if (rise)
+          set = eventFinder.findEvent(planet, SET_EVENT, rise.ut, observer, timezone);
+      }
+      else {
+        set = eventFinder.findEvent(planet, SET_EVENT, time_JDU + 2 / 1400, observer, timezone, null, true);
+
+        if (set)
+          rise = eventFinder.findEvent(planet, RISE_EVENT, set.ut, observer, timezone);
+      }
 
       if (rise && rise.ut > time_JDU - 1.1 && set && set.ut < time_JDU + 1.1) {
         const currentAngle = mod(-eclipticLongitude, 360);
