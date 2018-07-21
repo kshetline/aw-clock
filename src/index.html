@@ -128,58 +128,56 @@
     </div>
     <div id="marquee">&nbsp;</div>
     <div class="darksky"><img id="settings-btn" src="assets/gear.svg" width="35" height="40" alt="Settings"><a href="https://darksky.net/poweredby/" target="_blank"><img src="assets/dark-sky-logo.png" width="125" height="50" alt="Powered by Dark Sky"></a></div>
+    <div id="dimmer"></div>
     <div id="settings-dialog" class="dialog-wrapper">
       <div>
         <div class="user-options">
-          <div><label for="current-city">Current city:</label><input id="current-city" type="text" size="38"></div>
-          <div><label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative for south)</span></div>
-          <div><label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative for west)</span></div>
-          <div><label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span></div>
-          <div><label for="dimming">Dimming:</label>
-            <span class="colspan">
-              <select id="dimming">
-                <option value="0">None</option>
-                <option value="25">25%</option>
-                <option value="30">30%</option>
-                <option value="35">35%</option>
-                <option value="40">40%</option>
-                <option value="45">45%</option>
-                <option value="50">50%</option>
-                <option value="55">55%</option>
-                <option value="60">60%</option>
-                <option value="65">65%</option>
-                <option value="70">70%</option>
-                <option value="75">75%</option>
-              </select>
-              &nbsp;
-              <select id="dimming-start">
-              </select>
-              <span id="dimming-to">&nbsp;to&nbsp;</span>
-              <select id="dimming-end">
-              </select>
-            </span>
-          </div>
-          <div>
-            <span></span>
-            <span class="colspan">
-              <select id="temperature-option">
-                <option value="F">°F</option>
-                <option value="C">°C</option>
-              </select>
-              <select id="hours-option">
-                <option value="24">24-hour time</option>
-                <option value="AMPM">AM/PM time</option>
-              </select>
-              <select id="seconds-option">
-                <option value="S">Show seconds</option>
-                <option value="H">Hide seconds</option>
-              </select>
-              <select id="planets-option">
-                <option value="S">Show planets</option>
-                <option value="H">Hide planets</option>
-              </select>
-            </span>
-          </div>
+          <label for="current-city">Current city:</label><input id="current-city" type="text" size="38"><span></span>
+          <label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative for south)</span>
+          <label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative for west)</span>
+          <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
+          <label for="dimming">Dimming:</label>
+          <span class="colspan">
+            <select id="dimming">
+              <option value="0">None</option>
+              <option value="25">25%</option>
+              <option value="30">30%</option>
+              <option value="35">35%</option>
+              <option value="40">40%</option>
+              <option value="45">45%</option>
+              <option value="50">50%</option>
+              <option value="55">55%</option>
+              <option value="60">60%</option>
+              <option value="65">65%</option>
+              <option value="70">70%</option>
+              <option value="75">75%</option>
+            </select>
+            &nbsp;
+            <select id="dimming-start">
+            </select>
+            <span id="dimming-to">&nbsp;to&nbsp;</span>
+            <select id="dimming-end">
+            </select>
+          </span>
+          <span></span>
+          <span class="colspan">
+            <select id="temperature-option">
+              <option value="F">°F</option>
+              <option value="C">°C</option>
+            </select>
+            <select id="hours-option">
+              <option value="24">24-hour time</option>
+              <option value="AMPM">AM/PM time</option>
+            </select>
+            <select id="seconds-option">
+              <option value="S">Show seconds</option>
+              <option value="H">Hide seconds</option>
+            </select>
+            <select id="planets-option">
+              <option value="S">Show planets</option>
+              <option value="H">Hide planets</option>
+            </select>
+          </span>
         </div>
         <div class="search-section">
           <form action="javascript:void(0)" method="get" id="search">
@@ -210,6 +208,5 @@
         </div>
       </div>
     </div>
-    <div id="dimmer"></div>
   </body>
 </html>
