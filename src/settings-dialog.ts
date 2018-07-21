@@ -21,7 +21,7 @@ import * as $ from 'jquery';
 import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 import { Settings } from './settings';
 import { AppService } from './app.service';
-import { isIE } from 'ks-util';
+import { isIE, isSafari } from 'ks-util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -133,11 +133,12 @@ export class SettingsDialog {
     });
 
     if (isIE()) {
-      const userOptions = $('.user-options');
-
-      userOptions.children().each(function() {
+      $('.user-options').children().each(function() {
         $(this).css('margin', '0 4px 4px 0');
       });
+    }
+    else if (isSafari()) {
+      $('.user-options').css('grid-row-gap', '0');
     }
   }
 

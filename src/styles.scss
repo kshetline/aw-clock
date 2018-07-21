@@ -226,11 +226,12 @@ body {
   display: grid;
   -ms-grid-columns: max-content auto auto;
   grid-template-columns: max-content auto auto;
-  grid-gap: 4px;
+  grid-column-gap: 4px;
+  grid-row-gap: 3px;
 
   &>* {
     -ms-grid-row-align: center;
-    align-self: baseline;
+    align-self: center;
     display: block; // Needed to make IE grid layout work
   }
 
