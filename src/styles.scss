@@ -229,7 +229,9 @@ body {
   grid-gap: 4px;
 
   &>* {
+    -ms-grid-row-align: center;
     align-self: baseline;
+    display: block; // Needed to make IE grid layout work
   }
 
   &>.colspan {

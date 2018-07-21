@@ -21,6 +21,7 @@ import * as $ from 'jquery';
 import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 import { Settings } from './settings';
 import { AppService } from './app.service';
+import { isIE } from 'ks-util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -130,6 +131,14 @@ export class SettingsDialog {
       event.preventDefault();
       this.doSearch();
     });
+
+    if (isIE()) {
+      const userOptions = $('.user-options');
+
+      userOptions.children().each(function() {
+        $(this).css('margin', '0 4px 4px 0');
+      });
+    }
   }
 
   private doSearch(): void {
