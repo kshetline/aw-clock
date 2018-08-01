@@ -1,6 +1,6 @@
 $std-font: Verdana, "DejaVu Sans", sans-serif;
 $clock-face-font: "Arial Unicode MS", Arial, Helvetica, sans-serif;
-$constellation-font: "Apple Symbols", "Arial Unicode MS", "MS Gothic", sans-serif;
+$constellation-font: Astronomy;
 $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 $clock-border: #69C;
@@ -24,21 +24,56 @@ body {
   cursor: none;
 }
 
-#marquee {
+@font-face {
+  font-family: Astronomy;
+  src: url("assets/Astronomy.ttf");
+  unicode-range: U+263C-2653;
+}
+
+#marquee-outer-wrapper {
   position: fixed;
   left: 0;
   right: 170px;
   bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
   background-color: midnightblue;
   font-size: 14px;
   padding: 2px 1em;
   overflow: hidden;
   white-space: nowrap;
-  animation: none;
 }
 
-#marquee:hover {
-  animation-play-state: paused;
+#marquee-wrapper {
+  display: inline-block;
+  flex: 1 0 auto;
+  position: relative;
+  background: inherit;
+  color: inherit;
+  font: inherit;
+  overflow: hidden;
+}
+
+.marquee-spacer {
+  display: inline-block;
+  background: inherit;
+  color: inherit;
+  font: inherit;
+}
+
+#marquee {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: inherit;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #settings-btn {
@@ -440,13 +475,13 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 
 .planet-track {
   stroke: $planet-grid;
-  stroke-width: 0.25;
+  stroke-width: 0.25px;
   fill: none;
 }
 
 .risen-track {
   stroke: $risen-track;
-  stroke-width: 0.5;
+  stroke-width: 0.5px;
 }
 
 .constellation {

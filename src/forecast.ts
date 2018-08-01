@@ -19,7 +19,7 @@
 
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { getTextWidth, isEdge, isIE, isRaspbian } from 'ks-util';
+import { getTextWidth, isEdge, isIE } from 'ks-util';
 import { setSvgHref } from './util';
 import { AppService } from './app.service';
 
@@ -35,7 +35,6 @@ const WARNING_BACKGROUND = 'red';
 const WARNING_FOREGROUND = 'white';
 
 const MARQUEE_SPEED = 100; // pixels per second
-const RASPBIAN_MARQUEE_FRAMERATE = 30; // frames per second
 
 const FREQUENT_THRESHOLD = 300;
 
@@ -105,6 +104,8 @@ export class Forecast {
   private feelsLike: JQuery;
   private humidity: JQuery;
   private readonly currentIcon: JQuery;
+  private readonly marqueeOuterWrapper: JQuery;
+  private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
 
   private dayIcons: JQuery[] = [];
@@ -117,10 +118,12 @@ export class Forecast {
   private lastForecastData: ForecastData;
   private timezone = KsTimeZone.OS_ZONE;
 
-  private animationStyleSheet: CSSStyleSheet;
-  private keyframesIndex = 0;
-  private lastMarqueeText = '';
-  private readonly slowerFrameRate = isRaspbian();
+  private marqueeText = '';
+  private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0';
+  private animationStart: number;
+  private animationWidth: number;
+  private animationDuration: number;
+  private animationRequestId = 0;
 
   constructor(private appService: AppService) {
     this.currentTemp = $('#current-temp');
@@ -135,6 +138,8 @@ export class Forecast {
       this.dayPrecipAccums[i] = $('#day' + i + '-precip-accum');
     }
 
+    this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
+    this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
 
     if (!isIE() && !isEdge())
@@ -142,9 +147,7 @@ export class Forecast {
     else
       this.weatherServer = '';
 
-    window.addEventListener('resize', () => this.updateMarqueeAnimation());
-    $('head').append('<style id="marquee-animations" type="text/css"></style>');
-    this.animationStyleSheet = ($('#marquee-animations').get(0) as HTMLStyleElement).sheet as CSSStyleSheet;
+    window.addEventListener('resize', () => this.updateMarqueeAnimation(null));
   }
 
   public update(latitude: number, longitude: number, isMetric: boolean, amPm: boolean, userId?: string): void {
@@ -177,18 +180,16 @@ export class Forecast {
       this.dayPrecipAccums[index].text('--');
     });
 
-    this.marquee.text(error || '\u00A0');
-
     if (error) {
-      this.marquee.css('background-color', ERROR_BACKGROUND);
-      this.marquee.css('color', ERROR_FOREGROUND);
+      this.marqueeOuterWrapper.css('background-color', ERROR_BACKGROUND);
+      this.marqueeOuterWrapper.css('color', ERROR_FOREGROUND);
     }
     else {
-      this.marquee.css('background-color', DEFAULT_BACKGROUND);
-      this.marquee.css('color', DEFAULT_FOREGROUND);
+      this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
+      this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
     }
 
-    this.updateMarqueeAnimation(null);
+    this.updateMarqueeAnimation(error || '\u00A0');
   }
 
   public getTimezone(): KsTimeZone {
@@ -360,6 +361,7 @@ export class Forecast {
       });
 
       let alertText: string;
+      let newText;
       let maxSeverity = 0;
       const alerts: string[] = [];
 
@@ -406,54 +408,68 @@ export class Forecast {
           break;
         }
 
-        this.marquee.text(alertText);
-        this.marquee.css('background-color', background);
-        this.marquee.css('color', color);
+        newText = alertText;
+        this.marqueeOuterWrapper.css('background-color', background);
+        this.marqueeOuterWrapper.css('color', color);
       }
       else {
-        this.marquee.text('\u00A0');
-        this.marquee.css('background-color', DEFAULT_BACKGROUND);
-        this.marquee.css('color', DEFAULT_FOREGROUND);
+        newText = '\u00A0';
+        this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
+        this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
       }
 
-      this.updateMarqueeAnimation(null);
+      this.updateMarqueeAnimation(newText);
     }
   }
 
-  private updateMarqueeAnimation(event?: Event): void {
-    const newText = this.marquee.text();
+  private updateMarqueeAnimation(newText: string): void {
 
-    if (event === null && this.lastMarqueeText === newText)
-      return;
+    if (newText !== null) {
+      if (newText === this.marqueeText)
+        return;
+      else
+        this.marqueeText = newText;
+    }
+    else
+      newText = this.marqueeText;
 
-    this.lastMarqueeText = newText;
-    this.marquee.css('animation', 'none');
+    const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
+    const textWidth = getTextWidth(newText, this.marquee[0]);
 
-    const element = this.marquee[0];
-    const textWidth = getTextWidth(newText, element);
-    const style = window.getComputedStyle(element);
-    const padding = Number(style.getPropertyValue('padding-left').replace('px', '')) +
-                    Number(style.getPropertyValue('padding-right').replace('px', ''));
-    const offsetWidth = element.offsetWidth;
+    this.marquee.css('width', marqueeWidth + 'px');
+    this.marquee.css('text-indent', '0');
 
-    if (textWidth + padding <= offsetWidth) {
+    if (textWidth <= marqueeWidth) {
+      this.marquee.text(newText);
+      this.animationStart = 0;
       this.appService.updateMarqueeState(false);
+
+      if (this.animationRequestId) {
+        window.cancelAnimationFrame(this.animationRequestId);
+        this.animationRequestId = 0;
+      }
+
       return;
     }
 
+    this.marquee.text(newText + this.marqueeJoiner + newText);
+    this.marquee.text(newText + this.marqueeJoiner + newText);
+    this.animationStart = performance.now();
+    this.animationWidth = textWidth + getTextWidth(this.marqueeJoiner, this.marquee[0]);
+    this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
+    this.animationRequestId = window.requestAnimationFrame(() => this.animate());
     this.appService.updateMarqueeState(true);
+  }
 
-    if (this.animationStyleSheet.cssRules.length > 0)
-      this.animationStyleSheet.deleteRule(0);
+  private animate(): void {
+    if (!this.animationStart)
+      return;
 
-    const keyframesName = 'marquee-' + this.keyframesIndex++;
-    const keyframesRule = `@keyframes ${keyframesName} { 0% { text-indent: ${offsetWidth}px } 100% { text-indent: -${textWidth}px; } }`;
-    const seconds = (textWidth + offsetWidth) / MARQUEE_SPEED;
-    // When the Raspberry Pi tries to scroll the marquee as fast as it can, the result is very jerky. It will be better
-    // to have a slow but steady frame rate the Raspberry Pi can keep up with.
-    const linearOrSteps = (this.slowerFrameRate ? `steps(${Math.round(seconds * RASPBIAN_MARQUEE_FRAMERATE)})` : 'linear');
+    const now = performance.now();
+    const timeIntoScroll = now - this.animationStart;
+    const scrollOffset = (timeIntoScroll / 1000 * MARQUEE_SPEED) % this.animationWidth;
 
-    this.animationStyleSheet.insertRule(keyframesRule, 0);
-    this.marquee.css('animation', `${keyframesName} ${seconds}s infinite ${linearOrSteps}`);
+    this.marquee.css('text-indent', `-${scrollOffset}px`);
+    this.animationRequestId = window.requestAnimationFrame(() => this.animate());
   }
 }
