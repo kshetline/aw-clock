@@ -12,6 +12,7 @@
 
 # IDEs and editors
 /.idea
+/server/.idea
 .project
 .classpath
 .c9/

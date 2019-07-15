@@ -348,7 +348,7 @@ export class SettingsDialog {
   private callSearchApi(query: string): Promise<SearchResults> {
     // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations is subject
     // to future change and access restrictions. Users of this code should strongly consider substituting a different API.
-    const url = 'https://weather.shetline.com/atlasdb/atlas';
+    const url = 'https://skyviewcafe.com/atlas';
 
     return new Promise((resolve, reject) => {
       $.ajax({
