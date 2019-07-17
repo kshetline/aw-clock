@@ -1,6 +1,6 @@
 $std-font: Verdana, "DejaVu Sans", sans-serif;
 $clock-face-font: "Arial Unicode MS", Arial, Helvetica, sans-serif;
-$constellation-font: Astronomy;
+$constellation-font: Astronomy, sans-serif;
 $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 $clock-border: #69C;
@@ -61,6 +61,7 @@ body {
   background: inherit;
   color: inherit;
   font: inherit;
+  user-select: none;
 }
 
 #marquee {
@@ -74,6 +75,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
 }
 
 #settings-btn {
