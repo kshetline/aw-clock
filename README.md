@@ -42,8 +42,12 @@ automatically boot up as a full-screen astronomy/weather clock:
 
 1. Install the Chromium browser if it's not already installed:
 `sudo apt-get install chromium-browser`
-1. Install unclutter (this will hide your mouse cursor after 30 seconds of inactivity so it doesn't
+1. Install `unclutter` (this will hide your mouse cursor after 30 seconds of inactivity so it doesn't
 obscure the display): `sudo apt-get install unclutter`
+1. Install `xscreensaver` if it's not already installed (`sudo apt-get install xscreensaver`). This is needed not because you want a
+screen saver for this application &mdash; in fact, you want the screen to stay on all of the time without interruption. Installing
+`xscreensaver` gives you the option of going to your Raspberry Pi's Preferences and *turning off* the default screen blanking that will
+otherwise occur.
 1. Install an up-to-date node.js. (You can find instructions for this step here: https://www.w3schools.com/nodejs/nodejs_raspberrypi.asp.)
 1. Build the client project as described above (`npm run build`).
 1. Copy the contents of this project's `server` folder to `/home/pi/weather`.
@@ -52,12 +56,12 @@ steps to install the BCM 2835 library and connect the sensor.
 1. `cd /home/pi/weather`
 1. `npm install`
 1. Copy the included file `weatherService` (located in the `raspberry_pi_setup` folder) to `/etc/init.d/`. Make sure the file is owned by
-`root` is set to be executable. Follow the instructions listed inside that file to set up
-the necessary environment variables, including setting `HAS_INDOOR_SENSOR` to `true` if you're
+`root` is set to be executable. Follow the instructions listed inside that file to set up the necessary environment variables, which will
+be saved in `/etc/defaults/weatherService`. This is where you add your API key, and set `HAS_INDOOR_SENSOR` to `true` if you're
 connecting an indoor temperature/humidity sensor.
 1. Use the command `sudo update-rc.d weatherService defaults` to establish the service that
 starts up the weather server.
-1. `npm install -g forever`
+1. `sudo npm install -g forever`
 1. Copy the included files `autostart` and `autostart_extra.sh` to
 `/home/pi/.config/lxsession/LXDE-pi/` and make sure they're executable. This launches the
  astronomy/weather clock client in Chromium, in kiosk mode (full screen, no toolbars). It also
@@ -65,3 +69,5 @@ starts up the weather server.
 1. I'm not sure about the current copyright disposition of these fonts, but for improved
 appearance I'd recommend finding and installing the fonts "Arial Unicode MS" and "Verdana".
 These appear to be freely available for download without licensing restrictions.
+1. Reboot, and if all has gone well, the astronomy/weather clock be up and running. Click on the gear icon in the lower right corner of
+the app to set your preferences, such as the location to use for weather forecasts and astronomical observations.

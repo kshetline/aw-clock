@@ -28,17 +28,16 @@ interface IndoorConditions {
 export class Indoor {
   private indoorTemp: JQuery;
   private indoorHumidity: JQuery;
-
-  private readonly _available: boolean;
+  private currentTempBalanceSpace: JQuery;
+  private _available: boolean;
 
   constructor() {
-    const currentTempBalanceSpace = $('#curr-temp-balance-space');
-
+    this.currentTempBalanceSpace = $('#curr-temp-balance-space');
     this.indoorTemp = $('#indoor-temp');
     this.indoorHumidity = $('#indoor-humidity');
 
     if (document.location.port === '4200' || document.location.port === '8080') {
-      currentTempBalanceSpace.css('display', 'none');
+      this.currentTempBalanceSpace.css('display', 'none');
       this._available = true;
     }
     else
@@ -56,7 +55,11 @@ export class Indoor {
       url: url,
       dataType: 'json',
       success: (data: IndoorConditions) => {
-        if (data.error) {
+        if (data.error === 'n/a') {
+          this.currentTempBalanceSpace.css('display', 'none');
+          this._available = true;
+        }
+        else if (data.error) {
           console.error('Error reading temp/humidity: ' + data.error);
           this.indoorTemp.text('‣--°');
           this.indoorHumidity.text('‣--%');

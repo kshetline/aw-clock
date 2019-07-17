@@ -222,6 +222,7 @@ function getApp() {
   });
 
   let waitingForIndoorSensor = [];
+  let warnIndoorNA = true;
 
   app.use('/indoor', function(req, res) {
     res.setHeader('cache-control', 'no-cache, no-store');
@@ -235,7 +236,11 @@ function getApp() {
         res.json({temperature: lastTemp, humidity: lastHumidity});
     }
     else {
-      console.error('Indoor temp/humidity sensor not available.');
+      if (warnIndoorNA) {
+        console.warn('Indoor temp/humidity sensor not available.');
+        warnIndoorNA = false;
+      }
+
       res.json({temperature: 0, humidity: -1, error: 'n/a'});
     }
   });
