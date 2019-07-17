@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "start": "webpack-dev-server --port=4200",
-    "build": "webpack && cp -Rp dist server/public",
+    "build": "webpack && cp -Rp dist/ server/public",
     "test": "karma start ./karma.conf.js",
     "lint": "tslint --project .",
     "e2e": "protractor ./protractor.conf.js",
