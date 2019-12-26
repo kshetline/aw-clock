@@ -48,7 +48,7 @@ export class Indoor {
 
   public update(celsius: boolean) {
     const runningDev = (document.location.port === '4200');
-    const site = (runningDev ? 'http://192.168.42.92:8080' : '');
+    const site = (runningDev ? 'http://192.168.42.98:8080' : '');
     const url = `${site}/indoor`;
 
     $.ajax({

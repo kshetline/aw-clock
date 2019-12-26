@@ -10,6 +10,7 @@
 /node_modules
 /server/node_modules
 /server/public
+/server/dist
 
 # IDEs and editors
 /.idea

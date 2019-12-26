@@ -142,8 +142,11 @@ export class Forecast {
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
 
-    if (!isIE() && !isEdge())
-      this.weatherServer = new URL(window.location.href).searchParams.get('weather_server') || 'http://localhost:8080';
+    if (!isIE() && !isEdge()) {
+      const weatherPort = (document.location.port === '4200' ? '4201' : '8080');
+
+      this.weatherServer = new URL(window.location.href).searchParams.get('weather_server') || 'http://localhost:' + weatherPort;
+    }
     else
       this.weatherServer = '';
 
