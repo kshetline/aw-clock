@@ -64,3 +64,20 @@ export function normalizePort(val: number | string): string | number | false {
 
   return false;
 }
+
+export function splitIpAndPort(ipWithPossiblePort: string, defaultPort?: number): [string, number] {
+  if (!ipWithPossiblePort)
+    return [undefined, defaultPort];
+
+  let $ = /^\[(.+)\]:(\d+)$/.exec(ipWithPossiblePort); // IPv6 with port
+
+  if ($)
+    return [$[1], Number($[2])];
+
+  $ = /^([^[:]+):(\d+)$/.exec(ipWithPossiblePort); // domain or IPv4 with port
+
+  if ($)
+    return [$[1], Number($[2])];
+
+  return [ipWithPossiblePort, defaultPort];
+}

@@ -1,5 +1,5 @@
 import * as dgram from 'dgram';
-import { mod, processMillis } from './util';
+import { mod, processMillis, splitIpAndPort } from './util';
 import Timer = NodeJS.Timer;
 import { RemoteInfo } from 'dgram';
 
@@ -58,6 +58,7 @@ export class Ntp {
     private port = 123,
     private maxRetries = DEFAULT_MAX_RETRIES
   ) {
+    [this.server, this.port] = splitIpAndPort(server, port);
     Ntp.allOpenNtp.add(this);
     this.socket.on('error', err => this.handleError(err));
     this.socket.on('message', (msg, remoteInfo) => this.handleMessage(msg, remoteInfo));

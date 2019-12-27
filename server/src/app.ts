@@ -47,8 +47,9 @@ let humidities: number[] = [];
 let consecutiveSensorErrors = 0;
 const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
-const sensorGpio = parseInt(process.env.SENSOR_GPIO, 10) || 4;
-const ntpPoller = new NtpPoller();
+const sensorGpio = parseInt(process.env.SENSOR_GPIO, 10) ?? 4;
+const ntpServer = process.env.AWC_NTP_SERVER ?? 'pool.ntp.org';
+const ntpPoller = new NtpPoller(ntpServer);
 
 function readSensor() {
   indoorSensor.read(22, sensorGpio, (err: any, temperature: number, humidity: number) => {

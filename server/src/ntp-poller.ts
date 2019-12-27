@@ -1,5 +1,5 @@
 import { Ntp, NtpData } from './ntp';
-import { processMillis } from './util';
+import { processMillis, splitIpAndPort } from './util';
 
 const MAX_ERRORS = 5;
 const MAX_DELAY = 250;
@@ -44,6 +44,7 @@ export class NtpPoller {
     private server = 'pool.ntp.org',
     private port = 123
   ) {
+    [this.server, this.port] = splitIpAndPort(server, port);
     this.ntp = new Ntp(this.server, this.port);
     this.lastNtpTime = this.lastReportedTime = this.ntpAdjustmentTime = Date.now();
     this.ntpAdjustmentReceivedProcTime = this.lastNtpReceivedProcTime = processMillis();
@@ -79,7 +80,7 @@ export class NtpPoller {
     let repoll = RESYNC_POLLING_RATE;
     const expectedNtpTime = this.getNtpTimeInfo(true).time;
     const receivedProcTime = processMillis();
-    const roundTripDelay = receivedProcTime - ntpRequestedProcTime;
+    const roundTripDelay = receivedProcTime - ntpRequestedProcTime - (ntpData.txTm - ntpData.rxTm);
     const sendDelay = ntpData.rxTm - ntpRequested;
     let syncDelta: number;
 

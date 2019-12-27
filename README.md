@@ -12,6 +12,10 @@ To run the weather server, use "`npm start`" from within the server directory.
 The server requires a Dark Sky API key to function. Use the environment variable `DARK_SKY_API_KEY`
 to set the key. (See https://darksky.net/ for further details.)
 
+By default, the server uses `pool.ntp.org` as an NTP time server. Use the environment variable `AWC_NTP_SERVER`
+to changes the time server. Do not use a Google time server, or any other NTP server that implements "leap second
+smearing" if you want the Astronomy/Weather Clock to be able to display leap seconds.
+
 To deploy the server along with the web client, use `npm run build` as described above. The
 contents of the `dist` directory will be copied into the server's `public` directory.
 
@@ -31,7 +35,7 @@ header). You can use the environment variable `SENSOR_GPIO` to set a different G
 The `+` lead from the sensor needs to be connect to 5V (I chose pin 2 on the GPIO header) and
 the `-` lead needs to be connected to ground (I chose pin 6).
 
-![Picture of wiring](http://shetline.com/misc/rpi-dht22-wiring.jpg)
+![Picture of wiring](https://shetline.com/misc/rpi-dht22-wiring.jpg)
 
 The web client only displays the indoor temperature and humidity values when connected to the
 web server on `localhost:8080`.
