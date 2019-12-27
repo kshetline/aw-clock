@@ -113,7 +113,7 @@ export class Forecast {
   private dayChancePrecips: JQuery[] = [];
   private dayPrecipAccums: JQuery[] = [];
 
-  private readonly weatherServer;
+  private readonly weatherServer: string;
 
   private lastForecastData: ForecastData;
   private timezone = KsTimeZone.OS_ZONE;
@@ -215,6 +215,7 @@ export class Forecast {
       url += '&id=' + encodeURI(userId);
 
     return new Promise((resolve, reject) => {
+      // noinspection JSIgnoredPromiseFromCall
       $.ajax({
         url: url,
         dataType: 'json',
@@ -426,7 +427,6 @@ export class Forecast {
   }
 
   private updateMarqueeAnimation(newText: string): void {
-
     if (newText !== null) {
       if (newText === this.marqueeText)
         return;
@@ -455,7 +455,6 @@ export class Forecast {
       return;
     }
 
-    this.marquee.text(newText + this.marqueeJoiner + newText);
     this.marquee.text(newText + this.marqueeJoiner + newText);
     this.animationStart = performance.now();
     this.animationWidth = textWidth + getTextWidth(this.marqueeJoiner, this.marquee[0]);

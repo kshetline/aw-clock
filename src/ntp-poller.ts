@@ -1,7 +1,5 @@
-import { Ntp, NtpData } from './ntp';
-import { processMillis } from './util';
+import * as $ from 'jquery';
 
-const MAX_ERRORS = 5;
 const MAX_DELAY = 250;
 const MAX_RESYNC_POLLS = 10;
 const DELAY_AFTER_ERROR = 60000;
@@ -11,9 +9,9 @@ const RESYNC_POLLING_RATE = 500;
 const RETRY_POLLING_DELAY = 5000;
 const BACK_IN_TIME_THRESHOLD = 2000;
 const CLOCK_SPEED_WINDOW = 10800000; // 3 hours
-const DEBUG = false;
+const DEBUG = true;
 
-export interface TimeInfo {
+interface TimeInfo {
   time: number;
   leapSecond: number;
   leapExcess: number;
@@ -25,12 +23,9 @@ interface ClockReferencePoint {
 }
 
 export class NtpPoller {
-  private readonly ntp: Ntp;
-
   private clockReferencePoints: ClockReferencePoint[] = [];
   private clockSpeed = 1;
   private consecutiveGoodPolls = 0;
-  private errorCount = 0;
   private lastNtpReceivedProcTime: number;
   private lastNtpTime: number;
   private lastReportedTime: number;
@@ -40,47 +35,55 @@ export class NtpPoller {
   private pendingLeapSecond = 0;
   private pollCount = -1;
 
-  constructor(
-    private server = 'pool.ntp.org',
-    private port = 123
-  ) {
-    this.ntp = new Ntp(this.server, this.port);
+  private readonly weatherServer: string;
+
+  constructor() {
+    const weatherPort = (document.location.port === '4200' ? '4201' : '8080');
+
+    this.weatherServer = new URL(window.location.href).searchParams.get('weather_server') || 'http://localhost:' + weatherPort;
     this.lastNtpTime = this.lastReportedTime = this.ntpAdjustmentTime = Date.now();
-    this.ntpAdjustmentReceivedProcTime = this.lastNtpReceivedProcTime = processMillis();
+    this.ntpAdjustmentReceivedProcTime = this.lastNtpReceivedProcTime = performance.now();
     // noinspection JSIgnoredPromiseFromCall
     this.pollNtpTime();
   }
 
+  private getServerTime(): Promise<TimeInfo> {
+    const runningDev = (document.location.port === '4200');
+    const site = (runningDev ? this.weatherServer || '' : '');
+    const url = `${site}/ntp`;
+
+    return new Promise((resolve, reject) => {
+      // noinspection JSIgnoredPromiseFromCall
+      $.ajax({
+        url: url,
+        dataType: 'json',
+        success: (data: TimeInfo) => resolve(data),
+        error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(errorThrown)
+      });
+    });
+  }
+
   private async pollNtpTime(): Promise<void> {
-    if (!this.ntp)
-      return;
-
     const ntpRequested = this.getNtpTimeInfo(true).time;
-    const ntpRequestedProcTime = processMillis();
+    const ntpRequestedProcTime = performance.now();
 
-    let ntpData: NtpData;
+    let ntpData: TimeInfo;
 
     try {
-      ntpData = await this.ntp.getTime(ntpRequested);
+      ntpData = await this.getServerTime();
     }
     catch (err) {
-      if (++this.errorCount > MAX_ERRORS) {
-        console.error('NTP polling stopped');
-        this.ntpAcquired = false;
-      }
-      else {
-        this.pollCount = 0;
-        setTimeout(() => this.pollNtpTime(), DELAY_AFTER_ERROR);
-      }
+      this.pollCount = 0;
+      setTimeout(() => this.pollNtpTime(), DELAY_AFTER_ERROR);
 
       return;
     }
 
     let repoll = RESYNC_POLLING_RATE;
     const expectedNtpTime = this.getNtpTimeInfo(true).time;
-    const receivedProcTime = processMillis();
+    const receivedProcTime = performance.now();
     const roundTripDelay = receivedProcTime - ntpRequestedProcTime;
-    const sendDelay = ntpData.rxTm - ntpRequested;
+    const sendDelay = ntpData.time - ntpRequested;
     let syncDelta: number;
 
     if (roundTripDelay < MAX_DELAY) {
@@ -88,12 +91,12 @@ export class NtpPoller {
 
       this.ntpAcquired = true;
       ++this.pollCount;
-      this.pendingLeapSecond = [0, 1, -1][ntpData.li] || 0; // No leap second, positive leap, negative leap
+      this.pendingLeapSecond = ntpData.leapSecond;
 
       if (this.pollCount > 1)
-       newNtpTime = ntpData.txTm + roundTripDelay - Math.min(Math.max(sendDelay, 0), roundTripDelay);
+       newNtpTime = ntpData.time + roundTripDelay - Math.min(Math.max(sendDelay, 0), roundTripDelay);
       else
-        newNtpTime = ntpData.txTm + roundTripDelay / 2;
+        newNtpTime = ntpData.time + roundTripDelay / 2;
 
       let delta = newNtpTime - expectedNtpTime;
       const origDelta = delta;
@@ -123,7 +126,7 @@ export class NtpPoller {
         this.lastNtpTime = this.ntpAdjustmentTime;
         this.lastNtpReceivedProcTime = this.ntpAdjustmentReceivedProcTime;
 
-        const newReferencePt = {t: this.getNtpTimeInfo().time, pt: processMillis() };
+        const newReferencePt = {t: this.getNtpTimeInfo().time, pt: performance.now() };
 
         this.clockReferencePoints.push(newReferencePt);
 
@@ -172,7 +175,7 @@ export class NtpPoller {
       const pt = internalAdjust ? this.ntpAdjustmentReceivedProcTime : this.lastNtpReceivedProcTime;
 
       timeInfo = {
-        time: Math.floor(t + (processMillis() - pt) / this.clockSpeed),
+        time: Math.floor(t + (performance.now() - pt) / this.clockSpeed),
         leapSecond: this.pendingLeapSecond,
         leapExcess: 0
       };
