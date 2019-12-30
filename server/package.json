@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
   "scripts": {
-    "start": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec 'tsc && ((chmod +x ./dist/app.js && ./dist/app.js) || node ./dist/app.js)'",
+    "start": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec 'tsc && (chmod +x ./dist/app.js && ./dist/app.js) || node ./dist/app.js'",
     "test": "mocha --require ts-node/register src/**/*.spec.ts --exit"
   },
   "dependencies": {

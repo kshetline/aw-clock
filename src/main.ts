@@ -28,11 +28,11 @@ import { Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
 import { Indoor } from './indoor';
-import { NtpPoller } from './ntp-poller';
+import { HttpNtpPoller } from './http-ntp-poller';
 
 initTimeZoneSmall();
 
-const ntpPoller = new NtpPoller();
+const ntpPoller = new HttpNtpPoller();
 const baseTime = ntpPoller.getNtpTimeInfo().time;
 const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
 const debugTimeRate = 60;

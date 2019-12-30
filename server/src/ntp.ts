@@ -43,6 +43,8 @@ export class Ntp {
   private static allOpenNtp = new Set<Ntp>();
 
   private currentPromise: Promise<NtpData>;
+  private debugOffset = 0;
+  private debugLeap = 0;
   private errorCallback: ErrorCallback;
   private pollTime: number;
   private pollTime_s = 0;
@@ -64,6 +66,19 @@ export class Ntp {
     this.socket.on('message', (msg, remoteInfo) => this.handleMessage(msg, remoteInfo));
   }
 
+  clearDebugTime(): void {
+    this.debugOffset = 0;
+    this.debugLeap = 0;
+  }
+
+  setDebugTime(baseTime: Date | number, leap = 0): void {
+    const base = typeof baseTime === 'number' ? baseTime : baseTime.getTime();
+
+    // Assumes system time is at least close to NTP server time
+    this.debugOffset = base - Date.now();
+    this.debugLeap = leap;
+  }
+
   poll(timeCallback: TimeCallback, errorCallback: ErrorCallback, pollTime = Date.now(), retry = 0) {
     const packet = Buffer.concat([Buffer.from([0xE3]), Buffer.alloc(47)]);
 
@@ -73,7 +88,7 @@ export class Ntp {
     this.timeCallback = timeCallback;
     this.errorCallback = errorCallback;
 
-    const txTm = pollTime + NTP_BASE * 1000;
+    const txTm = pollTime - this.debugOffset + NTP_BASE * 1000;
 
     packet.writeUInt32BE(this.pollTime_s = Math.floor(txTm / 1000), 40);
     packet.writeUInt32BE(this.pollTime_f = Math.floor(mod(txTm, 1000) / 1000 * 0x100000000), 44);
@@ -162,7 +177,7 @@ export class Ntp {
     }
 
     const response: NtpData = {
-      li,
+      li: this.debugOffset ? (this.debugLeap < 0 ? 2 : this.debugLeap) : li,
       vn: (msg.readUInt8(0) & 0x38) >> 3,
       mode: msg.readUInt8(0) & 0x07,
 
@@ -192,13 +207,18 @@ export class Ntp {
     else
       this.pollTime_s = this.pollTime_f = 0;
 
-    response.refTm = (response.refTm_s + response.refTm_f / 0x100000000 - NTP_BASE) * 1000;
-    response.origTm = (response.origTm_s + response.origTm_f / 0x100000000 - NTP_BASE) * 1000;
-    response.rxTm = (response.rxTm_s + response.rxTm_f / 0x100000000 - NTP_BASE) * 1000;
-    response.txTm = (response.txTm_s + response.txTm_f / 0x100000000 - NTP_BASE) * 1000;
+    response.refTm = (response.refTm_s + response.refTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
+    response.origTm = (response.origTm_s + response.origTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
+    response.rxTm = (response.rxTm_s + response.rxTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
+    response.txTm = (response.txTm_s + response.txTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
     response.address = remoteInfo.address;
     response.roundTripTime = processMillis() - this.pollProcTime;
     response.sendDelay = response.rxTm - this.pollTime;
+
+    if (this.debugLeap && new Date(response.txTm).getUTCDate() === 1 && response.txTm % 86400000 >= 1000) {
+      this.debugOffset -= this.debugLeap * 1000;
+      this.debugLeap = response.li = 0;
+    }
 
     if (this.timeCallback)
       this.timeCallback(response);

@@ -51,6 +51,11 @@ const sensorGpio = parseInt(process.env.SENSOR_GPIO, 10) ?? 4;
 const ntpServer = process.env.AWC_NTP_SERVER ?? 'pool.ntp.org';
 const ntpPoller = new NtpPoller(ntpServer);
 
+if (process.env.DEBUG_TIME) {
+  const parts = process.env.DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
+  ntpPoller.setDebugTime(new Date(parts[0]), Number(parts[1] || 0));
+}
+
 function readSensor() {
   indoorSensor.read(22, sensorGpio, (err: any, temperature: number, humidity: number) => {
     if (err || temperature < -10 || temperature > 50 || humidity < 0 || humidity > 100)
@@ -229,9 +234,7 @@ function getApp() {
 
   theApp.use('/ntp', (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
-    const time = ntpPoller.getNtpTimeInfo() as any;
-    time.text = new Date(time.time).toISOString().replace('T', ' ');
-    res.json(time);
+    res.json(ntpPoller.getNtpTimeInfo());
   });
 
   return theApp;
