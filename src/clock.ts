@@ -285,6 +285,10 @@ export class Clock {
 
       let displayHour = hour;
       let suffix = '';
+      let secsText = padLeft(secs, 2, '0');
+
+      if (!this._hideSeconds && minuteOfLeapSecond && (timeInfo.leapSecond > 0 && secs === 60 || timeInfo.leapSecond < 0 && secs === 58))
+        secsText = '<tspan style="fill: #F55">' + secsText + '</tspan>';
 
       if (this.amPm) {
         if (displayHour === 0)
@@ -295,9 +299,9 @@ export class Clock {
         suffix = (hour < 12 ? ' AM' : ' PM');
       }
 
-      this.timeCaption.textContent =
+      this.timeCaption.innerHTML =
         padLeft(displayHour, 2, '0') + ':' +
-        padLeft(mins, 2, '0') + (this._hideSeconds ? '' : ':' + padLeft(secs, 2, '0')) + suffix;
+        padLeft(mins, 2, '0') + (this._hideSeconds ? '' : ':' + secsText) + suffix;
 
       if (mins !== this.lastMinute || this.lastTick + 60000 <= now) {
         this.appService.updateTime(hour, mins, this.lastMinute < 0);

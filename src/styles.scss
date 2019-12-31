@@ -74,7 +74,7 @@ body {
   font: inherit;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   user-select: none;
 }
 
@@ -513,7 +513,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .leap-second {
-  .moving-dot { fill: #ff5555; }
+  .moving-dot { fill: #F55; }
 
   #dot-56 { cx: 32.673; cy: 12.841; }
   #dot-57 { cx: 35.977; cy: 11.473; }
@@ -523,7 +523,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .neg-leap-second {
-  .moving-dot { fill: #ff5555; }
+  .moving-dot { fill: #F55; }
 
   #dot-56 { cx: 34.310; cy: 12.121; }
   #dot-57 { cx: 39.388; cy: 10.397; }
