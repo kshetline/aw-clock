@@ -1,5 +1,14 @@
+let performanceCopy: any;
+
+try {
+  performanceCopy = performance;
+}
+catch (err) {}
+
 export function processMillis(): number {
-  if ((process.hrtime as any).bigint)
+  if (performanceCopy)
+    return performanceCopy.now();
+  else if ((process.hrtime as any).bigint)
     return Number((process.hrtime as any).bigint()) / 1000000;
   else {
     const time = process.hrtime();

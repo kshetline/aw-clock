@@ -217,15 +217,30 @@ export class NtpPoller {
     }
   }
 
-  getNtpTimeInfo(internalAdjust = false): TimeInfo {
+  getNtpTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
+    const internalAdjust = (internalAdjustOrBias === true);
+    const bias = (typeof internalAdjustOrBias === 'number' ? internalAdjustOrBias : 0);
+    let time: number;
     let timeInfo: TimeInfo;
 
     if (this.ntpAcquired) {
       const t = internalAdjust ? this.ntpAdjustmentTime : this.lastNtpTime;
       const pt = internalAdjust ? this.ntpAdjustmentReceivedProcTime : this.lastNtpReceivedProcTime;
 
+      time = Math.floor(t + (processMillis() - pt) / this.clockSpeed);
+    }
+    else
+      time = Date.now();
+
+    // Time should be monotonic. Don't go backward in time unless the updated time is way-off backward.
+    if (!internalAdjust && time < this.lastReportedTime && time > this.lastReportedTime - BACK_IN_TIME_THRESHOLD)
+      time = this.lastReportedTime;
+    else
+      this.lastReportedTime = time;
+
+    if (this.ntpAcquired) {
       timeInfo = {
-        time: Math.floor(t + (processMillis() - pt) / this.clockSpeed),
+        time: time + bias,
         leapSecond: this.pendingLeapSecond,
         leapExcess: 0
       } as TimeInfo;
@@ -257,18 +272,13 @@ export class NtpPoller {
         }
       }
     }
-    else
+    else {
       timeInfo = {
-        time: Date.now(),
+        time: time + bias,
         leapSecond: 0,
         leapExcess: 0
       } as TimeInfo;
-
-    // Time should be monotonic. Don't go backward in time unless the updated time is way-off backward.
-    if (!internalAdjust && timeInfo.time < this.lastReportedTime && timeInfo.time > this.lastReportedTime - BACK_IN_TIME_THRESHOLD)
-      timeInfo.time = this.lastReportedTime;
-    else
-      this.lastReportedTime = timeInfo.time;
+    }
 
     timeInfo.text = new Date(timeInfo.time).toISOString().replace('T', ' ');
 

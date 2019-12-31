@@ -29,6 +29,7 @@ import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
 import { Indoor } from './indoor';
 import { HttpNtpPoller } from './http-ntp-poller';
+import { TimeInfo } from '../server/src/ntp-poller';
 
 initTimeZoneSmall();
 
@@ -112,11 +113,20 @@ export class AwClockApp implements AppService {
     $('#settings-btn').on('click', () => this.settingsDialog.openSettings(this.settings));
   }
 
-  getCurrentTime(): number {
+  getCurrentTime(bias = 0): number {
     if (debugTime)
-      return debugTime + (ntpPoller.getNtpTimeInfo().time - baseTime) * debugTimeRate;
+      return debugTime + (ntpPoller.getNtpTimeInfo(bias).time - baseTime) * debugTimeRate;
     else
-      return ntpPoller.getNtpTimeInfo().time;
+      return ntpPoller.getNtpTimeInfo(bias).time;
+  }
+
+  getTimeInfo(bias = 0): TimeInfo {
+    if (debugTime) {
+      const time = this.getCurrentTime(bias);
+      return { time, leapSecond: 0, leapExcess: 0, text: new Date(time).toISOString()};
+    }
+    else
+      return ntpPoller.getNtpTimeInfo(bias);
   }
 
   isTimeAccelerated(): boolean {

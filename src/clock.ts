@@ -19,7 +19,7 @@
 
 // Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed quite a bit from there.
 
-import { getDayOfWeek, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+import { getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { isIE, isRaspbian, padLeft } from 'ks-util';
 import { AppService } from './app.service';
 import * as $ from 'jquery';
@@ -28,6 +28,7 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 const SECOND_HAND_ANIMATION_TIME = 200;
 
+const MILLIS_PER_DAY = 86400000;
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -36,11 +37,12 @@ interface SVGAnimationElement extends HTMLElement {
 }
 
 export class Clock {
-  private secHand: HTMLElement;
+  private readonly secHand: HTMLElement;
+  private readonly minHand: HTMLElement;
+  private readonly hourHand: HTMLElement;
+  private readonly hands: HTMLElement;
+
   private sweep: SVGAnimationElement;
-  private minHand: HTMLElement;
-  private hourHand: HTMLElement;
-  private hands: HTMLElement;
   private zoneCaption:  HTMLElement;
   private hub: HTMLElement;
   private dayOfWeekCaption: HTMLElement;
@@ -50,12 +52,14 @@ export class Clock {
   private timeCaption: HTMLElement;
   private day2Caption: HTMLElement;
   private day3Caption: HTMLElement;
+  private clock: HTMLElement;
 
-  private hasBeginElement = false;
+  private readonly hasBeginElement: boolean;
 
   private lastSecRotation = 0;
   private lastMinute = -1;
   private lastTick = -1;
+  private inMinuteOfLeapSecond = false;
 
   private _amPm = false;
   private _hideSeconds = false;
@@ -126,26 +130,34 @@ export class Clock {
     const constellationRadius = 24;
     const center = 50;
     const centerStr = center.toString();
-    const clock = document.getElementById('clock');
     const planetTracks = document.getElementById('planet-tracks');
     const risenTracks = document.getElementById('risen-tracks');
 
-    for (let i = 0; i < 360; i += 6) {
-      const x1 = center + radius * Math.cos(Math.PI * i / 180);
-      const y1 = center + radius * Math.sin(Math.PI * i / 180);
+    this.clock = document.getElementById('clock');
+
+    for (let deg = 0; deg <= 360; deg += 6) { // 61 dots created, not just 60, so there's one for a possible leap second.
+      const i = deg / 6;
+      const x1 = center + radius * Math.cos(Math.PI * (deg - 90) / 180);
+      const y1 = center + radius * Math.sin(Math.PI * (deg - 90) / 180);
       const tickMark = document.createElementNS(SVG_NAMESPACE, 'circle');
 
       tickMark.setAttributeNS(null, 'cx', x1.toString());
       tickMark.setAttributeNS(null, 'cy', y1.toString());
-      tickMark.setAttributeNS(null, 'r', (i % 30 === 0 ? 1 : 0.333).toString());
+      tickMark.setAttributeNS(null, 'r', (i % 5 === 0 && i !== 60 ? 1 : 0.333).toString());
       tickMark.setAttributeNS(null, 'fill', 'white');
       tickMark.setAttributeNS(null, 'fill-opacity', '1');
-      clock.appendChild(tickMark);
 
-      if (i % 30 === 0) {
-        const h = (i === 270 ? 12 : ((i + 90) % 360) / 30);
-        const x2 = center + textRadius * Math.cos(Math.PI * i / 180);
-        const y2 = center + textRadius * Math.sin(Math.PI * i / 180);
+      if (i > 55) {
+        tickMark.setAttribute('id', 'dot-' + i);
+        tickMark.classList.add('moving-dot');
+      }
+
+      this.clock.appendChild(tickMark);
+
+      if (deg % 30 === 0) {
+        const h = (deg === 270 ? 12 : ((deg + 90) % 360) / 30);
+        const x2 = center + textRadius * Math.cos(Math.PI * deg / 180);
+        const y2 = center + textRadius * Math.sin(Math.PI * deg / 180);
         const text2 = document.createElementNS(SVG_NAMESPACE, 'text');
 
         text2.setAttributeNS(null, 'x', x2.toString());
@@ -153,17 +165,17 @@ export class Clock {
         text2.setAttributeNS(null, 'dy', '3.5');
         text2.classList.add('clock-face');
         text2.textContent = h.toString();
-        clock.insertBefore(text2, this.hands);
+        this.clock.insertBefore(text2, this.hands);
 
-        const x3 = center + constellationRadius * Math.cos(Math.PI * (-i - 15) / 180);
-        const y3 = center + constellationRadius * Math.sin(Math.PI * (-i - 15) / 180);
+        const x3 = center + constellationRadius * Math.cos(Math.PI * (-deg - 15) / 180);
+        const y3 = center + constellationRadius * Math.sin(Math.PI * (-deg - 15) / 180);
         const text3 = document.createElementNS(SVG_NAMESPACE, 'text');
 
         text3.setAttributeNS(null, 'x', x3.toString());
         text3.setAttributeNS(null, 'y', y3.toString());
         text3.setAttributeNS(null, 'dy', '1');
         text3.classList.add('constellation');
-        text3.textContent = String.fromCodePoint(0x2648 + i / 30);
+        text3.textContent = String.fromCodePoint(0x2648 + deg / 30);
         planetTracks.appendChild(text3);
       }
     }
@@ -223,22 +235,42 @@ export class Clock {
     const doMechanicalSecondHandEffect = this.hasBeginElement && !this.appService.isTimeAccelerated() &&
             (!isRaspbian() || !this.hasCompletingAnimation);
     const animationTime = (doMechanicalSecondHandEffect ? SECOND_HAND_ANIMATION_TIME : 0);
-    const now = this.appService.getCurrentTime() + animationTime;
+    const timeInfo = this.appService.getTimeInfo(animationTime);
+    const now = timeInfo.time;
     const date = new KsDateTime(now, this.timezone);
     const wallTime = date.wallTime;
-    const secs = wallTime.sec;
-    const secRotation = 6 * secs;
+    const secs = wallTime.sec + (timeInfo.leapExcess > 0 ? 1 : 0);
+    const millis = (timeInfo.leapExcess > 0 ? timeInfo.leapExcess - 1 : wallTime.millis);
+    let secRotation = 6 * secs;
     const mins = wallTime.min;
     const hour = wallTime.hrs;
+    const minuteOfLeapSecond = timeInfo.leapSecond && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
+            wallTime.d === getLastDateInMonthGregorian(wallTime.y, wallTime.m);
+
+    if (this.inMinuteOfLeapSecond !== minuteOfLeapSecond) {
+      if (!minuteOfLeapSecond) {
+        this.clock.classList.remove('leap-second');
+        this.clock.classList.remove('neg-leap-second');
+      }
+      else if (timeInfo.leapSecond > 0)
+        this.clock.classList.add('leap-second');
+      else
+        this.clock.classList.add('neg-leap-second');
+
+      this.inMinuteOfLeapSecond = minuteOfLeapSecond;
+    }
+
+    if (minuteOfLeapSecond && secs > 55)
+      secRotation = 330 + (secs - 55) * (timeInfo.leapSecond > 0 ? 5 : 7.5);
 
     if (doMechanicalSecondHandEffect)
       sweepSecondHand(this.lastSecRotation, secRotation);
 
     rotate(this.secHand, secRotation);
     this.lastSecRotation = secRotation;
-    rotate(this.minHand, 6 * mins + 0.1 * secs);
-    rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + secs / 120);
-    setTimeout(() => this.tick(), 1000 - wallTime.millis);
+    rotate(this.minHand, 6 * mins + 0.1 * Math.min(secs, 59));
+    rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + Math.min(secs, 59) / 120);
+    setTimeout(() => this.tick(), 1000 - millis);
 
     setTimeout(() => {
       const dayOfTheWeek = getDayOfWeek(wallTime.n);

@@ -106,6 +106,9 @@ const postcssPlugins = function (loader) {
 };
 
 module.exports = {
+  "stats": {
+    warnings: false
+  },
   "resolve": {
     "extensions": [
       ".ts",
@@ -405,7 +408,7 @@ module.exports = {
     }),
     new ProgressPlugin(),
     new CircularDependencyPlugin({
-      "exclude": /(\\|\/)node_modules(\\|\/)/,
+      "exclude": /([\\/])node_modules([\\/])/,
       "failOnError": false,
       "onDetected": false,
       "cwd": projectRoot

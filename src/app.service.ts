@@ -1,7 +1,9 @@
 import { Settings } from './settings';
+import { TimeInfo } from '../server/src/ntp-poller';
 
 export interface AppService {
-  getCurrentTime(): number;
+  getCurrentTime(bias?: number): number;
+  getTimeInfo(bias?: number): TimeInfo;
   isTimeAccelerated(): boolean;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
   updateSettings(newSettings: Settings);

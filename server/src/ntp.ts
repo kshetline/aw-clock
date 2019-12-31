@@ -1,7 +1,13 @@
-import * as dgram from 'dgram';
 import { mod, processMillis, splitIpAndPort } from './util';
-import Timer = NodeJS.Timer;
 import { RemoteInfo } from 'dgram';
+
+let dgram: any;
+
+try {
+  // Make this module optional
+  dgram = require('dgram');
+}
+catch (err) {}
 
 const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MAX_RESPONSE_WAIT = 3000;
@@ -50,7 +56,7 @@ export class Ntp {
   private pollTime_s = 0;
   private pollTime_f = 0;
   private pollProcTime: number;
-  private responseTimer: Timer;
+  private responseTimer: any;
   private retries: number;
   private socket = dgram.createSocket('udp4');
   private timeCallback: TimeCallback;
@@ -62,8 +68,8 @@ export class Ntp {
   ) {
     [this.server, this.port] = splitIpAndPort(server, port);
     Ntp.allOpenNtp.add(this);
-    this.socket.on('error', err => this.handleError(err));
-    this.socket.on('message', (msg, remoteInfo) => this.handleMessage(msg, remoteInfo));
+    this.socket.on('error', (err: Error) => this.handleError(err));
+    this.socket.on('message', (msg: Buffer, remoteInfo: RemoteInfo) => this.handleMessage(msg, remoteInfo));
   }
 
   clearDebugTime(): void {

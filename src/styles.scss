@@ -506,3 +506,28 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   pointer-events: none;
   transition: opacity 5s ease-in;
 }
+
+.moving-dot {
+  transition-property: cx, cy, fill, opacity;
+  transition-duration: 2s;
+}
+
+.leap-second {
+  .moving-dot { fill: #ff5555; }
+
+  #dot-56 { cx: 32.673; cy: 12.841; }
+  #dot-57 { cx: 35.977; cy: 11.473; }
+  #dot-58 { cx: 39.388; cy: 10.397; }
+  #dot-59 { cx: 42.880; cy:  9.623; }
+  #dot-60 { cx: 46.427; cy:  9.156; }
+}
+
+.neg-leap-second {
+  .moving-dot { fill: #ff5555; }
+
+  #dot-56 { cx: 34.310; cy: 12.121; }
+  #dot-57 { cx: 39.388; cy: 10.397; }
+  #dot-58 { cx: 44.648; cy:  9.351; }
+  #dot-59 { cx: 50.000; cy:  9.000; opacity: 0; }
+  #dot-60 { opacity: 0; }
+}
