@@ -16,5 +16,22 @@
     "morgan": "~1.9.0",
     "node-dht-sensor": "0.4.0",
     "request": "^2.87.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.6",
+    "@types/cookie-parser": "^1.4.2",
+    "@types/express": "^4.17.2",
+    "@types/http-errors": "^1.6.3",
+    "@types/mocha": "^5.2.7",
+    "@types/morgan": "^1.7.37",
+    "@types/node": "^12.12.14",
+    "@types/request": "^2.48.4",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2",
+    "nodemon": "^2.0.1",
+    "ts-node": "^8.5.2",
+    "tslint": "^5.20.1",
+    "tslint-no-unused-expression-chai": "^0.1.4",
+    "typescript": "^3.7.2"
   }
 }
