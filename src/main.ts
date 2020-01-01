@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -34,7 +34,7 @@ import { TimeInfo } from '../server/src/time-poller';
 initTimeZoneSmall();
 
 const ntpPoller = new HttpTimePoller();
-const baseTime = ntpPoller.getNtpTimeInfo().time;
+const baseTime = ntpPoller.getTimeInfo().time;
 const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
 const debugTimeRate = 60;
 
@@ -115,9 +115,9 @@ export class AwClockApp implements AppService {
 
   getCurrentTime(bias = 0): number {
     if (debugTime)
-      return debugTime + (ntpPoller.getNtpTimeInfo(bias).time - baseTime) * debugTimeRate;
+      return debugTime + (ntpPoller.getTimeInfo(bias).time - baseTime) * debugTimeRate;
     else
-      return ntpPoller.getNtpTimeInfo(bias).time;
+      return ntpPoller.getTimeInfo(bias).time;
   }
 
   getTimeInfo(bias = 0): TimeInfo {
@@ -126,7 +126,7 @@ export class AwClockApp implements AppService {
       return { time, leapSecond: 0, leapExcess: 0, text: new Date(time).toISOString()};
     }
     else
-      return ntpPoller.getNtpTimeInfo(bias);
+      return ntpPoller.getTimeInfo(bias);
   }
 
   isTimeAccelerated(): boolean {
@@ -167,8 +167,7 @@ export class AwClockApp implements AppService {
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {
       const doUpdate = () => {
-        this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius,
-                             this.settings.amPm, this.settings.userId);
+        this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.userId);
       };
 
       if (millisOffset === 0)

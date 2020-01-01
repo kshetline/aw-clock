@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { NtpPoller } from './ntp-poller';
 import { average, normalizePort, stdDev, toBoolean } from './util';
-// import { getNtpTime, stopNtpPolling } from './ntp';
 
 import * as http from 'http';
 import express from 'express';
@@ -12,7 +11,15 @@ import request from 'request';
 
 const debug = require('debug')('express:server');
 
-let indoorSensor: any;
+const DHT22_OR_AM2302 = 22;
+
+type DhtSensorCallback = (err: any, temperature: number, humidity: number) => void;
+
+interface NodeDhtSensor {
+  read: (sensorType: number, gpio: number, callback: DhtSensorCallback) => void;
+}
+
+let indoorSensor: NodeDhtSensor;
 
 if (toBoolean(process.env.HAS_INDOOR_SENSOR)) {
   indoorSensor = require('node-dht-sensor');
@@ -28,7 +35,7 @@ httpServer.listen(httpPort);
 
 process.on('SIGTERM', () => {
   console.log('*** closing server ***');
-  // httpServer.close(() => stopNtpPolling());
+  NtpPoller.closeAll();
 });
 
 // add error handler
@@ -57,7 +64,7 @@ if (process.env.DEBUG_TIME) {
 }
 
 function readSensor() {
-  indoorSensor.read(22, sensorGpio, (err: any, temperature: number, humidity: number) => {
+  indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {
     if (err || temperature < -10 || temperature > 50 || humidity < 0 || humidity > 100)
       ++consecutiveSensorErrors;
     else {
@@ -70,35 +77,8 @@ function readSensor() {
         humidities.shift();
       }
 
-      // Report the latest temperature and humidity values that are no more than two standard deviations from the average.
-      // Use the average itself in case no point matches that criterion.
-      const avgTemp = average(temps);
-      const sdTemp2 = stdDev(temps) * 2;
-
-      lastTemp = avgTemp;
-
-      for (let i = temps.length - 1; i >= 0; --i) {
-        const temp = temps[i];
-
-        if (Math.abs(temp - avgTemp) < sdTemp2) {
-          lastTemp = temp;
-          break;
-        }
-      }
-
-      const avgHumidity = average(humidities);
-      const sdHumidity2 = stdDev(humidities) * 2;
-
-      lastHumidity = avgHumidity;
-
-      for (let i = humidities.length - 1; i >= 0; --i) {
-        const h = humidities[i];
-
-        if (Math.abs(h - avgHumidity) < sdHumidity2) {
-          lastHumidity = h;
-          break;
-        }
-      }
+      lastTemp = useLatestValueIfNotOutlier(temps);
+      lastHumidity = useLatestValueIfNotOutlier(humidities);
     }
 
     if (consecutiveSensorErrors === MAX_ERRORS) {
@@ -114,6 +94,25 @@ function readSensor() {
 
 if (indoorSensor) {
   readSensor();
+}
+
+// Report the latest temperature and humidity values that are no more than two standard deviations from the average.
+// Use the average itself in case no point matches that criterion.
+function useLatestValueIfNotOutlier(values: number[]): number {
+  const avg = average(values);
+  const sd2 = stdDev(values) * 2;
+  let result = avg;
+
+  for (let i = values.length - 1; i >= 0; --i) {
+    const value = values[i];
+
+    if (Math.abs(value - avg) < sd2) {
+      result = value;
+      break;
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -234,7 +233,7 @@ function getApp() {
 
   theApp.use('/ntp', (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
-    res.json(ntpPoller.getNtpTimeInfo());
+    res.json(ntpPoller.getTimeInfo());
   });
 
   return theApp;

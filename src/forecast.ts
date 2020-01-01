@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -37,6 +37,8 @@ const WARNING_FOREGROUND = 'white';
 const MARQUEE_SPEED = 100; // pixels per second
 
 const FREQUENT_THRESHOLD = 300;
+
+const MAX_FORECAST_STALENESS = 7200000; // 2 hours
 
 interface CommonConditions {
   time: number;
@@ -94,7 +96,6 @@ interface ForecastData {
   flags?: Flags;
   frequent?: boolean;
   isMetric?: boolean;
-  amPm?: boolean;
 }
 
 const UNKNOWN_ICON = 'assets/unknown.svg';
@@ -116,10 +117,11 @@ export class Forecast {
   private readonly weatherServer: string;
 
   private lastForecastData: ForecastData;
+  private lastForecastTime = 0;
   private timezone = KsTimeZone.OS_ZONE;
 
   private marqueeText = '';
-  private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0';
+  private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
   private animationStart: number;
   private animationWidth: number;
   private animationDuration: number;
@@ -153,14 +155,21 @@ export class Forecast {
     window.addEventListener('resize', () => this.updateMarqueeAnimation(null));
   }
 
-  public update(latitude: number, longitude: number, isMetric: boolean, amPm: boolean, userId?: string): void {
+  public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
     this.getForecast(latitude, longitude, isMetric, userId).then(forecastData => {
-      forecastData.amPm = amPm;
       this.lastForecastData = forecastData;
+      this.lastForecastTime = performance.now();
+      this.currentTemp.removeClass('stale-forecast');
       this.displayForecast(forecastData);
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
-      this.showUnknown(error);
+      if (!this.lastForecastData || performance.now() >= this.lastForecastTime + MAX_FORECAST_STALENESS)
+        this.showUnknown(error);
+      else {
+        this.currentTemp.addClass('stale-forecast');
+        this.displayForecast(this.lastForecastData);
+      }
+
       this.appService.forecastHasBeenUpdated();
     });
   }

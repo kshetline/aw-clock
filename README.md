@@ -54,7 +54,7 @@ screen saver for this application &mdash; in fact, you want the screen to stay o
 otherwise occur.
 1. Install an up-to-date node.js. (You can find instructions for this step here: https://www.w3schools.com/nodejs/nodejs_raspberrypi.asp.)
 1. Build the client project as described above (`npm run build`).
-1. Copy the contents of this project's `server` folder to `/home/pi/weather`.
+1. Copy the contents of this project's `server/dist` folder to `/home/pi/weather`.
 1. If you wish to use an indoor temperature/humidity sensor, follow the previously mentioned
 steps to install the BCM 2835 library and connect the sensor.
 1. `cd /home/pi/weather`

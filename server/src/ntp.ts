@@ -21,6 +21,10 @@ type TimeCallback = (data: NtpData) => void;
 export class Ntp {
   private static allOpenNtp = new Set<Ntp>();
 
+  static closeAll(): void {
+    Ntp.allOpenNtp.forEach(ntp => ntp.close());
+  }
+
   private currentPromise: Promise<NtpData>;
   private debugOffset = 0;
   private debugLeap = 0;
@@ -59,6 +63,11 @@ export class Ntp {
   }
 
   poll(timeCallback: TimeCallback, errorCallback: ErrorCallback, pollTime = Date.now(), retry = 0) {
+    if (!this.socket) {
+      this.timeCallback({ li: 0, rxTm: Date.now(), txTm: Date.now(), } as NtpData);
+      return;
+    }
+
     const packet = Buffer.concat([Buffer.from([0xE3]), Buffer.alloc(47)]);
 
     this.retries = retry;
@@ -201,5 +210,13 @@ export class Ntp {
 
     if (this.timeCallback)
       this.timeCallback(response);
+  }
+
+  close(): void {
+    if (this.socket) {
+      this.socket.close();
+      this.socket = undefined;
+      Ntp.allOpenNtp.delete(this);
+    }
   }
 }

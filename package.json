@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "start": "webpack-dev-server --port=4200",
-    "build": "webpack && tsc -b ./server/ && cp -Rp dist/ server/dist/public && copy-node-modules server server/dist && del-cli dist",
+    "build": "webpack && tsc -b ./server/ && cp -Rp dist/ server/dist/public && copy-node-modules server server/dist",
     "test": "karma start ./karma.conf.js",
     "lint": "tslint --project .",
     "e2e": "protractor ./protractor.conf.js",
@@ -34,7 +34,6 @@
     "circular-dependency-plugin": "^4.2.1",
     "copy-node-modules": "^1.1.1",
     "copy-webpack-plugin": "~4.4.1",
-    "del-cli": "^3.0.0",
     "file-loader": "^1.1.5",
     "html-webpack-plugin": "^2.29.0",
     "istanbul-instrumenter-loader": "^3.0.0",

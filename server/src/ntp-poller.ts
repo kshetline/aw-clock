@@ -6,6 +6,10 @@ import { splitIpAndPort } from './util';
 export class NtpPoller extends TimePoller {
   private readonly ntp: Ntp;
 
+  static closeAll(): void {
+    Ntp.closeAll();
+  }
+
   constructor(
     private server = 'pool.ntp.org',
     private port = 123

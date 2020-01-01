@@ -13,7 +13,6 @@ const RETRY_POLLING_DELAY = 5000;
 const BACK_IN_TIME_THRESHOLD = 2000;
 const CLOCK_SPEED_WINDOW = 10800000; // 3 hours
 const MIDNIGHT_POLLING_AVOIDANCE = 5000;
-const DEBUG = false;
 
 export interface TimeInfo {
   time: number;
@@ -32,32 +31,34 @@ export abstract class TimePoller {
   private clockSpeed: number;
   private consecutiveGoodPolls: number;
   private errorCount: number;
-  private lastNtpReceivedProcTime: number;
-  private lastNtpTime: number;
+  private lastPollReceivedProcTime: number;
+  private lastPolledTime: number;
   private lastReportedTime: number;
-  private ntpAcquired: boolean;
-  private ntpAdjustmentReceivedProcTime: number;
-  private ntpAdjustmentTime: number;
+  private pollingAdjustmentTime: number;
   private pendingLeapSecond: number;
   private pollCount: number;
   private pollTimer: any;
+  private timeAcquired: boolean;
+  private timeAdjustmentReceivedProcTime: number;
+
+  protected displayPollingResults = false;
 
   protected constructor() {
     this.reset();
   }
 
   protected reset(baseTime = Date.now()): void {
-    this.lastNtpTime = this.lastReportedTime = this.ntpAdjustmentTime = baseTime;
-    this.ntpAdjustmentReceivedProcTime = this.lastNtpReceivedProcTime = processMillis();
+    this.lastPolledTime = this.lastReportedTime = this.pollingAdjustmentTime = baseTime;
+    this.timeAdjustmentReceivedProcTime = this.lastPollReceivedProcTime = processMillis();
     this.clockReferencePoints = [];
     this.errorCount = 0;
     this.clockSpeed = 1;
     this.consecutiveGoodPolls = 0;
-    this.ntpAcquired = false;
+    this.timeAcquired = false;
     this.pendingLeapSecond = 0;
     this.pollCount = -1;
     this.clearPollTimer();
-    this.pollTimer = setTimeout(() => this.pollNtpTime());
+    this.pollTimer = setTimeout(() => this.pollCurrentTime());
   }
 
   protected abstract getNtpData(requestTime: number): Promise<NtpData>;
@@ -66,71 +67,72 @@ export abstract class TimePoller {
     return true;
   }
 
-  private async pollNtpTime(): Promise<void> {
+  private async pollCurrentTime(): Promise<void> {
     this.clearPollTimer();
 
     if (!this.canPoll())
       return;
 
-    const ntpRequestedProcTime = processMillis();
-    const ntpRequested = this.getNtpTimeInfo(true).time;
+    const timeRequestedProcTime = processMillis();
+    const timeRequested = this.getTimeInfo(true).time;
     // Avoid polling close to midnight to ensure better leap second handling
-    const proximity = (ntpRequested + MIDNIGHT_POLLING_AVOIDANCE) % MILLIS_PER_DAY;
+    const proximity = (timeRequested + MIDNIGHT_POLLING_AVOIDANCE) % MILLIS_PER_DAY;
 
     if (proximity < MIDNIGHT_POLLING_AVOIDANCE * 2) {
-      this.pollTimer = setTimeout(() => this.pollNtpTime(), MIDNIGHT_POLLING_AVOIDANCE * 2 - proximity + 500);
+      this.pollTimer = setTimeout(() => this.pollCurrentTime(), MIDNIGHT_POLLING_AVOIDANCE * 2 - proximity + 500);
       return;
     }
 
     let ntpData: NtpData;
 
     try {
-      ntpData = await this.getNtpData(ntpRequested);
+      ntpData = await this.getNtpData(timeRequested);
     }
     catch (err) {
       if (++this.errorCount > MAX_ERRORS) {
         console.error('Time polling failing');
-        this.ntpAcquired = false;
+        this.timeAcquired = false;
       }
 
       this.pollCount = 0;
-      this.pollTimer = setTimeout(() => this.pollNtpTime(), DELAY_AFTER_ERROR);
+      this.errorCount = 0;
+      this.pollTimer = setTimeout(() => this.pollCurrentTime(), DELAY_AFTER_ERROR);
 
       return;
     }
 
     let repoll = RESYNC_POLLING_RATE;
-    const expectedNtpTime = this.getNtpTimeInfo(true).time;
+    const expectedPolledTime = this.getTimeInfo(true).time;
     const receivedProcTime = processMillis();
-    const roundTripDelay = receivedProcTime - ntpRequestedProcTime - (ntpData.txTm - ntpData.rxTm);
-    const sendDelay = ntpData.rxTm - ntpRequested;
+    const roundTripDelay = receivedProcTime - timeRequestedProcTime - (ntpData.txTm - ntpData.rxTm);
+    const sendDelay = ntpData.rxTm - timeRequested;
     let syncDelta: number;
 
     if (roundTripDelay < MAX_DELAY) {
-      let newNtpTime;
+      let newTime;
 
-      this.ntpAcquired = true;
+      this.timeAcquired = true;
       ++this.pollCount;
 
       if (this.pollCount > 1)
-        newNtpTime = ntpData.txTm + roundTripDelay - Math.min(Math.max(sendDelay, 0), roundTripDelay);
+        newTime = ntpData.txTm + roundTripDelay - Math.min(Math.max(sendDelay, 0), roundTripDelay);
       else
-        newNtpTime = ntpData.txTm + roundTripDelay / 2;
+        newTime = ntpData.txTm + roundTripDelay / 2;
 
-      let delta = newNtpTime - expectedNtpTime;
+      let delta = newTime - expectedPolledTime;
       const origDelta = delta;
 
       if (Math.abs(delta) > 5 && Math.abs(delta) < 1000)
         delta = Math.max(Math.abs(delta) / 4, 5) * Math.sign(delta);
 
       if (this.pollCount === 0) {
-        this.ntpAdjustmentTime = newNtpTime;
+        this.pollingAdjustmentTime = newTime;
         delta = 0;
       }
       else
-        this.ntpAdjustmentTime = expectedNtpTime + delta;
+        this.pollingAdjustmentTime = expectedPolledTime + delta;
 
-      this.ntpAdjustmentReceivedProcTime = receivedProcTime;
+      this.timeAdjustmentReceivedProcTime = receivedProcTime;
 
       if (Math.abs(origDelta) > 5)
         this.consecutiveGoodPolls = 0;
@@ -141,12 +143,12 @@ export abstract class TimePoller {
         this.consecutiveGoodPolls = 0;
         this.pollCount = 0;
         repoll = (this.clockReferencePoints.length < 3 ? EARLY_POLLING_RATE : NORMAL_POLLING_RATE);
-        syncDelta = expectedNtpTime - this.getNtpTimeInfo().time;
-        this.lastNtpTime = this.ntpAdjustmentTime;
-        this.lastNtpReceivedProcTime = this.ntpAdjustmentReceivedProcTime;
+        syncDelta = expectedPolledTime - this.getTimeInfo().time;
+        this.lastPolledTime = this.pollingAdjustmentTime;
+        this.lastPollReceivedProcTime = this.timeAdjustmentReceivedProcTime;
         this.pendingLeapSecond = [0, 1, -1][ntpData.li] || 0; // No leap second, positive leap, negative leap
 
-        const newReferencePt = {t: this.getNtpTimeInfo().time, pt: processMillis() };
+        const newReferencePt = {t: this.getTimeInfo().time, pt: processMillis() };
 
         this.clockReferencePoints.push(newReferencePt);
 
@@ -171,10 +173,10 @@ export abstract class TimePoller {
         }
       }
 
-      if (DEBUG) console.log(new Date(this.ntpAdjustmentTime).toISOString().substr(11) +
+      if (this.displayPollingResults) console.log(new Date(this.pollingAdjustmentTime).toISOString().substr(11) +
         ', orig delta: ' + origDelta.toFixed(2) +
         ', applied delta: ' + delta.toFixed(2) +
-        ', sys delta: ' + (this.ntpAdjustmentTime - Date.now()).toFixed(2) +
+        ', sys delta: ' + (this.pollingAdjustmentTime - Date.now()).toFixed(2) +
         ', rt delay: ' + roundTripDelay.toFixed(2) +
         ', send delay: ' + sendDelay.toFixed(2) +
         (syncDelta !== undefined ?
@@ -184,7 +186,7 @@ export abstract class TimePoller {
     else
       repoll = RETRY_POLLING_DELAY;
 
-    this.pollTimer = setTimeout(() => this.pollNtpTime(), repoll);
+    this.pollTimer = setTimeout(() => this.pollCurrentTime(), repoll);
   }
 
   private clearPollTimer(): void {
@@ -194,19 +196,19 @@ export abstract class TimePoller {
     }
   }
 
-  isTimeAquired(): boolean {
-    return this.ntpAcquired;
+  isTimeAcquired(): boolean {
+    return this.timeAcquired;
   }
 
-  getNtpTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
+  getTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
     const internalAdjust = (internalAdjustOrBias === true);
     const bias = (typeof internalAdjustOrBias === 'number' ? internalAdjustOrBias : 0);
     let time: number;
     let timeInfo: TimeInfo;
 
-    if (this.ntpAcquired) {
-      const t = internalAdjust ? this.ntpAdjustmentTime : this.lastNtpTime;
-      const pt = internalAdjust ? this.ntpAdjustmentReceivedProcTime : this.lastNtpReceivedProcTime;
+    if (this.timeAcquired) {
+      const t = internalAdjust ? this.pollingAdjustmentTime : this.lastPolledTime;
+      const pt = internalAdjust ? this.timeAdjustmentReceivedProcTime : this.lastPollReceivedProcTime;
 
       time = Math.floor(t + (processMillis() - pt) / this.clockSpeed);
     }
@@ -219,7 +221,7 @@ export abstract class TimePoller {
     else
       this.lastReportedTime = time;
 
-    if (this.ntpAcquired) {
+    if (this.timeAcquired) {
       timeInfo = {
         time: time + bias,
         leapSecond: this.pendingLeapSecond,
@@ -240,15 +242,15 @@ export abstract class TimePoller {
             else {
               timeInfo.time -= 1000;
               timeInfo.leapSecond = this.pendingLeapSecond = 0;
-              this.lastNtpReceivedProcTime += 1000;
-              this.ntpAdjustmentReceivedProcTime += 1000;
+              this.lastPollReceivedProcTime += 1000;
+              this.timeAdjustmentReceivedProcTime += 1000;
             }
           }
           else { // Handle (very unlikely!) negative leap second
             timeInfo.time += 1000;
             timeInfo.leapSecond = this.pendingLeapSecond = 0;
-            this.lastNtpReceivedProcTime -= 1000;
-            this.ntpAdjustmentReceivedProcTime -= 1000;
+            this.lastPollReceivedProcTime -= 1000;
+            this.timeAdjustmentReceivedProcTime -= 1000;
           }
         }
       }
