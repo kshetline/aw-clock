@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./dist/app.js"
   },
   "dependencies": {
     "cookie-parser": "~1.4.3",
@@ -14,7 +14,7 @@
     "http-errors": "~1.6.2",
     "jade": "~1.11.0",
     "morgan": "~1.9.0",
-    "node-dht-sensor": "0.0.34",
+    "node-dht-sensor": "0.4.0",
     "request": "^2.87.0"
   }
 }
