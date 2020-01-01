@@ -1,5 +1,5 @@
 import { Settings } from './settings';
-import { TimeInfo } from '../server/src/ntp-poller';
+import { TimeInfo } from '../server/src/time-poller';
 
 export interface AppService {
   getCurrentTime(bias?: number): number;

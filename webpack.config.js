@@ -106,9 +106,6 @@ const postcssPlugins = function (loader) {
 };
 
 module.exports = {
-  "stats": {
-    warnings: false
-  },
   "resolve": {
     "extensions": [
       ".ts",

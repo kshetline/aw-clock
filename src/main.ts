@@ -28,12 +28,12 @@ import { Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
 import { Indoor } from './indoor';
-import { HttpNtpPoller } from './http-ntp-poller';
-import { TimeInfo } from '../server/src/ntp-poller';
+import { HttpTimePoller } from './http-time-poller';
+import { TimeInfo } from '../server/src/time-poller';
 
 initTimeZoneSmall();
 
-const ntpPoller = new HttpNtpPoller();
+const ntpPoller = new HttpTimePoller();
 const baseTime = ntpPoller.getNtpTimeInfo().time;
 const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
 const debugTimeRate = 60;
