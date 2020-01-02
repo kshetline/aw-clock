@@ -21,7 +21,7 @@ import * as $ from 'jquery';
 import { isEdge, isSafari } from 'ks-util';
 import { cos_deg, Point, sin_deg } from 'ks-math';
 
-export type KeyListener = (KeyboardEvent) => void;
+export type KeyListener = (event: KeyboardEvent) => void;
 
 const keydownListeners: KeyListener[] = [];
 
@@ -39,7 +39,7 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
 });
 
 $.fn.extend({
-  enable: function(state) {
+  enable: function(state: boolean) {
     if (arguments.length === 0) {
       if (this.is('input, button'))
         return !this.attr('disabled');

@@ -48,7 +48,7 @@ $(() => {
   new AwClockApp().start();
 });
 
-export class AwClockApp implements AppService {
+class AwClockApp implements AppService {
   private clock: Clock;
   private forecast: Forecast;
   private ephemeris: Ephemeris;

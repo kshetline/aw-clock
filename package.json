@@ -49,6 +49,7 @@
     "karma-webpack": "^3.0.5",
     "less-loader": "^4.0.5",
     "node-sass": "^4.13.0",
+    "null-loader": "^3.0.0",
     "postcss-import": "^11.0.0",
     "postcss-loader": "^2.1.6",
     "postcss-url": "^7.1.2",

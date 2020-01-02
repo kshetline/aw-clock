@@ -367,7 +367,7 @@ module.exports = {
         ]
       },
       {
-        "test": /\.ts|\.tsx$/,
+        test: /\.ts|\.tsx$/,
         use: 'ts-loader',
         exclude: /node_modules/
       }

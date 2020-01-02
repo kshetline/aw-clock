@@ -1,16 +1,43 @@
 import { expect } from 'chai';
 import { Ntp } from './ntp';
 
+const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
+
 describe('ntp', () => {
-  it('should get time', async () => {
-    const ntp = new Ntp();
+  let ntp: Ntp;
+
+  afterEach(() => {
+    if (ntp) {
+      ntp.close();
+      ntp = undefined;
+    }
+  });
+
+  it('should get time', async function () {
+    this.slow(500);
+    this.timeout(1000);
+    ntp = new Ntp();
+
     const time = await ntp.getTime();
 
-    console.log(time);
-    Object.keys(time).forEach(key => {
-      if (/[a-z]Tm$/.test(key))
-        console.log(' '.repeat(6 - key.length) + key + ': ' + new Date((time as any)[key] as number).toISOString());
-    });
-    expect(time).to.be.ok;
+    expect(time.rxTm_s).to.be.closeTo(Math.floor(time.rxTm / 1000) + NTP_BASE, 1);
+    expect(time.rxTm_s).to.be.closeTo(Math.floor(Date.now() / 1000) + NTP_BASE, 10);
+  });
+
+  it('should debug time', async function () {
+    this.slow(500);
+    this.timeout(1000);
+    ntp = new Ntp();
+
+    const sampleDate = new Date(2020, 1 - 1, 1, 0, 0, 0).getTime();
+    let time: number;
+
+    ntp.setDebugTime(sampleDate);
+    time = (await ntp.getTime()).rxTm;
+    expect(time).to.be.closeTo(sampleDate, 2000);
+
+    ntp.clearDebugTime();
+    time = (await ntp.getTime()).rxTm;
+    expect(time).to.be.closeTo(Date.now(), 10000);
   });
 });

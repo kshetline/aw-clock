@@ -1,8 +1,5 @@
 const path = require('path');
-const webpack = require('webpack');
-
 const ROOT = path.resolve( __dirname, 'src' );
-const DESTINATION = path.resolve( __dirname, 'dist' );
 
 module.exports = {
   context: ROOT,
@@ -11,7 +8,8 @@ module.exports = {
     extensions: ['.ts', '.js'],
     modules: [
       ROOT,
-      'node_modules'
+      'node_modules',
+      'server/node_modules'
     ]
   },
 
@@ -26,9 +24,18 @@ module.exports = {
 
       // LOADERS
       {
-        test: /\.ts$/,
+        test: s => s.endsWith('.ts') && !s.endsWith('/ntp.ts'),
         exclude: [ /node_modules/ ],
-        use: 'ts-loader'
+        use: {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true
+          }
+        }
+      },
+      {
+        test: /\/ntp\.ts$/,
+        use: 'null-loader'
       }
     ]
   },

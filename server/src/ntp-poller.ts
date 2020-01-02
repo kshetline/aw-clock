@@ -4,11 +4,13 @@ import { NtpData } from './ntp-data';
 import { splitIpAndPort } from './util';
 
 export class NtpPoller extends TimePoller {
-  private readonly ntp: Ntp;
+  private static allOpenPollers = new Set<NtpPoller>();
 
   static closeAll(): void {
-    Ntp.closeAll();
+    NtpPoller.allOpenPollers.forEach(poller => poller.close());
   }
+
+  private ntp: Ntp;
 
   constructor(
     private server = 'pool.ntp.org',
@@ -41,5 +43,11 @@ export class NtpPoller extends TimePoller {
 
   protected canPoll() {
     return !!this.ntp;
+  }
+
+  close(): void {
+    this.ntp.close();
+    this.ntp = undefined;
+    NtpPoller.allOpenPollers.delete(this);
   }
 }
