@@ -54,8 +54,8 @@ let humidities: number[] = [];
 let consecutiveSensorErrors = 0;
 const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
-const sensorGpio = parseInt(process.env.SENSOR_GPIO, 10) ?? 4;
-const ntpServer = process.env.AWC_NTP_SERVER ?? 'pool.ntp.org';
+const sensorGpio = parseInt(process.env.SENSOR_GPIO, 10) || 4;
+const ntpServer = process.env.AWC_NTP_SERVER || 'pool.ntp.org';
 const ntpPoller = new NtpPoller(ntpServer);
 
 if (process.env.DEBUG_TIME) {
