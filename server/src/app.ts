@@ -253,7 +253,9 @@ function getApp() {
       return;
     }
 
-    if (req.query.json != null)
+    if (req.query.callback)
+      res.jsonp(time);
+    else if (req.query.json != null)
       res.json(time);
     else
       res.send(time.text);
