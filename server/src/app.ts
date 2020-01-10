@@ -8,6 +8,7 @@ import * as path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import request from 'request';
+import { Daytime, DaytimeData } from './daytime';
 
 const debug = require('debug')('express:server');
 
@@ -36,6 +37,7 @@ httpServer.listen(httpPort);
 process.on('SIGTERM', () => {
   console.log('*** closing server ***');
   NtpPoller.closeAll();
+  httpServer.close();
 });
 
 // add error handler
@@ -57,6 +59,8 @@ const MAX_POINTS = 10;
 const sensorGpio = parseInt(process.env.SENSOR_GPIO, 10) || 4;
 const ntpServer = process.env.AWC_NTP_SERVER || 'pool.ntp.org';
 const ntpPoller = new NtpPoller(ntpServer);
+const daytimeServer = process.env.DAYTIME_SERVER || 'time-a-g.nist.gov';
+const daytime = new Daytime(daytimeServer);
 
 if (process.env.DEBUG_TIME) {
   const parts = process.env.DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
@@ -234,6 +238,25 @@ function getApp() {
   theApp.use('/ntp', (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
     res.json(ntpPoller.getTimeInfo());
+  });
+
+  theApp.use('/daytime', async (req, res) => {
+    res.setHeader('cache-control', 'no-cache, no-store');
+
+    let time: DaytimeData;
+
+    try {
+      time = await daytime.getDaytime();
+    }
+    catch (err) {
+      res.status(500).send(err.toString());
+      return;
+    }
+
+    if (req.query.json != null)
+      res.json(time);
+    else
+      res.send(time.text);
   });
 
   return theApp;

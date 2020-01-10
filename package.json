@@ -22,14 +22,14 @@
     "ks-date-time-zone": "^1.6.6",
     "ks-math": "^1.1.6",
     "ks-util": "^1.6.0",
-    "rxjs": "^6.5.3"
+    "rxjs": "^6.5.4"
   },
   "devDependencies": {
     "@types/jasmine": "^2.8.16",
     "@types/jasminewd2": "^2.0.8",
     "@types/jquery": "^3.3.31",
     "@types/js-cookie": "^2.2.4",
-    "@types/node": "^12.12.22",
+    "@types/node": "^12.12.24",
     "autoprefixer": "^7.2.3",
     "circular-dependency-plugin": "^4.2.1",
     "copy-node-modules": "^1.1.1",

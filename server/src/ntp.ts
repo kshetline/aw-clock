@@ -1,14 +1,6 @@
 import { mod, processMillis, splitIpAndPort } from './util';
-import { RemoteInfo } from 'dgram';
+import { createSocket, RemoteInfo } from 'dgram';
 import { NtpData } from './ntp-data';
-
-let dgram: any;
-
-try {
-  // Make this module optional
-  dgram = require('dgram');
-}
-catch (err) {}
 
 const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MAX_RESPONSE_WAIT = 3000;
@@ -35,7 +27,7 @@ export class Ntp {
   private pollProcTime: number;
   private responseTimer: any;
   private retries: number;
-  private socket = dgram.createSocket('udp4');
+  private socket = createSocket('udp4');
   private timeCallback: TimeCallback;
 
   constructor(
