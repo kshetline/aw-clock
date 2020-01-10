@@ -49,7 +49,7 @@ export class Daytime {
         throw new Error('Invalid daytime: ' + this.lastTime);
       }
 
-      if (nowPT > this.lastPoll + REPOLL_DELAY || shortDate !== $[2]) {
+      if (!$ || nowPT > this.lastPoll + REPOLL_DELAY || shortDate !== $[2]) {
         this.lastTime = await this.getDaytimeFromServer();
         this.lastPoll = nowPT;
       }
