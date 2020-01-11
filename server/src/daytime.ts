@@ -57,7 +57,7 @@ export class Daytime {
         break;
     }
 
-    this.lastTime = [$[1], $[2], isoDate.substr(11, 8), $[4], $[5], $[6], '50 UTC(NIST) *'].join(' ');
+    this.lastTime = [$[1], $[2], isoDate.substr(11, 8), $[4], $[5], $[6], '0 UTC(NIST) *'].join(' ');
 
     const dstCode = Number($[4]);
     const data = {

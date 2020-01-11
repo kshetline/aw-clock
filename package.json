@@ -1,11 +1,12 @@
 {
   "name": "aw-clock",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "start": "webpack-dev-server --port=4200",
     "build": "webpack && tsc -b ./server/ && cp -Rp dist/ server/dist/public && copy-node-modules server server/dist",
+    "build-for-dht": "cd ./server && npm i node-dht-sensor && cd .. && npm run build",
     "test": "karma start ./karma.conf.js",
     "lint": "tslint --project .",
     "e2e": "protractor ./protractor.conf.js",

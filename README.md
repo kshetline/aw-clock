@@ -2,7 +2,8 @@
 
 To test and build the web client project, you can use the following commands:
    - "`npm run lint`" to inspect the code with TSLint.
-   - "`npm run build`" to build.
+   - "`npm run build`" to build _without_ support for temperature/humidity sensor.
+   - "`npm run build-for-dht`" to build _with_ support for temperature/humidity sensor.
    - "`npm test`" to run unit tests.
    - "`npm start`" to serve the app using webpack-dev-server.
    - "`npm run e2e`" to run Protractor for end-to-end tests.
@@ -22,7 +23,7 @@ By default, the server uses `pool.ntp.org` as an NTP time server. Use the enviro
 to changes the time server. Do not use a Google time server, or any other NTP server that implements "leap second
 smearing" if you want the Astronomy/Weather Clock to be able to display leap seconds.
 
-To deploy the server along with the web client, use `npm run build` as described above. The
+To deploy the server along with the web client, use `npm run build` (or `npm run build-for-dht`) as described above. The
 contents of the `dist` directory will be copied into the server's `public` directory.
 
 If you are running the server on a Raspberry Pi, you have the option to provide indoor temperature and
@@ -32,10 +33,7 @@ resistor.
 
 First, you must install the BCM 2835 library as described here: http://www.airspayce.com/mikem/bcm2835/
 
-Then delete the file in the server directory named `package.json`, followed by renaming the file `package.json.for-dht-sensor.json`
-to `package.json`. Next run `npm install` from within the server directory.
-
-With your Raspberry Pi shut down, and disconnected from power, connect the DHT22/AM2302 sensor.
+Then, with your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor.
 The code defaults to assuming the signal lead ("out") of the sensor is connected to GPIO 4 (pin 7 on the GPIO
 header). You can use the environment variable `SENSOR_GPIO` to set a different GPIO number.
 The `+` lead from the sensor needs to be connect to 5V (I chose pin 2 on the GPIO header) and
@@ -59,7 +57,7 @@ screen saver for this application &mdash; in fact, you want the screen to stay o
 `xscreensaver` gives you the option of going to your Raspberry Pi's Preferences and *turning off* the default screen blanking that will
 otherwise occur.
 1. Install an up-to-date node.js. (You can find instructions for this step here: https://www.w3schools.com/nodejs/nodejs_raspberrypi.asp.)
-1. Build the client project as described above (`npm run build`).
+1. Build the client project as described above (`npm run build-for-dht`, or `npm run build` if you aren't installing the DHT22/AM2302 sensor).
 1. Copy the contents of this project's `server/dist` folder to `/home/pi/weather`.
 1. If you wish to use an indoor temperature/humidity sensor, follow the previously mentioned
 steps to install the BCM 2835 library and connect the sensor.
