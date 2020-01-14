@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import request from 'request';
 import { Daytime, DaytimeData } from './daytime';
+import { TaiUtc } from './tai-utc';
 
 const debug = require('debug')('express:server');
 
@@ -22,9 +23,11 @@ interface NodeDhtSensor {
 
 let indoorSensor: NodeDhtSensor;
 
-if (toBoolean(process.env.HAS_INDOOR_SENSOR)) {
+if (toBoolean(process.env.AWC_HAS_INDOOR_SENSOR)) {
   indoorSensor = require('node-dht-sensor');
 }
+
+const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);
 
 // create http server
 const httpPort = normalizePort(process.env.AWC_PORT || 8080);
@@ -56,14 +59,16 @@ let humidities: number[] = [];
 let consecutiveSensorErrors = 0;
 const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
-const sensorGpio = parseInt(process.env.SENSOR_GPIO, 10) || 4;
+const sensorGpio = parseInt(process.env.AWC_TH_SENSOR_GPIO, 10) || 4;
 const ntpServer = process.env.AWC_NTP_SERVER || 'pool.ntp.org';
 const ntpPoller = new NtpPoller(ntpServer);
-const daytimeServer = process.env.DAYTIME_SERVER || 'time-a-g.nist.gov';
+const daytimeServer = process.env.AWC_DAYTIME_SERVER || 'time-a-g.nist.gov';
 const daytime = new Daytime(daytimeServer);
+const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || 'https://hpiers.obspm.fr/iers/bul/bulc/ntp/leap-seconds.list';
+const taiUtc = new TaiUtc(leapSecondsUrl);
 
-if (process.env.DEBUG_TIME) {
-  const parts = process.env.DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
+if (process.env.AWC_DEBUG_TIME) {
+  const parts = process.env.AWC_DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
   ntpPoller.setDebugTime(new Date(parts[0]), Number(parts[1] || 0));
 }
 
@@ -169,7 +174,7 @@ function getApp() {
     res.send('Static home file not found');
   });
 
-  if (toBoolean(process.env.ALLOW_CORS)) {
+  if (allowCors) {
     // see: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs
     theApp.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
@@ -187,14 +192,14 @@ function getApp() {
   }
 
   theApp.use('/darksky', (req, res) => {
-    let url = `https://api.darksky.net/forecast/${process.env.DARK_SKY_API_KEY}${req.url}`;
+    let url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}${req.url}`;
     let frequent = false;
     const match = /(.*)(&id=)([^&]*)$/.exec(url);
 
     if (match) {
       url = match[1];
 
-      if (process.env.FREQUENT_ID && match[3] === process.env.FREQUENT_ID)
+      if (process.env.AWC_FREQUENT_ID && match[3] === process.env.AWC_FREQUENT_ID)
         frequent = true;
     }
 
@@ -217,13 +222,15 @@ function getApp() {
   theApp.use('/indoor', (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
 
+    let result: any;
+
     if (indoorSensor) {
       if (consecutiveSensorErrors >= MAX_ERRORS || lastTemp === undefined || lastHumidity === undefined) {
         console.error('Failed to read indoor temp/humidity sensor.');
-        res.json({temperature: 0, humidity: -1, error: 'Sensor error'});
+        result = { temperature: 0, humidity: -1, error: 'Sensor error' };
       }
       else
-        res.json({temperature: lastTemp, humidity: lastHumidity});
+        result = { temperature: lastTemp, humidity: lastHumidity };
     }
     else {
       if (warnIndoorNA) {
@@ -231,13 +238,24 @@ function getApp() {
         warnIndoorNA = false;
       }
 
-      res.json({temperature: 0, humidity: -1, error: 'n/a'});
+      result = { temperature: 0, humidity: -1, error: 'n/a' };
     }
+
+    if (req.query.callback)
+      res.jsonp(result);
+    else
+      res.json(result);
   });
 
   theApp.use('/ntp', (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
-    res.json(ntpPoller.getTimeInfo());
+
+    const result = ntpPoller.getTimeInfo();
+
+    if (req.query.callback)
+      res.jsonp(result);
+    else
+      res.json(result);
   });
 
   theApp.use('/daytime', async (req, res) => {
@@ -250,6 +268,7 @@ function getApp() {
     }
     catch (err) {
       res.status(500).send(err.toString());
+
       return;
     }
 
@@ -259,6 +278,28 @@ function getApp() {
       res.json(time);
     else
       res.send(time.text);
+  });
+
+  theApp.use('/tai-utc', async (req, res) => {
+    res.setHeader('cache-control', 'no-cache, no-store');
+
+    const currentDelta = await taiUtc.getCurrentDelta();
+
+    if (req.query.callback)
+      res.jsonp(currentDelta);
+    else
+      res.json(currentDelta);
+  });
+
+  theApp.use('/ls-history', async (req, res) => {
+    res.setHeader('cache-control', 'no-cache, no-store');
+
+    const history = await taiUtc.getLeapSecondHistory();
+
+    if (req.query.callback)
+      res.jsonp(history);
+    else
+      res.json(history);
   });
 
   return theApp;

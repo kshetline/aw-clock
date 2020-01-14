@@ -7,8 +7,9 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es6"
+    "target": "es6",
+    "allowSyntheticDefaultImports": true
   },
   "include": ["./src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "exclude": ["node_modules", "server", "**/*.spec.ts"]
 }

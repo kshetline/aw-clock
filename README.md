@@ -16,7 +16,7 @@ fix it, search for solutions based on `node-sass` and any specific error message
 
 To run the weather server, use "`npm start`" from within the server directory.
 
-The server requires a Dark Sky API key to function. Use the environment variable `DARK_SKY_API_KEY`
+The server requires a Dark Sky API key to function. Use the environment variable `AWC_DARK_SKY_API_KEY`
 to set the key. (See https://darksky.net/ for further details.)
 
 By default, the server uses `pool.ntp.org` as an NTP time server. Use the environment variable `AWC_NTP_SERVER`
@@ -35,7 +35,7 @@ First, you must install the BCM 2835 library as described here: http://www.airsp
 
 Then, with your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor.
 The code defaults to assuming the signal lead ("out") of the sensor is connected to GPIO 4 (pin 7 on the GPIO
-header). You can use the environment variable `SENSOR_GPIO` to set a different GPIO number.
+header). You can use the environment variable `AWC_TH_SENSOR_GPIO` to set a different GPIO number.
 The `+` lead from the sensor needs to be connect to 5V (I chose pin 2 on the GPIO header) and
 the `-` lead needs to be connected to ground (I chose pin 6).
 
@@ -65,7 +65,7 @@ steps to install the BCM 2835 library and connect the sensor.
 1. `npm install`
 1. Copy the included file `weatherService` (located in the `raspberry_pi_setup` folder) to `/etc/init.d/`. Make sure the file is owned by
 `root` is set to be executable. Follow the instructions listed inside that file to set up the necessary environment variables, which will
-be saved in `/etc/defaults/weatherService`. This is where you add your API key, and set `HAS_INDOOR_SENSOR` to `true` if you're
+be saved in `/etc/defaults/weatherService`. This is where you add your API key, and set `AWC_HAS_INDOOR_SENSOR` to `true` if you're
 connecting an indoor temperature/humidity sensor.
 1. Use the command `sudo update-rc.d weatherService defaults` to establish the service that
 starts up the weather server.

@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { splitIpAndPort } from './util';
+import { describe, it } from 'mocha';
 
 describe('util', () => {
   it('should parse IP address or domain when possibly combined with port', () => {
