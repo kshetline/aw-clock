@@ -25,6 +25,8 @@ interface IndoorConditions {
   error?: any;
 }
 
+const DEV_SENSOR_URL = 'http://192.168.42.98:8080';
+
 export class Indoor {
   private indoorTemp: JQuery;
   private indoorHumidity: JQuery;
@@ -48,7 +50,7 @@ export class Indoor {
 
   public update(celsius: boolean) {
     const runningDev = (document.location.port === '4200');
-    const site = (runningDev ? 'http://192.168.42.98:8080' : '');
+    const site = (runningDev ? DEV_SENSOR_URL : '');
     const url = `${site}/indoor`;
 
     $.ajax({

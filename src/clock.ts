@@ -349,6 +349,7 @@ export class Clock {
   }
 
   private getLeapSecondInfo(): void {
+    // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url: this.appService.getWeatherServer() + '/tai-utc',
       dataType: 'json',

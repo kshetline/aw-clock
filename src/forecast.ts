@@ -210,9 +210,7 @@ export class Forecast {
   }
 
   private getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {
-    const runningDev = (document.location.port === '4200');
-    const site = (runningDev ? this.weatherServer || '' : '');
-    let url = `${site}/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
+    let url = `${this.weatherServer}/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
 
     if (isMetric)
       url += '&units=ca';

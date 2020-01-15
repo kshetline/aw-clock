@@ -8,9 +8,7 @@ export class HttpTimePoller extends TimePoller {
   }
 
   protected getNtpData(requestTime: number): Promise<NtpData> {
-    const runningDev = (document.location.port === '4200');
-    const site = (runningDev ? this.weatherServer || '' : '');
-    const url = `${site}/ntp`;
+    const url = `${this.weatherServer}/ntp`;
 
     return new Promise<NtpData>((resolve, reject) => {
       // noinspection JSIgnoredPromiseFromCall

@@ -33,8 +33,10 @@ import { TimeInfo } from '../server/src/time-poller';
 
 initTimeZoneSmall();
 
+const runningDev = (document.location.port === '4200');
 const weatherPort = (document.location.port === '4200' ? '4201' : '8080');
-const weatherServer = new URL(window.location.href).searchParams.get('weather_server') || 'http://localhost:' + weatherPort;
+const weatherServer = new URL(window.location.href).searchParams.get('weather_server') ||
+  (runningDev ? 'http://localhost:' + weatherPort : '');
 const ntpPoller = new HttpTimePoller(weatherServer);
 const baseTime = ntpPoller.getTimeInfo().time;
 const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
