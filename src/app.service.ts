@@ -4,6 +4,7 @@ import { TimeInfo } from '../server/src/time-poller';
 export interface AppService {
   getCurrentTime(bias?: number): number;
   getTimeInfo(bias?: number): TimeInfo;
+  getWeatherServer(): string;
   isTimeAccelerated(): boolean;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
   updateSettings(newSettings: Settings);

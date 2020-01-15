@@ -15,9 +15,9 @@ export interface LeapSecond {
   delta: number;
 }
 
-export const DEFAULT_HTTPS_URL = 'https://hpiers.obspm.fr/iers/bul/bulc/ntp/leap-seconds.list';
-export const DEFAULT_FTP_URL = 'ftp://ftp.nist.gov/pub/time/leap-seconds.list';
-export const DEFAULT_LEAP_SECOND_URLS = DEFAULT_HTTPS_URL + ';' + DEFAULT_FTP_URL;
+export const DEFAULT_LEAP_SECOND_HTTPS_URL = 'https://hpiers.obspm.fr/iers/bul/bulc/ntp/leap-seconds.list';
+export const DEFAULT_LEAP_SECOND_FTP_URL = 'ftp://ftp.nist.gov/pub/time/leap-seconds.list';
+export const DEFAULT_LEAP_SECOND_URLS = DEFAULT_LEAP_SECOND_HTTPS_URL + ';' + DEFAULT_LEAP_SECOND_FTP_URL;
 
 const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MILLIS_PER_DAY = 86400000;

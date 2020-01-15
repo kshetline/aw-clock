@@ -535,3 +535,11 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 .stale-forecast {
   fill: #999;
 }
+
+.month-of-leap-second {
+  fill: #9F9
+}
+
+.month-of-neg-leap-second {
+  fill: #C6F
+}

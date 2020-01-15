@@ -1,5 +1,5 @@
 import { TimePoller } from './time-poller';
-import { Ntp } from './ntp';
+import { DEFAULT_NTP_SERVER, Ntp } from './ntp';
 import { NtpData } from './ntp-data';
 import { splitIpAndPort } from './util';
 
@@ -13,7 +13,7 @@ export class NtpPoller extends TimePoller {
   private ntp: Ntp;
 
   constructor(
-    private server = 'pool.ntp.org',
+    private server = DEFAULT_NTP_SERVER,
     private port = 123
   ) {
     super();

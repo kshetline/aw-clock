@@ -2,6 +2,8 @@ import { mod, processMillis, splitIpAndPort } from './util';
 import { createSocket, RemoteInfo } from 'dgram';
 import { NtpData } from './ntp-data';
 
+export const DEFAULT_NTP_SERVER = 'pool.ntp.org';
+
 const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MAX_RESPONSE_WAIT = 3000;
 const DEFAULT_MAX_RETRIES = 5;
@@ -31,7 +33,7 @@ export class Ntp {
   private timeCallback: TimeCallback;
 
   constructor(
-    private server = 'pool.ntp.org',
+    private server = DEFAULT_NTP_SERVER,
     private port = 123,
     private maxRetries = DEFAULT_MAX_RETRIES
   ) {

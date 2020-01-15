@@ -3,12 +3,8 @@ import { NtpData } from '../server/src/ntp-data';
 import { TimePoller, TimeInfo } from '../server/src/time-poller';
 
 export class HttpTimePoller extends TimePoller {
-  private readonly weatherServer: string;
-
-  constructor() {
+  constructor(private weatherServer: string) {
     super();
-    const weatherPort = (document.location.port === '4200' ? '4201' : '8080');
-    this.weatherServer = new URL(window.location.href).searchParams.get('weather_server') || 'http://localhost:' + weatherPort;
   }
 
   protected getNtpData(requestTime: number): Promise<NtpData> {

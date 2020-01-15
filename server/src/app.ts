@@ -8,8 +8,9 @@ import * as path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import request from 'request';
-import { Daytime, DaytimeData } from './daytime';
+import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
+import { DEFAULT_NTP_SERVER } from './ntp';
 
 const debug = require('debug')('express:server');
 
@@ -60,9 +61,9 @@ let consecutiveSensorErrors = 0;
 const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
 const sensorGpio = parseInt(process.env.AWC_TH_SENSOR_GPIO, 10) || 4;
-const ntpServer = process.env.AWC_NTP_SERVER || 'pool.ntp.org';
+const ntpServer = process.env.AWC_NTP_SERVER || DEFAULT_NTP_SERVER;
 const ntpPoller = new NtpPoller(ntpServer);
-const daytimeServer = process.env.AWC_DAYTIME_SERVER || 'time-a-g.nist.gov';
+const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
 const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
 const taiUtc = new TaiUtc(leapSecondsUrl);

@@ -19,14 +19,16 @@
 
 // Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed quite a bit from there.
 
-import { getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { isIE, isRaspbian, padLeft } from 'ks-util';
 import { AppService } from './app.service';
+import { CurrentDelta } from '../server/src/tai-utc';
 import * as $ from 'jquery';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 const SECOND_HAND_ANIMATION_TIME = 200;
+const LEAP_SECOND_RETRY_DELAY = 300000; // 5 minutes
 
 const MILLIS_PER_DAY = 86400000;
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -60,6 +62,9 @@ export class Clock {
   private lastMinute = -1;
   private lastTick = -1;
   private inMinuteOfLeapSecond = false;
+  private pendingLeapSecondForMonth = 0;
+  private lastLeapSecondCheckDay = -1;
+  private upcomingLeapSecond: CurrentDelta;
 
   private _amPm = false;
   private _hideSeconds = false;
@@ -239,6 +244,7 @@ export class Clock {
     const now = timeInfo.time;
     const date = new KsDateTime(now, this.timezone);
     const wallTime = date.wallTime;
+    const wallTimeUtc = new KsDateTime(now, KsTimeZone.UT_ZONE).wallTime;
     const secs = wallTime.sec + (timeInfo.leapExcess > 0 ? 1 : 0);
     const millis = (timeInfo.leapExcess > 0 ? timeInfo.leapExcess - 1 : wallTime.millis);
     let secRotation = 6 * secs;
@@ -246,6 +252,12 @@ export class Clock {
     const hour = wallTime.hrs;
     const minuteOfLeapSecond = timeInfo.leapSecond && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
             wallTime.d === getLastDateInMonthGregorian(wallTime.y, wallTime.m);
+    const leapSecondForMonth = (minuteOfLeapSecond && timeInfo.leapSecond) || this.checkPendingLeapSecondForMonth(wallTimeUtc);
+
+    if (this.lastLeapSecondCheckDay !== wallTimeUtc.d) {
+      this.lastLeapSecondCheckDay = wallTimeUtc.d;
+      this.getLeapSecondInfo();
+    }
 
     if (this.inMinuteOfLeapSecond !== minuteOfLeapSecond) {
       if (!minuteOfLeapSecond) {
@@ -262,6 +274,19 @@ export class Clock {
 
     if (minuteOfLeapSecond && secs > 55)
       secRotation = 330 + (secs - 55) * (timeInfo.leapSecond > 0 ? 5 : 7.5);
+
+    if (this.pendingLeapSecondForMonth !== leapSecondForMonth) {
+      if (!leapSecondForMonth) {
+        this.monthCaption.classList.remove('month-of-leap-second');
+        this.monthCaption.classList.remove('month-of-neg-leap-second');
+      }
+      else if (leapSecondForMonth > 0)
+        this.monthCaption.classList.add('month-of-leap-second');
+      else
+        this.monthCaption.classList.add('month-of-neg-leap-second');
+
+      this.pendingLeapSecondForMonth = leapSecondForMonth;
+    }
 
     if (doMechanicalSecondHandEffect)
       sweepSecondHand(this.lastSecRotation, secRotation);
@@ -309,5 +334,29 @@ export class Clock {
         this.lastTick = now;
       }
     }, animationTime);
+  }
+
+  private checkPendingLeapSecondForMonth(wallTimeUtc: DateAndTime): number {
+    if (!this.upcomingLeapSecond?.pendingLeap)
+      return 0;
+
+    const [y, m] = this.upcomingLeapSecond.pendingLeapDate.split('-').map(n => Number(n));
+
+    if (y === wallTimeUtc.y && m === wallTimeUtc.m)
+      return this.upcomingLeapSecond.pendingLeap;
+    else
+      return 0;
+  }
+
+  private getLeapSecondInfo(): void {
+    $.ajax({
+      url: this.appService.getWeatherServer() + '/tai-utc',
+      dataType: 'json',
+      success: (data: CurrentDelta) => this.upcomingLeapSecond = data,
+      error: () => setTimeout(() => {
+        this.upcomingLeapSecond = undefined;
+        this.lastLeapSecondCheckDay = -1;
+      }, LEAP_SECOND_RETRY_DELAY)
+    });
   }
 }

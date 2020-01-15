@@ -12,6 +12,8 @@ export interface DaytimeData {
   leapSecond: number;
 }
 
+export const DEFAULT_DAYTIME_SERVER = 'time-a-g.nist.gov';
+
 const REPOLL_DELAY = 7200000; // Two hours
 
 function getDateFromMJD(mjd: number): string {
@@ -23,7 +25,7 @@ export class Daytime {
   private lastTime = '';
 
   constructor(
-    private server = 'time-a-g.nist.gov',
+    private server = DEFAULT_DAYTIME_SERVER,
     private port = 13
   ) {
     [this.server, this.port] = splitIpAndPort(server, port);
