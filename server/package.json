@@ -5,7 +5,8 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
   "scripts": {
-    "start": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec 'tsc && (chmod +x ./dist/app.js && ./dist/app.js) || node ./dist/app.js'",
+    "start": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec 'tsc && chmod +x ./dist/app.js && ./dist/app.js'",
+    "start-win": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec \"tsc && node ./dist/app.js\"",
     "test": "mocha --require ts-node/register src/**/*.spec.ts --exit"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "http-errors": "~1.6.2",
     "ks-date-time-zone": "^1.6.6",
     "morgan": "~1.9.0",
+    "promise-ftp": "^1.3.5",
     "request": "^2.87.0"
   },
   "devDependencies": {
@@ -27,6 +29,7 @@
     "@types/morgan": "^1.7.37",
     "@types/nock": "^11.1.0",
     "@types/node": "^12.12.24",
+    "@types/promise-ftp": "^1.3.4",
     "@types/request": "^2.48.4",
     "chai": "^4.2.0",
     "mocha": "^6.2.2",

@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import request from 'request';
 import { Daytime, DaytimeData } from './daytime';
-import { TaiUtc } from './tai-utc';
+import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 
 const debug = require('debug')('express:server');
 
@@ -64,7 +64,7 @@ const ntpServer = process.env.AWC_NTP_SERVER || 'pool.ntp.org';
 const ntpPoller = new NtpPoller(ntpServer);
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || 'time-a-g.nist.gov';
 const daytime = new Daytime(daytimeServer);
-const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || 'https://hpiers.obspm.fr/iers/bul/bulc/ntp/leap-seconds.list';
+const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
 const taiUtc = new TaiUtc(leapSecondsUrl);
 
 if (process.env.AWC_DEBUG_TIME) {
@@ -208,13 +208,13 @@ function getApp() {
       qs: req.query,
       method: req.method
     }))
-    .on('response', remoteRes => {
-      remoteRes.headers['cache-control'] = 'max-age=' + (frequent ? '240' : '840');
-    })
-    .on('error', err => {
-      res.status(500).send('Error connecting to Dark Sky: ' + err);
-    })
-    .pipe(res);
+      .on('response', remoteRes => {
+        remoteRes.headers['cache-control'] = 'max-age=' + (frequent ? '240' : '840');
+      })
+      .on('error', err => {
+        res.status(500).send('Error connecting to Dark Sky: ' + err);
+      })
+      .pipe(res);
   });
 
   let warnIndoorNA = true;

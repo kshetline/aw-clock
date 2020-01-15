@@ -1,5 +1,7 @@
 import { requestText } from 'by-request';
 import { getDateFromDayNumber_SGC, getISOFormatDate } from 'ks-date-time-zone';
+import PromiseFtp from 'promise-ftp';
+import { parse as parseUrl } from 'url';
 
 export interface CurrentDelta {
   delta: number;
@@ -13,21 +15,34 @@ export interface LeapSecond {
   delta: number;
 }
 
+export const DEFAULT_HTTPS_URL = 'https://hpiers.obspm.fr/iers/bul/bulc/ntp/leap-seconds.list';
+export const DEFAULT_FTP_URL = 'ftp://ftp.nist.gov/pub/time/leap-seconds.list';
+export const DEFAULT_LEAP_SECOND_URLS = DEFAULT_HTTPS_URL + ';' + DEFAULT_FTP_URL;
+
 const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MILLIS_PER_DAY = 86400000;
 const DAYS_BETWEEN_POLLS = 7;
 const TIMEOUT = 5000;
 const TIME_AND_DELTA = /^(\d{10,})\s+(\d{2,4})\s*#\s*1\s+[A-Za-z]{3}\s+\d{4}/;
 
+function makeError(err: any): Error {
+  return err instanceof Error ? err : new Error(err.toString);
+}
+
 export class TaiUtc {
   private lastPollDay = 0;
   private lastPollMonth = -1;
   private leapSeconds: LeapSecond[] = [];
+  private pendingPromise: Promise<void>;
+  private urls: string[] = [];
 
   constructor(
-    private sourceUrl = 'https://hpiers.obspm.fr/iers/bul/bulc/ntp/leap-seconds.list',
+    sourceUrls = DEFAULT_LEAP_SECOND_URLS,
     private getUtcMillis: () => number = Date.now
-  ) { }
+  ) {
+    this.urls = sourceUrls.split(';');
+    setTimeout(() => this.updateTaiUtc());
+  }
 
   async getCurrentDelta(): Promise<CurrentDelta> {
     await this.updateTaiUtc();
@@ -55,6 +70,15 @@ export class TaiUtc {
   }
 
   private async updateTaiUtc(): Promise<void> {
+    if (!this.pendingPromise) {
+      this.pendingPromise = this.updateTaiUtcAux();
+      (this.pendingPromise).then(() => this.pendingPromise = undefined);
+    }
+
+    return this.pendingPromise;
+  }
+
+  private async updateTaiUtcAux(): Promise<void> {
     const now = this.getUtcMillis();
     const day = Math.floor(now / MILLIS_PER_DAY);
     const month = new Date(now).getMonth() + 1;
@@ -62,28 +86,72 @@ export class TaiUtc {
     if (this.leapSeconds.length > 1 && this.lastPollDay < day + DAYS_BETWEEN_POLLS && this.lastPollMonth === month)
       return;
 
-    let leapList: string;
+    const promises: Promise<string | Error>[] = [];
 
-    try {
-      leapList = await requestText(this.sourceUrl, { timeout: TIMEOUT });
-    }
-    catch (err) {
-      this.lastPollDay = 0;
-      this.lastPollMonth = -1;
-    }
+    this.urls.forEach(url => {
+      if (parseUrl(url).protocol === 'ftp:')
+        promises.push(TaiUtc.getFtpText(url));
+      else
+        promises.push(requestText(url, { timeout: TIMEOUT }).catch(err => makeError(err)));
+    });
 
-    const lines = leapList.split(/\r\n|\r|\n/).filter(line => TIME_AND_DELTA.test(line));
+    const docs = await Promise.all(promises);
+    let newLeaps: LeapSecond[] = [];
 
-    if (lines.length > 1) {
-      this.leapSeconds = [];
+    docs.forEach(doc => {
+      if (typeof doc !== 'string')
+        return;
 
-      lines.forEach(line => {
-        const $ = TIME_AND_DELTA.exec(line);
-        this.leapSeconds.push({ ntp: Number($[1]), utc: Number($[1]) - NTP_BASE, delta: Number($[2]) });
-      });
+      const lines = doc.split(/\r\n|\r|\n/).filter(line => TIME_AND_DELTA.test(line));
 
+      if (lines.length > 1 && lines.length > newLeaps.length) {
+        newLeaps = [];
+
+        lines.forEach(line => {
+          const $ = TIME_AND_DELTA.exec(line);
+          newLeaps.push({ ntp: Number($[1]), utc: Number($[1]) - NTP_BASE, delta: Number($[2]) });
+        });
+      }
+    });
+
+    if (newLeaps.length > 1) {
+      this.leapSeconds = newLeaps;
       this.lastPollDay = day;
       this.lastPollMonth = month;
     }
+  }
+
+  private static getFtpText(url: string): Promise<string | Error> {
+    const parsed = parseUrl(url);
+    const port = Number(parsed.port || 21);
+    const options: PromiseFtp.Options = { host: parsed.hostname, port, connTimeout: TIMEOUT, pasvTimeout: TIMEOUT };
+    const [user, password] = (parsed.auth ?? '').split(':');
+
+    if (user)
+      options.user = user;
+
+    if (password != null)
+      options.password = password;
+
+    const ftp = new PromiseFtp();
+
+    return ftp.connect(options)
+      .then(() => ftp.ascii())
+      .then(() => ftp.get(parsed.path))
+      .then(stream => {
+        const chunks: string[] = [];
+
+        return new Promise<string>((resolve, reject) => {
+          stream.once('error', err => reject(err));
+          stream.once('end', () => resolve(chunks.join('')));
+          stream.on('data', chunk => chunks.push(chunk.toString()));
+          stream.resume();
+        });
+      })
+      .then(text => {
+        ftp.end();
+        return text;
+      })
+      .catch(err => makeError(err));
   }
 }

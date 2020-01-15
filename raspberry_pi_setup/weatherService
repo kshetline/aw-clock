@@ -23,7 +23,7 @@ LOGFILE="/var/log/weatherService.log"
 MIN_UPTIME="5000"
 SPIN_SLEEP_TIME="2000"
 
-# Define DARK_SKY_API_KEY, HAS_INDOOR_SENSOR, AWC_NTP_SERVER, etc., in the file below:
+# Define AWC_DARK_SKY_API_KEY, AWC_HAS_INDOOR_SENSOR, AWC_NTP_SERVER, etc., in the file below:
 [ -f /etc/default/weatherService ] && . /etc/default/weatherService
 
 PATH=$NODE_BIN_DIR:$PATH
