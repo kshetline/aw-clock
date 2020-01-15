@@ -198,7 +198,7 @@ export class Ephemeris {
 
     for (let dayIndex = 0; dayIndex < 4; ++dayIndex) {
       const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
-      const noon = new KsDateTime({y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0}, timezone);
+      const noon = new KsDateTime({ y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0 }, timezone);
       const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
       const noon_JDE = UT_to_TDB(noon_JDU);
       const phase = solarSystem.getLunarPhase(noon_JDE);

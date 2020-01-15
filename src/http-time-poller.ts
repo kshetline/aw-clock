@@ -7,6 +7,8 @@ export class HttpTimePoller extends TimePoller {
     super();
   }
 
+  // TODO: Allow unused var when overriding function?
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getNtpData(requestTime: number): Promise<NtpData> {
     const url = `${this.weatherServer}/ntp`;
 

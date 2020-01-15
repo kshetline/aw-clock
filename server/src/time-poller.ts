@@ -148,11 +148,11 @@ export abstract class TimePoller {
         this.lastPollReceivedProcTime = this.timeAdjustmentReceivedProcTime;
         this.pendingLeapSecond = [0, 1, -1][ntpData.li] || 0; // No leap second, positive leap, negative leap
 
-        const newReferencePt = {t: this.getTimeInfo().time, pt: processMillis() };
+        const newReferencePt = { t: this.getTimeInfo().time, pt: processMillis() };
 
         this.clockReferencePoints.push(newReferencePt);
 
-        if (this.clockReferencePoints.length > 1)  {
+        if (this.clockReferencePoints.length > 1) {
           let base = this.clockReferencePoints[0];
 
           if (this.clockReferencePoints.length > 2 && base.pt < newReferencePt.pt - CLOCK_SPEED_WINDOW) {
@@ -180,8 +180,8 @@ export abstract class TimePoller {
         ', rt delay: ' + roundTripDelay.toFixed(2) +
         ', send delay: ' + sendDelay.toFixed(2) +
         (syncDelta !== undefined ?
-         ', sync delta: ' + syncDelta +
-         ', clock speed: ' + this.clockSpeed.toFixed(8) : ''));
+          ', sync delta: ' + syncDelta +
+          ', clock speed: ' + this.clockSpeed.toFixed(8) : ''));
     }
     else
       repoll = RETRY_POLLING_DELAY;

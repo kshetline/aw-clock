@@ -50,17 +50,17 @@ export class Settings {
   public save(): void {
     const expiration = 36525;
 
-    Cookies.set('city', this.city, {expires: expiration});
-    Cookies.set('latitude', this.latitude.toString(), {expires: expiration});
-    Cookies.set('longitude', this.longitude.toString(), {expires: expiration});
-    Cookies.set('id', this.userId, {expires: expiration});
-    Cookies.set('dimming', this.dimming.toString(), {expires: expiration});
-    Cookies.set('dimming_start', this.dimmingStart, {expires: expiration});
-    Cookies.set('dimming_end', this.dimmingEnd, {expires: expiration});
-    Cookies.set('celsius', this.celsius.toString(), {expires: expiration});
-    Cookies.set('ampm', this.amPm.toString(), {expires: expiration});
-    Cookies.set('hides', this.hideSeconds.toString(), {expires: expiration});
-    Cookies.set('hidep', this.hidePlanets.toString(), {expires: expiration});
+    Cookies.set('city', this.city, { expires: expiration });
+    Cookies.set('latitude', this.latitude.toString(), { expires: expiration });
+    Cookies.set('longitude', this.longitude.toString(), { expires: expiration });
+    Cookies.set('id', this.userId, { expires: expiration });
+    Cookies.set('dimming', this.dimming.toString(), { expires: expiration });
+    Cookies.set('dimming_start', this.dimmingStart, { expires: expiration });
+    Cookies.set('dimming_end', this.dimmingEnd, { expires: expiration });
+    Cookies.set('celsius', this.celsius.toString(), { expires: expiration });
+    Cookies.set('ampm', this.amPm.toString(), { expires: expiration });
+    Cookies.set('hides', this.hideSeconds.toString(), { expires: expiration });
+    Cookies.set('hidep', this.hidePlanets.toString(), { expires: expiration });
   }
 }
 

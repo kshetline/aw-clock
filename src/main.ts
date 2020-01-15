@@ -127,7 +127,7 @@ class AwClockApp implements AppService {
   getTimeInfo(bias = 0): TimeInfo {
     if (debugTime) {
       const time = this.getCurrentTime(bias);
-      return { time, leapSecond: 0, leapExcess: 0, text: new Date(time).toISOString()};
+      return { time, leapSecond: 0, leapExcess: 0, text: new Date(time).toISOString() };
     }
     else
       return ntpPoller.getTimeInfo(bias);
@@ -156,7 +156,7 @@ class AwClockApp implements AppService {
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
-    if (hour < this.lastHour || hour === 0 && minute === 0)
+    if (hour < this.lastHour || (hour === 0 && minute === 0))
       this.forecast.refreshFromCache();
 
     if (this.indoor.available)

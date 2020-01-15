@@ -58,7 +58,7 @@ export class Ntp {
 
   poll(timeCallback: TimeCallback, errorCallback: ErrorCallback, pollTime = Date.now(), retry = 0) {
     if (!this.socket) {
-      this.timeCallback({ li: 0, rxTm: Date.now(), txTm: Date.now(), } as NtpData);
+      this.timeCallback({ li: 0, rxTm: Date.now(), txTm: Date.now() } as NtpData);
       return;
     }
 

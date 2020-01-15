@@ -1,6 +1,8 @@
 import { requestText } from 'by-request';
 import { getDateFromDayNumber_SGC, getISOFormatDate } from 'ks-date-time-zone';
 import PromiseFtp from 'promise-ftp';
+// TODO: fix
+// eslint-disable-next-line node/no-deprecated-api
 import { parse as parseUrl } from 'url';
 
 export interface CurrentDelta {

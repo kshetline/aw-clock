@@ -45,7 +45,7 @@ export class Clock {
   private readonly hands: HTMLElement;
 
   private sweep: SVGAnimationElement;
-  private zoneCaption:  HTMLElement;
+  private zoneCaption: HTMLElement;
   private hub: HTMLElement;
   private dayOfWeekCaption: HTMLElement;
   private dateCaption: HTMLElement;
@@ -312,7 +312,7 @@ export class Clock {
       let suffix = '';
       let secsText = padLeft(secs, 2, '0');
 
-      if (!this._hideSeconds && minuteOfLeapSecond && (timeInfo.leapSecond > 0 && secs === 60 || timeInfo.leapSecond < 0 && secs === 58))
+      if (!this._hideSeconds && minuteOfLeapSecond && ((timeInfo.leapSecond > 0 && secs === 60) || (timeInfo.leapSecond < 0 && secs === 58)))
         secsText = '<tspan style="fill: #F55">' + secsText + '</tspan>';
 
       if (this.amPm) {

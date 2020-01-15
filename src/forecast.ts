@@ -236,9 +236,9 @@ export class Forecast {
           }
 
           if (data.flags['darksky-unavailable'])
-            reject('Dark Sky unavailable');
+            reject(new Error('Dark Sky unavailable'));
           else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
-            reject('Incomplete data');
+            reject(new Error('Incomplete data'));
           else
             resolve(data);
         },
@@ -345,13 +345,13 @@ export class Forecast {
             if (forecastData.isMetric) {
               accum = daily.precipIntensity * 2.4; // mm/hr -> cm/day
 
-              if (daily.precipType === 'snow' && accum < 0.5 || accum < 0.05)
+              if ((daily.precipType === 'snow' && accum < 0.5) || accum < 0.05)
                 accum = 0;
             }
             else {
               accum = daily.precipIntensity * 24; // in/hr -> in/day
 
-              if (daily.precipType === 'snow' && accum < 0.2 || accum < 0.02)
+              if ((daily.precipType === 'snow' && accum < 0.2) || accum < 0.02)
                 accum = 0;
             }
           }
@@ -368,7 +368,6 @@ export class Forecast {
         }
       });
 
-      let alertText: string;
       let newText;
       let maxSeverity = 0;
       const alerts: string[] = [];
@@ -388,7 +387,7 @@ export class Forecast {
         });
       }
 
-      alertText = alerts.join(' \u2022 '); // Bullet
+      const alertText = alerts.join(' \u2022 '); // Bullet
 
       if (alertText) {
         let background;
@@ -398,22 +397,22 @@ export class Forecast {
           case 0:
             background = DEFAULT_BACKGROUND;
             color = DEFAULT_FOREGROUND;
-          break;
+            break;
 
           case 1:
             background = ADVISORY_BACKGROUND;
             color = ADVISORY_FOREGROUND;
-          break;
+            break;
 
           case 2:
             background = WATCH_BACKGROUND;
             color = WATCH_FOREGROUND;
-          break;
+            break;
 
           case 3:
             background = WARNING_BACKGROUND;
             color = WARNING_FOREGROUND;
-          break;
+            break;
         }
 
         newText = alertText;

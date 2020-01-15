@@ -13,11 +13,11 @@ module.exports = function (config) {
       'karma-webpack',
       'karma-jquery'
     ],
-    client:{
+    client: {
       clearContext: false // leave Jasmine Spec Runner output visible in browser
     },
     coverageIstanbulReporter: {
-      reports: [ 'html', 'lcovonly' ],
+      reports: ['html', 'lcovonly'],
       fixWebpackSourcePaths: true
     },
     reporters: ['progress', 'kjhtml'],

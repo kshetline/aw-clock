@@ -1,5 +1,5 @@
 const path = require('path');
-const ROOT = path.resolve( __dirname, 'src' );
+const ROOT = path.resolve(__dirname, 'src');
 
 module.exports = {
   context: ROOT,
@@ -25,7 +25,7 @@ module.exports = {
       // LOADERS
       {
         test: s => s.endsWith('.ts') && !s.endsWith('/ntp.ts'),
-        exclude: [ /node_modules/ ],
+        exclude: [/node_modules/],
         use: {
           loader: 'ts-loader',
           options: {

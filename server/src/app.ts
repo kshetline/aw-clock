@@ -183,7 +183,7 @@ function getApp() {
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
       // intercept OPTIONS method
-      if ('OPTIONS' === req.method) {
+      if (req.method === 'OPTIONS') {
         res.send(200);
       }
       else {

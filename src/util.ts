@@ -39,7 +39,7 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
 });
 
 $.fn.extend({
-  enable: function(state: boolean) {
+  enable: function (state: boolean) {
     if (arguments.length === 0) {
       if (this.is('input, button'))
         return !this.attr('disabled');
@@ -47,7 +47,7 @@ $.fn.extend({
         return !this.hasClass('disabled');
     }
     else {
-      return this.each(function() {
+      return this.each(function () {
         const $this = $(this);
 
         if ($this.is('input, button')) {
@@ -90,7 +90,7 @@ export function setSvgHref(elem: JQuery, href: string) {
   elem.attr('href', href);
 
   if (isSafari() || isEdge()) {
-    elem.each(function() {
+    elem.each(function () {
       this.setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     });
   }

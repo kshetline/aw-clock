@@ -133,7 +133,7 @@ export class SettingsDialog {
     });
 
     if (isIE()) {
-      $('.user-options').children().each(function() {
+      $('.user-options').children().each(function () {
         $(this).css('margin', '0 4px 4px 0');
       });
     }
@@ -192,7 +192,7 @@ export class SettingsDialog {
 
         const self = this;
 
-        this.cityTable.find('tr').each(function(index) {
+        this.cityTable.find('tr').each(function (index) {
           if (index !== 0) {
             const $this = $(this);
 
