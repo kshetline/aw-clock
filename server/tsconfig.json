@@ -3,7 +3,7 @@
     "target": "es6",
     "module": "commonjs",
     "sourceMap": true,
-    "outDir": "./dist",
+    "outDir": "./tsc-out",
     "noImplicitAny": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
@@ -17,5 +17,5 @@
     ]
   },
   "include": ["./src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "exclude": ["node_modules", "tsc-out", "**/*.spec.ts"]
 }

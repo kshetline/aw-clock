@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "start": "webpack-dev-server --port=4200",
-    "build": "webpack && tsc -b ./server/ && cp -Rp dist/ server/dist/public && copy-node-modules server server/dist",
+    "build": "webpack && cd server && npm run build && cd .. && cp -Rp dist/ server/dist/public/",
     "build-for-dht": "cd ./server && npm i node-dht-sensor && cd .. && npm run build",
     "test": "karma start ./karma.conf.js",
     "lint": "eslint \"**/*.ts\" \"**/*.js\"",
@@ -36,7 +36,6 @@
     "@typescript-eslint/parser": "^2.16.0",
     "autoprefixer": "^7.2.3",
     "circular-dependency-plugin": "^4.2.1",
-    "copy-node-modules": "^1.1.1",
     "copy-webpack-plugin": "~4.4.1",
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
