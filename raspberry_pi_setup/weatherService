@@ -53,7 +53,7 @@ start() {
 stop() {
   if [ -f $PIDFILE ]; then
     echo "Shutting down $NAME"
-    forever stop $APPLICATION_PATH 2>&1 > /dev/null
+    forever stop $APPLICATION_PATH > /dev/null 2>&1
     rm -f $PIDFILE
     RETVAL=$?
   else

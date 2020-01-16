@@ -22,6 +22,7 @@ const deployUrl = '';
 const projectRoot = process.cwd();
 const maximumInlineSize = 10;
 const postcssPlugins = function (loader) {
+  // noinspection JSValidateTypes
   return [
     postcssImports({
       resolve: (url, context) => {
@@ -54,6 +55,7 @@ const postcssPlugins = function (loader) {
       },
       load: (filename) => {
         return new Promise((resolve, reject) => {
+          // noinspection JSValidateTypes
           loader.fs.readFile(filename, (err, data) => {
             if (err) {
               reject(err);
@@ -109,6 +111,7 @@ const postcssPlugins = function (loader) {
   ];
 };
 
+// noinspection JSUnusedGlobalSymbols,JSUnusedGlobalSymbols
 module.exports = {
   resolve: {
     extensions: [

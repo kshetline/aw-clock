@@ -2,8 +2,7 @@
   "env": {
     "browser": true,
     "es6": true,
-    "jasmine": true,
-    "node": true
+    "jasmine": true
   },
   "extends": [
     "standard",
@@ -42,11 +41,13 @@
       }
     ],
     "curly": "off",
-    "indent": [
+    "indent": "off",
+    "@typescript-eslint/indent": [
       "error",
       2,
       {
-        "ArrayExpression": "off",
+        "ArrayExpression": "first",
+        "ObjectExpression": "first",
         "SwitchCase": 1
       }
     ],

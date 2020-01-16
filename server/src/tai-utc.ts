@@ -1,9 +1,7 @@
 import { requestText } from 'by-request';
 import { getDateFromDayNumber_SGC, getISOFormatDate } from 'ks-date-time-zone';
 import PromiseFtp from 'promise-ftp';
-// TODO: fix
-// eslint-disable-next-line node/no-deprecated-api
-import { parse as parseUrl } from 'url';
+import { URL } from 'url';
 
 export interface CurrentDelta {
   delta: number;
@@ -91,7 +89,7 @@ export class TaiUtc {
     const promises: Promise<string | Error>[] = [];
 
     this.urls.forEach(url => {
-      if (parseUrl(url).protocol === 'ftp:')
+      if (new URL(url).protocol === 'ftp:')
         promises.push(TaiUtc.getFtpText(url));
       else
         promises.push(requestText(url, { timeout: TIMEOUT }).catch(err => makeError(err)));
@@ -124,22 +122,21 @@ export class TaiUtc {
   }
 
   private static getFtpText(url: string): Promise<string | Error> {
-    const parsed = parseUrl(url);
+    const parsed = new URL(url);
     const port = Number(parsed.port || 21);
     const options: PromiseFtp.Options = { host: parsed.hostname, port, connTimeout: TIMEOUT, pasvTimeout: TIMEOUT };
-    const [user, password] = (parsed.auth ?? '').split(':');
 
-    if (user)
-      options.user = user;
+    if (parsed.username)
+      options.user = parsed.username;
 
-    if (password != null)
-      options.password = password;
+    if (parsed.password != null)
+      options.password = parsed.password;
 
     const ftp = new PromiseFtp();
 
     return ftp.connect(options)
       .then(() => ftp.ascii())
-      .then(() => ftp.get(parsed.path))
+      .then(() => ftp.get(parsed.pathname))
       .then(stream => {
         const chunks: string[] = [];
 
@@ -151,6 +148,7 @@ export class TaiUtc {
         });
       })
       .then(text => {
+        // noinspection JSIgnoredPromiseFromCall
         ftp.end();
         return text;
       })

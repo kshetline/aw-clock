@@ -53,6 +53,7 @@ export class Indoor {
     const site = (runningDev ? DEV_SENSOR_URL : '');
     const url = `${site}/indoor`;
 
+    // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url: url,
       dataType: 'json',

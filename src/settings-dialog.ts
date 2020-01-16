@@ -61,15 +61,16 @@ function formatDegrees(angle, compassPointsPosNeg, degreeDigits) {
 }
 
 export class SettingsDialog {
+  private readonly dimmingStart: JQuery;
+  private readonly dimmingEnd: JQuery;
+
   private dialog: JQuery;
   private currentCity: JQuery;
   private latitude: JQuery;
   private longitude: JQuery;
   private userId: JQuery;
   private dimming: JQuery;
-  private dimmingStart: JQuery;
   private dimmingTo: JQuery;
-  private dimmingEnd: JQuery;
   private temperature: JQuery;
   private hours: JQuery;
   private seconds: JQuery;
@@ -341,7 +342,7 @@ export class SettingsDialog {
     });
 
     this.reloadButton.one('click', () => {
-      window.location.reload(true);
+      window.location.reload();
     });
   }
 
@@ -351,6 +352,7 @@ export class SettingsDialog {
     const url = 'https://skyviewcafe.com/atlas';
 
     return new Promise((resolve, reject) => {
+      // noinspection JSIgnoredPromiseFromCall
       $.ajax({
         url: url,
         dataType: 'jsonp',

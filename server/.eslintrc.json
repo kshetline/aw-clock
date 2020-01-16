@@ -1,0 +1,9 @@
+{
+  "extends": "../.eslintrc.json",
+  "env": {
+    "browser": false,
+    "jasmine": false,
+    "mocha": true,
+    "node": true
+  }
+}

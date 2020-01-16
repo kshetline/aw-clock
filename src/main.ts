@@ -100,7 +100,7 @@ class AwClockApp implements AppService {
     this.cityLabel.text(this.settings.city);
 
     document.addEventListener('keypress', event => {
-      if (!event.repeat && event.srcElement === document.body) {
+      if (!event.repeat && event.target === document.body) {
         if (event.code === 'KeyF' || event.key === 'F' || event.key === 'f')
           setFullScreen(true);
         else if (event.code === 'KeyN' || event.key === 'N' || event.key === 'n')

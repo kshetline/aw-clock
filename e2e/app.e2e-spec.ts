@@ -1,6 +1,7 @@
 import { browser } from 'protractor';
 import { AppPage } from './app.po';
 
+// noinspection JSIgnoredPromiseFromCall
 browser.waitForAngularEnabled(false);
 
 describe('aw-clock', () => {
