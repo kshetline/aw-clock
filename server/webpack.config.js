@@ -1,7 +1,8 @@
+const webpack = require('webpack');
 const path = require('path');
 const NODE_ENV = process.env.NODE_ENV || 'production'; // 'development' | 'production' | 'none'
 
-// no-inspection WebpackConfigHighlighting
+// noinspection WebpackConfigHighlighting
 module.exports = {
   mode: NODE_ENV, // TODO: Why is there a warning that "mode" isn't allowed?
   entry: './src/app.ts',
@@ -26,5 +27,8 @@ module.exports = {
   externals: {
     'node-dht-sensor': 'commonjs node-dht-sensor'
   },
-  devtool: 'source-map'
+  devtool: 'source-map',
+  plugins: [
+    new webpack.BannerPlugin({ banner: '#!/usr/bin/env node', raw: true }),
+  ]
 };

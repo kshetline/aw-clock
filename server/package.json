@@ -11,7 +11,7 @@
     "start": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec 'tsc && chmod +x ./tsc-out/app.js && ./tsc-out/app.js'",
     "start-win": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec \"tsc && node ./tsc-out/app.js\"",
     "test": "mocha --require ts-node/register src/**/*.spec.ts --exit",
-    "build": "webpack"
+    "build": "webpack && chmod +x ./dist/app.js"
   },
   "dependencies": {
     "by-request": "^1.1.4",

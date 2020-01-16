@@ -75,6 +75,12 @@
         "named": "never",
         "asyncArrow": "always"
       }
+    ],
+    "quotes": [
+      "error",
+      "single", {
+        "avoidEscape": true
+      }
     ]
   }
 }
