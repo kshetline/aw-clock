@@ -1,6 +1,5 @@
-const fs = require('fs');
 const path = require('path');
-const UglifyWebpackPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
@@ -11,16 +10,14 @@ const postcssUrl = require('postcss-url');
 const postcssImports = require('postcss-import');
 
 const { NoEmitOnErrorsPlugin, SourceMapDevToolPlugin, NamedModulesPlugin } = require('webpack');
-const { CommonsChunkPlugin } = require('webpack').optimize;
 
-const nodeModules = path.join(process.cwd(), 'node_modules');
-const realNodeModules = fs.realpathSync(nodeModules);
-const genDirNodeModules = path.join(process.cwd(), 'src', '$$_gendir', 'node_modules');
 const entryPoints = ['inline', 'polyfills', 'sw-register', 'styles', 'vendor', 'main'];
 const baseHref = '';
 const deployUrl = '';
 const projectRoot = process.cwd();
 const maximumInlineSize = 10;
+const NODE_ENV = process.env.NODE_ENV || 'production';
+
 const postcssPlugins = function (loader) {
   // noinspection JSValidateTypes
   return [
@@ -111,8 +108,9 @@ const postcssPlugins = function (loader) {
   ];
 };
 
-// noinspection JSUnusedGlobalSymbols,JSUnusedGlobalSymbols
+// noinspection JSUnusedGlobalSymbols
 module.exports = {
+  mode: NODE_ENV,
   resolve: {
     extensions: [
       '.ts',
@@ -311,12 +309,7 @@ module.exports = {
             }
           },
           {
-            loader: 'sass-loader',
-            options: {
-              sourceMap: true,
-              precision: 8,
-              includePaths: []
-            }
+            loader: 'sass-loader'
           }
         ]
       },
@@ -380,11 +373,12 @@ module.exports = {
       }
     ]
   },
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()],
+  },
   plugins: [
     new NoEmitOnErrorsPlugin(),
-    new UglifyWebpackPlugin({
-      sourceMap: true
-    }),
     new CopyWebpackPlugin([
       {
         context: 'src',
@@ -410,7 +404,7 @@ module.exports = {
       ],
       debug: 'warning'
     }),
-    new ProgressPlugin(),
+    new ProgressPlugin({}),
     new CircularDependencyPlugin({
       exclude: /([\\/])node_modules([\\/])/,
       failOnError: false,
@@ -445,51 +439,16 @@ module.exports = {
         }
       }
     }),
-    new CommonsChunkPlugin({
-      name: [
-        'inline'
-      ],
-      minChunks: null
-    }),
-    new CommonsChunkPlugin({
-      name: [
-        'vendor'
-      ],
-      minChunks: (module) => {
-        return module.resource &&
-          (module.resource.startsWith(nodeModules) ||
-            module.resource.startsWith(genDirNodeModules) ||
-            module.resource.startsWith(realNodeModules));
-      },
-      chunks: [
-        'main'
-      ]
-    }),
     new SourceMapDevToolPlugin({
       filename: '[file].map[query]',
       moduleFilenameTemplate: '[resource-path]',
       fallbackModuleFilenameTemplate: '[resource-path]?[hash]',
       sourceRoot: 'webpack:///'
     }),
-    new CommonsChunkPlugin({
-      name: [
-        'main'
-      ],
-      minChunks: 2,
-      async: 'common'
-    }),
     new NamedModulesPlugin({})
   ],
   node: {
-    fs: 'empty',
     global: true,
-    crypto: 'empty',
-    tls: 'empty',
-    net: 'empty',
-    process: true,
-    module: false,
-    clearImmediate: false,
-    setImmediate: false
   },
   devServer: {
     historyApiFallback: true

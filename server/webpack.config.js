@@ -1,10 +1,9 @@
 const webpack = require('webpack');
 const path = require('path');
-const NODE_ENV = process.env.NODE_ENV || 'production'; // 'development' | 'production' | 'none'
+const NODE_ENV = process.env.NODE_ENV || 'production';
 
-// noinspection WebpackConfigHighlighting
 module.exports = {
-  mode: NODE_ENV, // TODO: Why is there a warning that "mode" isn't allowed?
+  mode: NODE_ENV,
   entry: './src/app.ts',
   target: 'node',
   output: {

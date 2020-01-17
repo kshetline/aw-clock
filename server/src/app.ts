@@ -1,3 +1,4 @@
+// #!/usr/bin/env node
 import { NtpPoller } from './ntp-poller';
 import { average, normalizePort, stdDev, toBoolean } from './util';
 
