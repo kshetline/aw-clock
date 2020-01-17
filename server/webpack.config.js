@@ -10,6 +10,10 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'app.js'
   },
+  node: {
+    __dirname: false,
+    __filename: false,
+  },
   resolve: {
     extensions: ['.ts', '.js'],
   },

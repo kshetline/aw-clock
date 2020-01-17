@@ -6,7 +6,7 @@
   "scripts": {
     "start": "webpack-dev-server --port=4200",
     "build": "webpack && cd server && npm run build && cd .. && cp -Rp dist/ server/dist/public/",
-    "build-for-dht": "cd ./server && npm i node-dht-sensor && cd .. && npm run build",
+    "build-for-dht": "webpack && cd server && npm run build-for-dht && cd .. && cp -Rp dist/ server/dist/public/",
     "test": "karma start ./karma.conf.js",
     "lint": "eslint \"**/*.ts\" \"**/*.js\"",
     "e2e": "protractor ./protractor.conf.js",
