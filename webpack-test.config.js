@@ -1,15 +1,17 @@
 const path = require('path');
 const ROOT = path.resolve(__dirname, 'src');
+const SERVER = path.resolve(__dirname, 'server');
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 module.exports = {
+  mode: NODE_ENV,
   context: ROOT,
 
   resolve: {
     extensions: ['.ts', '.js'],
     modules: [
       ROOT,
-      'node_modules',
-      'server/node_modules'
+      'node_modules'
     ]
   },
 
@@ -19,23 +21,20 @@ module.exports = {
       {
         enforce: 'pre',
         test: /\.js$/,
+        exclude: [SERVER],
         use: 'source-map-loader'
       },
 
       // LOADERS
       {
-        test: s => s.endsWith('.ts') && !s.endsWith('/ntp.ts'),
-        exclude: [/node_modules/],
+        test: /\.ts$/,
+        exclude: [/node_modules/, SERVER],
         use: {
           loader: 'ts-loader',
           options: {
             transpileOnly: true
           }
         }
-      },
-      {
-        test: /\/ntp\.ts$/,
-        use: 'null-loader'
       }
     ]
   },

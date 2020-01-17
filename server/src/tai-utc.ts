@@ -22,6 +22,7 @@ export const DEFAULT_LEAP_SECOND_URLS = DEFAULT_LEAP_SECOND_HTTPS_URL + ';' + DE
 const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MILLIS_PER_DAY = 86400000;
 const DAYS_BETWEEN_POLLS = 7;
+const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 120000; // Two minutes
 const TIMEOUT = 5000;
 const TIME_AND_DELTA = /^(\d{10,})\s+(\d{2,4})\s*#\s*1\s+[A-Za-z]{3}\s+\d{4}/;
 
@@ -30,6 +31,7 @@ function makeError(err: any): Error {
 }
 
 export class TaiUtc {
+  private firstLeapSecondPoll = true;
   private lastPollDay = 0;
   private lastPollMonth = -1;
   private leapSeconds: LeapSecond[] = [];
@@ -85,6 +87,13 @@ export class TaiUtc {
 
     if (this.leapSeconds.length > 1 && this.lastPollDay < day + DAYS_BETWEEN_POLLS && this.lastPollMonth === month)
       return;
+
+    await new Promise<void>(resolve => {
+      // Randomly delay polling so that multiple TaiUtc instances don't all poll at the same time every day.
+      const delay = (this.firstLeapSecondPoll ? 0 : Math.floor(Math.random() * MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
+      this.firstLeapSecondPoll = false;
+      setTimeout(() => resolve(), delay);
+    });
 
     const promises: Promise<string | Error>[] = [];
 

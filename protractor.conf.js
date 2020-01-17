@@ -47,7 +47,7 @@ exports.config = {
       let resolved = false;
       let rejected = false;
 
-      webpackServerProcess = spawn('webpack-dev-server', ['--port=4200']);
+      webpackServerProcess = spawn('webpack-dev-server', ['--mode=development', '--port=4200']);
       webpackServerProcess.stdout.pipe(process.stdout);
 
       webpackServerProcess.stdout.addListener('data', chunk => {

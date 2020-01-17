@@ -28,6 +28,7 @@ import * as $ from 'jquery';
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 const SECOND_HAND_ANIMATION_TIME = 200;
+const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 120000; // Two minutes
 const LEAP_SECOND_RETRY_DELAY = 300000; // 5 minutes
 
 const MILLIS_PER_DAY = 86400000;
@@ -63,6 +64,7 @@ export class Clock {
   private lastTick = -1;
   private inMinuteOfLeapSecond = false;
   private pendingLeapSecondForMonth = 0;
+  private firstLeapSecondPoll = true;
   private lastLeapSecondCheckDay = -1;
   private upcomingLeapSecond: CurrentDelta;
 
@@ -349,15 +351,20 @@ export class Clock {
   }
 
   private getLeapSecondInfo(): void {
-    // noinspection JSIgnoredPromiseFromCall
-    $.ajax({
-      url: this.appService.getWeatherServer() + '/tai-utc',
-      dataType: 'json',
-      success: (data: CurrentDelta) => this.upcomingLeapSecond = data,
-      error: () => setTimeout(() => {
-        this.upcomingLeapSecond = undefined;
-        this.lastLeapSecondCheckDay = -1;
-      }, LEAP_SECOND_RETRY_DELAY)
-    });
+    setTimeout(() => {
+      this.firstLeapSecondPoll = false;
+
+      // noinspection JSIgnoredPromiseFromCall
+      $.ajax({
+        url: this.appService.getWeatherServer() + '/tai-utc',
+        dataType: 'json',
+        success: (data: CurrentDelta) => this.upcomingLeapSecond = data,
+        error: () => setTimeout(() => {
+          this.upcomingLeapSecond = undefined;
+          this.lastLeapSecondCheckDay = -1;
+        }, LEAP_SECOND_RETRY_DELAY)
+      });
+      // Randomly delay polling so that multiple clock instances don't all poll at the same time every day.
+    }, this.firstLeapSecondPoll ? 0 : Math.floor(Math.random() * MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
   }
 }

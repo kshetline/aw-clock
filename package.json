@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -58,7 +58,6 @@
     "karma-webpack": "^4.0.2",
     "less-loader": "^5.0.0",
     "node-sass": "^4.13.1",
-    "null-loader": "^3.0.0",
     "postcss-import": "^12.0.1",
     "postcss-loader": "^3.0.0",
     "postcss-url": "^8.0.0",
