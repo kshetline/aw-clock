@@ -1,7 +1,7 @@
 ## Astronomy/Weather Clock
 
 To test and build the web client project, you can use the following commands:
-   - "`npm run lint`" to inspect the code with TSLint.
+   - "`npm run lint`" to inspect the code with ESLint.
    - "`npm run build`" to build _without_ support for temperature/humidity sensor.
    - "`npm run build-for-dht`" to build _with_ support for temperature/humidity sensor.
    - "`npm test`" to run unit tests.

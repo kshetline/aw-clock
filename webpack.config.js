@@ -448,7 +448,7 @@ module.exports = {
     new NamedModulesPlugin({})
   ],
   node: {
-    global: true,
+    global: true
   },
   devServer: {
     historyApiFallback: true
