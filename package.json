@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -38,6 +38,7 @@
     "copy-webpack-plugin": "~5.1.1",
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-chai-friendly": "^0.5.0",
     "eslint-plugin-import": "^2.20.0",
     "eslint-plugin-jasmine": "^4.1.0",
     "eslint-plugin-node": "^11.0.0",

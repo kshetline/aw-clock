@@ -7,7 +7,7 @@ const MAX_DELAY = 250;
 const MAX_RESYNC_POLLS = 10;
 const DELAY_AFTER_ERROR = 60000;
 const EARLY_POLLING_RATE = 150000; // 2.5 minutes
-const NORMAL_POLLING_RATE = 600000; // 10 minutes
+const NORMAL_POLLING_RATE = 1800000; // 30 minutes
 const RESYNC_POLLING_RATE = 500;
 const RETRY_POLLING_DELAY = 5000;
 const BACK_IN_TIME_THRESHOLD = 2000;
@@ -30,10 +30,12 @@ export abstract class TimePoller {
   private clockReferencePoints: ClockReferencePoint[];
   private clockSpeed: number;
   private consecutiveGoodPolls: number;
+  private earlyPollingRate = EARLY_POLLING_RATE;
   private errorCount: number;
   private lastPollReceivedProcTime: number;
   private lastPolledTime: number;
   private lastReportedTime: number;
+  private normalPollingRate = NORMAL_POLLING_RATE;
   private pollingAdjustmentTime: number;
   private pendingLeapSecond: number;
   private pollCount: number;
@@ -142,7 +144,7 @@ export abstract class TimePoller {
       if (this.consecutiveGoodPolls === 2 || this.pollCount > MAX_RESYNC_POLLS) {
         this.consecutiveGoodPolls = 0;
         this.pollCount = 0;
-        repoll = (this.clockReferencePoints.length < 3 ? EARLY_POLLING_RATE : NORMAL_POLLING_RATE);
+        repoll = (this.clockReferencePoints.length < 3 ? this.earlyPollingRate : this.normalPollingRate);
         syncDelta = expectedPolledTime - this.getTimeInfo().time;
         this.lastPolledTime = this.pollingAdjustmentTime;
         this.lastPollReceivedProcTime = this.timeAdjustmentReceivedProcTime;

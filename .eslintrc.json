@@ -19,7 +19,8 @@
   },
   "plugins": [
     "@typescript-eslint",
-    "jasmine"
+    "jasmine",
+    "chai-friendly"
   ],
   "rules": {
     "brace-style": [
@@ -54,6 +55,8 @@
     "no-control-regex": "off",
     "no-new": "off",
     "no-return-assign": "off",
+    "no-unused-expressions": "off",
+    "chai-friendly/no-unused-expressions": 2,
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",

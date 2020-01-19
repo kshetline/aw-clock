@@ -44,6 +44,7 @@ describe('ntp-poller', () => {
     const time3 = await waitForSecondsToChange(poller, time2);
 
     expect(time + time2 + time3).equals('596000');
+    expect(poller.isTimeAcquired()).equals(true);
   });
 
   it('should handle negative leap second', async function () {
