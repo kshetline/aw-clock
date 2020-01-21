@@ -17,25 +17,34 @@ describe('tai-utc', () => {
   });
 
   it('should get TAI-UTC and pending leap second', async function () {
+    this.slow(5000);
+    this.timeout(20000);
     let data: any;
 
     data = await (new TaiUtc('http://example.com/1', () => new Date(2016, 6, 1).getTime()).getCurrentDelta());
+    delete data.dut1;
     expect(data).to.eql({ delta: 36, pendingLeap: 1, pendingLeapDate: '2016-12-31' });
 
     data = await (new TaiUtc('http://example.com/2', () => new Date(2020, 0, 1).getTime()).getCurrentDelta());
+    delete data.dut1;
     expect(data).to.eql({ delta: 37, pendingLeap: 1, pendingLeapDate: '2021-12-31' });
 
     data = await (new TaiUtc('http://example.com/2', () => new Date(2022, 0, 1).getTime()).getCurrentDelta());
+    delete data.dut1;
     expect(data).to.eql({ delta: 38, pendingLeap: 0, pendingLeapDate: null });
 
     data = await (new TaiUtc('http://example.com/3', () => new Date(2020, 0, 1).getTime()).getCurrentDelta());
+    delete data.dut1;
     expect(data).to.eql({ delta: 37, pendingLeap: -1, pendingLeapDate: '2021-12-31' });
 
     data = await (new TaiUtc('http://example.com/3', () => new Date(2022, 0, 1).getTime()).getCurrentDelta());
+    delete data.dut1;
     expect(data).to.eql({ delta: 36, pendingLeap: 0, pendingLeapDate: null });
   });
 
   it('should get leap second history', async function () {
+    this.slow(5000);
+    this.timeout(20000);
     let data: any;
 
     data = await (new TaiUtc('http://example.com/1', () => new Date(2016, 6, 1).getTime()).getLeapSecondHistory());

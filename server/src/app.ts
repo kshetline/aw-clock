@@ -66,11 +66,13 @@ const ntpPoller = new NtpPoller(ntpServer);
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
 const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
-const taiUtc = new TaiUtc(leapSecondsUrl);
+let taiUtc = new TaiUtc(leapSecondsUrl);
 
 if (process.env.AWC_DEBUG_TIME) {
   const parts = process.env.AWC_DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
   ntpPoller.setDebugTime(new Date(parts[0]), Number(parts[1] || 0));
+  const debugDelta = Date.now() - new Date(parts[0]).getTime();
+  taiUtc = new TaiUtc(leapSecondsUrl, () => Date.now() - debugDelta);
 }
 
 function readSensor() {

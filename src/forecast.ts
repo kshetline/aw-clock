@@ -206,7 +206,7 @@ export class Forecast {
   }
 
   public getFrequent(): boolean {
-    return this.lastForecastData && this.lastForecastData.frequent;
+    return !!this.lastForecastData?.frequent;
   }
 
   private getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {

@@ -17,18 +17,19 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-// Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed quite a bit from there.
+// Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed *quite* a bit from there.
 
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { isIE, isRaspbian, padLeft } from 'ks-util';
 import { AppService } from './app.service';
 import { CurrentDelta } from '../server/src/tai-utc';
 import * as $ from 'jquery';
+import { interpolate } from 'ks-math';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 const SECOND_HAND_ANIMATION_TIME = 200;
-const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 120000; // Two minutes
+const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180000; // Three minutes
 const LEAP_SECOND_RETRY_DELAY = 300000; // 5 minutes
 
 const MILLIS_PER_DAY = 86400000;
@@ -53,6 +54,10 @@ export class Clock {
   private monthCaption: HTMLElement;
   private yearCaption: HTMLElement;
   private timeCaption: HTMLElement;
+  private dut1Label: HTMLElement;
+  private dut1Caption: HTMLElement;
+  private dtaiLabel: HTMLElement;
+  private dtaiCaption: HTMLElement;
   private day2Caption: HTMLElement;
   private day3Caption: HTMLElement;
   private clock: HTMLElement;
@@ -67,6 +72,7 @@ export class Clock {
   private firstLeapSecondPoll = true;
   private lastLeapSecondCheckDay = -1;
   private upcomingLeapSecond: CurrentDelta;
+  private dut1PositionAdjustmentNeeded = true;
 
   private _amPm = false;
   private _hideSeconds = false;
@@ -87,6 +93,10 @@ export class Clock {
     this.monthCaption = document.getElementById('month');
     this.yearCaption = document.getElementById('year');
     this.timeCaption = document.getElementById('time');
+    this.dut1Label = document.getElementById('dut1-label');
+    this.dut1Caption = document.getElementById('dut1');
+    this.dtaiLabel = document.getElementById('dtai-label');
+    this.dtaiCaption = document.getElementById('dtai');
     this.day2Caption = document.getElementById('day2-caption');
     this.day3Caption = document.getElementById('day3-caption');
 
@@ -221,6 +231,23 @@ export class Clock {
 
   private adjustTimeFontSize(): void {
     this.timeCaption.style['font-size'] = (this._amPm && !this._hideSeconds ? '7.5' : '10');
+    this.dut1PositionAdjustmentNeeded = true;
+  }
+
+  private adjustDut1Position(): void {
+    const viewWidth = (this.clock as any).viewBox?.baseVal?.width ?? 172;
+    const r0 = this.clock.getBoundingClientRect();
+    const scale = viewWidth / r0.width;
+    const r1 = this.timeCaption.getBoundingClientRect();
+    const r2 = this.dut1Label.getBoundingClientRect();
+    const r3 = this.dtaiLabel.getBoundingClientRect();
+    const labelX = (r1.x + r1.width - r0.x) * scale;
+    const captionX = labelX + Math.max(r2.width, r3.width) * scale;
+
+    this.dut1Label.setAttributeNS(null, 'x', labelX.toString());
+    this.dtaiLabel.setAttributeNS(null, 'x', labelX.toString());
+    this.dut1Caption.setAttributeNS(null, 'x', captionX.toString());
+    this.dtaiCaption.setAttributeNS(null, 'x', captionX.toString());
   }
 
   private tick(): void {
@@ -252,19 +279,33 @@ export class Clock {
     let secRotation = 6 * secs;
     const mins = wallTime.min;
     const hour = wallTime.hrs;
-    const minuteOfLeapSecond = timeInfo.leapSecond && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
+    const minuteOfLeapSecond = !!timeInfo.leapSecond && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
             wallTime.d === getLastDateInMonthGregorian(wallTime.y, wallTime.m);
     const leapSecondForMonth = (minuteOfLeapSecond && timeInfo.leapSecond) || this.checkPendingLeapSecondForMonth(wallTimeUtc);
 
     if (this.lastLeapSecondCheckDay !== wallTimeUtc.d) {
       this.lastLeapSecondCheckDay = wallTimeUtc.d;
       this.getLeapSecondInfo();
+      this.adjustTimeFontSize();
     }
 
     if (this.inMinuteOfLeapSecond !== minuteOfLeapSecond) {
+      console.log(this.inMinuteOfLeapSecond, minuteOfLeapSecond);
       if (!minuteOfLeapSecond) {
         this.clock.classList.remove('leap-second');
         this.clock.classList.remove('neg-leap-second');
+
+        if (this.upcomingLeapSecond) {
+          console.log('adjusting ' + this.upcomingLeapSecond.pendingLeap);
+          // Use previous end-of-day TAI and dut1 values, adjusted by the last new leap second, until this info is re-polled.
+          this.upcomingLeapSecond.delta += this.upcomingLeapSecond.pendingLeap;
+
+          if (this.upcomingLeapSecond.dut1) {
+            console.log('adjusting.2 ' + this.upcomingLeapSecond.pendingLeap);
+            this.upcomingLeapSecond.dut1[2] += this.upcomingLeapSecond.pendingLeap;
+            this.upcomingLeapSecond.dut1[0] = this.upcomingLeapSecond.dut1[2];
+          }
+        }
       }
       else if (timeInfo.leapSecond > 0)
         this.clock.classList.add('leap-second');
@@ -289,6 +330,26 @@ export class Clock {
 
       this.pendingLeapSecondForMonth = leapSecondForMonth;
     }
+
+    let dut1 = '±---';
+
+    if (this.upcomingLeapSecond?.dut1) {
+      const utcSec = now / 1000;
+      const utc_0h = Math.floor(utcSec / 86400) * 86400;
+      const utc_24h = utc_0h + 86400;
+      const value = interpolate(utc_0h, utcSec, utc_24h, this.upcomingLeapSecond.dut1[0], this.upcomingLeapSecond.dut1[2]) * 1000;
+
+      dut1 = (value >= 0 ? '+' : '') + value.toFixed(0);
+    }
+
+    this.dut1Caption.textContent = dut1 + 'ms';
+
+    let dtai = '--';
+
+    if (this.upcomingLeapSecond)
+      dtai = this.upcomingLeapSecond.delta.toString();
+
+    this.dtaiCaption.textContent = dtai + 's';
 
     if (doMechanicalSecondHandEffect)
       sweepSecondHand(this.lastSecRotation, secRotation);
@@ -329,6 +390,11 @@ export class Clock {
       this.timeCaption.innerHTML =
         padLeft(displayHour, 2, '0') + ':' +
         padLeft(mins, 2, '0') + (this._hideSeconds ? '' : ':' + secsText) + suffix;
+
+      if (this.dut1PositionAdjustmentNeeded) {
+        this.dut1PositionAdjustmentNeeded = false;
+        setTimeout(() => this.adjustDut1Position());
+      }
 
       if (mins !== this.lastMinute || this.lastTick + 60000 <= now) {
         this.appService.updateTime(hour, mins, this.lastMinute < 0);

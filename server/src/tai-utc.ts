@@ -1,10 +1,12 @@
 import { requestText } from 'by-request';
-import { getDateFromDayNumber_SGC, getISOFormatDate } from 'ks-date-time-zone';
+import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from 'ks-date-time-zone';
+import { interpolate } from 'ks-math';
 import PromiseFtp from 'promise-ftp';
 import { URL } from 'url';
 
 export interface CurrentDelta {
   delta: number;
+  dut1: number[] | null;
   pendingLeap: number;
   pendingLeapDate: string;
 }
@@ -19,10 +21,22 @@ export const DEFAULT_LEAP_SECOND_HTTPS_URL = 'https://hpiers.obspm.fr/iers/bul/b
 export const DEFAULT_LEAP_SECOND_FTP_URL = 'ftp://ftp.nist.gov/pub/time/leap-seconds.list';
 export const DEFAULT_LEAP_SECOND_URLS = DEFAULT_LEAP_SECOND_HTTPS_URL + ';' + DEFAULT_LEAP_SECOND_FTP_URL;
 
+interface DeltaUt1Utc {
+  utc: number;
+  delta: number;
+}
+
+interface DebugTime {
+  leap: number;
+  leapUtc: number;
+}
+
+const IERS_BULLETIN_A_URL = 'ftp://ftp.iers.org/products/eop/rapid/daily/finals.daily';
+
 const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MILLIS_PER_DAY = 86400000;
 const DAYS_BETWEEN_POLLS = 7;
-const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 120000; // Two minutes
+const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180000; // Three minutes
 const TIMEOUT = 5000;
 const TIME_AND_DELTA = /^(\d{10,})\s+(\d{2,4})\s*#\s*1\s+[A-Za-z]{3}\s+\d{4}/;
 
@@ -30,7 +44,12 @@ function makeError(err: any): Error {
   return err instanceof Error ? err : new Error(err.toString);
 }
 
+function getUtcFromMJD(mjd: number): number {
+  return getDateFromDayNumber_SGC(mjd - 40587).n * 86400;
+}
+
 export class TaiUtc {
+  private deltaUt1s: DeltaUt1Utc[] = [];
   private firstLeapSecondPoll = true;
   private lastPollDay = 0;
   private lastPollMonth = -1;
@@ -49,20 +68,23 @@ export class TaiUtc {
   async getCurrentDelta(): Promise<CurrentDelta> {
     await this.updateTaiUtc();
 
-    if (this.leapSeconds.length < 2)
-      return { delta: 0, pendingLeap: 0, pendingLeapDate: null };
-
     const now = Math.floor(this.getUtcMillis() / 1000);
+    const dut1 = this.getDeltaUtc1(now);
+
+    if (this.leapSeconds.length < 2)
+      return { delta: 0, dut1, pendingLeap: 0, pendingLeapDate: null };
+
     const nextIndex = this.leapSeconds.findIndex((ls, index) => index > 0 && ls.utc > now);
 
     if (nextIndex > 0)
       return {
         delta: this.leapSeconds[nextIndex - 1].delta,
+        dut1,
         pendingLeap: this.leapSeconds[nextIndex].delta - this.leapSeconds[nextIndex - 1].delta,
         pendingLeapDate: getISOFormatDate(getDateFromDayNumber_SGC(Math.floor((this.leapSeconds[nextIndex].utc - 1) / 86400)))
       };
 
-    return { delta: this.leapSeconds[this.leapSeconds.length - 1].delta, pendingLeap: 0, pendingLeapDate: null };
+    return { delta: this.leapSeconds[this.leapSeconds.length - 1].delta, dut1, pendingLeap: 0, pendingLeapDate: null };
   }
 
   async getLeapSecondHistory(): Promise<LeapSecond[]> {
@@ -94,6 +116,13 @@ export class TaiUtc {
       this.firstLeapSecondPoll = false;
       setTimeout(() => resolve(), delay);
     });
+
+    try {
+      await this.getIersBulletinA();
+    }
+    catch (err) {
+      console.error(err);
+    }
 
     const promises: Promise<string | Error>[] = [];
 
@@ -127,10 +156,81 @@ export class TaiUtc {
       this.leapSeconds = newLeaps;
       this.lastPollDay = day;
       this.lastPollMonth = month;
+
+      const dt = TaiUtc.getDebugTime();
+
+      if (dt) {
+        let index = this.leapSeconds.findIndex(ls => ls.utc > dt.leapUtc);
+
+        if (index < 0)
+          index = this.leapSeconds.length;
+
+        this.leapSeconds.splice(index, 0,
+          { ntp: dt.leapUtc + NTP_BASE, utc: dt.leapUtc, delta: this.leapSeconds[index - 1].delta + dt.leap });
+      }
     }
   }
 
-  private static getFtpText(url: string): Promise<string | Error> {
+  private static getDebugTime(): DebugTime {
+    if (process.env.AWC_DEBUG_TIME) {
+      const parts = process.env.AWC_DEBUG_TIME.split(';');
+      const leap = Number(parts[1] || 0);
+
+      if (leap) {
+        const startDate = parseISODate(parts[0].substr(0, 10));
+        const leapSecondDay = getDayNumber_SGC(startDate.y, startDate.m + 1, 1);
+        const leapUtc = leapSecondDay * 86400;
+
+        return { leap, leapUtc };
+      }
+    }
+
+    return undefined;
+  }
+
+  private getDeltaUtc1(utc: number): number[] | null {
+    const index = this.deltaUt1s.findIndex(entry => entry.utc > utc) - 1;
+    const entry = (index < 0 ? null : this.deltaUt1s[index]);
+
+    if (index < 0 || entry.utc > utc + 86400)
+      return null;
+    else if (this.deltaUt1s.length === index + 1)
+      return [entry.delta, entry.delta, entry.delta];
+
+    const next = this.deltaUt1s[index + 1];
+    let nextDelta = next.delta;
+
+    if (nextDelta > entry.delta + 0.5)
+      nextDelta -= 1;
+    else if (nextDelta < entry.delta - 0.5)
+      nextDelta += 1;
+
+    return [entry.delta, interpolate(entry.utc, utc, next.utc, entry.delta, nextDelta), nextDelta];
+  }
+
+  // IERS Bulletin A provides (among other things) current and predicted UTC1-UTC values.
+  private async getIersBulletinA(): Promise<void> {
+    const lines = (await TaiUtc.getFtpText(IERS_BULLETIN_A_URL, true)).toString().split(/\r\n|\r|\n/);
+    const newDeltas: DeltaUt1Utc[] = [];
+
+    lines.forEach(line => {
+      const $ = /[ \d]{6}\s+(\d{5,})[.\d]*\s+[IP](?:\s+[-.\d]+){4}\s+[IP](?:[ +]?)([-.\d]+)/i.exec(line);
+
+      if ($)
+        newDeltas.push({ utc: getUtcFromMJD(Number($[1])), delta: Number($[2]) });
+    });
+
+    if (newDeltas.length > 0) {
+      this.deltaUt1s = newDeltas;
+
+      const dt = TaiUtc.getDebugTime();
+
+      if (dt)
+        this.deltaUt1s.forEach(dut1 => dut1.delta += (dut1.utc >= dt.leapUtc ? dt.leap : 0));
+    }
+  }
+
+  private static getFtpText(url: string, throwError = false): Promise<string | Error> {
     const parsed = new URL(url);
     const port = Number(parsed.port || 21);
     const options: PromiseFtp.Options = { host: parsed.hostname, port, connTimeout: TIMEOUT, pasvTimeout: TIMEOUT };
@@ -161,6 +261,6 @@ export class TaiUtc {
         ftp.end();
         return text;
       })
-      .catch(err => makeError(err));
+      .catch(err => throwError ? Promise.reject(err) : makeError(err));
   }
 }

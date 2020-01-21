@@ -2,3 +2,4 @@ dist
 e2e
 node_modules
 raspberry_pi_setup
+tsc-out

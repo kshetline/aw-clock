@@ -11,7 +11,7 @@ To test and build the web client project, you can use the following commands:
 > Note: As of the time of this writing, the build will not work with Node 11 or later on Linux (including Raspbian)
 because of a dependency on `node-sass`. Even when using Node 10.x or earlier you might get some errors with `npm install`
 due to `node-sass`. I found that using `LIBSASS_EXT="no" npm install` helped. If you have a problem, and this doesn't
-fix it, search for solutions based on `node-sass` and any specific error messages you recieve.
+fix it, search for solutions based on `node-sass` and any specific error messages you receive.
 
 
 To run the weather server, use "`npm start`" from within the server directory.
