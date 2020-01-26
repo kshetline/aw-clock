@@ -28,7 +28,8 @@ module.exports = {
     ]
   },
   externals: {
-    'node-dht-sensor': 'commonjs node-dht-sensor'
+    'node-dht-sensor': 'commonjs node-dht-sensor',
+    'i2c-bus': 'commonjs i2c-bus'
   },
   devtool: 'source-map',
   plugins: [
