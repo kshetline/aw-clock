@@ -31,7 +31,7 @@ if (/[/\\]build\.ts$/.test(process.argv[0] ?? ''))
 
 process.argv.forEach(arg => {
   if (arg === '--acu')
-    doAcu = doI2c = true;
+    doAcu = true;
   else if (arg === '--dht')
     doDht = true;
   else if (arg === '--gps')
@@ -131,8 +131,15 @@ async function npmInit(): Promise<void> {
     console.log('\x08' + chalk.green(CHECK_MARK));
     console.log(chalk.hex('#808080')(getWebpackSummary(output)));
 
+    if (doAcu) {
+      process.stdout.write('Adding Acu-Rite wireless temperature/humidity sensor support  ');
+      await npmInit();
+      await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature'], { cwd: path.join(__dirname, 'server', 'dist') }));
+      console.log('\x08' + chalk.green(CHECK_MARK));
+    }
+
     if (doDht) {
-      process.stdout.write('Adding DHT temperature/humidity sensor support  ');
+      process.stdout.write('Adding DHT wired temperature/humidity sensor support  ');
       await npmInit();
       await monitorProcess(spawn('npm', ['i', 'node-dht-sensor'], { cwd: path.join(__dirname, 'server', 'dist') }));
       console.log('\x08' + chalk.green(CHECK_MARK));

@@ -1,32 +1,24 @@
 // #!/usr/bin/env node
-import { NtpPoller } from './ntp-poller';
-import { average, normalizePort, stdDev, toBoolean } from './util';
-
-import * as http from 'http';
-import express from 'express';
-import * as path from 'path';
+import { jsonOrJsonp } from './common';
 import cookieParser from 'cookie-parser';
-import logger from 'morgan';
-import request from 'request';
+import { router as darkskyRouter } from './darksky-router';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
-import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
+import express, { Router } from 'express';
+import * as http from 'http';
+import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
+import { NtpPoller } from './ntp-poller';
+import * as path from 'path';
+import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
+import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
+import { normalizePort, toBoolean } from './util';
 
 const debug = require('debug')('express:server');
 
-const DHT22_OR_AM2302 = 22;
+let indoorRouter: Router;
 
-type DhtSensorCallback = (err: any, temperature: number, humidity: number) => void;
-
-interface NodeDhtSensor {
-  read: (sensorType: number, gpio: number, callback: DhtSensorCallback) => void;
-}
-
-let indoorSensor: NodeDhtSensor;
-
-if (toBoolean(process.env.AWC_HAS_INDOOR_SENSOR)) {
-  indoorSensor = require('node-dht-sensor');
-}
+if (process.env.AWC_HAS_INDOOR_SENSOR)
+  indoorRouter = require('./indoor-router').router;
 
 const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);
 
@@ -38,11 +30,15 @@ const httpServer = http.createServer(app);
 // listen on provided ports
 httpServer.listen(httpPort);
 
-process.on('SIGTERM', () => {
-  console.log('*** closing server ***');
+function shutdown() {
+  console.log('\n*** closing server ***');
+  cleanUp();
   NtpPoller.closeAll();
-  httpServer.close();
-});
+  httpServer.close(() => process.exit(0));
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 // add error handler
 httpServer.on('error', onError);
@@ -53,14 +49,6 @@ httpServer.on('listening', onListening);
 // The DHT-22 temperature/humidity sensor appears to be prone to spurious bad readings, so we'll attempt to
 // screen out the noise.
 
-let lastTemp: number;
-let lastHumidity: number;
-let temps: number[] = [];
-let humidities: number[] = [];
-let consecutiveSensorErrors = 0;
-const MAX_ERRORS = 5;
-const MAX_POINTS = 10;
-const sensorGpio = parseInt(process.env.AWC_TH_SENSOR_GPIO, 10) || 4;
 const ntpServer = process.env.AWC_NTP_SERVER || DEFAULT_NTP_SERVER;
 const ntpPoller = new NtpPoller(ntpServer);
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
@@ -75,65 +63,12 @@ if (process.env.AWC_DEBUG_TIME) {
   taiUtc = new TaiUtc(leapSecondsUrl, () => Date.now() - debugDelta);
 }
 
-function readSensor() {
-  indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {
-    if (err || temperature < -10 || temperature > 50 || humidity < 0 || humidity > 100)
-      ++consecutiveSensorErrors;
-    else {
-      consecutiveSensorErrors = 0;
-      temps.push(temperature);
-      humidities.push(humidity);
-
-      if (temps.length > MAX_POINTS) {
-        temps.shift();
-        humidities.shift();
-      }
-
-      lastTemp = useLatestValueIfNotOutlier(temps);
-      lastHumidity = useLatestValueIfNotOutlier(humidities);
-    }
-
-    if (consecutiveSensorErrors === MAX_ERRORS) {
-      lastTemp = undefined;
-      lastHumidity = undefined;
-      temps = [];
-      humidities = [];
-    }
-
-    setTimeout(readSensor, 10000);
-  });
-}
-
-if (indoorSensor) {
-  readSensor();
-}
-
-// Report the latest temperature and humidity values that are no more than two standard deviations from the average.
-// Use the average itself in case no point matches that criterion.
-function useLatestValueIfNotOutlier(values: number[]): number {
-  const avg = average(values);
-  const sd2 = stdDev(values) * 2;
-  let result = avg;
-
-  for (let i = values.length - 1; i >= 0; --i) {
-    const value = values[i];
-
-    if (Math.abs(value - avg) < sd2) {
-      result = value;
-      break;
-    }
-  }
-
-  return result;
-}
-
 /**
  * Event listener for HTTP server 'error' event.
  */
 function onError(error: any) {
-  if (error.syscall !== 'listen') {
+  if (error.syscall !== 'listen')
     throw error;
-  }
 
   const bind = typeof httpPort === 'string'
     ? 'Pipe ' + httpPort
@@ -185,83 +120,32 @@ function getApp() {
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
       // intercept OPTIONS method
-      if (req.method === 'OPTIONS') {
+      if (req.method === 'OPTIONS')
         res.send(200);
-      }
       else {
         next();
       }
     });
   }
 
-  theApp.use('/darksky', (req, res) => {
-    let url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}${req.url}`;
-    let frequent = false;
-    const match = /(.*)(&id=)([^&]*)$/.exec(url);
+  theApp.use('/darksky/:loc', darkskyRouter);
+  theApp.use('/wireless-th', tempHumidityRouter);
 
-    if (match) {
-      url = match[1];
+  if (indoorRouter)
+    theApp.use('/indoor', indoorRouter);
+  else {
+    theApp.get('/indoor', (req, res) => {
+      console.warn('Indoor temp/humidity sensor not available.');
+      jsonOrJsonp(req, res, { temperature: 0, humidity: -1, error: 'n/a' });
+    });
+  }
 
-      if (process.env.AWC_FREQUENT_ID && match[3] === process.env.AWC_FREQUENT_ID)
-        frequent = true;
-    }
-
-    req.pipe(request({
-      url: url,
-      qs: req.query,
-      method: req.method
-    }))
-      .on('response', remoteRes => {
-        remoteRes.headers['cache-control'] = 'max-age=' + (frequent ? '240' : '840');
-      })
-      .on('error', err => {
-        res.status(500).send('Error connecting to Dark Sky: ' + err);
-      })
-      .pipe(res);
-  });
-
-  let warnIndoorNA = true;
-
-  theApp.use('/indoor', (req, res) => {
+  theApp.get('/ntp', (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
-
-    let result: any;
-
-    if (indoorSensor) {
-      if (consecutiveSensorErrors >= MAX_ERRORS || lastTemp === undefined || lastHumidity === undefined) {
-        console.error('Failed to read indoor temp/humidity sensor.');
-        result = { temperature: 0, humidity: -1, error: 'Sensor error' };
-      }
-      else
-        result = { temperature: lastTemp, humidity: lastHumidity };
-    }
-    else {
-      if (warnIndoorNA) {
-        console.warn('Indoor temp/humidity sensor not available.');
-        warnIndoorNA = false;
-      }
-
-      result = { temperature: 0, humidity: -1, error: 'n/a' };
-    }
-
-    if (req.query.callback)
-      res.jsonp(result);
-    else
-      res.json(result);
+    jsonOrJsonp(req, res, ntpPoller.getTimeInfo());
   });
 
-  theApp.use('/ntp', (req, res) => {
-    res.setHeader('cache-control', 'no-cache, no-store');
-
-    const result = ntpPoller.getTimeInfo();
-
-    if (req.query.callback)
-      res.jsonp(result);
-    else
-      res.json(result);
-  });
-
-  theApp.use('/daytime', async (req, res) => {
+  theApp.get('/daytime', async (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
 
     let time: DaytimeData;
@@ -283,26 +167,14 @@ function getApp() {
       res.send(time.text);
   });
 
-  theApp.use('/tai-utc', async (req, res) => {
+  theApp.get('/tai-utc', async (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
-
-    const currentDelta = await taiUtc.getCurrentDelta();
-
-    if (req.query.callback)
-      res.jsonp(currentDelta);
-    else
-      res.json(currentDelta);
+    jsonOrJsonp(req, res, await taiUtc.getCurrentDelta());
   });
 
-  theApp.use('/ls-history', async (req, res) => {
+  theApp.get('/ls-history', async (req, res) => {
     res.setHeader('cache-control', 'no-cache, no-store');
-
-    const history = await taiUtc.getLeapSecondHistory();
-
-    if (req.query.callback)
-      res.jsonp(history);
-    else
-      res.json(history);
+    jsonOrJsonp(req, res, await taiUtc.getLeapSecondHistory());
   });
 
   return theApp;

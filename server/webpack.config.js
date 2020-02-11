@@ -28,8 +28,9 @@ module.exports = {
     ]
   },
   externals: {
+    'i2c-bus': 'commonjs i2c-bus',
     'node-dht-sensor': 'commonjs node-dht-sensor',
-    'i2c-bus': 'commonjs i2c-bus'
+    'rpi-acu-rite-temperature': 'commonjs rpi-acu-rite-temperature'
   },
   devtool: 'source-map',
   plugins: [
