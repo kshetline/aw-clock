@@ -53,6 +53,9 @@ function setSignalLevel(elem: JQuery, level: number): void {
     classes = (classes + ' ' + newLevel).trim();
 
   (elem[0].className as any).baseVal = classes;
+
+  if (level <= 0)
+    elem.attr('data-signal-quality', '0%');
 }
 
 export class Sensors {
@@ -142,6 +145,7 @@ export class Sensors {
             indoorTemp = (celsius ? thd.temperature : thd.temperature * 1.8 + 32);
             indoorHumidity = thd.humidity;
             setSignalLevel(this.indoorMeter, Math.floor((thd.signalQuality + 10) / 20));
+            this.indoorMeter.attr('data-signal-quality', thd.signalQuality + '%');
 
             if (thd.batteryLow)
               lowBatteries.push(indoorOption);
@@ -150,16 +154,21 @@ export class Sensors {
             setSignalLevel(this.indoorMeter, -1);
 
           if (outdoorOption !== 'F' && (thd = wireless[outdoorOption])) {
-            const outdoorTemp = (celsius ? thd.temperature : thd.temperature * 1.8 + 32);
-            this.outdoorTemp.text(`\u00A0${Math.round(outdoorTemp)}°`);
-            this.outdoorHumidity.text(`${Math.round(thd.humidity)}%`);
+            const temperature = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
+            const humidity = Math.round(thd.humidity);
+
+            this.appService.setSensorCurrentConditions({ humidity, temperature });
+            this.outdoorTemp.text(`\u00A0${temperature}°`);
+            this.outdoorHumidity.text(`${humidity}%`);
             setSignalLevel(this.outdoorMeter, Math.floor((thd.signalQuality + 10) / 20));
+            this.outdoorMeter.attr('data-signal-quality', thd.signalQuality + '%');
 
             if (thd.batteryLow)
               lowBatteries.push(outdoorOption);
           }
           else {
             setSignalLevel(this.outdoorMeter, -1);
+            this.appService.setSensorCurrentConditions(undefined);
 
             if (outdoorOption !== 'F' && !this.appService.getForecastCurrentConditions()) {
               this.outdoorTemp.text('\u00A0--°');
@@ -173,15 +182,10 @@ export class Sensors {
         else if (indoorTemp === undefined) {
           this.indoorTemp.text('‣--°');
           this.indoorHumidity.text('‣--%');
-          this.appService.setSensorCurrentConditions(undefined);
         }
         else {
-          const humidity = Math.round(indoorHumidity);
-          const temperature = Math.round(indoorTemp);
-
-          this.indoorTemp.text(`‣${temperature}°`);
-          this.indoorHumidity.text(`‣${humidity}%`);
-          this.appService.setSensorCurrentConditions({ humidity, temperature });
+          this.indoorTemp.text(`‣${Math.round(indoorTemp)}°`);
+          this.indoorHumidity.text(`‣${Math.round(indoorHumidity)}%`);
         }
 
         if (lowBatteries.length === 0) {
