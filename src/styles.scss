@@ -549,32 +549,49 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   fill: #C6F
 }
 
+.signal-meter {
+  fill: rgba(0, 255, 0, 0.25)
+}
+
 .signal-level-1 {
   .signal-bar-1 {
-    fill: white;
+    fill: #0F0;
   }
 }
 
 .signal-level-2 {
   .signal-bar-1, .signal-bar-2 {
-    fill: white;
+    fill: #0F0;
   }
 }
 
 .signal-level-3 {
   .signal-bar-1, .signal-bar-2, .signal-bar-3 {
-    fill: white;
+    fill: #0F0;
   }
 }
 
 .signal-level-4 {
   .signal-bar-1, .signal-bar-2, .signal-bar-3, .signal-bar-4 {
-    fill: white;
+    fill: #0F0;
   }
 }
 
 .signal-level-5 {
   .signal-bar-1, .signal-bar-2, .signal-bar-3, .signal-bar-4, .signal-bar-5 {
-    fill: white;
+    fill: #0F0;
   }
+}
+
+.signal-lost .no-signal {
+  display: block !important;
+}
+
+#low-battery {
+  display: none;
+}
+
+#low-battery-text {
+  fill: red;
+  font-size: 2px;
 }

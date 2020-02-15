@@ -20,7 +20,7 @@
 import * as $ from 'jquery';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { Clock } from './clock';
-import { AppService } from './app.service';
+import { AppService, CurrentConditions } from './app.service';
 import { Forecast } from './forecast';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { setFullScreen } from 'ks-util';
@@ -74,6 +74,8 @@ class AwClockApp implements AppService {
   private lastTimezone: KsTimeZone;
   private lastHour = -1;
   private frequent = false;
+  private forecastConditions: CurrentConditions;
+  private sensorConditions: CurrentConditions;
 
   private settings = new Settings();
 
@@ -229,6 +231,22 @@ class AwClockApp implements AppService {
 
   getOutdoorOption(): string {
     return this.settings.outdoorOption;
+  }
+
+  getForecastCurrentConditions(): CurrentConditions {
+    return this.forecastConditions;
+  }
+
+  getSensorCurrentConditions(): CurrentConditions {
+    return this.sensorConditions;
+  }
+
+  setForecastCurrentConditions(conditions: CurrentConditions): void {
+    this.forecastConditions = conditions;
+  }
+
+  setSensorCurrentConditions(conditions: CurrentConditions): void {
+    this.sensorConditions = conditions;
   }
 
   private updateDimming(now: number, todayRise: string, todaySet: string): void {

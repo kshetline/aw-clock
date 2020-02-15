@@ -2,8 +2,7 @@
 
 To test and build the web client project, you can use the following commands:
    - "`npm run lint`" to inspect the code with ESLint.
-   - "`npm run build`" to build _without_ support for temperature/humidity sensor.
-   - "`npm run build-for-dht`" to build _with_ support for temperature/humidity sensor.
+   - "`npm run build` &#x5B;`--dht`&#x5D; &#x5B;`--acu`&#x5D;" to build (with optional support for wired and/or wireless temperature/humidity sensors).
    - "`npm test`" to run unit tests.
    - "`npm start`" to serve the app using webpack-dev-server.
    - "`npm run e2e`" to run Protractor for end-to-end tests.
@@ -23,10 +22,10 @@ By default, the server uses `pool.ntp.org` as an NTP time server. Use the enviro
 to changes the time server. Do not use a Google time server, or any other NTP server that implements "leap second
 smearing" if you want the Astronomy/Weather Clock to be able to display leap seconds.
 
-To deploy the server along with the web client, use `npm run build` (or `npm run build-for-dht`) as described above. The
+To deploy the server along with the web client, use `npm run build` (possibly with the `--dht` and/or `--acu` options as described above). The
 contents of the `dist` directory will be copied into the server's `public` directory.
 
-If you are running the server on a Raspberry Pi, you have the option to provide indoor temperature and
+If you are running the server on a Raspberry Pi, you have the option to provide wired indoor temperature and
 humidity data using a DHT22/AM2302 sensor, as seen here: https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/.
 The wiring I will describe is specifically for the AM2302 version of the DHT22, with the built-in pull-up
 resistor.
@@ -43,6 +42,9 @@ the `-` lead needs to be connected to ground (I chose pin 6).
 
 The web client only displays the indoor temperature and humidity values when connected to the
 web server on `localhost:8080`.
+
+Also for the Raspberry Pi, you have the option to provide wireless indoor and outdoor weather data using
+433 MHz Acu Rite 06002M wireless temperature and humidity sensors (https://www.amazon.com/gp/product/B00T0K8NXC/).
 
 I can't guarantee that I'm recalling every important step I took to create my own set-up, but
 hopefully the following is a more-or-less complete guide to setting up a Raspberry Pi to

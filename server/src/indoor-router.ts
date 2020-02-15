@@ -4,6 +4,12 @@ import { average, stdDev, toBoolean } from './util';
 
 export const router = Router();
 
+export interface DhtSensorData {
+  temperature: number;
+  humidity: number;
+  error?: string;
+}
+
 const DHT22_OR_AM2302 = 22;
 
 type DhtSensorCallback = (err: any, temperature: number, humidity: number) => void;
@@ -82,7 +88,7 @@ let warnIndoorNA = true;
 router.get('/', (req: Request, res: Response) => {
   res.setHeader('cache-control', 'no-cache, no-store');
 
-  let result: any;
+  let result: DhtSensorData;
 
   if (indoorSensor) {
     if (consecutiveSensorErrors >= MAX_ERRORS || lastTemp === undefined || lastHumidity === undefined) {

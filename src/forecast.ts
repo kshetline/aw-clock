@@ -22,6 +22,7 @@ import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { getTextWidth, isEdge, isIE } from 'ks-util';
 import { setSvgHref } from './util';
 import { AppService } from './app.service';
+import { reflow } from './svg-flow';
 
 const DEFAULT_BACKGROUND = 'midnightblue';
 const DEFAULT_FOREGROUND = 'white';
@@ -39,6 +40,7 @@ const MARQUEE_SPEED = 100; // pixels per second
 const FREQUENT_THRESHOLD = 300;
 
 const MAX_FORECAST_STALENESS = 7200000; // 2 hours
+const MAX_CURRENT_TEMP_STALENESS = 1800000; // 30 minutes
 
 interface CommonConditions {
   time: number;
@@ -160,9 +162,16 @@ export class Forecast {
       this.displayForecast(forecastData);
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
-      if (!this.lastForecastData || performance.now() >= this.lastForecastTime + MAX_FORECAST_STALENESS)
+      const now = performance.now();
+
+      if (!this.lastForecastData || now >= this.lastForecastTime + MAX_FORECAST_STALENESS) {
+        this.appService.setForecastCurrentConditions(undefined);
         this.showUnknown(error);
+      }
       else {
+        if (now >= this.lastForecastTime + MAX_CURRENT_TEMP_STALENESS)
+          this.appService.setForecastCurrentConditions(undefined);
+
         this.currentTemp.addClass('stale-forecast');
         this.displayForecast(this.lastForecastData);
       }
@@ -178,9 +187,9 @@ export class Forecast {
 
   public showUnknown(error?: string): void {
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
-    this.currentTemp.text('\u00A0--°');
+    this.currentTemp.text(`\u00A0${this.appService.getSensorCurrentConditions()?.temperature ?? '--'}°`);
     this.feelsLike.text('--°');
-    this.humidity.text('--%');
+    this.humidity.text(`${this.appService.getSensorCurrentConditions()?.humidity ?? '--'}%`);
 
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
@@ -310,10 +319,18 @@ export class Forecast {
       this.showUnknown('Missing data');
     }
     else {
+      const humidity = Math.round(forecastData.currently.humidity * 100);
+      const temperature = Math.round(forecastData.currently.temperature);
+
+      this.appService.setForecastCurrentConditions({ humidity, temperature });
       setSvgHref(this.currentIcon, this.getIcon(forecastData.currently, true));
-      this.currentTemp.text(`\u00A0${Math.round(forecastData.currently.temperature)}°`);
+
+      if (this.appService.getOutdoorOption() === 'F' || !this.appService.getSensorCurrentConditions()) {
+        this.currentTemp.text(`\u00A0${temperature}°`);
+        this.humidity.text(`${humidity}%`);
+      }
+
       this.feelsLike.text(`${Math.round(forecastData.currently.apparentTemperature)}°`);
-      this.humidity.text(`${Math.round(forecastData.currently.humidity * 100)}%`);
 
       this.dayIcons.forEach((dayIcon, index) => {
         if (forecastData.daily.data.length > todayIndex + index) {
@@ -423,6 +440,8 @@ export class Forecast {
 
       this.updateMarqueeAnimation(newText);
     }
+
+    setTimeout(reflow);
   }
 
   private updateMarqueeAnimation(newText: string): void {
