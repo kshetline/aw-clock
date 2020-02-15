@@ -24,6 +24,8 @@ export class Settings {
   latitude = 42.75;
   longitude = -71.48;
   city = 'Nashua, NH';
+  indoorOption = 'D';
+  outdoorOption = 'F';
   userId = '';
   dimming = 0;
   dimmingStart = '23:00';
@@ -37,6 +39,8 @@ export class Settings {
     this.latitude = Number(Cookies.get('latitude')) || defaultSettings.latitude;
     this.longitude = Number(Cookies.get('longitude')) || defaultSettings.longitude;
     this.city = Cookies.get('city') || defaultSettings.city;
+    this.indoorOption = Cookies.get('indoor') || 'D';
+    this.outdoorOption = Cookies.get('outdoor') || 'F';
     this.userId = Cookies.get('id') || '';
     this.dimming = Number(Cookies.get('dimming')) || 0;
     this.dimmingStart = Cookies.get('dimming_start') || defaultSettings.dimmingStart;
@@ -53,6 +57,8 @@ export class Settings {
     Cookies.set('city', this.city, { expires: expiration });
     Cookies.set('latitude', this.latitude.toString(), { expires: expiration });
     Cookies.set('longitude', this.longitude.toString(), { expires: expiration });
+    Cookies.set('indoor', this.indoorOption, { expires: expiration });
+    Cookies.set('outdoor', this.outdoorOption, { expires: expiration });
     Cookies.set('id', this.userId, { expires: expiration });
     Cookies.set('dimming', this.dimming.toString(), { expires: expiration });
     Cookies.set('dimming_start', this.dimmingStart, { expires: expiration });

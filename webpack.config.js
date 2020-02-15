@@ -107,6 +107,7 @@ const postcssPlugins = function (loader) {
 // noinspection JSUnusedGlobalSymbols
 module.exports = {
   mode: NODE_ENV,
+  performance: { hints: false },
   resolve: {
     extensions: [
       '.ts',

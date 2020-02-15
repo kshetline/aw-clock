@@ -1,11 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <!--suppress HtmlFormInputWithoutLabel -->
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <title>Astronomy/Weather Clock</title>
     <base href="/">
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
   </head>
@@ -67,13 +66,23 @@
         <circle id="subhub" cx="50" cy="50" r="1.5"/>
         <circle id="hub" cx="50" cy="50" r="1.5"/>
         <text id="time" x="50" y="105" text-anchor="middle">--:--:--</text>
-        <text id="dut1-label" x="73.6" y="102.5" text-anchor="start">&nbsp;ΔUT1:&nbsp;</text>
+        <text id="dut1-label" class="svg-flow-tr-tl" x="73.6" y="102.5" text-anchor="start">&nbsp;ΔUT1:&nbsp;</text>
         <text id="dut1" x="81.3" y="102.5" text-anchor="start">±---ms</text>
         <text id="dtai-label" x="73.6" y="105" text-anchor="start">&nbsp;ΔTAI:&nbsp;</text>
         <text id="dtai" x="81.3" y="105" text-anchor="start">--s</text>
 
         <text id="city" x="134.5" y="4" text-anchor="middle"></text>
-        <text x="134.5" y="19" text-anchor="middle"><tspan id="curr-temp-balance-space">&nbsp;</tspan><tspan id="current-temp">--°</tspan><tspan id="indoor-temp" dy="-2"></tspan></text>
+        <text id="temperature-text" x="134.5" y="19" text-anchor="middle"><tspan id="curr-temp-balance-space">&nbsp;</tspan><tspan
+          id="current-temp">--°</tspan><tspan id="indoor-temp" dy="-2"></tspan></text>
+        <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-3.5,dy=-2">
+          <svg viewBox="0 0 640 512" fill="rgba(255, 255, 255, 0.25)" width="2" height="1.6">
+            <rect x= "24" y="384" width="80" height="128" class="signal-bar-1"/>
+            <rect x="152" y="288" width="80" height="224" class="signal-bar-2"/>
+            <rect x="280" y="192" width="80" height="320" class="signal-bar-3"/>
+            <rect x="408" y= "96" width="80" height="416" class="signal-bar-4"/>
+            <rect x="536" y=  "0" width="80" height="512" class="signal-bar-5"/>
+          </svg>
+        </svg>
 
         <g transform="translate(110, 24.25)">
           <text x="0" y="0" class="small-caption" text-anchor="start">
@@ -142,6 +151,20 @@
           <label for="current-city">Current city:</label><input id="current-city" type="text" size="38"><span></span>
           <label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative for south)</span>
           <label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative for west)</span>
+          <label for="indoor-option">Indoor temp.:</label>
+            <select id="indoor-option">
+              <option value="D">Wired sensor</option>
+              <option value="A">Wireless channel A</option>
+              <option value="B">Wireless channel B</option>
+              <option value="C">Wireless channel C</option>
+            </select><span>&nbsp;</span>
+          <label for="outdoor-option">Outdoor temp.:</label>
+            <select id="outdoor-option">
+              <option value="F">From forecast</option>
+              <option value="A">Wireless channel A</option>
+              <option value="B">Wireless channel B</option>
+              <option value="C">Wireless channel C</option>
+            </select><span>&nbsp;</span>
           <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
           <label for="dimming">Dimming:</label>
           <span class="colspan">
@@ -199,7 +222,7 @@
           </div>
         </div>
         <div class="dialog-buttons">
-          <span class="version-number">1.2.7</span>
+          <span class="version-number">1.3.0</span>
           <button id="settings-reload">Reload</button>
           <span>&bull;</span>
           <button id="settings-cancel">Cancel</button>

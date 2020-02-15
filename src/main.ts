@@ -27,9 +27,10 @@ import { setFullScreen } from 'ks-util';
 import { Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
-import { Indoor } from './indoor';
+import { Sensors } from './sensors';
 import { HttpTimePoller } from './http-time-poller';
 import { TimeInfo } from '../server/src/time-poller';
+import { findSvgFlowItems, reflow } from './svg-flow';
 
 initTimeZoneSmall();
 
@@ -56,7 +57,7 @@ class AwClockApp implements AppService {
   private clock: Clock;
   private forecast: Forecast;
   private ephemeris: Ephemeris;
-  private indoor: Indoor;
+  private sensors: Sensors;
   private settingsDialog: SettingsDialog;
 
   private body: JQuery;
@@ -89,7 +90,7 @@ class AwClockApp implements AppService {
     this.ephemeris = new Ephemeris(this);
     this.ephemeris.hidePlanets = this.settings.hidePlanets;
 
-    this.indoor = new Indoor();
+    this.sensors = new Sensors(this);
 
     this.settingsDialog = new SettingsDialog(this);
 
@@ -141,11 +142,16 @@ class AwClockApp implements AppService {
     return (!!debugTime && debugTimeRate > 1);
   }
 
-  public start() {
+  start() {
     this.clock.start();
+
+    setTimeout(() => {
+      findSvgFlowItems();
+      reflow();
+    });
   }
 
-  public updateTime(hour: number, minute: number, forceRefresh: boolean): void {
+  updateTime(hour: number, minute: number, forceRefresh: boolean): void {
     const now = this.getCurrentTime();
 
     // Hide cursor if it hasn't been moved in the last two minutes.
@@ -159,8 +165,8 @@ class AwClockApp implements AppService {
     if (hour < this.lastHour || (hour === 0 && minute === 0))
       this.forecast.refreshFromCache();
 
-    if (this.indoor.available)
-      this.indoor.update(this.settings.celsius);
+    if (this.sensors.available)
+      this.sensors.update(this.settings.celsius);
 
     this.lastHour = hour;
 
@@ -185,7 +191,7 @@ class AwClockApp implements AppService {
     }
   }
 
-  public forecastHasBeenUpdated(): void {
+  forecastHasBeenUpdated(): void {
     const currentZone = this.forecast.getTimezone();
 
     if (this.lastTimezone !== currentZone) {
@@ -198,7 +204,7 @@ class AwClockApp implements AppService {
     this.lastForecast = this.getCurrentTime();
   }
 
-  public updateSettings(newSettings: Settings): void {
+  updateSettings(newSettings: Settings): void {
     this.settings = newSettings;
     newSettings.save();
     this.forecast.showUnknown();
@@ -209,12 +215,20 @@ class AwClockApp implements AppService {
     this.clock.triggerRefresh();
   }
 
-  public updateSunriseAndSunset(rise: string, set: string): void {
+  updateSunriseAndSunset(rise: string, set: string): void {
     this.updateDimming(this.getCurrentTime(), rise, set);
   }
 
-  public updateMarqueeState(isScrolling: boolean) {
+  updateMarqueeState(isScrolling: boolean) {
     this.clock.hasCompletingAnimation = isScrolling;
+  }
+
+  getIndoorOption(): string {
+    return this.settings.indoorOption;
+  }
+
+  getOutdoorOption(): string {
+    return this.settings.outdoorOption;
   }
 
   private updateDimming(now: number, todayRise: string, todaySet: string): void {

@@ -385,7 +385,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 .search-section {
   position: absolute;
   width: calc(100% - 2em);
-  top: 12.5em;
+  top: 15.5em;
 
   & label, input {
     margin-right: 0.5em;
@@ -402,7 +402,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .city-table-wrapper {
-  max-height: 224px;
+  max-height: 176px;
   overflow: auto;
   border: darkgray 1px solid;
 }
@@ -547,4 +547,34 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 
 .month-of-neg-leap-second {
   fill: #C6F
+}
+
+.signal-level-1 {
+  .signal-bar-1 {
+    fill: white;
+  }
+}
+
+.signal-level-2 {
+  .signal-bar-1, .signal-bar-2 {
+    fill: white;
+  }
+}
+
+.signal-level-3 {
+  .signal-bar-1, .signal-bar-2, .signal-bar-3 {
+    fill: white;
+  }
+}
+
+.signal-level-4 {
+  .signal-bar-1, .signal-bar-2, .signal-bar-3, .signal-bar-4 {
+    fill: white;
+  }
+}
+
+.signal-level-5 {
+  .signal-bar-1, .signal-bar-2, .signal-bar-3, .signal-bar-4, .signal-bar-5 {
+    fill: white;
+  }
 }

@@ -270,15 +270,12 @@ export class Forecast {
     if (!ignorePrecipProbability && iconIndex >= 0 && iconIndex <= 6 &&
         conditions.precipProbability >= 0.25 &&
         (precipIntensity >= 0.01 || (conditions.precipProbability >= 0.5 && precipIntensity > 0.0025) || precipAccumulation >= 0.25)) {
-      if (conditions.precipType === 'snow') {
+      if (conditions.precipType === 'snow')
         icon = 'snow';
-      }
-      else if (conditions.precipType === 'sleet') {
+      else if (conditions.precipType === 'sleet')
         icon = 'sleet';
-      }
-      else {
+      else
         icon = 'rain';
-      }
     }
 
     // Dark Sky currently doesn't report thunderstorms as a condition by icon value. We'll try to make
@@ -289,9 +286,8 @@ export class Forecast {
       if (summary.indexOf('scattered') >= 0 || summary.indexOf('isolated') >= 0)
         icon = 'scattered-thunderstorms-day';
     }
-    else if (icon === 'rain' && precipIntensity < 0.01) {
+    else if (icon === 'rain' && precipIntensity < 0.01)
       icon = 'light-rain';
-    }
 
     if (conditions.cloudCover < 0.333) {
       if (icon === 'partly-cloudy-day')
