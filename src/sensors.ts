@@ -20,8 +20,8 @@
 import { AppService } from './app.service';
 import { DhtSensorData } from '../server/src/indoor-router';
 import * as $ from 'jquery';
-import { reflow } from './svg-flow';
 import { TempHumidityData } from '../server/src/temp-humidity-router';
+import { CurrentTemperatureHumidity } from './current-temp-manager';
 
 const DEV_SENSOR_URL = 'http://192.168.42.98:8080';
 
@@ -45,48 +45,34 @@ function getJson(url: string): Promise<any> {
   });
 }
 
-function setSignalLevel(elem: JQuery, level: number): void {
-  const newLevel = 'signal-' + (level < 0 ? 'lost' : 'level-' + level);
+function setSignalLevel(elem: JQuery, quality: number): void {
+  const newLevel = 'signal-' + (quality < 0 ? 'lost' : 'level-' + Math.floor((quality + 10) / 20));
   let classes = ((elem[0].className as any).baseVal || '').replace(/signal-[-\w]+/, newLevel);
 
   if (!classes.includes(newLevel))
     classes = (classes + ' ' + newLevel).trim();
 
   (elem[0].className as any).baseVal = classes;
-
-  if (level <= 0)
-    elem.attr('data-signal-quality', '0%');
+  elem.attr('data-signal-quality', (quality < 0 ? 0 : quality) + '%');
 }
 
 export class Sensors {
-  private readonly currentTempBalanceSpace: JQuery;
   private readonly indoorMeter: JQuery;
-  private readonly indoorHumidity: JQuery;
-  private readonly indoorTemp: JQuery;
   private readonly lowBattery: JQuery;
   private readonly lowBatteryText: JQuery;
   private readonly outdoorMeter: JQuery;
-  private readonly outdoorHumidity: JQuery;
-  private readonly outdoorTemp: JQuery;
 
   private wiredAvailable = false;
   private wirelessAvailable = false;
 
   constructor(private appService: AppService) {
-    this.currentTempBalanceSpace = $('#curr-temp-balance-space');
-    this.indoorHumidity = $('#indoor-humidity');
     this.indoorMeter = $('#indoor-meter');
-    this.indoorTemp = $('#indoor-temp');
     this.lowBattery = $('#low-battery');
     this.lowBatteryText = $('#low-battery-text');
-    this.outdoorHumidity = $('#humidity');
     this.outdoorMeter = $('#outdoor-meter');
-    this.outdoorTemp = $('#current-temp');
 
-    if (document.location.port === '4200' || document.location.port === '8080') {
-      this.currentTempBalanceSpace.css('display', 'none');
+    if (document.location.port === '4200' || document.location.port === '8080')
       this.wiredAvailable = this.wirelessAvailable = true;
-    }
   }
 
   get available() { return this.wiredAvailable || this.wirelessAvailable; }
@@ -108,9 +94,13 @@ export class Sensors {
         const lowBatteries: string[] = [];
         const indoorOption = this.appService.getIndoorOption();
         const outdoorOption = this.appService.getOutdoorOption();
-        let indoorTemp: number;
-        let indoorHumidity: number;
         let thd: TempHumidityData;
+        const cth: CurrentTemperatureHumidity = {
+          indoorHumidity: null,
+          indoorTemp: null,
+          outdoorHumidity: null,
+          outdoorTemp: null
+        };
         let err: string;
 
         this.indoorMeter.css('display', /[ABC]/.test(indoorOption) ? 'block' : 'none');
@@ -124,8 +114,8 @@ export class Sensors {
           this.wiredAvailable = !(/not found/i.test(err));
         }
         else if (wired && indoorOption === 'D') {
-          indoorTemp = (celsius ? wired.temperature : wired.temperature * 1.8 + 32);
-          indoorHumidity = wired.humidity;
+          cth.indoorTemp = (celsius ? wired.temperature : wired.temperature * 1.8 + 32);
+          cth.indoorHumidity = wired.humidity;
         }
 
         if (wireless && !(wireless instanceof Error) && wireless.error === 'n/a') {
@@ -142,10 +132,9 @@ export class Sensors {
         }
         else if (wireless) {
           if ((thd = wireless[indoorOption])) {
-            indoorTemp = (celsius ? thd.temperature : thd.temperature * 1.8 + 32);
-            indoorHumidity = thd.humidity;
-            setSignalLevel(this.indoorMeter, Math.floor((thd.signalQuality + 10) / 20));
-            this.indoorMeter.attr('data-signal-quality', thd.signalQuality + '%');
+            cth.indoorTemp = (celsius ? thd.temperature : thd.temperature * 1.8 + 32);
+            cth.indoorHumidity = thd.humidity;
+            setSignalLevel(this.indoorMeter, thd.signalQuality);
 
             if (thd.batteryLow)
               lowBatteries.push(indoorOption);
@@ -153,39 +142,18 @@ export class Sensors {
           else
             setSignalLevel(this.indoorMeter, -1);
 
-          if (outdoorOption !== 'F' && (thd = wireless[outdoorOption])) {
-            const temperature = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
-            const humidity = Math.round(thd.humidity);
+          if (outdoorOption !== 'F') {
+            if ((thd = wireless[outdoorOption])) {
+              cth.outdoorHumidity = Math.round(thd.humidity);
+              cth.outdoorTemp = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
+              setSignalLevel(this.outdoorMeter, thd.signalQuality);
 
-            this.appService.setSensorCurrentConditions({ humidity, temperature });
-            this.outdoorTemp.text(`\u00A0${temperature}°`);
-            this.outdoorHumidity.text(`${humidity}%`);
-            setSignalLevel(this.outdoorMeter, Math.floor((thd.signalQuality + 10) / 20));
-            this.outdoorMeter.attr('data-signal-quality', thd.signalQuality + '%');
-
-            if (thd.batteryLow)
-              lowBatteries.push(outdoorOption);
-          }
-          else {
-            setSignalLevel(this.outdoorMeter, -1);
-            this.appService.setSensorCurrentConditions(undefined);
-
-            if (outdoorOption !== 'F' && !this.appService.getForecastCurrentConditions()) {
-              this.outdoorTemp.text('\u00A0--°');
-              this.outdoorHumidity.text('--%');
+              if (thd.batteryLow)
+                lowBatteries.push(outdoorOption);
             }
+            else
+              setSignalLevel(this.outdoorMeter, -1);
           }
-        }
-
-        if (!this.available)
-          this.currentTempBalanceSpace.css('display', 'none');
-        else if (indoorTemp === undefined) {
-          this.indoorTemp.text('‣--°');
-          this.indoorHumidity.text('‣--%');
-        }
-        else {
-          this.indoorTemp.text(`‣${Math.round(indoorTemp)}°`);
-          this.indoorHumidity.text(`‣${Math.round(indoorHumidity)}%`);
         }
 
         if (lowBatteries.length === 0) {
@@ -197,7 +165,7 @@ export class Sensors {
           this.lowBatteryText.text(lowBatteries.sort().join(', '));
         }
 
-        setTimeout(reflow);
+        this.appService.updateCurrentTemp(cth);
       });
   }
 }

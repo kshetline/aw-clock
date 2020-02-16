@@ -20,7 +20,8 @@
 import * as $ from 'jquery';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { Clock } from './clock';
-import { AppService, CurrentConditions } from './app.service';
+import { AppService } from './app.service';
+import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
 import { Forecast } from './forecast';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { setFullScreen } from 'ks-util';
@@ -55,6 +56,7 @@ $(() => {
 
 class AwClockApp implements AppService {
   private clock: Clock;
+  private currentTempManager: CurrentTempManager;
   private forecast: Forecast;
   private ephemeris: Ephemeris;
   private sensors: Sensors;
@@ -74,8 +76,6 @@ class AwClockApp implements AppService {
   private lastTimezone: KsTimeZone;
   private lastHour = -1;
   private frequent = false;
-  private forecastConditions: CurrentConditions;
-  private sensorConditions: CurrentConditions;
 
   private settings = new Settings();
 
@@ -86,6 +86,8 @@ class AwClockApp implements AppService {
     this.clock.amPm = this.settings.amPm;
     this.clock.hideSeconds = this.settings.hideSeconds;
     this.lastTimezone = this.clock.timezone;
+
+    this.currentTempManager = new CurrentTempManager();
 
     this.forecast = new Forecast(this);
 
@@ -233,20 +235,8 @@ class AwClockApp implements AppService {
     return this.settings.outdoorOption;
   }
 
-  getForecastCurrentConditions(): CurrentConditions {
-    return this.forecastConditions;
-  }
-
-  getSensorCurrentConditions(): CurrentConditions {
-    return this.sensorConditions;
-  }
-
-  setForecastCurrentConditions(conditions: CurrentConditions): void {
-    this.forecastConditions = conditions;
-  }
-
-  setSensorCurrentConditions(conditions: CurrentConditions): void {
-    this.sensorConditions = conditions;
+  updateCurrentTemp(cth: CurrentTemperatureHumidity): void {
+    this.currentTempManager.updateCurrentTempAndHumidity(cth);
   }
 
   private updateDimming(now: number, todayRise: string, todaySet: string): void {

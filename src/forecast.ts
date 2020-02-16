@@ -18,6 +18,7 @@
 */
 
 import * as $ from 'jquery';
+import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { getTextWidth, isEdge, isIE } from 'ks-util';
 import { setSvgHref } from './util';
@@ -101,11 +102,9 @@ interface ForecastData {
 }
 
 const UNKNOWN_ICON = 'assets/unknown.svg';
+const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
 
 export class Forecast {
-  private currentTemp: JQuery;
-  private feelsLike: JQuery;
-  private humidity: JQuery;
   private readonly currentIcon: JQuery;
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
@@ -130,9 +129,6 @@ export class Forecast {
   private animationRequestId = 0;
 
   constructor(private appService: AppService) {
-    this.currentTemp = $('#current-temp');
-    this.feelsLike = $('#feels-like');
-    this.humidity = $('#humidity');
     this.currentIcon = $('#current-icon');
 
     for (let i = 0; i < 4; ++i) {
@@ -158,21 +154,21 @@ export class Forecast {
     this.getForecast(latitude, longitude, isMetric, userId).then(forecastData => {
       this.lastForecastData = forecastData;
       this.lastForecastTime = performance.now();
-      this.currentTemp.removeClass('stale-forecast');
+      this.appService.updateCurrentTemp({ forecastStale: false });
       this.displayForecast(forecastData);
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
       const now = performance.now();
 
       if (!this.lastForecastData || now >= this.lastForecastTime + MAX_FORECAST_STALENESS) {
-        this.appService.setForecastCurrentConditions(undefined);
+        this.appService.updateCurrentTemp(NO_DATA);
         this.showUnknown(error);
       }
       else {
         if (now >= this.lastForecastTime + MAX_CURRENT_TEMP_STALENESS)
-          this.appService.setForecastCurrentConditions(undefined);
+          this.appService.updateCurrentTemp(NO_DATA);
 
-        this.currentTemp.addClass('stale-forecast');
+        this.appService.updateCurrentTemp({ forecastStale: true });
         this.displayForecast(this.lastForecastData);
       }
 
@@ -187,9 +183,7 @@ export class Forecast {
 
   public showUnknown(error?: string): void {
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
-    this.currentTemp.text(`\u00A0${this.appService.getSensorCurrentConditions()?.temperature ?? '--'}°`);
-    this.feelsLike.text('--°');
-    this.humidity.text(`${this.appService.getSensorCurrentConditions()?.humidity ?? '--'}%`);
+    this.appService.updateCurrentTemp(NO_DATA);
 
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
@@ -319,18 +313,13 @@ export class Forecast {
       this.showUnknown('Missing data');
     }
     else {
-      const humidity = Math.round(forecastData.currently.humidity * 100);
-      const temperature = Math.round(forecastData.currently.temperature);
+      this.appService.updateCurrentTemp({
+        forecastFeelsLike: forecastData.currently.apparentTemperature,
+        forecastHumidity: forecastData.currently.humidity * 100,
+        forecastTemp: forecastData.currently.temperature,
+      });
 
-      this.appService.setForecastCurrentConditions({ humidity, temperature });
       setSvgHref(this.currentIcon, this.getIcon(forecastData.currently, true));
-
-      if (this.appService.getOutdoorOption() === 'F' || !this.appService.getSensorCurrentConditions()) {
-        this.currentTemp.text(`\u00A0${temperature}°`);
-        this.humidity.text(`${humidity}%`);
-      }
-
-      this.feelsLike.text(`${Math.round(forecastData.currently.apparentTemperature)}°`);
 
       this.dayIcons.forEach((dayIcon, index) => {
         if (forecastData.daily.data.length > todayIndex + index) {
