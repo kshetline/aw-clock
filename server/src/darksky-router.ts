@@ -1,10 +1,11 @@
 import { Request, Response, Router } from 'express';
 import request from 'request';
+import { noCache } from './util';
 
 export const router = Router();
 
 router.get('/', (req: Request, res: Response) => {
-  res.setHeader('cache-control', 'no-cache, no-store');
+  noCache(res);
 
   let url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}${req.originalUrl}`.replace('/darksky/', '/');
   let frequent = false;

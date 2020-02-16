@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { addSensorDataListener, removeSensorDataListener } from 'rpi-acu-rite-temperature';
 import { jsonOrJsonp } from './common';
+import { noCache } from './util';
 
 export interface TempHumidityData {
   batteryLow: boolean;
@@ -45,11 +46,13 @@ if (process.env.AWC_WIRELESS_TEMP) {
 
     if (data.reliable || !oldData || !oldData.reliable)
       readings[data.channel] = data;
+    else
+      oldData.signalQuality = data.signalQuality;
   });
 }
 
 router.get('/', (req: Request, res: Response) => {
-  res.setHeader('cache-control', 'no-cache, no-store');
+  noCache(res);
 
   let result: any;
 

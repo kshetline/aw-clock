@@ -11,7 +11,7 @@ import { NtpPoller } from './ntp-poller';
 import * as path from 'path';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { normalizePort, toBoolean } from './util';
+import { noCache, normalizePort, toBoolean } from './util';
 
 const debug = require('debug')('express:server');
 
@@ -141,12 +141,12 @@ function getApp() {
   }
 
   theApp.get('/ntp', (req, res) => {
-    res.setHeader('cache-control', 'no-cache, no-store');
+    noCache(res);
     jsonOrJsonp(req, res, ntpPoller.getTimeInfo());
   });
 
   theApp.get('/daytime', async (req, res) => {
-    res.setHeader('cache-control', 'no-cache, no-store');
+    noCache(res);
 
     let time: DaytimeData;
 
@@ -168,12 +168,12 @@ function getApp() {
   });
 
   theApp.get('/tai-utc', async (req, res) => {
-    res.setHeader('cache-control', 'no-cache, no-store');
+    noCache(res);
     jsonOrJsonp(req, res, await taiUtc.getCurrentDelta());
   });
 
   theApp.get('/ls-history', async (req, res) => {
-    res.setHeader('cache-control', 'no-cache, no-store');
+    noCache(res);
     jsonOrJsonp(req, res, await taiUtc.getLeapSecondHistory());
   });
 

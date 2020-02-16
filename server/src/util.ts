@@ -1,9 +1,17 @@
+import { Response } from 'express';
+
 let performanceCopy: any;
 
 try {
   performanceCopy = performance;
 }
 catch (err) {}
+
+export function noCache(res: Response): void {
+  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.header('Expires', '-1');
+  res.header('Pragma', 'no-cache');
+}
 
 export function processMillis(): number {
   if (performanceCopy)

@@ -1,6 +1,6 @@
 import { jsonOrJsonp } from './common';
 import { Request, Response, Router } from 'express';
-import { average, stdDev, toBoolean } from './util';
+import { average, noCache, stdDev, toBoolean } from './util';
 
 export const router = Router();
 
@@ -86,7 +86,7 @@ if (indoorSensor)
 let warnIndoorNA = true;
 
 router.get('/', (req: Request, res: Response) => {
-  res.setHeader('cache-control', 'no-cache, no-store');
+  noCache(res);
 
   let result: DhtSensorData;
 
