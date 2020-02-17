@@ -84,6 +84,16 @@
             <line style="display: none; stroke-width: 40px; stroke: rgb(255, 0, 0);" class="no-signal" x1="64" y1="40" x2="576" y2="424"/>
           </svg>
         </svg>
+        <svg id="outdoor-meter-2" class="svg-flow" svg-flow="current-temp,dx=-3.8,dy=-3.5">
+          <svg viewBox="0 0 640 512" class="signal-meter" width="2" height="1.6">
+            <rect x= "24" y="384" width="80" height="128" class="signal-bar-1"/>
+            <rect x="152" y="288" width="80" height="224" class="signal-bar-2"/>
+            <rect x="280" y="192" width="80" height="320" class="signal-bar-3"/>
+            <rect x="408" y= "96" width="80" height="416" class="signal-bar-4"/>
+            <rect x="536" y=  "0" width="80" height="512" class="signal-bar-5"/>
+            <line style="display: none; stroke-width: 40px; stroke: rgb(255, 0, 0);" class="no-signal" x1="64" y1="40" x2="576" y2="424"/>
+          </svg>
+        </svg>
         <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-3.5,dy=-2">
           <svg viewBox="0 0 640 512" class="signal-meter" width="2" height="1.6">
             <rect x= "24" y="384" width="80" height="128" class="signal-bar-1"/>
@@ -179,6 +189,9 @@
               <option value="A">Wireless channel A</option>
               <option value="B">Wireless channel B</option>
               <option value="C">Wireless channel C</option>
+              <option value="AB">Wireless channels A &amp; B</option>
+              <option value="AC">Wireless channels A &amp; C</option>
+              <option value="BC">Wireless channels B &amp; C</option>
             </select><span>&nbsp;</span>
           <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
           <label for="dimming">Dimming:</label>

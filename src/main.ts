@@ -31,7 +31,7 @@ import { Ephemeris } from './ephemeris';
 import { Sensors } from './sensors';
 import { HttpTimePoller } from './http-time-poller';
 import { TimeInfo } from '../server/src/time-poller';
-import { findSvgFlowItems, reflow } from './svg-flow';
+import { updateSvgFlowItems, reflow } from './svg-flow';
 
 initTimeZoneSmall();
 
@@ -150,7 +150,7 @@ class AwClockApp implements AppService {
     this.clock.start();
 
     setTimeout(() => {
-      findSvgFlowItems();
+      updateSvgFlowItems();
       reflow();
     });
   }

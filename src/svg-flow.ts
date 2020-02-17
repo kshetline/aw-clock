@@ -9,7 +9,7 @@ interface ItemInfo {
 
 let svgFlowItems: ItemInfo[];
 
-export function findSvgFlowItems(): void {
+export function updateSvgFlowItems(): void {
   svgFlowItems = [];
 
   const flowItems = document.querySelectorAll('.svg-flow');

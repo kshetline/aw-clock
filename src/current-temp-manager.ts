@@ -48,7 +48,7 @@ export class CurrentTempManager {
     const temperature = this.cth.outdoorTemp ?? this.cth.forecastTemp;
 
     this.outdoorHumidity.text(`${humidity != null ? Math.round(humidity) : '--'}%`);
-    this.outdoorTemp.text(`‣\u00A0${temperature != null ? Math.round(temperature) : '--'}°`);
+    this.outdoorTemp.text(`\u00A0${temperature != null ? Math.round(temperature) : '--'}°`);
 
     if (this.cth.forecastStale)
       this.outdoorTemp.addClass('stale-forecast');

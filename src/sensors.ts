@@ -22,6 +22,7 @@ import { DhtSensorData } from '../server/src/indoor-router';
 import * as $ from 'jquery';
 import { TempHumidityData } from '../server/src/temp-humidity-router';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
+import { updateSvgFlowItems } from './svg-flow';
 
 const DEV_SENSOR_URL = 'http://192.168.42.98:8080';
 
@@ -61,6 +62,7 @@ export class Sensors {
   private readonly lowBattery: JQuery;
   private readonly lowBatteryText: JQuery;
   private readonly outdoorMeter: JQuery;
+  private readonly outdoorMeter2: JQuery;
 
   private wiredAvailable = false;
   private wirelessAvailable = false;
@@ -70,6 +72,7 @@ export class Sensors {
     this.lowBattery = $('#low-battery');
     this.lowBatteryText = $('#low-battery-text');
     this.outdoorMeter = $('#outdoor-meter');
+    this.outdoorMeter2 = $('#outdoor-meter-2');
 
     if (document.location.port === '4200' || document.location.port === '8080')
       this.wiredAvailable = this.wirelessAvailable = true;
@@ -94,6 +97,8 @@ export class Sensors {
         const lowBatteries: string[] = [];
         const indoorOption = this.appService.getIndoorOption();
         const outdoorOption = this.appService.getOutdoorOption();
+        const flowSpec = this.outdoorMeter[0].getAttributeNS(null, 'svg-flow');
+        let newFlowSpec: string;
         let thd: TempHumidityData;
         const cth: CurrentTemperatureHumidity = {
           indoorHumidity: null,
@@ -103,8 +108,22 @@ export class Sensors {
         };
         let err: string;
 
-        this.indoorMeter.css('display', /[ABC]/.test(indoorOption) ? 'block' : 'none');
-        this.outdoorMeter.css('display', /[ABC]/.test(outdoorOption) ? 'block' : 'none');
+        this.indoorMeter.css('display', /[ABC]{1,2}/.test(indoorOption) ? 'block' : 'none');
+        this.outdoorMeter.css('display', /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
+
+        if (outdoorOption.length === 2) {
+          this.outdoorMeter2.css('display', 'block');
+          newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
+        }
+        else {
+          this.outdoorMeter2.css('display', 'none');
+          newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-5$2');
+        }
+
+        if (newFlowSpec !== flowSpec) {
+          this.outdoorMeter[0].setAttributeNS(null, 'svg-flow', newFlowSpec);
+          updateSvgFlowItems();
+        }
 
         if (wired && !(wired instanceof Error) && wired.error === 'n/a')
           this.wiredAvailable = false;
@@ -143,16 +162,41 @@ export class Sensors {
             setSignalLevel(this.indoorMeter, -1);
 
           if (outdoorOption !== 'F') {
-            if ((thd = wireless[outdoorOption])) {
-              cth.outdoorHumidity = Math.round(thd.humidity);
-              cth.outdoorTemp = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
-              setSignalLevel(this.outdoorMeter, thd.signalQuality);
+            const humidities: number[] = [];
+            let temperature: number = null;
+            let selectedChannel: string;
+            const signalQs: number[] = [];
+
+            outdoorOption.split('').forEach(channel => {
+              if (!(thd = wireless[channel])) {
+                signalQs.push(-1);
+                return;
+              }
+
+              signalQs.push(thd.signalQuality);
+
+              if (thd.temperature !== undefined) {
+                const t = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
+
+                if (temperature === null || temperature > t) {
+                  temperature = t;
+                  selectedChannel = channel;
+                }
+              }
+
+              if (thd.humidity !== undefined)
+                humidities.push(thd.humidity);
 
               if (thd.batteryLow)
-                lowBatteries.push(outdoorOption);
-            }
-            else
-              setSignalLevel(this.outdoorMeter, -1);
+                lowBatteries.push(channel);
+            });
+
+            const index = selectedChannel ? outdoorOption.indexOf(selectedChannel) : -1;
+
+            cth.outdoorHumidity = index < 0 ? null : humidities[Math.min(index, humidities.length - 1)];
+            cth.outdoorTemp = temperature;
+            setSignalLevel(this.outdoorMeter, signalQs[0] ?? -1);
+            setSignalLevel(this.outdoorMeter2, signalQs[1] ?? -1);
           }
         }
 
