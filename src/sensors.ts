@@ -107,6 +107,7 @@ export class Sensors {
           outdoorTemp: null
         };
         let err: string;
+        const sensorDetail: string[] = [];
 
         this.indoorMeter.css('display', /[ABC]{1,2}/.test(indoorOption) ? 'block' : 'none');
         this.outdoorMeter.css('display', /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
@@ -155,7 +156,7 @@ export class Sensors {
             cth.indoorHumidity = thd.humidity;
             setSignalLevel(this.indoorMeter, thd.signalQuality);
 
-            if (thd.batteryLow)
+            if (thd.batteryLow && thd.reliable)
               lowBatteries.push(indoorOption);
           }
           else
@@ -178,6 +179,8 @@ export class Sensors {
               if (thd.temperature !== undefined) {
                 const t = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
 
+                sensorDetail.push(`${channel}: ${t}°` + (thd.reliable ? '' : '?'));
+
                 if (temperature === null || temperature > t) {
                   temperature = t;
                   selectedChannel = channel;
@@ -187,7 +190,7 @@ export class Sensors {
               if (thd.humidity !== undefined)
                 humidities.push(thd.humidity);
 
-              if (thd.batteryLow)
+              if (thd.batteryLow && thd.reliable)
                 lowBatteries.push(channel);
             });
 
@@ -209,6 +212,7 @@ export class Sensors {
           this.lowBatteryText.text(lowBatteries.sort().join(', '));
         }
 
+        cth.sensorTempDetail = sensorDetail.join(', ');
         this.appService.updateCurrentTemp(cth);
       });
   }

@@ -236,7 +236,7 @@ class AwClockApp implements AppService {
   }
 
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void {
-    this.currentTempManager.updateCurrentTempAndHumidity(cth);
+    this.currentTempManager.updateCurrentTempAndHumidity(cth, this.settings.celsius);
   }
 
   private updateDimming(now: number, todayRise: string, todaySet: string): void {
