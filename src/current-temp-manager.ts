@@ -56,8 +56,8 @@ export class CurrentTempManager {
       detail.push(`F: ${this.cth.forecastTemp}°`);
     }
 
-    if (temperature != null && this.cth.forecastTemp != null && temperature > this.cth.forecastTemp +
-        (celsius ? 2 : 4) && !this.cth.forecastStale) {
+    if (temperature != null && this.cth.forecastTemp != null && Math.abs(temperature - this.cth.forecastTemp) > (celsius ? 2 : 4) &&
+        !this.cth.forecastStale) {
       temperature = this.cth.forecastTemp;
       this.outdoorTemp.addClass('forecast-substitution');
     }

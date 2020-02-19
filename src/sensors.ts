@@ -152,8 +152,11 @@ export class Sensors {
         }
         else if (wireless) {
           if ((thd = wireless[indoorOption])) {
-            cth.indoorTemp = (celsius ? thd.temperature : thd.temperature * 1.8 + 32);
-            cth.indoorHumidity = thd.humidity;
+            if (thd.reliable) {
+              cth.indoorTemp = (celsius ? thd.temperature : thd.temperature * 1.8 + 32);
+              cth.indoorHumidity = thd.humidity;
+            }
+
             setSignalLevel(this.indoorMeter, thd.signalQuality);
 
             if (thd.batteryLow && thd.reliable)
@@ -166,6 +169,7 @@ export class Sensors {
             const humidities: number[] = [];
             let temperature: number = null;
             let selectedChannel: string;
+            let reliable = false;
             const signalQs: number[] = [];
 
             outdoorOption.split('').forEach(channel => {
@@ -176,18 +180,19 @@ export class Sensors {
 
               signalQs.push(thd.signalQuality);
 
-              if (thd.temperature !== undefined) {
+              if (thd.temperature !== undefined && thd.reliable) {
                 const t = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
 
                 sensorDetail.push(`${channel}: ${t}°` + (thd.reliable ? '' : '?'));
 
-                if (temperature === null || temperature > t) {
+                if (temperature === null || temperature > t || (thd.reliable && !reliable)) {
                   temperature = t;
                   selectedChannel = channel;
+                  reliable = thd.reliable;
                 }
               }
 
-              if (thd.humidity !== undefined)
+              if (thd.humidity !== undefined && thd.reliable)
                 humidities.push(thd.humidity);
 
               if (thd.batteryLow && thd.reliable)
