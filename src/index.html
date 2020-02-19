@@ -121,7 +121,7 @@
         </g>
         <text id="feels-like" x="118.5" y="27" text-anchor="start">--°</text>
 
-        <text id="temperature-detail" x="134.5" y="21" text-anchor="start"></text>
+        <text id="temperature-detail" x="134.5" y="21.5" text-anchor="start"></text>
         <text x="134.5" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
         <text x="143" y="27" class="small-caption" text-anchor="start"><tspan id="humidity">--%</tspan><tspan id="indoor-humidity" dy="-1"></tspan></text>
 
@@ -181,8 +181,9 @@
           <label for="current-city">Current city:</label><input id="current-city" type="text" size="38"><span></span>
           <label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative for south)</span>
           <label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative for west)</span>
-          <label for="indoor-option">Indoor temp.:</label>
+          <label id="indoor-option-label" for="indoor-option">Indoor temp.:</label>
             <select id="indoor-option">
+              <option value="X">Off</option>
               <option value="D">Wired sensor</option>
               <option value="A">Wireless channel A</option>
               <option value="B">Wireless channel B</option>

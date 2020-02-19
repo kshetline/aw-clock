@@ -87,7 +87,7 @@ class AwClockApp implements AppService {
     this.clock.hideSeconds = this.settings.hideSeconds;
     this.lastTimezone = this.clock.timezone;
 
-    this.currentTempManager = new CurrentTempManager();
+    this.currentTempManager = new CurrentTempManager(this);
 
     this.forecast = new Forecast(this);
 

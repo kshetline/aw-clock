@@ -1,5 +1,8 @@
+import { AppService } from './app.service';
 import * as $ from 'jquery';
 import { reflow } from './svg-flow';
+
+const DD = '\u2012\u2012';
 
 export interface CurrentTemperatureHumidity {
   forecastFeelsLike?: number;
@@ -24,7 +27,7 @@ export class CurrentTempManager {
 
   private readonly cth: CurrentTemperatureHumidity = {};
 
-  constructor() {
+  constructor(private appService: AppService) {
     this.currentTempBalanceSpace = $('#curr-temp-balance-space');
     this.feelsLike = $('#feels-like');
     this.indoorHumidity = $('#indoor-humidity');
@@ -32,9 +35,6 @@ export class CurrentTempManager {
     this.outdoorHumidity = $('#humidity');
     this.outdoorTemp = $('#current-temp');
     this.temperatureDetail = $('#temperature-detail');
-
-    if (document.location.port === '4200' || document.location.port === '8080')
-      this.currentTempBalanceSpace.css('display', 'none');
   }
 
   // Null values erase old values, undefined values preserver old values, defined values replace old values
@@ -44,8 +44,21 @@ export class CurrentTempManager {
         this.cth[key] = cthUpdate[key];
     });
 
-    this.indoorHumidity.text(`‣${this.cth.indoorHumidity != null ? Math.round(this.cth.indoorHumidity) : '--'}%`);
-    this.indoorTemp.text(`‣${this.cth.indoorTemp != null ? Math.round(this.cth.indoorTemp) : '--'}°`);
+    const indoorOption = this.appService.getIndoorOption();
+    const outdoorOption = this.appService.getOutdoorOption();
+
+    if (indoorOption === 'X') {
+      this.currentTempBalanceSpace.css('display', 'none');
+      this.indoorHumidity.text('');
+      this.indoorTemp.text('');
+    }
+    else {
+      this.currentTempBalanceSpace.css('display', 'block');
+      this.indoorHumidity.text(`‣${this.cth.indoorHumidity != null ? Math.round(this.cth.indoorHumidity) : DD}%`);
+      this.indoorTemp.text(`‣${this.cth.indoorTemp != null ? Math.round(this.cth.indoorTemp) : DD}°`);
+    }
+
+    this.temperatureDetail.css('display', outdoorOption === 'F' ? 'none' : 'block');
 
     const humidity = this.cth.outdoorHumidity ?? this.cth.forecastHumidity;
     let temperature = this.cth.outdoorTemp ?? this.cth.forecastTemp;
@@ -64,15 +77,15 @@ export class CurrentTempManager {
     else
       this.outdoorTemp.removeClass('forecast-substitution');
 
-    this.outdoorHumidity.text(`${humidity != null ? Math.round(humidity) : '--'}%`);
-    this.outdoorTemp.text(`\u00A0${temperature != null ? Math.round(temperature) : '--'}°`);
+    this.outdoorHumidity.text(`${humidity != null ? Math.round(humidity) : DD}%`);
+    this.outdoorTemp.text(`\u00A0${temperature != null ? Math.round(temperature) : DD}°`);
 
     if (this.cth.forecastStale)
       this.outdoorTemp.addClass('stale-forecast');
     else
       this.outdoorTemp.removeClass('stale-forecast');
 
-    this.feelsLike.text(`${this.cth.forecastFeelsLike != null ? Math.round(this.cth.forecastFeelsLike) : '--'}°`);
+    this.feelsLike.text(`${this.cth.forecastFeelsLike != null ? Math.round(this.cth.forecastFeelsLike) : DD}°`);
     this.temperatureDetail.text(detail.join(', '));
 
     setTimeout(reflow);
