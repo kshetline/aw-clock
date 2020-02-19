@@ -168,7 +168,7 @@ export class Sensors {
           if (outdoorOption !== 'F') {
             const humidities: number[] = [];
             let temperature: number = null;
-            let selectedChannel: string;
+            let selectedChannel: string = null;
             let reliable = false;
             const signalQs: number[] = [];
 
@@ -199,12 +199,24 @@ export class Sensors {
                 lowBatteries.push(channel);
             });
 
-            const index = selectedChannel ? outdoorOption.indexOf(selectedChannel) : -1;
+            const index = (selectedChannel ? outdoorOption.indexOf(selectedChannel) : -1);
 
             cth.outdoorHumidity = index < 0 ? null : humidities[Math.min(index, humidities.length - 1)];
             cth.outdoorTemp = temperature;
-            setSignalLevel(this.outdoorMeter, signalQs[0] ?? -1);
-            setSignalLevel(this.outdoorMeter2, signalQs[1] ?? -1);
+            signalQs[0] = signalQs[0] ?? -1;
+            signalQs[1] = signalQs[1] ?? -1;
+            setSignalLevel(this.outdoorMeter, signalQs[0]);
+            setSignalLevel(this.outdoorMeter2, signalQs[1]);
+
+            if (signalQs[0] < 0 || outdoorOption.length === 1 || selectedChannel === outdoorOption.charAt(0))
+              this.outdoorMeter.removeClass('meter-tint');
+            else
+              this.outdoorMeter.addClass('meter-tint');
+
+            if (signalQs[1] < 0 || outdoorOption.length === 1 || selectedChannel === outdoorOption.charAt(1))
+              this.outdoorMeter2.removeClass('meter-tint');
+            else
+              this.outdoorMeter2.addClass('meter-tint');
           }
         }
 

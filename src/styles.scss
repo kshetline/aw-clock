@@ -604,3 +604,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   font-size: 1.5px;
   fill: #999;
 }
+
+.meter-tint {
+  filter: url(#meter-tint);
+}
