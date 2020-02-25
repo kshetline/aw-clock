@@ -69,7 +69,7 @@ class AwClockApp implements AppService {
   // Make sure most clients stagger their polling so that the weather server isn't likely
   // to get lots of simultaneous requests.
   private readonly pollingMinute = Math.floor(Math.random() * 15);
-  private readonly pollingMillis = Math.floor(Math.random() * 60000);
+  private readonly pollingMillis = Math.floor(Math.random() * 60_000);
 
   private lastCursorMove = 0;
   private lastForecast = 0;
