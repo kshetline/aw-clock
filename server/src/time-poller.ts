@@ -1,17 +1,17 @@
 import { NtpData } from './ntp-data';
 import { processMillis } from './util';
 
-const MILLIS_PER_DAY = 86400000;
+const MILLIS_PER_DAY = 86_400_000;
 const MAX_ERRORS = 5;
 const MAX_DELAY = 250;
 const MAX_RESYNC_POLLS = 10;
-const DELAY_AFTER_ERROR = 60000;
-const EARLY_POLLING_RATE = 150000; // 2.5 minutes
-const NORMAL_POLLING_RATE = 1800000; // 30 minutes
+const DELAY_AFTER_ERROR = 60_000;
+const EARLY_POLLING_RATE = 150_000; // 2.5 minutes
+const NORMAL_POLLING_RATE = 1_800_000; // 30 minutes
 const RESYNC_POLLING_RATE = 500;
 const RETRY_POLLING_DELAY = 5000;
 const BACK_IN_TIME_THRESHOLD = 2000;
-const CLOCK_SPEED_WINDOW = 10800000; // 3 hours
+const CLOCK_SPEED_WINDOW = 10_800_000; // 3 hours
 const MIDNIGHT_POLLING_AVOIDANCE = 5000;
 
 export interface TimeInfo {
@@ -268,7 +268,7 @@ export abstract class TimePoller {
     timeInfo.text = new Date(timeInfo.time).toISOString().replace('T', ' ');
 
     if (timeInfo.leapExcess > 0)
-      timeInfo.text = timeInfo.text.substr(0, 17) + ((59999 + timeInfo.leapExcess) / 1000).toFixed(3) + 'Z';
+      timeInfo.text = timeInfo.text.substr(0, 17) + ((59_999 + timeInfo.leapExcess) / 1000).toFixed(3) + 'Z';
 
     return timeInfo;
   }

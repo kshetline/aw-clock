@@ -39,6 +39,6 @@ describe('ntp', () => {
 
     ntp.clearDebugTime();
     time = (await ntp.getTime()).rxTm;
-    expect(time).to.be.closeTo(Date.now(), 10000);
+    expect(time).to.be.closeTo(Date.now(), 10_000);
   });
 });

@@ -12,7 +12,6 @@ because of a dependency on `node-sass`. Even when using Node 10.x or earlier you
 due to `node-sass`. I found that using `LIBSASS_EXT="no" npm install` helped. If you have a problem, and this doesn't
 fix it, search for solutions based on `node-sass` and any specific error messages you receive.
 
-
 To run the weather server, use "`npm start`" from within the server directory.
 
 The server requires a Dark Sky API key to function. Use the environment variable `AWC_DARK_SKY_API_KEY`
@@ -71,7 +70,8 @@ be saved in `/etc/defaults/weatherService`. This is where you add your API key, 
 connecting an indoor temperature/humidity sensor.
 1. Use the command `sudo update-rc.d weatherService defaults` to establish the service that
 starts up the weather server.
-1. `sudo npm install -g forever`
+1. Use the command `sudo systemctl enable weatherService` to enable the service.
+1. `sudo npm install -g forever` — this installs a utiliy to monitor and automatically restart the server if necessary.
 1. Copy the included files `autostart` and `autostart_extra.sh` to
 `/home/pi/.config/lxsession/LXDE-pi/` and make sure they're executable. This launches the
  astronomy/weather clock client in Chromium, in kiosk mode (full screen, no toolbars). It also

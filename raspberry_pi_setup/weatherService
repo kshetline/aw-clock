@@ -47,6 +47,7 @@ start() {
     -l $LOGFILE \
     --minUptime $MIN_UPTIME \
     --spinSleepTime $SPIN_SLEEP_TIME \
+     --killSignal=SIGTERM \
     start $APPLICATION_PATH 2>%1 > /dev/null &
   RETVAL=$?
 }

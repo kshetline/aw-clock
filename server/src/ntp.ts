@@ -4,7 +4,7 @@ import { NtpData } from './ntp-data';
 
 export const DEFAULT_NTP_SERVER = 'pool.ntp.org';
 
-const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
+const NTP_BASE = 2_208_988_800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const MAX_RESPONSE_WAIT = 3000;
 const DEFAULT_MAX_RETRIES = 5;
 const LI_UNSYNCHRONIZED = 3;
@@ -73,7 +73,7 @@ export class Ntp {
     const txTm = pollTime - this.debugOffset + NTP_BASE * 1000;
 
     packet.writeUInt32BE(this.pollTime_s = Math.floor(txTm / 1000), 40);
-    packet.writeUInt32BE(this.pollTime_f = Math.floor(mod(txTm, 1000) / 1000 * 0x100000000), 44);
+    packet.writeUInt32BE(this.pollTime_f = Math.floor(mod(txTm, 1000) / 1000 * 0x1_0000_0000), 44);
 
     try {
       this.socket.send(packet, 0, 48, this.port, this.server);
@@ -141,7 +141,7 @@ export class Ntp {
     else if (remoteInfo.family === 'IPv4')
       refId = msg[12] + ':' + msg[13] + ':' + msg[14] + ':' + msg[15]; // As IPv4 address
     else
-      refId = (0x100000000 + msg.readUInt32BE(12)).toString(16).substr(1); // As hash
+      refId = (0x1_0000_0000 + msg.readUInt32BE(12)).toString(16).substr(1); // As hash
 
     if (stratum === 0) {
       if (this.errorCallback)
@@ -189,15 +189,15 @@ export class Ntp {
     else
       this.pollTime_s = this.pollTime_f = 0;
 
-    response.refTm = (response.refTm_s + response.refTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
-    response.origTm = (response.origTm_s + response.origTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
-    response.rxTm = (response.rxTm_s + response.rxTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
-    response.txTm = (response.txTm_s + response.txTm_f / 0x100000000 - NTP_BASE) * 1000 + this.debugOffset;
+    response.refTm = (response.refTm_s + response.refTm_f / 0x1_0000_0000 - NTP_BASE) * 1000 + this.debugOffset;
+    response.origTm = (response.origTm_s + response.origTm_f / 0x1_0000_0000 - NTP_BASE) * 1000 + this.debugOffset;
+    response.rxTm = (response.rxTm_s + response.rxTm_f / 0x1_0000_0000 - NTP_BASE) * 1000 + this.debugOffset;
+    response.txTm = (response.txTm_s + response.txTm_f / 0x1_0000_0000 - NTP_BASE) * 1000 + this.debugOffset;
     response.address = remoteInfo.address;
     response.roundTripTime = processMillis() - this.pollProcTime;
     response.sendDelay = response.rxTm - this.pollTime;
 
-    if (this.debugLeap && new Date(response.txTm).getUTCDate() === 1 && response.txTm % 86400000 >= 1000) {
+    if (this.debugLeap && new Date(response.txTm).getUTCDate() === 1 && response.txTm % 86_400_000 >= 1000) {
       this.debugOffset -= this.debugLeap * 1000;
       this.debugLeap = response.li = 0;
     }

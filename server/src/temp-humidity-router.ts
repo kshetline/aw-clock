@@ -16,7 +16,7 @@ export interface TempHumidityData {
 export const router = Router();
 
 let callbackId = -1;
-const MAX_DATA_AGE = 1800000; // half an hour
+const MAX_DATA_AGE = 900_000; // 15 minutes
 const readings: Record<string, TempHumidityData> = {};
 
 function removeOldData() {
