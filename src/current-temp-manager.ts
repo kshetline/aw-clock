@@ -69,9 +69,11 @@ export class CurrentTempManager {
       detail.push(`F: ${this.cth.forecastTemp}°`);
     }
 
-    if (temperature != null && this.cth.forecastTemp != null && Math.abs(temperature - this.cth.forecastTemp) > (celsius ? 2 : 4) &&
+    const delta = (celsius ? 2 : 4);
+
+    if (temperature != null && this.cth.forecastTemp != null && Math.abs(temperature - this.cth.forecastTemp) > delta &&
         !this.cth.forecastStale) {
-      temperature = this.cth.forecastTemp;
+      temperature = Math.min(Math.max(this.cth.forecastTemp - delta, temperature), this.cth.forecastTemp + delta);
       this.outdoorTemp.addClass('forecast-substitution');
     }
     else
