@@ -1,5 +1,4 @@
 import { Request, Response, Router } from 'express';
-import { addSensorDataListener, removeSensorDataListener } from 'rpi-acu-rite-temperature';
 import { jsonOrJsonp } from './common';
 import { noCache } from './util';
 
@@ -18,6 +17,8 @@ export const router = Router();
 let callbackId = -1;
 const MAX_DATA_AGE = 900_000; // 15 minutes
 const readings: Record<string, TempHumidityData> = {};
+let addSensorDataListener: (pin: number | string, callback: (data: any) => void) => number;
+let removeSensorDataListener: (id: number) => void;
 
 function removeOldData() {
   const oldestAllowed = Date.now() - MAX_DATA_AGE;
@@ -29,26 +30,33 @@ function removeOldData() {
 }
 
 if (process.env.AWC_WIRELESS_TEMP) {
-  callbackId = addSensorDataListener(process.env.AWC_WIRELESS_TEMP, originalData => {
-    removeOldData();
+  try {
+    ({ addSensorDataListener, removeSensorDataListener } = require('rpi-acu-rite-temperature'));
 
-    const data = {
-      batteryLow: originalData.batteryLow,
-      channel: originalData.channel,
-      humidity: originalData.humidity,
-      reliable: originalData.validChecksum,
-      signalQuality: originalData.signalQuality,
-      temperature: originalData.tempCelsius,
-      time: Date.now()
-    };
+    callbackId = addSensorDataListener(process.env.AWC_WIRELESS_TEMP, originalData => {
+      removeOldData();
 
-    const oldData = readings[data.channel];
+      const data = {
+        batteryLow: originalData.batteryLow,
+        channel: originalData.channel,
+        humidity: originalData.humidity,
+        reliable: originalData.validChecksum,
+        signalQuality: originalData.signalQuality,
+        temperature: originalData.tempCelsius,
+        time: Date.now()
+      };
 
-    if (data.reliable || !oldData || !oldData.reliable)
-      readings[data.channel] = data;
-    else
-      oldData.signalQuality = data.signalQuality;
-  });
+      const oldData = readings[data.channel];
+
+      if (data.reliable || !oldData || !oldData.reliable)
+        readings[data.channel] = data;
+      else
+        oldData.signalQuality = data.signalQuality;
+    });
+  }
+  catch (err) {
+    console.error(err);
+  }
 }
 
 router.get('/', (req: Request, res: Response) => {
@@ -67,6 +75,6 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 export function cleanUp() {
-  if (callbackId >= 0)
+  if (removeSensorDataListener && callbackId >= 0)
     removeSensorDataListener(callbackId);
 }

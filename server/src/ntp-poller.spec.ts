@@ -43,7 +43,7 @@ describe('ntp-poller', () => {
     const time2 = await waitForSecondsToChange(poller, time);
     const time3 = await waitForSecondsToChange(poller, time2);
 
-    expect(time + time2 + time3).equals('596_000');
+    expect(time + time2 + time3).equals('596000');
     expect(poller.isTimeAcquired()).equals(true);
   });
 
