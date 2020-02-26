@@ -26,6 +26,8 @@ To deploy the server along with the web client, use `npm run build` (possibly fo
 | `npm run build -- --dht` | &nbsp;&nbsp;&nbsp;&nbsp;Server/client with wired indoor sensor support. |
 | `npm run build -- --dht --acu` | &nbsp;&nbsp;&nbsp;&nbsp;Server/client with both wired and wireless sensor support. |
 
+_(Note: Don't forget the extra double dashes by themselves before the other options!)_
+
 If you are running the server on a Raspberry Pi, you have the option to provide wired indoor temperature and humidity data using a DHT22/AM2302 sensor, as seen here: https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/. The wiring I will describe is specifically for the AM2302 version of the DHT22, with the built-in pull-up
 resistor.
 
