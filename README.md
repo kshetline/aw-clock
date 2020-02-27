@@ -52,6 +52,8 @@ When connecting the 433 Mhz receiver module, follow the same precautions as give
 I can't guarantee that I'm recalling every important step I took to create my own set-up, but hopefully the following is a more-or-less complete guide to setting up a Raspberry Pi to automatically boot up as a full-screen astronomy/weather clock:
 
 1. Install Node.js version 10.x. (You can find instructions for this step here: https://www.w3schools.com/nodejs/nodejs_raspberrypi.asp.) Later versions of Node may work if and when node-sass is updated to be compatible.
+1. Install the BCM 2835 library, as described here: http://www.airspayce.com/mikem/bcm2835/
+1. `pigpio` is probably already installed on your Raspberry Pi, but it may need to be updated, particularly if you're using a Raspberry Pi 4. That's described here: http://abyz.me.uk/rpi/pigpio/download.html. As I write this the `pigpio` website says, "At the moment pigpio on the Pi4B is experimental." This project's software was very flaky until I upgraded `pigpio` from the pre-installed version 71 to version 74.
 1. Clone this project and, from the root directory of the project, do `npm install`.
 1. Install the Chromium browser if it's not already installed:
 `sudo apt-get install chromium-browser`
