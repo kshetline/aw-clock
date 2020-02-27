@@ -95,7 +95,7 @@ export class CurrentTempManager {
 
     this.feelsLike.text(`${this.cth.forecastFeelsLike != null ? Math.round(this.cth.forecastFeelsLike) : DD}°`);
     const details = detail.join(', ');
-    this.temperatureDetail.text(detail.includes(',') ? details : '');
+    this.temperatureDetail.text(details.includes(',') ? details : '');
 
     setTimeout(reflow);
   }
