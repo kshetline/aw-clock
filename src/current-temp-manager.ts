@@ -19,6 +19,7 @@ export interface CurrentTemperatureHumidity {
 export class CurrentTempManager {
   private readonly currentTempBalanceSpace: JQuery;
   private readonly feelsLike: JQuery;
+  private readonly headers: JQuery;
   private readonly indoorHumidity: JQuery;
   private readonly indoorTemp: JQuery;
   private readonly outdoorHumidity: JQuery;
@@ -30,6 +31,7 @@ export class CurrentTempManager {
   constructor(private appService: AppService) {
     this.currentTempBalanceSpace = $('#curr-temp-balance-space');
     this.feelsLike = $('#feels-like');
+    this.headers = $('.forecast-day-header');
     this.indoorHumidity = $('#indoor-humidity');
     this.indoorTemp = $('#indoor-temp');
     this.outdoorHumidity = $('#humidity');
@@ -82,13 +84,18 @@ export class CurrentTempManager {
     this.outdoorHumidity.text(`${humidity != null ? Math.round(humidity) : DD}%`);
     this.outdoorTemp.text(`\u00A0${temperature != null ? Math.round(temperature) : DD}°`);
 
-    if (this.cth.forecastStale)
-      this.outdoorTemp.addClass('stale-forecast');
-    else
-      this.outdoorTemp.removeClass('stale-forecast');
+    if (this.cth.forecastStale) {
+      this.feelsLike.addClass('stale-forecast');
+      this.headers.addClass('stale-forecast');
+    }
+    else {
+      this.feelsLike.removeClass('stale-forecast');
+      this.headers.removeClass('stale-forecast');
+    }
 
     this.feelsLike.text(`${this.cth.forecastFeelsLike != null ? Math.round(this.cth.forecastFeelsLike) : DD}°`);
-    this.temperatureDetail.text(detail.join(', '));
+    const details = detail.join(', ');
+    this.temperatureDetail.text(detail.includes(',') ? details : '');
 
     setTimeout(reflow);
   }

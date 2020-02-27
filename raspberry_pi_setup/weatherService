@@ -45,6 +45,8 @@ start() {
     --pidFile $PIDFILE \
     -a \
     -l $LOGFILE \
+    -o $LOGFILE \
+    -e $LOGFILE \
     --minUptime $MIN_UPTIME \
     --spinSleepTime $SPIN_SLEEP_TIME \
      --killSignal=SIGTERM \

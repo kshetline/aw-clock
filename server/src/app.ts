@@ -32,6 +32,8 @@ httpServer.listen(httpPort);
 
 function shutdown() {
   console.log('\n*** closing server ***');
+  // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
+  setTimeout(() => process.exit(0), 5000);
   cleanUp();
   NtpPoller.closeAll();
   httpServer.close(() => process.exit(0));

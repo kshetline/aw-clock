@@ -152,6 +152,7 @@ export class Sensors {
           console.error('Error reading wireless temp/humidity: ' + err);
           setSignalLevel(this.indoorMeter, -1);
           setSignalLevel(this.outdoorMeter, -1);
+          setSignalLevel(this.outdoorMeter2, -1);
           this.wirelessAvailable = !(/not found/i.test(err));
         }
         else if (wireless) {
