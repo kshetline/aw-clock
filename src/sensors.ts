@@ -23,6 +23,7 @@ import * as $ from 'jquery';
 import { TempHumidityData } from '../server/src/temp-humidity-router';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { updateSvgFlowItems } from './svg-flow';
+import { localServer, runningDev } from './settings';
 
 const DEV_SENSOR_URL = 'http://192.168.42.98:8080';
 
@@ -75,16 +76,18 @@ export class Sensors {
     this.outdoorMeter = $('#outdoor-meter');
     this.outdoorMeter2 = $('#outdoor-meter-2');
 
-    if (document.location.port === '4200' || document.location.port === '8080')
+    if (localServer)
       this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = true;
-    else
+    else {
       this.indoorAvailable = false;
+      this.outdoorMeter.css('display', 'none');
+      this.outdoorMeter2.css('display', 'none');
+    }
   }
 
   get available() { return this.wiredAvailable || this.wirelessAvailable; }
 
   public update(celsius: boolean) {
-    const runningDev = (document.location.port === '4200');
     const site = (runningDev ? DEV_SENSOR_URL : '');
     const wiredUrl = `${site}/indoor`;
     const wirelessUrl = `${site}/wireless-th`;
@@ -93,8 +96,8 @@ export class Sensors {
     const flowSpec = this.outdoorMeter[0].getAttributeNS(null, 'svg-flow');
     let newFlowSpec: string;
 
-    this.indoorMeter.css('display', /[ABC]{1,2}/.test(indoorOption) ? 'block' : 'none');
-    this.outdoorMeter.css('display', /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
+    this.indoorMeter.css('display', this.wiredAvailable && /[ABC]{1,2}/.test(indoorOption) ? 'block' : 'none');
+    this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
 
     if (outdoorOption.length === 2) {
       this.outdoorMeter2.css('display', 'block');
@@ -146,6 +149,8 @@ export class Sensors {
           this.wirelessAvailable = false;
           setSignalLevel(this.indoorMeter, -1);
           setSignalLevel(this.outdoorMeter, -1);
+          this.outdoorMeter.css('display', 'none');
+          this.outdoorMeter2.css('display', 'none');
         }
         else if (wireless instanceof Error || wireless?.error) {
           err = errorText(wireless);

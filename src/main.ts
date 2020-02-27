@@ -25,7 +25,7 @@ import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-m
 import { Forecast } from './forecast';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { setFullScreen } from 'ks-util';
-import { Settings } from './settings';
+import { runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
 import { Sensors } from './sensors';
@@ -35,8 +35,7 @@ import { updateSvgFlowItems, reflow } from './svg-flow';
 
 initTimeZoneSmall();
 
-const runningDev = (document.location.port === '4200');
-const weatherPort = (document.location.port === '4200' ? '4201' : '8080');
+const weatherPort = (runningDev ? '4201' : '8080');
 const weatherServer = new URL(window.location.href).searchParams.get('weather_server') ||
   (runningDev ? 'http://localhost:' + weatherPort : '');
 const ntpPoller = new HttpTimePoller(weatherServer);

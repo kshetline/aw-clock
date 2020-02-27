@@ -19,7 +19,7 @@
 
 import * as $ from 'jquery';
 import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
-import { Settings } from './settings';
+import { localServer, Settings } from './settings';
 import { AppService } from './app.service';
 import { isIE, isSafari } from 'ks-util';
 
@@ -70,6 +70,7 @@ export class SettingsDialog {
   private longitude: JQuery;
   private indoor: JQuery;
   private outdoor: JQuery;
+  private indoorOutdoorOptions: JQuery;
   private userId: JQuery;
   private dimming: JQuery;
   private dimmingTo: JQuery;
@@ -77,6 +78,7 @@ export class SettingsDialog {
   private hours: JQuery;
   private seconds: JQuery;
   private planets: JQuery;
+  private searchSection: JQuery;
   private searchCity: JQuery;
   private submitSearch: JQuery;
   private searching: JQuery;
@@ -97,6 +99,7 @@ export class SettingsDialog {
     this.longitude = $('#longitude');
     this.indoor = $('#indoor-option');
     this.outdoor = $('#outdoor-option');
+    this.indoorOutdoorOptions = $('.indoor-outdoor-options');
     this.userId = $('#user-id');
     this.dimming = $('#dimming');
     this.dimmingStart = $('#dimming-start');
@@ -106,6 +109,7 @@ export class SettingsDialog {
     this.hours = $('#hours-option');
     this.seconds = $('#seconds-option');
     this.planets = $('#planets-option');
+    this.searchSection = $('.search-section');
     this.searchCity = $('#search-city');
     this.submitSearch = $('#submit-search');
     this.searching = $('.searching');
@@ -136,6 +140,11 @@ export class SettingsDialog {
       event.preventDefault();
       this.doSearch();
     });
+
+    if (!localServer) {
+      this.indoorOutdoorOptions.css('display', 'none');
+      this.searchSection.addClass('no-indoor-outdoor');
+    }
 
     if (isIE()) {
       $('.user-options').children().each(function () {

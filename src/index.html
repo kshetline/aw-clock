@@ -181,24 +181,24 @@
           <label for="current-city">Current city:</label><input id="current-city" type="text" size="38"><span></span>
           <label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative for south)</span>
           <label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative for west)</span>
-          <label id="indoor-option-label" for="indoor-option">Indoor temp.:</label>
-            <select id="indoor-option">
-              <option value="X">Off</option>
-              <option value="D">Wired sensor</option>
-              <option value="A">Wireless channel A</option>
-              <option value="B">Wireless channel B</option>
-              <option value="C">Wireless channel C</option>
-            </select><span>&nbsp;</span>
-          <label for="outdoor-option">Outdoor temp.:</label>
-            <select id="outdoor-option">
-              <option value="F">From forecast</option>
-              <option value="A">Wireless channel A</option>
-              <option value="B">Wireless channel B</option>
-              <option value="C">Wireless channel C</option>
-              <option value="AB">Wireless channels A &amp; B</option>
-              <option value="AC">Wireless channels A &amp; C</option>
-              <option value="BC">Wireless channels B &amp; C</option>
-            </select><span>&nbsp;</span>
+          <label for="indoor-option" class="indoor-outdoor-options">Indoor temp.:</label>
+          <select id="indoor-option" class="indoor-outdoor-options">
+            <option value="X">Off</option>
+            <option value="D">Wired sensor</option>
+            <option value="A">Wireless channel A</option>
+            <option value="B">Wireless channel B</option>
+            <option value="C">Wireless channel C</option>
+          </select><span class="indoor-outdoor-options">&nbsp;</span>
+          <label for="outdoor-option" class="indoor-outdoor-options">Outdoor temp.:</label>
+          <select id="outdoor-option" class="indoor-outdoor-options">
+            <option value="F">From forecast</option>
+            <option value="A">Wireless channel A</option>
+            <option value="B">Wireless channel B</option>
+            <option value="C">Wireless channel C</option>
+            <option value="AB">Wireless channels A &amp; B</option>
+            <option value="AC">Wireless channels A &amp; C</option>
+            <option value="BC">Wireless channels B &amp; C</option>
+          </select><span class="indoor-outdoor-options">&nbsp;</span>
           <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
           <label for="dimming">Dimming:</label>
           <span class="colspan">

@@ -390,6 +390,10 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   & label, input {
     margin-right: 0.5em;
   }
+
+  &.no-indoor-outdoor {
+    top: 12.5em;
+  }
 }
 
 #search-message {

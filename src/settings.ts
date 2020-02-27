@@ -20,11 +20,14 @@
 import * as Cookies from 'js-cookie';
 import { toBoolean } from 'ks-util';
 
+export const runningDev = (document.location.port === '4200');
+export const localServer = (document.location.port === '4200' || document.location.port === '8080');
+
 export class Settings {
   latitude = 42.75;
   longitude = -71.48;
   city = 'Nashua, NH';
-  indoorOption = 'D';
+  indoorOption = localServer ? 'D' : 'X';
   outdoorOption = 'F';
   userId = '';
   dimming = 0;
