@@ -68,6 +68,8 @@ export class SettingsDialog {
   private currentCity: JQuery;
   private latitude: JQuery;
   private longitude: JQuery;
+  private indoor: JQuery;
+  private outdoor: JQuery;
   private userId: JQuery;
   private dimming: JQuery;
   private dimmingTo: JQuery;
@@ -93,6 +95,8 @@ export class SettingsDialog {
     this.currentCity = $('#current-city');
     this.latitude = $('#latitude');
     this.longitude = $('#longitude');
+    this.indoor = $('#indoor-option');
+    this.outdoor = $('#outdoor-option');
     this.userId = $('#user-id');
     this.dimming = $('#dimming');
     this.dimmingStart = $('#dimming-start');
@@ -265,6 +269,8 @@ export class SettingsDialog {
     this.currentCity.val(previousSettings.city);
     this.latitude.val(previousSettings.latitude);
     this.longitude.val(previousSettings.longitude);
+    this.indoor.val(previousSettings.indoorOption);
+    this.outdoor.val(previousSettings.outdoorOption);
     this.userId.val(previousSettings.userId);
     this.temperature.val(previousSettings.celsius ? 'C' : 'F');
     this.hours.val(previousSettings.amPm ? 'AMPM' : '24');
@@ -304,6 +310,8 @@ export class SettingsDialog {
       newSettings.city = (this.currentCity.val() as string).trim();
       newSettings.latitude = Number(this.latitude.val());
       newSettings.longitude = Number(this.longitude.val());
+      newSettings.indoorOption = this.indoor.val() as string;
+      newSettings.outdoorOption = this.outdoor.val() as string;
       newSettings.userId = this.userId.val() as string;
       newSettings.dimming = +this.dimming.val();
       newSettings.dimmingStart = this.dimmingStart.val() as string;

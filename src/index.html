@@ -1,11 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <!--suppress HtmlFormInputWithoutLabel -->
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <title>Astronomy/Weather Clock</title>
     <base href="/">
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
   </head>
@@ -13,6 +12,10 @@
     <div id="clock-container">
       <svg id="clock" viewBox="0 0 172 108">
         <!-- <rect x="0" y="0" width="172" height="108" stroke-width="1" stroke="black" fill="none"></rect> -->
+        <filter id="meter-tint">
+          <feColorMatrix type="matrix" values="1 0 0 0 0 0 0.5 0 0 0 0 1 1 0 0 0 0 0 1 0"></feColorMatrix>
+        </filter>
+
         <text id="timezone" x="50" y="2.5" text-anchor="middle"></text>
         <text id="day-of-week" x="1" y="9">---</text>
         <text id="month" x="1" y="99">--</text>
@@ -67,13 +70,48 @@
         <circle id="subhub" cx="50" cy="50" r="1.5"/>
         <circle id="hub" cx="50" cy="50" r="1.5"/>
         <text id="time" x="50" y="105" text-anchor="middle">--:--:--</text>
-        <text id="dut1-label" x="73.6" y="102.5" text-anchor="start">&nbsp;ΔUT1:&nbsp;</text>
+        <text id="dut1-label" class="svg-flow-tr-tl" x="73.6" y="102.5" text-anchor="start">&nbsp;ΔUT1:&nbsp;</text>
         <text id="dut1" x="81.3" y="102.5" text-anchor="start">±---ms</text>
         <text id="dtai-label" x="73.6" y="105" text-anchor="start">&nbsp;ΔTAI:&nbsp;</text>
         <text id="dtai" x="81.3" y="105" text-anchor="start">--s</text>
 
         <text id="city" x="134.5" y="4" text-anchor="middle"></text>
-        <text x="134.5" y="19" text-anchor="middle"><tspan id="curr-temp-balance-space">&nbsp;</tspan><tspan id="current-temp">--°</tspan><tspan id="indoor-temp" dy="-2"></tspan></text>
+        <text id="temperature-text" x="134.5" y="19" text-anchor="middle"><tspan id="curr-temp-balance-space">&nbsp;</tspan><tspan
+          id="current-temp">--°</tspan><tspan id="indoor-temp" dy="-2"></tspan></text>
+        <svg id="outdoor-meter" class="svg-flow" svg-flow="current-temp,dx=-5,dy=-3.5">
+          <svg viewBox="0 0 640 512" class="signal-meter" width="2" height="1.6">
+            <rect x= "24" y="384" width="80" height="128" class="signal-bar-1"/>
+            <rect x="152" y="288" width="80" height="224" class="signal-bar-2"/>
+            <rect x="280" y="192" width="80" height="320" class="signal-bar-3"/>
+            <rect x="408" y= "96" width="80" height="416" class="signal-bar-4"/>
+            <rect x="536" y=  "0" width="80" height="512" class="signal-bar-5"/>
+            <line style="display: none; stroke-width: 40px; stroke: rgb(255, 0, 0);" class="no-signal" x1="64" y1="40" x2="576" y2="424"/>
+          </svg>
+        </svg>
+        <svg id="outdoor-meter-2" class="svg-flow" svg-flow="current-temp,dx=-3.8,dy=-3.5">
+          <svg viewBox="0 0 640 512" class="signal-meter" width="2" height="1.6">
+            <rect x= "24" y="384" width="80" height="128" class="signal-bar-1"/>
+            <rect x="152" y="288" width="80" height="224" class="signal-bar-2"/>
+            <rect x="280" y="192" width="80" height="320" class="signal-bar-3"/>
+            <rect x="408" y= "96" width="80" height="416" class="signal-bar-4"/>
+            <rect x="536" y=  "0" width="80" height="512" class="signal-bar-5"/>
+            <line style="display: none; stroke-width: 40px; stroke: rgb(255, 0, 0);" class="no-signal" x1="64" y1="40" x2="576" y2="424"/>
+          </svg>
+        </svg>
+        <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-3.5,dy=-2">
+          <svg viewBox="0 0 640 512" class="signal-meter" width="2" height="1.6">
+            <rect x= "24" y="384" width="80" height="128" class="signal-bar-1"/>
+            <rect x="152" y="288" width="80" height="224" class="signal-bar-2"/>
+            <rect x="280" y="192" width="80" height="320" class="signal-bar-3"/>
+            <rect x="408" y= "96" width="80" height="416" class="signal-bar-4"/>
+            <rect x="536" y=  "0" width="80" height="512" class="signal-bar-5"/>
+            <line style="display: none; stroke-width: 40px; stroke: rgb(255, 0, 0);" class="no-signal" x1="64" y1="40" x2="576" y2="424"/>
+          </svg>
+        </svg>
+
+        <text id="low-battery-text" x="169" y="2.75" text-anchor="end"></text>
+        <!-- Icon made by fjstudio from www.flaticon.com -->
+        <image id="low-battery" href="assets/low-battery.svg" x="169.5" y="0.5" width="2.5" height="2.5"/>
 
         <g transform="translate(110, 24.25)">
           <text x="0" y="0" class="small-caption" text-anchor="start">
@@ -83,12 +121,13 @@
         </g>
         <text id="feels-like" x="118.5" y="27" text-anchor="start">--°</text>
 
+        <text id="temperature-detail" x="134.5" y="21.5" text-anchor="start"></text>
         <text x="134.5" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
         <text x="143" y="27" class="small-caption" text-anchor="start"><tspan id="humidity">--%</tspan><tspan id="indoor-humidity" dy="-1"></tspan></text>
 
         <image id="current-icon" href="assets/unknown.svg" x="122" y="30" width="25" height="25"/>
 
-        <text x="115" y="59"  class="small-caption" text-anchor="middle">Today</text>
+        <text x="115" y="59"  class="small-caption forecast-day-header" text-anchor="middle">Today</text>
         <image id="day0-icon" href="assets/unknown.svg" x="109" y="60" width="12" height="12"/>
         <text id="day0-low-high" x="115" y="74.5" class="small-caption" text-anchor="middle">--°/--°</text>
         <text id="day0-chance-precip" x="115" y="77.5" class="small-caption" text-anchor="middle">--%</text>
@@ -98,7 +137,7 @@
         <image id="day0-moon" href="assets/empty.svg" x="110" y="89" width="10" height="10"/>
         <text id="day0-phase-time" x="115" y="101.75" class="small-caption" text-anchor="middle"></text>
 
-        <text x="128" y="59" class="small-caption" text-anchor="middle">Tomorrow</text>
+        <text x="128" y="59" class="small-caption forecast-day-header" text-anchor="middle">Tomorrow</text>
         <image id="day1-icon" href="assets/unknown.svg" x="122" y="60" width="12" height="12"/>
         <text id="day1-low-high" x="128" y="74.5" class="small-caption" text-anchor="middle">--°/--°</text>
         <text id="day1-chance-precip" x="128" y="77.5" class="small-caption" text-anchor="middle">--%</text>
@@ -108,7 +147,7 @@
         <image id="day1-moon" href="assets/empty.svg" x="123" y="89" width="10" height="10"/>
         <text id="day1-phase-time" x="128" y="101.75" class="small-caption" text-anchor="middle"></text>
 
-        <text id="day2-caption" x="141" y="59" class="small-caption" text-anchor="middle">---</text>
+        <text id="day2-caption" x="141" y="59" class="small-caption forecast-day-header" text-anchor="middle">---</text>
         <image id="day2-icon" href="assets/unknown.svg" x="135" y="60" width="12" height="12"/>
         <text id="day2-low-high" x="141" y="74.5" class="small-caption" text-anchor="middle">--°/--°</text>
         <text id="day2-chance-precip" x="141" y="77.5" class="small-caption" text-anchor="middle">--%</text>
@@ -118,7 +157,7 @@
         <image id="day2-moon" href="assets/empty.svg" x="136" y="89" width="10" height="10"/>
         <text id="day2-phase-time" x="141" y="101.75" class="small-caption" text-anchor="middle"></text>
 
-        <text id="day3-caption" x="154" y="59" class="small-caption" text-anchor="middle">---</text>
+        <text id="day3-caption" x="154" y="59" class="small-caption forecast-day-header" text-anchor="middle">---</text>
         <image id="day3-icon" href="assets/unknown.svg" x="148" y="60" width="12" height="12"/>
         <text id="day3-low-high" x="154" y="74.5" class="small-caption" text-anchor="middle">--°/--°</text>
         <text id="day3-chance-precip" x="154" y="77.5" class="small-caption" text-anchor="middle">--%</text>
@@ -142,6 +181,24 @@
           <label for="current-city">Current city:</label><input id="current-city" type="text" size="38"><span></span>
           <label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative for south)</span>
           <label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative for west)</span>
+          <label id="indoor-option-label" for="indoor-option">Indoor temp.:</label>
+            <select id="indoor-option">
+              <option value="X">Off</option>
+              <option value="D">Wired sensor</option>
+              <option value="A">Wireless channel A</option>
+              <option value="B">Wireless channel B</option>
+              <option value="C">Wireless channel C</option>
+            </select><span>&nbsp;</span>
+          <label for="outdoor-option">Outdoor temp.:</label>
+            <select id="outdoor-option">
+              <option value="F">From forecast</option>
+              <option value="A">Wireless channel A</option>
+              <option value="B">Wireless channel B</option>
+              <option value="C">Wireless channel C</option>
+              <option value="AB">Wireless channels A &amp; B</option>
+              <option value="AC">Wireless channels A &amp; C</option>
+              <option value="BC">Wireless channels B &amp; C</option>
+            </select><span>&nbsp;</span>
           <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
           <label for="dimming">Dimming:</label>
           <span class="colspan">
@@ -199,7 +256,7 @@
           </div>
         </div>
         <div class="dialog-buttons">
-          <span class="version-number">1.2.7</span>
+          <span class="version-number">1.3.0</span>
           <button id="settings-reload">Reload</button>
           <span>&bull;</span>
           <button id="settings-cancel">Cancel</button>

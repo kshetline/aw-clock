@@ -29,10 +29,10 @@ import { interpolate } from 'ks-math';
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 const SECOND_HAND_ANIMATION_TIME = 200;
-const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180000; // Three minutes
-const LEAP_SECOND_RETRY_DELAY = 300000; // 5 minutes
+const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180_000; // Three minutes
+const LEAP_SECOND_RETRY_DELAY = 300_000; // 5 minutes
 
-const MILLIS_PER_DAY = 86400000;
+const MILLIS_PER_DAY = 86_400_000;
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -335,8 +335,8 @@ export class Clock {
 
     if (this.upcomingLeapSecond?.dut1) {
       const utcSec = now / 1000;
-      const utc_0h = Math.floor(utcSec / 86400) * 86400;
-      const utc_24h = utc_0h + 86400;
+      const utc_0h = Math.floor(utcSec / 86_400) * 86_400;
+      const utc_24h = utc_0h + 86_400;
       const value = interpolate(utc_0h, utcSec, utc_24h, this.upcomingLeapSecond.dut1[0], this.upcomingLeapSecond.dut1[2]) * 1000;
 
       dut1 = (value >= 0 ? '+' : '') + value.toFixed(0);
@@ -396,7 +396,7 @@ export class Clock {
         setTimeout(() => this.adjustDut1Position());
       }
 
-      if (mins !== this.lastMinute || this.lastTick + 60000 <= now) {
+      if (mins !== this.lastMinute || this.lastTick + 60_000 <= now) {
         this.appService.updateTime(hour, mins, this.lastMinute < 0);
         this.lastMinute = mins;
         this.lastTick = now;

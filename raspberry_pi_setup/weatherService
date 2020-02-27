@@ -37,6 +37,7 @@ export AWC_LEAP_SECONDS_URL=$AWC_LEAP_SECONDS_URL
 export AWC_NTP_SERVER=$AWC_NTP_SERVER
 export AWC_PORT=$AWC_PORT
 export AWC_TH_SENSOR_GPIO=$AWC_TH_SENSOR_GPIO
+export AWC_WIRELESS_TEMP=$AWC_WIRELESS_TEMP
 
 start() {
   echo "Starting $NAME"
@@ -44,8 +45,11 @@ start() {
     --pidFile $PIDFILE \
     -a \
     -l $LOGFILE \
+    -o $LOGFILE \
+    -e $LOGFILE \
     --minUptime $MIN_UPTIME \
     --spinSleepTime $SPIN_SLEEP_TIME \
+     --killSignal=SIGTERM \
     start $APPLICATION_PATH 2>%1 > /dev/null &
   RETVAL=$?
 }

@@ -107,6 +107,7 @@ const postcssPlugins = function (loader) {
 // noinspection JSUnusedGlobalSymbols
 module.exports = {
   mode: NODE_ENV,
+  performance: { hints: false },
   resolve: {
     extensions: [
       '.ts',
@@ -142,7 +143,7 @@ module.exports = {
     ]
   },
   output: {
-    path: path.join(process.cwd(), 'dist'),
+    path: path.join(process.cwd(), 'dist', 'public'),
     filename: '[name].bundle.js',
     chunkFilename: '[id].chunk.js',
     crossOriginLoading: false

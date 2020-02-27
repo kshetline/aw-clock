@@ -1,6 +1,6 @@
 {
   "name": "aw-clock-server",
-  "version": "1.2.7",
+  "version": "2.0.0",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
@@ -11,8 +11,7 @@
     "start": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec 'tsc && chmod +x ./tsc-out/app.js && node ./tsc-out/app.js'",
     "start-win": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec \"tsc && node ./tsc-out/app.js\"",
     "test": "mocha --require ts-node/register src/**/*.spec.ts --exit",
-    "build": "webpack && chmod +x ./dist/app.js",
-    "build-for-dht": "npm run build && cd dist && npm init --yes && npm i node-dht-sensor"
+    "build": "webpack && chmod +x ./dist/app.js"
   },
   "dependencies": {
     "by-request": "^1.1.4",
@@ -23,28 +22,29 @@
     "ks-date-time-zone": "^1.6.6",
     "morgan": "~1.9.1",
     "promise-ftp": "^1.3.5",
-    "request": "^2.88.0"
+    "request": "^2.88.2"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.7",
+    "@types/chai": "^4.2.9",
     "@types/cookie-parser": "^1.4.2",
     "@types/express": "^4.17.2",
     "@types/http-errors": "^1.6.3",
     "@types/mocha": "^5.2.7",
     "@types/morgan": "^1.7.37",
     "@types/nock": "^11.1.0",
-    "@types/node": "^13.1.8",
+    "@types/node": "^13.7.6",
     "@types/promise-ftp": "^1.3.4",
     "@types/request": "^2.48.4",
     "chai": "^4.2.0",
-    "mocha": "^7.0.0",
-    "nock": "^11.7.2",
+    "mocha": "^7.1.0",
+    "nock": "^11.9.1",
     "nodemon": "^2.0.2",
+    "rpi-acu-rite-temperature": "^2.0.1",
     "ts-loader": "^6.2.1",
     "ts-node": "^8.6.2",
-    "typescript": "^3.7.5",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10",
+    "typescript": "^3.8.2",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
     "webpack-node-externals": "^1.7.2"
   }
 }

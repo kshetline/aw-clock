@@ -18,7 +18,7 @@ describe('tai-utc', () => {
 
   it('should get TAI-UTC and pending leap second', async function () {
     this.slow(5000);
-    this.timeout(20000);
+    this.timeout(20_000);
     let data: any;
 
     data = await (new TaiUtc('http://example.com/1', () => new Date(2016, 6, 1).getTime()).getCurrentDelta());
@@ -44,13 +44,13 @@ describe('tai-utc', () => {
 
   it('should get leap second history', async function () {
     this.slow(5000);
-    this.timeout(20000);
+    this.timeout(20_000);
     let data: any;
 
     data = await (new TaiUtc('http://example.com/1', () => new Date(2016, 6, 1).getTime()).getLeapSecondHistory());
-    expect(data).to.eql([{ ntp: 3644697600, utc: 1435708800, delta: 36 }, { ntp: 3692217600, utc: 1483228800, delta: 37 }]);
+    expect(data).to.eql([{ ntp: 3_644_697_600, utc: 1_435_708_800, delta: 36 }, { ntp: 3692217600, utc: 1_483_228_800, delta: 37 }]);
 
     data = await (new TaiUtc('http://example.com/2', () => new Date(2020, 0, 1).getTime()).getLeapSecondHistory());
-    expect(data).to.eql([{ ntp: 3692217600, utc: 1483228800, delta: 37 }, { ntp: 3849984000, utc: 1640995200, delta: 38 }]);
+    expect(data).to.eql([{ ntp: 3_692_217_600, utc: 1_483_228_800, delta: 37 }, { ntp: 3_849_984_000, utc: 1_640_995_200, delta: 38 }]);
   });
 });

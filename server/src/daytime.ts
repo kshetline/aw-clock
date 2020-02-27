@@ -14,10 +14,10 @@ export interface DaytimeData {
 
 export const DEFAULT_DAYTIME_SERVER = 'time-a-g.nist.gov';
 
-const REPOLL_DELAY = 7200000; // Two hours
+const REPOLL_DELAY = 7_200_000; // Two hours
 
 function getDateFromMJD(mjd: number): string {
-  return getISOFormatDate(getDateFromDayNumber_SGC(mjd - 40587));
+  return getISOFormatDate(getDateFromDayNumber_SGC(mjd - 40_587));
 }
 
 export class Daytime {

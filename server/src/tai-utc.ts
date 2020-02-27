@@ -33,10 +33,10 @@ interface DebugTime {
 
 const IERS_BULLETIN_A_URL = 'ftp://ftp.iers.org/products/eop/rapid/daily/finals.daily';
 
-const NTP_BASE = 2208988800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
-const MILLIS_PER_DAY = 86400000;
+const NTP_BASE = 2_208_988_800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
+const MILLIS_PER_DAY = 86_400_000;
 const DAYS_BETWEEN_POLLS = 7;
-const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180000; // Three minutes
+const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180_000; // Three minutes
 const TIMEOUT = 5000;
 const TIME_AND_DELTA = /^(\d{10,})\s+(\d{2,4})\s*#\s*1\s+[A-Za-z]{3}\s+\d{4}/;
 

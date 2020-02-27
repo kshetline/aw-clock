@@ -18,10 +18,12 @@
 */
 
 import * as $ from 'jquery';
+import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { getTextWidth, isEdge, isIE } from 'ks-util';
 import { setSvgHref } from './util';
 import { AppService } from './app.service';
+import { reflow } from './svg-flow';
 
 const DEFAULT_BACKGROUND = 'midnightblue';
 const DEFAULT_FOREGROUND = 'white';
@@ -39,6 +41,7 @@ const MARQUEE_SPEED = 100; // pixels per second
 const FREQUENT_THRESHOLD = 300;
 
 const MAX_FORECAST_STALENESS = 7200000; // 2 hours
+const MAX_CURRENT_TEMP_STALENESS = 1800000; // 30 minutes
 
 interface CommonConditions {
   time: number;
@@ -99,11 +102,9 @@ interface ForecastData {
 }
 
 const UNKNOWN_ICON = 'assets/unknown.svg';
+const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
 
 export class Forecast {
-  private currentTemp: JQuery;
-  private feelsLike: JQuery;
-  private humidity: JQuery;
   private readonly currentIcon: JQuery;
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
@@ -128,9 +129,6 @@ export class Forecast {
   private animationRequestId = 0;
 
   constructor(private appService: AppService) {
-    this.currentTemp = $('#current-temp');
-    this.feelsLike = $('#feels-like');
-    this.humidity = $('#humidity');
     this.currentIcon = $('#current-icon');
 
     for (let i = 0; i < 4; ++i) {
@@ -156,14 +154,21 @@ export class Forecast {
     this.getForecast(latitude, longitude, isMetric, userId).then(forecastData => {
       this.lastForecastData = forecastData;
       this.lastForecastTime = performance.now();
-      this.currentTemp.removeClass('stale-forecast');
+      this.appService.updateCurrentTemp({ forecastStale: false });
       this.displayForecast(forecastData);
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
-      if (!this.lastForecastData || performance.now() >= this.lastForecastTime + MAX_FORECAST_STALENESS)
+      const now = performance.now();
+
+      if (!this.lastForecastData || now >= this.lastForecastTime + MAX_FORECAST_STALENESS) {
+        this.appService.updateCurrentTemp(NO_DATA);
         this.showUnknown(error);
+      }
       else {
-        this.currentTemp.addClass('stale-forecast');
+        if (now >= this.lastForecastTime + MAX_CURRENT_TEMP_STALENESS)
+          this.appService.updateCurrentTemp(NO_DATA);
+
+        this.appService.updateCurrentTemp({ forecastStale: true });
         this.displayForecast(this.lastForecastData);
       }
 
@@ -178,9 +183,7 @@ export class Forecast {
 
   public showUnknown(error?: string): void {
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
-    this.currentTemp.text('\u00A0--°');
-    this.feelsLike.text('--°');
-    this.humidity.text('--%');
+    this.appService.updateCurrentTemp(NO_DATA);
 
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
@@ -270,15 +273,12 @@ export class Forecast {
     if (!ignorePrecipProbability && iconIndex >= 0 && iconIndex <= 6 &&
         conditions.precipProbability >= 0.25 &&
         (precipIntensity >= 0.01 || (conditions.precipProbability >= 0.5 && precipIntensity > 0.0025) || precipAccumulation >= 0.25)) {
-      if (conditions.precipType === 'snow') {
+      if (conditions.precipType === 'snow')
         icon = 'snow';
-      }
-      else if (conditions.precipType === 'sleet') {
+      else if (conditions.precipType === 'sleet')
         icon = 'sleet';
-      }
-      else {
+      else
         icon = 'rain';
-      }
     }
 
     // Dark Sky currently doesn't report thunderstorms as a condition by icon value. We'll try to make
@@ -289,9 +289,8 @@ export class Forecast {
       if (summary.indexOf('scattered') >= 0 || summary.indexOf('isolated') >= 0)
         icon = 'scattered-thunderstorms-day';
     }
-    else if (icon === 'rain' && precipIntensity < 0.01) {
+    else if (icon === 'rain' && precipIntensity < 0.01)
       icon = 'light-rain';
-    }
 
     if (conditions.cloudCover < 0.333) {
       if (icon === 'partly-cloudy-day')
@@ -314,10 +313,13 @@ export class Forecast {
       this.showUnknown('Missing data');
     }
     else {
+      this.appService.updateCurrentTemp({
+        forecastFeelsLike: forecastData.currently.apparentTemperature,
+        forecastHumidity: forecastData.currently.humidity * 100,
+        forecastTemp: forecastData.currently.temperature,
+      });
+
       setSvgHref(this.currentIcon, this.getIcon(forecastData.currently, true));
-      this.currentTemp.text(`\u00A0${Math.round(forecastData.currently.temperature)}°`);
-      this.feelsLike.text(`${Math.round(forecastData.currently.apparentTemperature)}°`);
-      this.humidity.text(`${Math.round(forecastData.currently.humidity * 100)}%`);
 
       this.dayIcons.forEach((dayIcon, index) => {
         if (forecastData.daily.data.length > todayIndex + index) {
@@ -427,6 +429,8 @@ export class Forecast {
 
       this.updateMarqueeAnimation(newText);
     }
+
+    setTimeout(reflow);
   }
 
   private updateMarqueeAnimation(newText: string): void {

@@ -106,7 +106,7 @@ export class Ephemeris {
       elem.attr('transform', 'rotate(' + deg + ' 50 50)');
     }
 
-    time = Math.floor(time / 60000) * 60000; // Make sure time is in whole minutes.
+    time = Math.floor(time / 60_000) * 60_000; // Make sure time is in whole minutes.
 
     const dateTime = new KsDateTime(time, timezone);
     const wallTime = dateTime.wallTime;

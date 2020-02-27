@@ -1,3 +1,5 @@
+import { Response } from 'express';
+
 let performanceCopy: any;
 
 try {
@@ -5,15 +7,21 @@ try {
 }
 catch (err) {}
 
+export function noCache(res: Response): void {
+  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.header('Expires', '-1');
+  res.header('Pragma', 'no-cache');
+}
+
 export function processMillis(): number {
   if (performanceCopy)
     return performanceCopy.now();
   else if ((process.hrtime as any).bigint)
-    return Number((process.hrtime as any).bigint()) / 1000000;
+    return Number((process.hrtime as any).bigint()) / 1_000_000;
   else {
     const time = process.hrtime();
 
-    return time[0] * 1000 + time[1] / 1000000;
+    return time[0] * 1000 + time[1] / 1_000_000;
   }
 }
 
