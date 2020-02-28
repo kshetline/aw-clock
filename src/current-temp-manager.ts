@@ -1,6 +1,7 @@
 import { AppService } from './app.service';
 import * as $ from 'jquery';
 import { reflow } from './svg-flow';
+import { localServer } from './settings';
 
 const DD = '\u2012\u2012';
 
@@ -37,6 +38,12 @@ export class CurrentTempManager {
     this.outdoorHumidity = $('#humidity');
     this.outdoorTemp = $('#current-temp');
     this.temperatureDetail = $('#temperature-detail');
+
+    if (!localServer) {
+      this.currentTempBalanceSpace.css('display', 'none');
+      this.indoorHumidity.text('');
+      this.indoorTemp.text('');
+    }
   }
 
   // Null values erase old values, undefined values preserver old values, defined values replace old values
@@ -49,7 +56,7 @@ export class CurrentTempManager {
     const indoorOption = this.appService.getIndoorOption();
     const outdoorOption = this.appService.getOutdoorOption();
 
-    if (indoorOption === 'X') {
+    if (indoorOption === 'X' || !localServer) {
       this.currentTempBalanceSpace.css('display', 'none');
       this.indoorHumidity.text('');
       this.indoorTemp.text('');

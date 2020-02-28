@@ -48,7 +48,7 @@ function getJson(url: string): Promise<any> {
 }
 
 function setSignalLevel(elem: JQuery, quality: number): void {
-  const newLevel = 'signal-' + (quality < 0 ? 'lost' : 'level-' + Math.floor((quality + 10) / 20));
+  const newLevel = 'signal-' + (quality < 0 ? 'lost' : 'level-' + Math.max(Math.floor((quality + 19) / 20)), 1);
   let classes = ((elem[0].className as any).baseVal || '').replace(/signal-[-\w]+/, newLevel);
 
   if (!classes.includes(newLevel))
@@ -80,6 +80,7 @@ export class Sensors {
       this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = true;
     else {
       this.indoorAvailable = false;
+      this.indoorMeter.css('display', 'none');
       this.outdoorMeter.css('display', 'none');
       this.outdoorMeter2.css('display', 'none');
     }
