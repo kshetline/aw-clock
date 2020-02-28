@@ -1,6 +1,6 @@
 {
   "name": "aw-clock-server",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
@@ -39,7 +39,7 @@
     "mocha": "^7.1.0",
     "nock": "^11.9.1",
     "nodemon": "^2.0.2",
-    "rpi-acu-rite-temperature": "^2.0.1",
+    "rpi-acu-rite-temperature": "^2.0.2",
     "ts-loader": "^6.2.1",
     "ts-node": "^8.6.2",
     "typescript": "^3.8.2",
