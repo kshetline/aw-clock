@@ -48,7 +48,7 @@ function getJson(url: string): Promise<any> {
 }
 
 function setSignalLevel(elem: JQuery, quality: number): void {
-  const newLevel = 'signal-' + (quality < 0 ? 'lost' : 'level-' + Math.min(Math.floor((quality + 19) / 20), 1));
+  const newLevel = 'signal-' + (quality < 0 ? 'lost' : 'level-' + Math.max(Math.floor((quality + 19) / 20), 1));
   let classes = ((elem[0].className as any).baseVal || '').replace(/signal-[-\w]+/, newLevel);
 
   if (!classes.includes(newLevel))
