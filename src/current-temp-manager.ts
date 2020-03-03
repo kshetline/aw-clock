@@ -83,10 +83,10 @@ export class CurrentTempManager {
     if (temperature != null && this.cth.forecastTemp != null && Math.abs(temperature - this.cth.forecastTemp) > delta &&
         !this.cth.forecastStale) {
       temperature = Math.min(Math.max(this.cth.forecastTemp - delta, temperature), this.cth.forecastTemp + delta);
-      this.outdoorTemp.addClass('forecast-substitution');
+      this.outdoorTemp.addClass('forecast-limited');
     }
     else
-      this.outdoorTemp.removeClass('forecast-substitution');
+      this.outdoorTemp.removeClass('forecast-limited');
 
     this.outdoorHumidity.text(`${humidity != null ? Math.round(humidity) : DD}%`);
     this.outdoorTemp.text(`\u00A0${temperature != null ? Math.round(temperature) : DD}°`);

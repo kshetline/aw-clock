@@ -1,5 +1,5 @@
-import * as chalk from 'chalk';
-import { ChildProcess, spawn } from 'child_process';
+import * as Chalk from 'chalk';
+import { ChildProcess, spawn as nodeSpawn } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
 import { processMillis } from './server/src/util';
@@ -13,6 +13,8 @@ const SPIN_DELAY = 100;
 const MAX_SPIN_DELAY = 100;
 const NO_OP = () => {};
 
+const isWindows = (process.platform === 'win32');
+
 let spinStep = 0;
 let lastSpin = 0;
 let npmInitDone = false;
@@ -21,13 +23,24 @@ let doDht = false;
 let doGps = false;
 let doWwvb = false;
 let doI2c = false;
+let chalk = new Chalk.Instance();
+
+let canSpin = true;
+let backspace = '\x08';
+let trailingSpace = '  ';
 
 // Remove extraneous command line args, if present.
-if (/[/\\]ts-node(?:\.cmd)?$/.test(process.argv[0] ?? ''))
+if (/\bts-node\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
 
-if (/[/\\]build\.ts$/.test(process.argv[0] ?? ''))
+if (/\bbuild\.ts\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
+
+if (process.argv.length === 0) {
+  console.warn(chalk.yellow('Warning: no build options specified.'));
+  console.warn(chalk.yellow('This could be OK, or this could mean you forgot the leading ') +
+               chalk.white('--') + chalk.yellow(' before your options.'));
+}
 
 process.argv.forEach(arg => {
   if (arg === '--acu')
@@ -38,6 +51,12 @@ process.argv.forEach(arg => {
     doGps = doI2c = true;
   else if (arg === '--wwvb')
     doWwvb = doI2c = true;
+  else if (arg === '--dull') {
+    canSpin = false;
+    chalk.level = 0;
+    backspace = '';
+    trailingSpace = ' ';
+  }
   else {
     if (arg !== '--help')
       console.error('Unrecognized option "' + chalk.red(arg) + '"');
@@ -47,20 +66,30 @@ process.argv.forEach(arg => {
   }
 });
 
-process.stdout.write(('' + doAcu + doGps + doWwvb).substr(0, 0));
+function spawn(command: string, args: string[] = [], options?: any): ChildProcess {
+  if (isWindows) {
+    const cmd = process.env.comspec || 'cmd';
+
+    return nodeSpawn(cmd, ['/c', command, ...args], options);
+  }
+  else
+    return nodeSpawn(command, args, options);
+}
 
 function spin(): void {
   const now = processMillis();
 
   if (lastSpin < now - SPIN_DELAY) {
     lastSpin = now;
-    process.stdout.write('\x08' + SPIN_CHARS.charAt(spinStep));
+    process.stdout.write(backspace + SPIN_CHARS.charAt(spinStep));
     spinStep = (spinStep + 1) % 4;
   }
 }
 
 function monitorProcess(proc: ChildProcess, doSpin = true): Promise<string> {
   let output = '';
+
+  doSpin = doSpin && canSpin;
 
   return new Promise<string>((resolve, reject) => {
     const slowSpin = setInterval(doSpin ? spin : NO_OP, MAX_SPIN_DELAY);
@@ -109,55 +138,55 @@ async function npmInit(): Promise<void> {
   try {
     console.log(chalk.cyan('Starting build...'));
 
-    process.stdout.write('Updating client  ');
+    process.stdout.write('Updating client' + trailingSpace);
     await monitorProcess(spawn('npm', ['--dev', 'update']));
-    console.log('\x08' + chalk.green(CHECK_MARK));
+    console.log(backspace + chalk.green(CHECK_MARK));
 
-    process.stdout.write('Building client  ');
+    process.stdout.write('Building client' + trailingSpace);
     if (fs.existsSync('dist'))
       await monitorProcess(spawn('rm', ['-Rf', 'dist']));
     let output = await monitorProcess(spawn('webpack'));
-    console.log('\x08' + chalk.green(CHECK_MARK));
+    console.log(backspace + chalk.green(CHECK_MARK));
     console.log(chalk.hex('#808080')(getWebpackSummary(output)));
 
-    process.stdout.write('Updating server  ');
+    process.stdout.write('Updating server' + trailingSpace);
     await monitorProcess(spawn('npm', ['--dev', 'update'], { cwd: path.join(__dirname, 'server') }));
-    console.log('\x08' + chalk.green(CHECK_MARK));
+    console.log(backspace + chalk.green(CHECK_MARK));
 
-    process.stdout.write('Building server  ');
+    process.stdout.write('Building server' + trailingSpace);
     if (fs.existsSync('server/dist'))
       await monitorProcess(spawn('rm', ['-Rf', 'server/dist']));
     output = await monitorProcess(spawn('npm', ['run', 'build'], { cwd: path.join(__dirname, 'server') }));
-    console.log('\x08' + chalk.green(CHECK_MARK));
+    console.log(backspace + chalk.green(CHECK_MARK));
     console.log(chalk.hex('#808080')(getWebpackSummary(output)));
 
     if (doAcu) {
-      process.stdout.write('Adding Acu-Rite wireless temperature/humidity sensor support  ');
+      process.stdout.write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
       await npmInit();
       await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      console.log('\x08' + chalk.green(CHECK_MARK));
+      console.log(backspace + chalk.green(CHECK_MARK));
     }
 
     if (doDht) {
-      process.stdout.write('Adding DHT wired temperature/humidity sensor support  ');
+      process.stdout.write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
       await npmInit();
       await monitorProcess(spawn('npm', ['i', 'node-dht-sensor'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      console.log('\x08' + chalk.green(CHECK_MARK));
+      console.log(backspace + chalk.green(CHECK_MARK));
     }
 
     if (doI2c) {
-      process.stdout.write('Adding I²C serial bus support  ');
+      process.stdout.write('Adding I²C serial bus support' + trailingSpace);
       await npmInit();
       await monitorProcess(spawn('npm', ['i', 'i2c-bus'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      console.log('\x08' + chalk.green(CHECK_MARK));
+      console.log(backspace + chalk.green(CHECK_MARK));
     }
 
-    process.stdout.write('Copying server to top-level dist directory  ');
+    process.stdout.write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
-    console.log('\x08' + chalk.green(CHECK_MARK));
+    console.log(backspace + chalk.green(CHECK_MARK));
   }
   catch (err) {
-    console.log('\x08' + chalk.red(FAIL_MARK));
+    console.log(backspace + chalk.red(FAIL_MARK));
     console.error(err);
   }
 })();
