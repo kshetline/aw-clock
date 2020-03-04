@@ -17,7 +17,7 @@ const debug = require('debug')('express:server');
 
 let indoorRouter: Router;
 
-if (process.env.AWC_HAS_INDOOR_SENSOR)
+if (process.env.AWC_HAS_INDOOR_SENSOR || process.env.AWC_ALT_DEV_SERVER)
   indoorRouter = require('./indoor-router').router;
 
 const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);
