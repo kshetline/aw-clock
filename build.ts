@@ -164,7 +164,6 @@ async function npmInit(): Promise<void> {
 (async () => {
   try {
     console.log(chalk.cyan('Starting build...'));
-
     process.stdout.write('Updating client' + trailingSpace);
     await monitorProcess(spawn('npm', ['--dev', 'update']));
     console.log(backspace + chalk.green(CHECK_MARK));
@@ -211,6 +210,18 @@ async function npmInit(): Promise<void> {
     process.stdout.write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
     console.log(backspace + chalk.green(CHECK_MARK));
+
+    if (doStdDeploy) {
+      process.stdout.write('Moving server to ~/weather directory' + trailingSpace);
+
+      if (!fs.existsSync(process.env.HOME + '/weather'))
+        fs.mkdirSync(process.env.HOME + '/weather');
+      else
+        await monitorProcess(spawn('rm', ['-Rf', '~/weather/*'], { shell: true }));
+
+      await monitorProcess(spawn('mv', ['dist/*', '~/weather'], { shell: true }));
+      console.log(backspace + chalk.green(CHECK_MARK));
+   }
   }
   catch (err) {
     console.log(backspace + chalk.red(FAIL_MARK));
