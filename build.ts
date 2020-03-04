@@ -21,13 +21,15 @@ let npmInitDone = false;
 let doAcu = false;
 let doDht = false;
 let doGps = false;
-let doWwvb = false;
 let doI2c = false;
-let chalk = new Chalk.Instance();
+let doStdDeploy = false;
+let doWwvb = false;
+let isRaspberryPi = false;
 
+let chalk = new Chalk.Instance();
 let canSpin = true;
 let backspace = '\x08';
-let trailingSpace = '  ';
+let trailingSpace = '  '; // Two spaces
 
 // Remove extraneous command line args, if present.
 if (/\bts-node\b/.test(process.argv[0] ?? ''))
@@ -49,22 +51,47 @@ process.argv.forEach(arg => {
     doDht = true;
   else if (arg === '--gps')
     doGps = doI2c = true;
-  else if (arg === '--wwvb')
-    doWwvb = doI2c = true;
-  else if (arg === '--dull') {
+  else if (arg === '--pt') {
     canSpin = false;
     chalk.level = 0;
     backspace = '';
     trailingSpace = ' ';
   }
+  else if (arg === '--sd')
+    doStdDeploy = true;
+  else if (arg === '--wwvb')
+    doWwvb = doI2c = true;
   else {
     if (arg !== '--help')
       console.error('Unrecognized option "' + chalk.red(arg) + '"');
 
-    console.log('Usage: npm run build [-- [--acu] [--dht] [--gps] [--help] [--wwvb]]');
+    console.log('Usage: npm run build [-- [--acu] [--dht] [--gps] [--help] [--pt] [--sd] [--wwvb]]');
     process.exit(0);
   }
 });
+
+if (process.platform === 'linux') {
+  try {
+    if (fs.existsSync('/proc/cpuinfo')) {
+      const lines = fs.readFileSync('/proc/cpuinfo').toString().split('\n');
+
+      for (let line of lines) {
+        if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
+          isRaspberryPi = true;
+          break;
+        }
+      }
+    }
+  }
+  catch (err) {
+    console.error(chalk.red('Raspberry Pi check failed'));
+  }
+}
+
+if (doStdDeploy && !isRaspberryPi) {
+  console.error(chalk.red('--sd option is only valid on Raspberry Pi'));
+  process.exit(0);
+}
 
 function spawn(command: string, args: string[] = [], options?: any): ChildProcess {
   if (isWindows) {
@@ -156,7 +183,7 @@ async function npmInit(): Promise<void> {
     process.stdout.write('Building server' + trailingSpace);
     if (fs.existsSync('server/dist'))
       await monitorProcess(spawn('rm', ['-Rf', 'server/dist']));
-    output = await monitorProcess(spawn('npm', ['run', 'build'], { cwd: path.join(__dirname, 'server') }));
+    output = await monitorProcess(spawn('npm', ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }));
     console.log(backspace + chalk.green(CHECK_MARK));
     console.log(chalk.hex('#808080')(getWebpackSummary(output)));
 
