@@ -1,5 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { jsonOrJsonp } from './common';
+import request from 'request';
 import { noCache } from './util';
 
 export interface TempHumidityData {
@@ -29,7 +30,7 @@ function removeOldData() {
   });
 }
 
-if (process.env.AWC_WIRELESS_TEMP) {
+if (process.env.AWC_WIRELESS_TEMP && !process.env.AWC_ALT_DEV_SERVER) {
   try {
     ({ addSensorDataListener, removeSensorDataListener } = require('rpi-acu-rite-temperature'));
 
@@ -64,7 +65,19 @@ router.get('/', (req: Request, res: Response) => {
 
   let result: any;
 
-  if (callbackId >= 0) {
+  if (process.env.AWC_ALT_DEV_SERVER) {
+    req.pipe(request({
+      url: process.env.AWC_ALT_DEV_SERVER + '/wireless-th',
+      method: req.method
+    }))
+      .on('error', err => {
+        res.status(500).send('Error connecting to development server: ' + err);
+      })
+      .pipe(res);
+
+    return;
+  }
+  else if (callbackId >= 0) {
     removeOldData();
     result = readings;
   }

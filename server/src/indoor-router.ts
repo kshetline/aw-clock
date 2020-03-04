@@ -1,5 +1,6 @@
 import { jsonOrJsonp } from './common';
 import { Request, Response, Router } from 'express';
+import request from 'request';
 import { average, noCache, stdDev, toBoolean } from './util';
 
 export const router = Router();
@@ -97,6 +98,18 @@ router.get('/', (req: Request, res: Response) => {
     }
     else
       result = { temperature: lastTemp, humidity: lastHumidity };
+  }
+  else if (process.env.AWC_ALT_DEV_SERVER) {
+    req.pipe(request({
+      url: process.env.AWC_ALT_DEV_SERVER + '/indoor',
+      method: req.method
+    }))
+      .on('error', err => {
+        res.status(500).send('Error connecting to development server: ' + err);
+      })
+      .pipe(res);
+
+    return;
   }
   else {
     if (warnIndoorNA) {
