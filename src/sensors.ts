@@ -111,7 +111,7 @@ export class Sensors {
     }
 
     if (newFlowSpec !== flowSpec) {
-      this.outdoorMeter[0].setAttributeNS(null, 'svg-flow', newFlowSpec);
+      this.outdoorMeter[0].setAttribute('svg-flow', newFlowSpec);
       updateSvgFlowItems();
     }
 

@@ -30,14 +30,15 @@ export function updateSvgFlowItems(): void {
   });
 }
 
-interface SimpleRect { x: number, y: number, width: number, height: number }
+interface GeneralRect { x: number, y: number, width: number, height: number }
 
-function getBBox(elem: SVGGraphicsElement): SimpleRect {
+function getBBox(elem: SVGGraphicsElement): GeneralRect {
   if (elem.localName !== 'tspan')
     return elem.getBBox();
 
   const text = elem as SVGTextContentElement;
-  const extent = text.getNumberOfChars() > 0 ? text.getExtentOfChar(0) : { x: 0, y: 0, height: 0 };
+  const extent = text.getNumberOfChars() > 0 || text.textContent?.length > 0 ?
+    text.getExtentOfChar(0) : { x: 0, y: 0, height: 0 };
   const width = text.getComputedTextLength();
 
   return { x: extent.x, y: extent.y, width, height: extent.height };
@@ -57,8 +58,8 @@ export function reflow(): void {
         (item.anchorCorner.charAt(0) === 'b' ? r1.height : 0) -
         (item.elemCorner.charAt(0) === 'b' ? r2.height : 0) + item.dy;
 
-      item.elem.setAttributeNS(null, 'x', labelX.toString());
-      item.elem.setAttributeNS(null, 'y', labelY.toString());
+      item.elem.setAttribute('x', labelX.toString());
+      item.elem.setAttribute('y', labelY.toString());
     }
   });
 }
