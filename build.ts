@@ -116,6 +116,7 @@ function spin(): void {
 }
 
 function monitorProcess(proc: ChildProcess, doSpin = true): Promise<string> {
+  let errors = '';
   let output = '';
 
   doSpin = doSpin && canSpin;
@@ -123,10 +124,21 @@ function monitorProcess(proc: ChildProcess, doSpin = true): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const slowSpin = setInterval(doSpin ? spin : NO_OP, MAX_SPIN_DELAY);
 
-    proc.stderr.on('data', doSpin ? spin : NO_OP);
-    proc.stdout.on('data', data => {
-      output += data.toString();
+    proc.stderr.on('data', data => {
       (doSpin ? spin : NO_OP)();
+      data = data.toString();
+      // This gets confusing, because a lot of non-error progress messaging goes to stderr, and the
+      //   webpack process doesn't exit with an error for compilation errors unless you make it do so.
+      if (/\[webpack.Progress\]/.test(data))
+        return;
+
+      errors += data;
+    });
+    proc.stdout.on('data', data => {
+      (doSpin ? spin : NO_OP)();
+      data = data.toString();
+      output += data;
+      errors = '';
     });
     proc.on('error', err => {
       clearInterval(slowSpin);
@@ -134,7 +146,11 @@ function monitorProcess(proc: ChildProcess, doSpin = true): Promise<string> {
     });
     proc.on('close', () => {
       clearInterval(slowSpin);
-      resolve(output);
+
+      if (errors && (/\b(error|exception)\b/i.test(errors) || /[_0-9a-z](Error|Exception)\b/.test(errors)))
+        reject(errors);
+      else
+        resolve(output);
     });
   });
 }
