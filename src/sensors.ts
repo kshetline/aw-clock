@@ -25,7 +25,7 @@ import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { updateSvgFlowItems } from './svg-flow';
 import { localServer, runningDev } from './settings';
 
-const DEV_SENSOR_URL = 'http://192.168.42.98:8080';
+const DEV_SENSOR_URL = 'http://localhost:4201';
 
 function errorText(err: any): string {
   err = err instanceof Error ? err.message : err.error;
@@ -36,7 +36,7 @@ function errorText(err: any): string {
 function getJson(url: string): Promise<any> {
   return new Promise(resolve => {
     // `$.ajax()` returns a Promise, but if I try to use that Promise directly, I can't find a way to get
-    //   around "Uncaught (in promise)" errors, when what I was is a Promise resolved with an Error value.
+    //   around "Uncaught (in promise)" errors, when what I want is a Promise resolved with an Error value.
     // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url,
@@ -65,7 +65,7 @@ export class Sensors {
   private readonly outdoorMeter: JQuery;
   private readonly outdoorMeter2: JQuery;
 
-  private readonly indoorAvailable: boolean;
+  private indoorAvailable: boolean;
   private wiredAvailable = false;
   private wirelessAvailable = false;
 
@@ -83,12 +83,16 @@ export class Sensors {
       this.indoorMeter.css('display', 'none');
       this.outdoorMeter.css('display', 'none');
       this.outdoorMeter2.css('display', 'none');
+
+      appService.proxySensorUpdate().then(available =>
+        this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = available);
     }
   }
 
   get available() { return this.wiredAvailable || this.wirelessAvailable; }
 
   public update(celsius: boolean) {
+    const adjustTemp = (temp: number) => (celsius || temp == null ? temp : temp * 1.8 + 32);
     const site = (runningDev ? DEV_SENSOR_URL : '');
     const wiredUrl = `${site}/indoor`;
     const wirelessUrl = `${site}/wireless-th`;
@@ -100,7 +104,7 @@ export class Sensors {
     this.indoorMeter.css('display', this.wiredAvailable && /[ABC]{1,2}/.test(indoorOption) ? 'block' : 'none');
     this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
 
-    if (outdoorOption.length === 2) {
+    if (outdoorOption.length === 2 && this.wirelessAvailable) {
       this.outdoorMeter2.css('display', 'block');
       newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
     }
@@ -110,7 +114,7 @@ export class Sensors {
     }
 
     if (newFlowSpec !== flowSpec) {
-      this.outdoorMeter[0].setAttributeNS(null, 'svg-flow', newFlowSpec);
+      this.outdoorMeter[0].setAttribute('svg-flow', newFlowSpec);
       updateSvgFlowItems();
     }
 
@@ -142,7 +146,7 @@ export class Sensors {
           this.wiredAvailable = !(/not found/i.test(err));
         }
         else if (wired && indoorOption === 'D') {
-          cth.indoorTemp = (celsius ? wired.temperature : wired.temperature * 1.8 + 32);
+          cth.indoorTemp = adjustTemp(wired.temperature);
           cth.indoorHumidity = wired.humidity;
         }
 
@@ -164,7 +168,7 @@ export class Sensors {
         else if (wireless) {
           if ((thd = wireless[indoorOption])) {
             if (thd.reliable) {
-              cth.indoorTemp = (celsius ? thd.temperature : thd.temperature * 1.8 + 32);
+              cth.indoorTemp = adjustTemp(thd.temperature);
               cth.indoorHumidity = thd.humidity;
             }
 
@@ -192,7 +196,7 @@ export class Sensors {
               signalQs.push(thd.signalQuality);
 
               if (thd.temperature !== undefined && thd.reliable) {
-                const t = Math.round(celsius ? thd.temperature : thd.temperature * 1.8 + 32);
+                const t = Math.round(adjustTemp(thd.temperature));
 
                 sensorDetail.push(`${channel}: ${t}°` + (thd.reliable ? '' : '?'));
 

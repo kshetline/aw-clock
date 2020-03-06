@@ -29,6 +29,8 @@ export class CurrentTempManager {
 
   private readonly cth: CurrentTemperatureHumidity = {};
 
+  private hideIndoor = false;
+
   constructor(private appService: AppService) {
     this.currentTempBalanceSpace = $('#curr-temp-balance-space');
     this.feelsLike = $('#feels-like');
@@ -40,9 +42,19 @@ export class CurrentTempManager {
     this.temperatureDetail = $('#temperature-detail');
 
     if (!localServer) {
+      this.hideIndoor = true;
       this.currentTempBalanceSpace.css('display', 'none');
       this.indoorHumidity.text('');
       this.indoorTemp.text('');
+
+      appService.proxySensorUpdate().then(available => {
+        if (available) {
+          this.hideIndoor = false;
+          this.currentTempBalanceSpace.css('display', 'block');
+          this.indoorHumidity.text(DD);
+          this.indoorTemp.text(DD + '°');
+        }
+      });
     }
   }
 
@@ -56,7 +68,7 @@ export class CurrentTempManager {
     const indoorOption = this.appService.getIndoorOption();
     const outdoorOption = this.appService.getOutdoorOption();
 
-    if (indoorOption === 'X' || !localServer) {
+    if (indoorOption === 'X' || this.hideIndoor) {
       this.currentTempBalanceSpace.css('display', 'none');
       this.indoorHumidity.text('');
       this.indoorTemp.text('');
@@ -83,10 +95,10 @@ export class CurrentTempManager {
     if (temperature != null && this.cth.forecastTemp != null && Math.abs(temperature - this.cth.forecastTemp) > delta &&
         !this.cth.forecastStale) {
       temperature = Math.min(Math.max(this.cth.forecastTemp - delta, temperature), this.cth.forecastTemp + delta);
-      this.outdoorTemp.addClass('forecast-substitution');
+      this.outdoorTemp.addClass('forecast-limited');
     }
     else
-      this.outdoorTemp.removeClass('forecast-substitution');
+      this.outdoorTemp.removeClass('forecast-limited');
 
     this.outdoorHumidity.text(`${humidity != null ? Math.round(humidity) : DD}%`);
     this.outdoorTemp.text(`\u00A0${temperature != null ? Math.round(temperature) : DD}°`);

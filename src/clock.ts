@@ -158,11 +158,11 @@ export class Clock {
       const y1 = center + radius * Math.sin(Math.PI * (deg - 90) / 180);
       const tickMark = document.createElementNS(SVG_NAMESPACE, 'circle');
 
-      tickMark.setAttributeNS(null, 'cx', x1.toString());
-      tickMark.setAttributeNS(null, 'cy', y1.toString());
-      tickMark.setAttributeNS(null, 'r', (i % 5 === 0 && i !== 60 ? 1 : 0.333).toString());
-      tickMark.setAttributeNS(null, 'fill', 'white');
-      tickMark.setAttributeNS(null, 'fill-opacity', '1');
+      tickMark.setAttribute('cx', x1.toString());
+      tickMark.setAttribute('cy', y1.toString());
+      tickMark.setAttribute('r', (i % 5 === 0 && i !== 60 ? 1 : 0.333).toString());
+      tickMark.setAttribute('fill', 'white');
+      tickMark.setAttribute('fill-opacity', '1');
 
       if (i > 55) {
         tickMark.setAttribute('id', 'dot-' + i);
@@ -177,9 +177,9 @@ export class Clock {
         const y2 = center + textRadius * Math.sin(Math.PI * deg / 180);
         const text2 = document.createElementNS(SVG_NAMESPACE, 'text');
 
-        text2.setAttributeNS(null, 'x', x2.toString());
-        text2.setAttributeNS(null, 'y', y2.toString());
-        text2.setAttributeNS(null, 'dy', '3.5');
+        text2.setAttribute('x', x2.toString());
+        text2.setAttribute('y', y2.toString());
+        text2.setAttribute('dy', '3.5');
         text2.classList.add('clock-face');
         text2.textContent = h.toString();
         this.clock.insertBefore(text2, this.hands);
@@ -188,9 +188,9 @@ export class Clock {
         const y3 = center + constellationRadius * Math.sin(Math.PI * (-deg - 15) / 180);
         const text3 = document.createElementNS(SVG_NAMESPACE, 'text');
 
-        text3.setAttributeNS(null, 'x', x3.toString());
-        text3.setAttributeNS(null, 'y', y3.toString());
-        text3.setAttributeNS(null, 'dy', '1');
+        text3.setAttribute('x', x3.toString());
+        text3.setAttribute('y', y3.toString());
+        text3.setAttribute('dy', '1');
         text3.classList.add('constellation');
         text3.textContent = String.fromCodePoint(0x2648 + deg / 30);
         planetTracks.appendChild(text3);
@@ -207,22 +207,22 @@ export class Clock {
       const text = document.createElementNS(SVG_NAMESPACE, 'text');
       const path = document.createElementNS(SVG_NAMESPACE, 'path');
 
-      rect.setAttributeNS(null, 'x', (x - 0.9).toString());
-      rect.setAttributeNS(null, 'y', (center + dy - 2).toString());
-      rect.setAttributeNS(null, 'width', '1.8');
-      rect.setAttributeNS(null, 'height', '2.7');
-      rect.setAttributeNS(null, 'fill', 'black');
+      rect.setAttribute('x', (x - 0.9).toString());
+      rect.setAttribute('y', (center + dy - 2).toString());
+      rect.setAttribute('width', '1.8');
+      rect.setAttribute('height', '2.7');
+      rect.setAttribute('fill', 'black');
       planetTracks.appendChild(rect);
 
-      text.setAttributeNS(null, 'x', x.toString());
-      text.setAttributeNS(null, 'y', centerStr);
-      text.setAttributeNS(null, 'dy', dy.toString());
+      text.setAttribute('x', x.toString());
+      text.setAttribute('y', centerStr);
+      text.setAttribute('dy', dy.toString());
       text.classList.add('constellation');
       text.textContent = String.fromCodePoint(planet);
       planetTracks.appendChild(text);
 
-      path.setAttributeNS(null, 'fill', 'none');
-      path.setAttributeNS(null, 'visibility', 'inherited');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('visibility', 'inherited');
       path.classList.add('risen-track');
       path.id = `risen-${planetIds[index]}`;
       risenTracks.appendChild(path);
@@ -244,10 +244,10 @@ export class Clock {
     const labelX = (r1.x + r1.width - r0.x) * scale;
     const captionX = labelX + Math.max(r2.width, r3.width) * scale;
 
-    this.dut1Label.setAttributeNS(null, 'x', labelX.toString());
-    this.dtaiLabel.setAttributeNS(null, 'x', labelX.toString());
-    this.dut1Caption.setAttributeNS(null, 'x', captionX.toString());
-    this.dtaiCaption.setAttributeNS(null, 'x', captionX.toString());
+    this.dut1Label.setAttribute('x', labelX.toString());
+    this.dtaiLabel.setAttribute('x', labelX.toString());
+    this.dut1Caption.setAttribute('x', captionX.toString());
+    this.dtaiCaption.setAttribute('x', captionX.toString());
   }
 
   private tick(): void {

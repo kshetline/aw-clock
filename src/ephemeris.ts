@@ -130,7 +130,7 @@ export class Ephemeris {
 
       rotate(elem, -eclipticLongitude);
       elem.css('stroke-width', risen ? '0' : '0.25');
-      elem[0].setAttributeNS(null, 'r', altitude < targetAltitude ? '0.625' : '0.75');
+      elem[0].setAttribute('r', altitude < targetAltitude ? '0.625' : '0.75');
 
       if (risen) {
         rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU + 2 / 1400, observer, timezone, null, true);
@@ -159,7 +159,7 @@ export class Ephemeris {
 
         const arc = describeArc(50, 50, radius, setAngle, riseAngle);
 
-        risenTrack[0].setAttributeNS(null, 'd', arc);
+        risenTrack[0].setAttribute('d', arc);
         risenTrack.css('visibility', 'inherited');
       }
       else

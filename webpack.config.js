@@ -442,7 +442,21 @@ module.exports = {
       fallbackModuleFilenameTemplate: '[resource-path]?[hash]',
       sourceRoot: 'webpack:///'
     }),
-    new NamedModulesPlugin({})
+    new NamedModulesPlugin({}),
+    function () {
+      this.plugin('done', stats => {
+        if (stats.compilation.errors && stats.compilation.errors.length > 0) {
+          if (stats.compilation.errors.length === 0)
+            console.error(stats.compilation.errors[0]);
+          else {
+            console.error(stats.compilation.errors.map(err =>
+              err && typeof err === 'object' && err.message ? err.message : '').join('\n'));
+          }
+
+          process.exit(1);
+        }
+      });
+    }
   ],
   node: {
     global: true
