@@ -129,7 +129,7 @@ function monitorProcess(proc: ChildProcess, doSpin = true): Promise<string> {
       data = data.toString();
       // This gets confusing, because a lot of non-error progress messaging goes to stderr, and the
       //   webpack process doesn't exit with an error for compilation errors unless you make it do so.
-      if (/\[webpack.Progress\]/.test(data))
+      if (/\[webpack.Progress]/.test(data))
         return;
 
       errors += data;
