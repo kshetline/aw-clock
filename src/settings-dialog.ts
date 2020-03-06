@@ -17,11 +17,11 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import * as $ from 'jquery';
-import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
-import { localServer, Settings } from './settings';
 import { AppService } from './app.service';
+import * as $ from 'jquery';
 import { isIE, isSafari } from 'ks-util';
+import { localServer, Settings } from './settings';
+import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -142,8 +142,17 @@ export class SettingsDialog {
     });
 
     if (!localServer) {
+      // Hide indoor/outdoor options by default if this isn't a local server, but check if proxied data
+      // is available, and if so, bring the options back.
       this.indoorOutdoorOptions.css('display', 'none');
       this.searchSection.addClass('no-indoor-outdoor');
+
+      appService.proxySensorUpdate().then(available => {
+        if (available) {
+          this.indoorOutdoorOptions.css('display', 'block');
+          this.searchSection.removeClass('no-indoor-outdoor');
+        }
+      });
     }
 
     if (isIE()) {

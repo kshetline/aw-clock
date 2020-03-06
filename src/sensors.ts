@@ -65,7 +65,7 @@ export class Sensors {
   private readonly outdoorMeter: JQuery;
   private readonly outdoorMeter2: JQuery;
 
-  private readonly indoorAvailable: boolean;
+  private indoorAvailable: boolean;
   private wiredAvailable = false;
   private wirelessAvailable = false;
 
@@ -83,13 +83,16 @@ export class Sensors {
       this.indoorMeter.css('display', 'none');
       this.outdoorMeter.css('display', 'none');
       this.outdoorMeter2.css('display', 'none');
+
+      appService.proxySensorUpdate().then(available =>
+        this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = available);
     }
   }
 
   get available() { return this.wiredAvailable || this.wirelessAvailable; }
 
   public update(celsius: boolean) {
-    const adjustTemp = (temp: number) => (celsius ? temp : temp * 1.8 + 32);
+    const adjustTemp = (temp: number) => (celsius || temp == null ? temp : temp * 1.8 + 32);
     const site = (runningDev ? DEV_SENSOR_URL : '');
     const wiredUrl = `${site}/indoor`;
     const wirelessUrl = `${site}/wireless-th`;

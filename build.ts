@@ -33,6 +33,24 @@ let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
 
+if (process.platform === 'linux') {
+  try {
+    if (fs.existsSync('/proc/cpuinfo')) {
+      const lines = fs.readFileSync('/proc/cpuinfo').toString().split('\n');
+
+      for (const line of lines) {
+        if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
+          isRaspberryPi = true;
+          break;
+        }
+      }
+    }
+  }
+  catch (err) {
+    console.error(chalk.red('Raspberry Pi check failed'));
+  }
+}
+
 // Remove extraneous command line args, if present.
 if (/\bts-node\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
@@ -40,7 +58,7 @@ if (/\bts-node\b/.test(process.argv[0] ?? ''))
 if (/\bbuild\.ts\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
 
-if (process.argv.length === 0) {
+if (process.argv.length === 0 && isRaspberryPi) {
   console.warn(chalk.yellow('Warning: no build options specified.'));
   console.warn(chalk.yellow('This could be OK, or this could mean you forgot the leading ') +
                chalk.white('--') + chalk.yellow(' before your options.'));
@@ -71,24 +89,6 @@ process.argv.forEach(arg => {
     process.exit(0);
   }
 });
-
-if (process.platform === 'linux') {
-  try {
-    if (fs.existsSync('/proc/cpuinfo')) {
-      const lines = fs.readFileSync('/proc/cpuinfo').toString().split('\n');
-
-      for (const line of lines) {
-        if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
-          isRaspberryPi = true;
-          break;
-        }
-      }
-    }
-  }
-  catch (err) {
-    console.error(chalk.red('Raspberry Pi check failed'));
-  }
-}
 
 if (doStdDeploy && !isRaspberryPi) {
   console.error(chalk.red('--sd option is only valid on Raspberry Pi'));

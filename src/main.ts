@@ -75,6 +75,7 @@ class AwClockApp implements AppService {
   private lastTimezone: KsTimeZone;
   private lastHour = -1;
   private frequent = false;
+  private proxyStatus: boolean | Promise<boolean> = undefined;
 
   private settings = new Settings();
 
@@ -135,6 +136,28 @@ class AwClockApp implements AppService {
     }
     else
       return ntpPoller.getTimeInfo(bias);
+  }
+
+  proxySensorUpdate(): Promise<boolean> {
+    if (this.proxyStatus instanceof Promise)
+      return this.proxyStatus;
+    else if (typeof this.proxyStatus === 'boolean')
+      return Promise.resolve(this.proxyStatus);
+
+    this.proxyStatus = new Promise(resolve => $.ajax({
+      url: '/wireless-th',
+      dataType: 'json',
+      success: data => {
+        (this.proxyStatus as Promise<boolean>).then(() => this.clock.triggerRefresh());
+        resolve(this.proxyStatus = typeof data === 'object' && data?.error !== 'n/a');
+      },
+      error: () => {
+        (this.proxyStatus as Promise<boolean>).then(() => this.clock.triggerRefresh());
+        resolve(this.proxyStatus = false);
+      }
+    }));
+
+    return this.proxyStatus;
   }
 
   getWeatherServer(): string {

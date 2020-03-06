@@ -11,6 +11,7 @@ export interface AppService {
   getTimeInfo(bias?: number): TimeInfo;
   getWeatherServer(): string;
   isTimeAccelerated(): boolean;
+  proxySensorUpdate(): Promise<boolean>;
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
   updateSettings(newSettings: Settings);
