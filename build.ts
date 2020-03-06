@@ -207,14 +207,14 @@ async function npmInit(): Promise<void> {
     if (doAcu) {
       process.stdout.write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
       await npmInit();
-      await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature'], { cwd: path.join(__dirname, 'server', 'dist') }));
+      await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature@2.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
       console.log(backspace + chalk.green(CHECK_MARK));
     }
 
     if (doDht) {
       process.stdout.write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
       await npmInit();
-      await monitorProcess(spawn('npm', ['i', 'node-dht-sensor'], { cwd: path.join(__dirname, 'server', 'dist') }));
+      await monitorProcess(spawn('npm', ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
       console.log(backspace + chalk.green(CHECK_MARK));
     }
 
