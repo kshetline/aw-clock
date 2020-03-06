@@ -20,13 +20,15 @@ let lastSpin = 0;
 let npmInitDone = false;
 let doAcu = false;
 let doDht = false;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doGps = false;
 let doI2c = false;
 let doStdDeploy = false;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
 let isRaspberryPi = false;
 
-let chalk = new Chalk.Instance();
+const chalk = new Chalk.Instance();
 let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
@@ -65,7 +67,7 @@ process.argv.forEach(arg => {
     if (arg !== '--help')
       console.error('Unrecognized option "' + chalk.red(arg) + '"');
 
-    console.log('Usage: npm run build [-- [--acu] [--dht] [--gps] [--help] [--pt] [--sd] [--wwvb]]');
+    console.log('Usage: npm run build [-- [--acu] [--dht] [--help] [--pt] [--sd]]');
     process.exit(0);
   }
 });
@@ -75,7 +77,7 @@ if (process.platform === 'linux') {
     if (fs.existsSync('/proc/cpuinfo')) {
       const lines = fs.readFileSync('/proc/cpuinfo').toString().split('\n');
 
-      for (let line of lines) {
+      for (const line of lines) {
         if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
           isRaspberryPi = true;
           break;
@@ -221,7 +223,7 @@ async function npmInit(): Promise<void> {
 
       await monitorProcess(spawn('mv', ['dist/*', '~/weather'], { shell: true }));
       console.log(backspace + chalk.green(CHECK_MARK));
-   }
+    }
   }
   catch (err) {
     console.log(backspace + chalk.red(FAIL_MARK));
