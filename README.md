@@ -2,7 +2,7 @@
 
 This project is designed to create a desktop clock which provides weather and astronomical information. While primarily designed to run on a Raspberry Pi, the code will create a Node.js server and client web app that can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors.
 
-The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, a four-day forecast, sunrise and sunset times, moon phases, and the positions of the Sun, Moon, and major planets along the ecliptic.
+The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, a four-day forecast, sunrise and sunset times, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
 ### Getting started
 
@@ -17,15 +17,15 @@ While it’s typical to do `npm install` upon first cloning a project, this proj
 
 To build and run this project you can use the following commands:
    - “`npm run build` &#x5B;-- &#x5B;`--acu`&#x5D; &#x5B;`--dht`&#x5D; &#x5B; `--pt`&#x5D; &#x5B;`--sd`&#x5D;&#x5D;” to build (with optional support for wired and/or wireless temperature/humidity sensors).
-   - “`npm run start-server`” to start the data server for this project (not on Windows).
-   - “`npm run start-server-win`” to start the data server for this project (on Windows).
-   - “`npm start`” to serve the web client using webpack-dev-server.
+   - “`npm run start-server`” to start the data server for this project (not for Windows) on `localhost:4201`.
+   - “`npm run start-server-win`” to start the data server for this project (for Windows) on `localhost:4201`.
+   - “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. _(Note that for development and testing, two different ports are used, but that when the server is deployed, all content and data is served on one port, by default 8080.)_
 
 > Note: A dependency on `node-sass` sometimes causes build problems. It often helps to delete the top level `node_modules` directory, and then do `npm install` over again. I’ve also found that using `LIBSASS_EXT=”no” npm install` helped.
 
 The server requires a Dark Sky API key for weather data. Use the environment variable `AWC_DARK_SKY_API_KEY` to set the key. (See https://darksky.net/ for further details.)
 
-By default the server uses `pool.ntp.org` as an NTP time server. Use the environment variable `AWC_NTP_SERVER` to change the time server. Do not use a Google time server, or any other NTP server that implements “leap second smearing” if you want the Astronomy/Weather Clock to be able to display leap seconds.
+By default the server uses `pool.ntp.org` as an NTP time server. Use the environment variable `AWC_NTP_SERVER` to change the time server. Do not use a Google time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to display leap seconds.
 
 ![Hypothetical leap second](https://shetline.com/misc/moment_of_leap_second.jpg)
 
@@ -39,7 +39,7 @@ To build the server along with the web client, use `npm run build` (possibly fol
 | `npm run build -- --dht` | &nbsp;&nbsp;&nbsp;&nbsp;Server/client with wired indoor sensor support. |
 | `npm run build -- --dht --acu` | &nbsp;&nbsp;&nbsp;&nbsp;Server/client with both wired and wireless sensor support. |
 
-This `--pt` option is for “plain text”, meaning the console colors and progress animation are disabled.
+This `--pt` option is for “plain text”, meaning that console colors and progress animation are disabled.
 
 The Raspberry Pi-only option `--sd` deploys the app to the default `~/weather` directory (typically `/home/pi/weather`).
 
