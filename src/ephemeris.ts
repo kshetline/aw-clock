@@ -62,6 +62,7 @@ export class Ephemeris {
   private sunsets: JQuery[] = [];
   private moons: JQuery[] = [];
   private phaseTimes: JQuery[] = [];
+  private esTimes: JQuery[] = [];
   private planetElems: JQuery[] = [];
 
   private _hidePlanets = false;
@@ -80,6 +81,7 @@ export class Ephemeris {
       this.sunsets[i] = $('#day' + i + '-sunset');
       this.moons[i] = $('#day' + i + '-moon');
       this.phaseTimes[i] = $('#day' + i + '-phase-time');
+      this.esTimes[i] = $('#day' + i + '-equisolstice');
     }
   }
 
@@ -202,10 +204,13 @@ export class Ephemeris {
       const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
       const noon_JDE = UT_to_TDB(noon_JDU);
       const phase = solarSystem.getLunarPhase(noon_JDE);
-      const event = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
+      const lpEvent = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
+      const esEvent = eventFinder.getEquinoxSolsticeEvent(date.y, date.m, date.d, timezone);
 
       setSvgHref(this.moons[dayIndex], getMoonPhaseIcon(phase));
-      this.phaseTimes[dayIndex].text(event ? formatTime(event.eventTime, amPm) : '');
+      this.phaseTimes[dayIndex].text(lpEvent ? formatTime(lpEvent.eventTime, amPm) : '');
+      this.esTimes[dayIndex].text(esEvent ? (date.m === 3 || date.m === 9 ? 'E•' : 'S•') +
+          formatTime(esEvent.eventTime, amPm) : '');
     }
   }
 }
