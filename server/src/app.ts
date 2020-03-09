@@ -131,8 +131,8 @@ function getApp() {
     });
   }
 
-  theApp.use('/forecast', darkskyRouter);
-  theApp.use('/forecast2', wuRouter);
+  theApp.use('/forecast2', darkskyRouter);
+  theApp.use('/forecast', wuRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
 
   if (indoorRouter)

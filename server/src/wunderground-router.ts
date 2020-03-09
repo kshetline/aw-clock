@@ -1,7 +1,7 @@
 import { requestJson, requestText } from 'by-request';
 import { jsonOrJsonp } from './common';
 import { Request, Response, Router } from 'express';
-import { ForecastData } from './forecast-types';
+import { Alert, ForecastData } from './forecast-types';
 import { noCache } from './util';
 
 export const router = Router();
@@ -10,31 +10,15 @@ router.get('/', async (req: Request, res: Response) => {
   noCache(res);
 
   try {
-    const content = await requestText(`https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`, {
-      followRedirects: true,
-      headers: {
-        'Accept-Language': 'en-US,en;q=0.5',
-        'User-Agent': req.headers['user-agent']
-      }
-    });
-    const $ = /<script\b.+\bid="app-root-state"[^>]*>(.+?)<\/script>/is.exec(content);
-
-    if (!$) {
-      parseError(res);
-      return;
-    }
-
-    const decoded = decodeWeirdJson($[1]);
-    const originalForecast = JSON.parse(decoded);
-    const celsius = (req.query.du === 'c');
-    const intermediateForecast: any = { alerts: [] };
-    const items = originalForecast['wu-next-state-key'];
+    const items = await getContent(req);
 
     if (!items) {
       parseError(res);
       return;
     }
 
+    const celsius = (req.query.du === 'c');
+    const intermediateForecast: any = { alerts: [] };
     const itemsArray = Object.keys(items).map(key => items[key]);
 
     for (const item of itemsArray) {
@@ -49,11 +33,12 @@ router.get('/', async (req: Request, res: Response) => {
         await adjustUnits(intermediateForecast, item, 'hourly', celsius);
       else if (/\/wx\/forecast\/daily\/10day\?/.test(item.url))
         await adjustUnits(intermediateForecast, item, 'daily', celsius);
-      else if (/\/alerts\/detail\?/.test(item.url) && item.value)
-        intermediateForecast.alerts.push(item.value);
+      else if (/\/alerts\/detail\?/.test(item.url) && item.value?.alertDetail)
+        intermediateForecast.alerts.push(item.value?.alertDetail);
     }
 
-    if (!intermediateForecast.location || !intermediateForecast.currently || !intermediateForecast.hourly || !intermediateForecast.daily) {
+    if (!intermediateForecast.location || !intermediateForecast.currently ||
+        !intermediateForecast.hourly || !intermediateForecast.daily) {
       parseError(res);
       return;
     }
@@ -68,23 +53,40 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+async function getContent(req: Request): Promise<any> {
+  let result: any = null;
+  const content = await requestText(`https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`, {
+    followRedirects: true,
+    headers: {
+      'Accept-Language': 'en-US,en;q=0.5',
+      'User-Agent': req.headers['user-agent']
+    }
+  });
+  const $ = /<script\b.+\bid="app-root-state"[^>]*>(.+?)<\/script>/is.exec(content);
+
+  if ($) {
+    result = JSON.parse(decodeWeirdJson($[1]))['wu-next-state-key'];
+    result = (typeof result === 'object' ? result : null);
+  }
+
+  return result;
+}
+
 function decodeWeirdJson(s: string): string {
   // What would otherwise be normal JSON data is weirdly encoded using something like HTML entities, but all
   // single letter codes, for ampersands, double quotes, '>', and '<'. The quotes in particular make the content
   // unreadable as JSON without first being decoded.
-  return s.split(/(&\w+;)/g).map((s, i) => {
+  return s.split(/(&\w;)/g).map((s, i) => {
     if (i % 2 === 0)
       return s;
-    else if (s === '&a;')
-      return '&';
-    else if (s === '&q;')
-      return '"';
-    else if (s === '&g;')
-      return '>';
-    else if (s === '&l;')
-      return '<';
-    else
-      return s;
+
+    switch (s) {
+      case '&a;': return '&';
+      case '&q;': return '"';
+      case '&g;': return '>';
+      case '&l;': return '<';
+      default: return s;
+    }
   }).join('');
 }
 
@@ -122,6 +124,7 @@ function convertForecast(wuForecast: any): ForecastData {
   const wc = wuForecast.currently;
   const wh = wuForecast.hourly;
   const wd = wuForecast.daily;
+  const wa = wuForecast.alerts;
 
   forecast.currently = {
     time: wc.validTimeUtc,
@@ -158,11 +161,34 @@ function convertForecast(wuForecast: any): ForecastData {
   }
 
   forecast.daily = {
-    summary: '?',
+    summary: (wd.narrative && wd.narrative[0]) ?? '',
     data: daily
   };
 
-  forecast.alerts = [];
+  forecast.alerts = wa.map((wuAlert: any) => {
+    const alert: Alert = {} as Alert;
+
+    alert.description = '';
+    alert.expires = wuAlert.expireTimeUTC;
+    alert.severity = 'advisory';
+    alert.time = Math.floor(Date.parse(wuAlert.issueTimeLocal) / 1000);
+    alert.title = wuAlert.headlineText;
+
+    if (wuAlert.texts && wuAlert.texts[0]) {
+      const text = wuAlert.texts[0];
+
+      alert.description = ((text.overview ?? '') + ' ' + (text.description ?? '')).trim();
+    }
+
+    if (!/advisory/i.test(wuAlert.headlineText)) {
+      if (/observed/i.test(wuAlert.certainty) || /warning/i.test(wuAlert.headlineText))
+        alert.severity = 'warning';
+      else if (/likely/i.test(wuAlert.certainty) || /watch/i.test(wuAlert.headlineText))
+        alert.severity = 'watch';
+    }
+
+    return alert;
+  });
 
   return forecast;
 }
