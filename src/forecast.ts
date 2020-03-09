@@ -21,7 +21,7 @@ import * as $ from 'jquery';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { ForecastData } from '../server/src/forecast-types';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { getTextWidth, isEdge, isIE } from 'ks-util';
+import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
 import { setSvgHref } from './util';
 import { AppService } from './app.service';
 import { reflow } from './svg-flow';
@@ -74,6 +74,8 @@ export class Forecast {
   private animationWidth: number;
   private animationDuration: number;
   private animationRequestId = 0;
+  private rainGlyph: string;
+  private snowGlyph: string;
 
   constructor(private appService: AppService) {
     this.currentIcon = $('#current-icon');
@@ -241,6 +243,7 @@ export class Forecast {
       this.dayIcons.forEach((dayIcon, index) => {
         if (forecastData.daily.data.length > todayIndex + index) {
           const daily = forecastData.daily.data[todayIndex + index];
+          const textElem = this.dayPrecipAccums[index];
 
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
@@ -251,17 +254,23 @@ export class Forecast {
 
           let chancePrecip = Math.round(daily.precipProbability * 100) + '%';
 
+          if (!this.rainGlyph) // Raindrop emoji, or umbrella with raindrops
+            this.rainGlyph = doesCharacterGlyphExist(textElem[0], '\uD83D\uDCA7') ? '\uD83D\uDCA7' : '\u2614';
+
+          if (!this.snowGlyph) // Snowflake emoji, or more basic snowflake character
+            this.snowGlyph = doesCharacterGlyphExist(textElem[0], '\u2744\uFE0F') ? '\u2744\uFE0F' : '\u2744';
+
           if (daily.precipType === 'snow')
-            chancePrecip = '\u2744\uFE0F' + chancePrecip; // snowflake
+            chancePrecip = this.snowGlyph + chancePrecip;
           else
-            chancePrecip = '\uD83D\uDCA7' + chancePrecip; // raindrop
+            chancePrecip = this.rainGlyph + chancePrecip;
 
           this.dayChancePrecips[index].text(daily.precipProbability > 0.01 ? chancePrecip : '--');
 
           const accum = daily.precipAccumulation || 0;
           const precision = (accum < 0.995 ? 2 : (accum < 9.95 ? 1 : 0));
 
-          this.dayPrecipAccums[index].text(accum > 0 ? accum.toFixed(precision) + (forecastData.isMetric ? ' cm' : ' in') : '--');
+          textElem.text(accum > 0 ? accum.toFixed(precision) + (forecastData.isMetric ? ' cm' : ' in') : '--');
         }
         else {
           setSvgHref(dayIcon, UNKNOWN_ICON);
