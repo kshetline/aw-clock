@@ -252,9 +252,9 @@ export class Forecast {
           let chancePrecip = Math.round(daily.precipProbability * 100) + '%';
 
           if (daily.precipType === 'snow')
-            chancePrecip += '\u2744'; // snowflake
+            chancePrecip = '\u2744\uFE0F' + chancePrecip; // snowflake
           else
-            chancePrecip += '\u2614'; // umbrella with rain
+            chancePrecip = '\uD83D\uDCA7' + chancePrecip; // raindrop
 
           this.dayChancePrecips[index].text(daily.precipProbability > 0.01 ? chancePrecip : '--');
 

@@ -23,7 +23,9 @@ To build and run this project you can use the following commands:
 
 > Note: A dependency on `node-sass` sometimes causes build problems. It often helps to delete the top level `node_modules` directory, and then do `npm install` over again. I’ve also found that using `LIBSASS_EXT=”no” npm install` helped.
 
-The server requires a Dark Sky API key for weather data. Use the environment variable `AWC_DARK_SKY_API_KEY` to set the key. (See https://darksky.net/ for further details.)
+As of v2.1.0 of this software no API key is required to get weather data. The default weather data, however, is now being acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
+
+Obtaining a Dark Sky API key for back-up weather data is still, therefore, a good idea. Use the environment variable `AWC_DARK_SKY_API_KEY` to set the key. (See https://darksky.net/ for further details.) You can also set the environment variable `AWS_PREFERRED_WS` to `darksky` to make Dark Sky your primary weather source, with Weather Underground as a backup.
 
 By default the server uses `pool.ntp.org` as an NTP time server. Use the environment variable `AWC_NTP_SERVER` to change the time server. Do not use a Google time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to display leap seconds.
 
@@ -31,7 +33,7 @@ By default the server uses `pool.ntp.org` as an NTP time server. Use the environ
 
 _This image is hypothetical — the pictured moment in time is not guaranteed to be an actual leap second. Video here: https://shetline.com/video/leap_second_display.mp4_
 
-To build the server along with the web client, use `npm run build` (possibly followed by `--`, then the `--acu`, `--dht`, and/or other options), executed in the project’s root directory. The contents of the root-level `dist` directory will then contain the Node.js server code, and the client code in the `dist/public` directory. For example:
+To build the server along with the web client, use `npm run build` (possibly followed by `--`, then the `--acu`, `--dht`, and/or other options), executed in the project’s root directory. The contents of the root-level `dist` directory will then contain the Node.js server code, with the client code in the `dist/public` directory. For example:
 
 | &nbsp; | &nbsp; |
 | ------------------------------ | -------------------------------------------------------------- |
