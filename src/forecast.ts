@@ -49,9 +49,13 @@ const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastH
 
 export class Forecast {
   private readonly currentIcon: JQuery;
+  private readonly darkskyLogo: JQuery;
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
+  private readonly settingsBtn: JQuery;
+  private readonly weatherLogo: JQuery;
+  private readonly wundergroundLogo: JQuery;
 
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
@@ -81,6 +85,11 @@ export class Forecast {
       this.dayPrecipAccums[i] = $('#day' + i + '-precip-accum');
     }
 
+    this.darkskyLogo = $('#darksky-logo');
+    this.settingsBtn = $('#settings-btn');
+    this.weatherLogo = $('.weather-logo');
+    this.wundergroundLogo = $('#wunderground-logo');
+
     this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
@@ -94,11 +103,22 @@ export class Forecast {
   }
 
   public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
-    this.getForecast(latitude, longitude, isMetric, userId).then(forecastData => {
+    this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
       this.lastForecastData = forecastData;
       this.lastForecastTime = performance.now();
       this.appService.updateCurrentTemp({ forecastStale: false });
       this.displayForecast(forecastData);
+
+      const ds = (forecastData.source === 'darksky');
+      const wu = (forecastData.source === 'wunderground');
+      const buttonWidth = this.settingsBtn.width();
+      const logoWidth = (ds ? 125 : (wu ? 190 : 8)) + 10;
+
+      this.darkskyLogo.css('display', ds ? 'inline-block' : 'none');
+      this.wundergroundLogo.css('display', wu ? 'inline-block' : 'none');
+      this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
+      this.settingsBtn.css('margin-right', ds || wu ? 0 : 8);
+
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
       const now = performance.now();
@@ -160,8 +180,6 @@ export class Forecast {
 
     if (userId)
       url += '&id=' + encodeURI(userId);
-
-    $.ajax({ url: url.replace('forecast', 'forecast2'), dataType: 'json', success: data => console.log(data) });
 
     return new Promise((resolve, reject) => {
       // noinspection JSIgnoredPromiseFromCall
@@ -238,7 +256,7 @@ export class Forecast {
           else
             chancePrecip += '\u2614'; // umbrella with rain
 
-          this.dayChancePrecips[index].text(chancePrecip);
+          this.dayChancePrecips[index].text(daily.precipProbability > 0.01 ? chancePrecip : '--');
 
           const accum = daily.precipAccumulation || 0;
           const precision = (accum < 0.995 ? 2 : (accum < 9.95 ? 1 : 0));

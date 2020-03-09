@@ -1,9 +1,9 @@
 // #!/usr/bin/env node
 import { jsonOrJsonp } from './common';
 import cookieParser from 'cookie-parser';
-import { router as darkskyRouter } from './darksky-router';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
 import express, { Router } from 'express';
+import { router as forecastRouter } from './forecast-router';
 import * as http from 'http';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
@@ -12,7 +12,6 @@ import * as path from 'path';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { noCache, normalizePort, toBoolean } from './util';
-import { router as wuRouter } from './wunderground-router';
 
 const debug = require('debug')('express:server');
 
@@ -131,8 +130,7 @@ function getApp() {
     });
   }
 
-  theApp.use('/forecast2', darkskyRouter);
-  theApp.use('/forecast', wuRouter);
+  theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
 
   if (indoorRouter)

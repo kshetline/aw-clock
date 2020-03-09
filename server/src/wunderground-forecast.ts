@@ -1,21 +1,17 @@
 import { requestJson, requestText } from 'by-request';
-import { jsonOrJsonp } from './common';
-import { Request, Response, Router } from 'express';
+import { Request, Router } from 'express';
 import { Alert, ForecastData } from './forecast-types';
-import { noCache } from './util';
 
 export const router = Router();
 
-router.get('/', async (req: Request, res: Response) => {
-  noCache(res);
+const parseError = new Error('Error parsing Weather Underground data');
 
+export async function getForecast(req: Request): Promise<ForecastData | Error> {
   try {
     const items = await getContent(req);
 
-    if (!items) {
-      parseError(res);
-      return;
-    }
+    if (!items)
+      return parseError;
 
     const celsius = (req.query.du === 'c');
     const intermediateForecast: any = { alerts: [] };
@@ -39,19 +35,15 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (!intermediateForecast.location || !intermediateForecast.currently ||
         !intermediateForecast.hourly || !intermediateForecast.daily) {
-      parseError(res);
-      return;
+      return parseError;
     }
 
-    const forecast: ForecastData = convertForecast(intermediateForecast);
-
-    forecast.isMetric = celsius;
-    jsonOrJsonp(req, res, forecast);
+    return convertForecast(intermediateForecast, celsius);
   }
   catch (err) {
-    res.status(500).send('Error connecting to Weather Underground: ' + err);
+    return new Error('Error connecting to Weather Underground: ' + err);
   }
-});
+}
 
 async function getContent(req: Request): Promise<any> {
   let result: any = null;
@@ -90,10 +82,6 @@ function decodeWeirdJson(s: string): string {
   }).join('');
 }
 
-function parseError(res: Response): void {
-  res.status(500).send('Error parsing Weather Underground data');
-}
-
 async function adjustUnits(forecast: any, item: any, category: string, celsius: boolean): Promise<void> {
   if (/&units=e&/.test(item.url)) {
     if (celsius)
@@ -114,12 +102,13 @@ function getIcon(iconCode: number): string {
     return 'unknown';
 }
 
-function convertForecast(wuForecast: any): ForecastData {
+function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
   const forecast: ForecastData = { source: 'wunderground' } as ForecastData;
 
   forecast.latitude = wuForecast.location.latitude;
   forecast.longitude = wuForecast.location.longitude;
   forecast.timezone = wuForecast.location.ianaTimeZone;
+  forecast.isMetric = isMetric;
 
   const wc = wuForecast.currently;
   const wh = wuForecast.hourly;

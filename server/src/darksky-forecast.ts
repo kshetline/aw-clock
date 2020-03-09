@@ -1,4 +1,4 @@
-import { Request, Response, Router } from 'express';
+import { Request } from 'express';
 import {
   Alert, AlertKeys,
   CommonConditions,
@@ -8,11 +8,7 @@ import {
   ForecastData,
   ForecastDataKeys
 } from './forecast-types';
-import { noCache } from './util';
 import { requestJson } from 'by-request';
-import { jsonOrJsonp } from './common';
-
-export const router = Router();
 
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;
@@ -22,33 +18,20 @@ interface DarkSkyForecast extends Omit<ForecastData, 'currently'> {
   currently: DSCurrentConditions
 }
 
-router.get('/', async (req: Request, res: Response) => {
-  noCache(res);
-
+export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
-  let url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}/` +
+  const url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}/` +
     `${req.query.lat},${req.query.lon}?exclude=minutely,hourly${isMetric ? '&units=ca' : ''}`;
-  let frequent = false;
-  const match = /(.*)(&id=)([^&]*)$/.exec(url);
-
-  if (match) {
-    url = match[1];
-
-    if (process.env.AWC_FREQUENT_ID && match[3] === process.env.AWC_FREQUENT_ID)
-      frequent = true;
-  }
 
   try {
     const origForecast = (await requestJson(url)) as DarkSkyForecast;
-    const forecast = convertForecast(origForecast, isMetric);
 
-    res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));
-    jsonOrJsonp(req, res, forecast);
+    return convertForecast(origForecast, isMetric);
   }
   catch (err) {
-    res.status(500).send('Error connecting to Dark Sky: ' + err);
+    return new Error('Error connecting to Dark Sky: ' + err);
   }
-});
+}
 
 const iconNames = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night',
                    'cloudy', 'rain', 'sleet', 'snow'];
