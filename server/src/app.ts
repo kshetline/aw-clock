@@ -12,6 +12,7 @@ import * as path from 'path';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { noCache, normalizePort, toBoolean } from './util';
+import { router as wuRouter } from './wunderground-router';
 
 const debug = require('debug')('express:server');
 
@@ -130,7 +131,8 @@ function getApp() {
     });
   }
 
-  theApp.use('/darksky/:loc', darkskyRouter);
+  theApp.use('/forecast', darkskyRouter);
+  theApp.use('/forecast2', wuRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
 
   if (indoorRouter)
