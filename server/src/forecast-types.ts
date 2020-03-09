@@ -48,7 +48,7 @@ export interface Alert {
   severity: 'advisory' | 'watch' | 'warning';
   time: number;
   title: string;
-  url: string;
+  url?: string;
 }
 
 export const ForecastDataKeys = ['latitude', 'longitude', 'timezone', 'currently', 'daily', 'alerts', 'forecastUnavailable',
@@ -58,11 +58,11 @@ export interface ForecastData {
   latitude: number;
   longitude: number;
   timezone: string;
-  currently?: CurrentConditions;
-  daily?: DailySummaryConditions;
+  currently: CurrentConditions;
+  daily: DailySummaryConditions;
   alerts?: Alert[];
   forecastUnavailable?: boolean;
   frequent?: boolean;
-  isMetric?: boolean;
-  source?: string;
+  isMetric: boolean;
+  source: string;
 }

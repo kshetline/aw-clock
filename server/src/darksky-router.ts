@@ -14,7 +14,12 @@ import { jsonOrJsonp } from './common';
 
 export const router = Router();
 
-interface DarkSkyForecast extends ForecastData {
+interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
+  apparentTemperature: number;
+}
+
+interface DarkSkyForecast extends Omit<ForecastData, 'currently'> {
+  currently: DSCurrentConditions
 }
 
 router.get('/', async (req: Request, res: Response) => {
@@ -122,7 +127,7 @@ function convertConditions(dsConditions: CommonConditions, keys: string[], isMet
     if (key === 'icon')
       conditions.icon = getIcon(dsConditions, isMetric);
     else if (key === 'apparentTemperature')
-      (conditions as CurrentConditions).feelsLikeTemperature = (dsConditions as any).apparentTemperature;
+      (conditions as CurrentConditions).feelsLikeTemperature = (dsConditions as DSCurrentConditions).apparentTemperature;
     else if (keys.includes(key))
       (conditions as any)[key] = (dsConditions as any)[key];
   });
