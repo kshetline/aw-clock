@@ -145,7 +145,7 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
       summary: wd.narrative[i],
       temperatureHigh: wd.temperatureMax[i] ?? wc.temperatureMax24Hour,
       temperatureLow: wd.temperatureMin[i] ?? wc.temperatureMin24Hour,
-      time: wd.expirationTimeUtc[i]
+      time: wd.validTimeUtc[i]
     });
   }
 
