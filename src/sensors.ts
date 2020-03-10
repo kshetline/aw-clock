@@ -101,7 +101,7 @@ export class Sensors {
     const flowSpec = this.outdoorMeter[0].getAttributeNS(null, 'svg-flow');
     let newFlowSpec: string;
 
-    this.indoorMeter.css('display', this.wiredAvailable && /[ABC]{1,2}/.test(indoorOption) ? 'block' : 'none');
+    this.indoorMeter.css('display', this.wirelessAvailable && /[ABC]/.test(indoorOption) ? 'block' : 'none');
     this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
 
     if (outdoorOption.length === 2 && this.wirelessAvailable) {

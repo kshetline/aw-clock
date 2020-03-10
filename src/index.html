@@ -175,9 +175,13 @@
       </svg>
     </div>
     <div id="marquee-outer-wrapper"><div id="marquee-wrapper"><div class="marquee-spacer">&nbsp;</div><div id="marquee"></div></div></div>
-    <div class="darksky"><img id="settings-btn" src="assets/gear.svg" width="35" height="40" alt="Settings"><a href="https://darksky.net/poweredby/" target="_blank">
+    <div class="weather-logo"><img id="settings-btn" src="assets/gear.svg" width="35" height="40" alt="Settings"><span
+        id="darksky-logo" style="display: none"><a href="https://darksky.net/poweredby/" target="_blank">
       <!--suppress CheckImageSize -->
-      <img src="assets/dark-sky-logo.png" width="125" height="50" alt="Powered by Dark Sky"></a></div>
+      <img src="assets/dark-sky-logo.png" width="125" height="50" alt="Powered by Dark Sky"></a></span><span
+        id="wunderground-logo"><a href="https://wunderground.com/" target="_blank">
+      <!--suppress CheckImageSize -->
+      <img src="assets/wunderground-logo.png" width="190" height="50" alt="Powered by Dark Sky"></a></span></div>
     <div id="dimmer"></div>
     <div id="settings-dialog" class="dialog-wrapper">
       <div>
@@ -260,7 +264,7 @@
           </div>
         </div>
         <div class="dialog-buttons">
-          <span class="version-number">2.0.4</span>
+          <span class="version-number">2.1.0</span>
           <button id="settings-reload">Reload</button>
           <span>&bull;</span>
           <button id="settings-cancel">Cancel</button>

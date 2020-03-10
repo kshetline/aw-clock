@@ -42,7 +42,7 @@ export class Settings {
     this.latitude = Number(Cookies.get('latitude')) || defaultSettings.latitude;
     this.longitude = Number(Cookies.get('longitude')) || defaultSettings.longitude;
     this.city = Cookies.get('city') || defaultSettings.city;
-    this.indoorOption = Cookies.get('indoor') || 'D';
+    this.indoorOption = Cookies.get('indoor') || this.indoorOption;
     this.outdoorOption = Cookies.get('outdoor') || 'F';
     this.userId = Cookies.get('id') || '';
     this.dimming = Number(Cookies.get('dimming')) || 0;

@@ -84,6 +84,13 @@
       "single", {
         "avoidEscape": true
       }
+    ],
+    "yoda": [
+      "error",
+      "never",
+      {
+        "exceptRange": true
+      }
     ]
   }
 }

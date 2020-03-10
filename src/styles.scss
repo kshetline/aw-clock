@@ -33,7 +33,7 @@ body {
 #marquee-outer-wrapper {
   position: fixed;
   left: 0;
-  right: 170px;
+  right: 235px;
   bottom: 0;
   display: flex;
   flex-direction: column;
@@ -83,7 +83,7 @@ body {
   top: -4px;
 }
 
-.darksky {
+.weather-logo {
   position: fixed;
   right: 0;
   bottom: 0;
@@ -94,7 +94,7 @@ body {
     right: 128px;
   }
 
-  .darksky {
+  .weather-logo {
     zoom: 0.75;
   }
 }

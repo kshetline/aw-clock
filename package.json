@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -22,7 +22,7 @@
     "ks-astronomy": "^1.0.6",
     "ks-date-time-zone": "^1.6.6",
     "ks-math": "^1.1.6",
-    "ks-util": "^1.6.0",
+    "ks-util": "^1.7.1",
     "rxjs": "^6.5.4"
   },
   "devDependencies": {
@@ -33,8 +33,8 @@
     "@types/jquery": "^3.3.33",
     "@types/js-cookie": "^2.2.5",
     "@types/node": "^13.9.0",
-    "@typescript-eslint/eslint-plugin": "^2.22.0",
-    "@typescript-eslint/parser": "^2.22.0",
+    "@typescript-eslint/eslint-plugin": "^2.23.0",
+    "@typescript-eslint/parser": "^2.23.0",
     "autoprefixer": "^9.7.4",
     "chalk": "^3.0.0",
     "circular-dependency-plugin": "^5.2.0",

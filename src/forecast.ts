@@ -19,8 +19,9 @@
 
 import * as $ from 'jquery';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
+import { ForecastData } from '../server/src/forecast-types';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { getTextWidth, isEdge, isIE } from 'ks-util';
+import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
 import { setSvgHref } from './util';
 import { AppService } from './app.service';
 import { reflow } from './svg-flow';
@@ -43,72 +44,18 @@ const FREQUENT_THRESHOLD = 300;
 const MAX_FORECAST_STALENESS = 7200000; // 2 hours
 const MAX_CURRENT_TEMP_STALENESS = 1800000; // 30 minutes
 
-interface CommonConditions {
-  time: number;
-  summary: string;
-  icon: string;
-  humidity: number;
-  cloudCover: number;
-  precipProbability: number;
-  precipIntensity: number;
-  precipType?: string;
-}
-
-interface CurrentConditions extends CommonConditions {
-  temperature: number;
-  apparentTemperature: number;
-}
-
-interface DailyConditions extends CommonConditions {
-  temperatureHigh: number;
-  temperatureLow: number;
-  precipIntensityMax: number;
-  precipAccumulation: number;
-}
-
-interface DailySummaryConditions {
-  summary: string;
-  icon: string;
-  data: DailyConditions[];
-}
-
-interface Alert {
-  description: string;
-  expires: number;
-  regions: string[];
-  severity: 'advisory' | 'watch' | 'warning';
-  time: number;
-  title: string;
-  url: string;
-}
-
-interface Flags {
-  'darksky-unavailable'?: boolean;
-  sources: string[];
-  'isd-stations'?: string[];
-  units: string;
-}
-
-interface ForecastData {
-  latitude: number;
-  longitude: number;
-  timezone: string;
-  currently?: CurrentConditions;
-  daily?: DailySummaryConditions;
-  alerts?: Alert[];
-  flags?: Flags;
-  frequent?: boolean;
-  isMetric?: boolean;
-}
-
 const UNKNOWN_ICON = 'assets/unknown.svg';
 const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
 
 export class Forecast {
   private readonly currentIcon: JQuery;
+  private readonly darkskyLogo: JQuery;
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
+  private readonly settingsBtn: JQuery;
+  private readonly weatherLogo: JQuery;
+  private readonly wundergroundLogo: JQuery;
 
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
@@ -127,6 +74,8 @@ export class Forecast {
   private animationWidth: number;
   private animationDuration: number;
   private animationRequestId = 0;
+  private rainGlyph: string;
+  private snowGlyph: string;
 
   constructor(private appService: AppService) {
     this.currentIcon = $('#current-icon');
@@ -137,6 +86,11 @@ export class Forecast {
       this.dayChancePrecips[i] = $('#day' + i + '-chance-precip');
       this.dayPrecipAccums[i] = $('#day' + i + '-precip-accum');
     }
+
+    this.darkskyLogo = $('#darksky-logo');
+    this.settingsBtn = $('#settings-btn');
+    this.weatherLogo = $('.weather-logo');
+    this.wundergroundLogo = $('#wunderground-logo');
 
     this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
     this.marqueeWrapper = $('#marquee-wrapper');
@@ -151,11 +105,22 @@ export class Forecast {
   }
 
   public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
-    this.getForecast(latitude, longitude, isMetric, userId).then(forecastData => {
+    this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
       this.lastForecastData = forecastData;
       this.lastForecastTime = performance.now();
       this.appService.updateCurrentTemp({ forecastStale: false });
       this.displayForecast(forecastData);
+
+      const ds = (forecastData.source === 'darksky');
+      const wu = (forecastData.source === 'wunderground');
+      const buttonWidth = this.settingsBtn.width();
+      const logoWidth = (ds ? 125 : (wu ? 190 : 8)) + 10;
+
+      this.darkskyLogo.css('display', ds ? 'inline-block' : 'none');
+      this.wundergroundLogo.css('display', wu ? 'inline-block' : 'none');
+      this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
+      this.settingsBtn.css('margin-right', ds || wu ? 0 : 8);
+
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
       const now = performance.now();
@@ -213,10 +178,7 @@ export class Forecast {
   }
 
   private getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {
-    let url = `${this.weatherServer}/darksky/${latitude},${longitude}?exclude=minutely,hourly`;
-
-    if (isMetric)
-      url += '&units=ca';
+    let url = `${this.weatherServer}/forecast/?lat=${latitude}&lon=${longitude}&du=${isMetric ? 'c' : 'f'}`;
 
     if (userId)
       url += '&id=' + encodeURI(userId);
@@ -224,7 +186,7 @@ export class Forecast {
     return new Promise((resolve, reject) => {
       // noinspection JSIgnoredPromiseFromCall
       $.ajax({
-        url: url,
+        url,
         dataType: 'json',
         success: (data: ForecastData, textStatus: string, jqXHR: JQueryXHR) => {
           data.isMetric = isMetric;
@@ -238,8 +200,8 @@ export class Forecast {
               data.frequent = true;
           }
 
-          if (data.flags['darksky-unavailable'])
-            reject(new Error('Dark Sky unavailable'));
+          if (data.forecastUnavailable)
+            reject(new Error('Forecast unavailable'));
           else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
             reject(new Error('Incomplete data'));
           else
@@ -252,54 +214,11 @@ export class Forecast {
     });
   }
 
-  // noinspection JSMethodCanBeStatic
-  private getIcon(conditions: CommonConditions, isMetric: boolean, ignorePrecipProbability = false): string {
-    let icon = conditions.icon;
-    const iconIndex = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night', 'cloudy',
-                       'rain', 'sleet', 'snow'].indexOf(icon);
-    const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
-    let precipIntensity = conditions.precipIntensity;
-    let precipAccumulation = (conditions as DailyConditions).precipAccumulation || 0;
-
-    // Metric precipitation rate is in mm/hr, and needs to be converted to inches/hr.
-    // Accumulated precipitation is in cm, and needs to be converted to inches.
-    if (isMetric) {
-      precipIntensity /= 25.4;
-      precipAccumulation /= 2.54;
-    }
-
-    // Sometimes the icon says "cloudy" or the like, but the numbers look more like rain or snow.
-    // Change the icon if conditions look less favorable.
-    if (!ignorePrecipProbability && iconIndex >= 0 && iconIndex <= 6 &&
-        conditions.precipProbability >= 0.25 &&
-        (precipIntensity >= 0.01 || (conditions.precipProbability >= 0.5 && precipIntensity > 0.0025) || precipAccumulation >= 0.25)) {
-      if (conditions.precipType === 'snow')
-        icon = 'snow';
-      else if (conditions.precipType === 'sleet')
-        icon = 'sleet';
-      else
-        icon = 'rain';
-    }
-
-    // Dark Sky currently doesn't report thunderstorms as a condition by icon value. We'll try to make
-    // up for that by looking at the summary.
-    if (icon === 'rain' && (summary.indexOf('thunder') >= 0 || summary.indexOf('lightning') >= 0)) {
-      icon = 'thunderstorm';
-
-      if (summary.indexOf('scattered') >= 0 || summary.indexOf('isolated') >= 0)
-        icon = 'scattered-thunderstorms-day';
-    }
-    else if (icon === 'rain' && precipIntensity < 0.01)
-      icon = 'light-rain';
-
-    if (conditions.cloudCover < 0.333) {
-      if (icon === 'partly-cloudy-day')
-        icon = 'mostly-clear-day';
-      else if (icon === 'partly-cloudy-night')
-        icon = 'mostly-clear-night';
-    }
-
-    return `assets/${icon}.svg`;
+  getIconSource(icon: string) {
+    if (/^\d\d$/.test(icon))
+      return `assets/indexed-weather/${icon}.svg`;
+    else
+      return `assets/${icon}.svg`;
   }
 
   private displayForecast(forecastData: ForecastData) {
@@ -314,18 +233,19 @@ export class Forecast {
     }
     else {
       this.appService.updateCurrentTemp({
-        forecastFeelsLike: forecastData.currently.apparentTemperature,
+        forecastFeelsLike: forecastData.currently.feelsLikeTemperature,
         forecastHumidity: forecastData.currently.humidity * 100,
         forecastTemp: forecastData.currently.temperature,
       });
 
-      setSvgHref(this.currentIcon, this.getIcon(forecastData.currently, true));
+      setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
       this.dayIcons.forEach((dayIcon, index) => {
         if (forecastData.daily.data.length > todayIndex + index) {
           const daily = forecastData.daily.data[todayIndex + index];
+          const textElem = this.dayPrecipAccums[index];
 
-          setSvgHref(dayIcon, this.getIcon(daily, forecastData.isMetric));
+          setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
           const low = Math.round(daily.temperatureLow);
           const high = Math.round(daily.temperatureHigh);
@@ -334,33 +254,23 @@ export class Forecast {
 
           let chancePrecip = Math.round(daily.precipProbability * 100) + '%';
 
+          if (!this.rainGlyph) // Raindrop emoji, or umbrella with raindrops
+            this.rainGlyph = doesCharacterGlyphExist(textElem[0], '\uD83D\uDCA7') ? '\uD83D\uDCA7' : '\u2614';
+
+          if (!this.snowGlyph) // Snowflake emoji, or more basic snowflake character
+            this.snowGlyph = doesCharacterGlyphExist(textElem[0], '\u2744\uFE0F') ? '\u2744\uFE0F' : '\u2744';
+
           if (daily.precipType === 'snow')
-            chancePrecip += '\u2744'; // snowflake
+            chancePrecip = this.snowGlyph + chancePrecip;
           else
-            chancePrecip += '\u2614'; // umbrella with rain
+            chancePrecip = this.rainGlyph + chancePrecip;
 
-          this.dayChancePrecips[index].text(chancePrecip);
+          this.dayChancePrecips[index].text(daily.precipProbability > 0.01 ? chancePrecip : '--');
 
-          let accum = daily.precipAccumulation || 0;
-
-          if (!accum) {
-            if (forecastData.isMetric) {
-              accum = daily.precipIntensity * 2.4; // mm/hr -> cm/day
-
-              if ((daily.precipType === 'snow' && accum < 0.5) || accum < 0.05)
-                accum = 0;
-            }
-            else {
-              accum = daily.precipIntensity * 24; // in/hr -> in/day
-
-              if ((daily.precipType === 'snow' && accum < 0.2) || accum < 0.02)
-                accum = 0;
-            }
-          }
-
+          const accum = daily.precipAccumulation || 0;
           const precision = (accum < 0.995 ? 2 : (accum < 9.95 ? 1 : 0));
 
-          this.dayPrecipAccums[index].text(accum > 0 ? accum.toFixed(precision) + (forecastData.isMetric ? ' cm' : ' in') : '--');
+          textElem.text(accum > 0 ? accum.toFixed(precision) + (forecastData.isMetric ? ' cm' : ' in') : '--');
         }
         else {
           setSvgHref(dayIcon, UNKNOWN_ICON);

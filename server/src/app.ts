@@ -1,9 +1,9 @@
 // #!/usr/bin/env node
 import { jsonOrJsonp } from './common';
 import cookieParser from 'cookie-parser';
-import { router as darkskyRouter } from './darksky-router';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
 import express, { Router } from 'express';
+import { router as forecastRouter } from './forecast-router';
 import * as http from 'http';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
@@ -130,7 +130,7 @@ function getApp() {
     });
   }
 
-  theApp.use('/darksky/:loc', darkskyRouter);
+  theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
 
   if (indoorRouter)
