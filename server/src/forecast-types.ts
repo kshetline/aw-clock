@@ -16,16 +16,14 @@ export interface CommonConditions {
   precipType?: string;
 }
 
-export const CurrentConditionsKeys = Array.from(CommonConditionsKeys);
-CurrentConditionsKeys.push('temperature', 'feelsLikeTemperature');
+export const CurrentConditionsKeys = [...CommonConditionsKeys, 'temperature', 'feelsLikeTemperature'];
 
 export interface CurrentConditions extends CommonConditions {
   temperature: number;
   feelsLikeTemperature: number;
 }
 
-export const DailyConditionsKeys = Array.from(CommonConditionsKeys);
-DailyConditionsKeys.push('temperatureHigh', 'temperatureLow', 'precipAccumulation');
+export const DailyConditionsKeys = [...CommonConditionsKeys, 'temperatureHigh', 'temperatureLow', 'precipAccumulation'];
 
 export interface DailyConditions extends CommonConditions {
   temperatureHigh: number;

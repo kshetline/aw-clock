@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@types/copyfiles": "^2.1.1",
     "@types/follow-redirects": "^1.8.0",
-    "@types/jasmine": "^3.5.8",
+    "@types/jasmine": "^3.5.9",
     "@types/jasminewd2": "^2.0.8",
     "@types/jquery": "^3.3.33",
     "@types/js-cookie": "^2.2.5",

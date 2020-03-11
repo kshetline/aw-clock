@@ -58,7 +58,7 @@ export class CurrentTempManager {
     }
   }
 
-  // Null values erase old values, undefined values preserver old values, defined values replace old values
+  // Null values erase old values, undefined values preserve old values, defined values replace old values
   updateCurrentTempAndHumidity(cthUpdate: CurrentTemperatureHumidity, celsius: boolean): void {
     Object.keys(cthUpdate ?? {}).forEach(key => {
       if (cthUpdate[key] !== undefined)

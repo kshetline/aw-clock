@@ -554,12 +554,22 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .signal-meter {
-  fill: rgba(63, 255, 63, 0.30)
+  fill: rgba(63, 255, 63, 0.25)
+}
+
+.meter-tint .signal-meter {
+  fill: rgba(63, 63, 255, 0.40)
 }
 
 .signal-level-1 {
   .signal-bar-1 {
     fill: #0F0;
+  }
+}
+
+.signal-level-1.meter-tint {
+  .signal-bar-1 {
+    fill: #5BF;
   }
 }
 
@@ -569,9 +579,21 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   }
 }
 
+.signal-level-2.meter-tint {
+  .signal-bar-1, .signal-bar-2 {
+    fill: #5BF;
+  }
+}
+
 .signal-level-3 {
   .signal-bar-1, .signal-bar-2, .signal-bar-3 {
     fill: #0F0;
+  }
+}
+
+.signal-level-3.meter-tint {
+  .signal-bar-1, .signal-bar-2, .signal-bar-3 {
+    fill: #5BF;
   }
 }
 
@@ -581,9 +603,21 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   }
 }
 
+.signal-level-4.meter-tint {
+  .signal-bar-1, .signal-bar-2, .signal-bar-3, .signal-bar-4 {
+    fill: #5BF;
+  }
+}
+
 .signal-level-5 {
   .signal-bar-1, .signal-bar-2, .signal-bar-3, .signal-bar-4, .signal-bar-5 {
     fill: #0F0;
+  }
+}
+
+.signal-level-5.meter-tint {
+  .signal-bar-1, .signal-bar-2, .signal-bar-3, .signal-bar-4, .signal-bar-5 {
+    fill: #5BF;
   }
 }
 
@@ -607,10 +641,6 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 #temperature-detail {
   font-size: 1.5px;
   fill: #AAA;
-}
-
-.meter-tint {
-  filter: url(#meter-tint);
 }
 
 .equisolstice {
