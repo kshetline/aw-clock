@@ -1,6 +1,8 @@
-import { mod, processMillis, splitIpAndPort } from './util';
+import { mod } from 'ks-math';
+import { processMillis } from 'ks-util';
 import { createSocket, RemoteInfo } from 'dgram';
 import { NtpData } from './ntp-data';
+import { splitIpAndPort } from './util';
 
 export const DEFAULT_NTP_SERVER = 'pool.ntp.org';
 

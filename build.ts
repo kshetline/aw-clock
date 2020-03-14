@@ -2,7 +2,7 @@ import * as Chalk from 'chalk';
 import { ChildProcess, spawn as nodeSpawn } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
-import { processMillis } from './server/src/util';
+import { processMillis } from 'ks-util';
 import * as path from 'path';
 import { promisify } from 'util';
 

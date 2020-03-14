@@ -63,8 +63,10 @@ $.fn.extend({
   }
 });
 
-export function htmlEncode(value) {
-  return $('<div/>').text(value).html();
+const basicEntities: Record<string, string> = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
+
+export function htmlEncode(s: string): string {
+  return s.replace(/[<>&]/g, match => basicEntities[match]);
 }
 
 export function domAlert(message: string): void {

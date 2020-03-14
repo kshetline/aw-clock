@@ -16,6 +16,7 @@ interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperatu
 
 interface DarkSkyForecast extends Omit<ForecastData, 'currently'> {
   currently: DSCurrentConditions
+  flags?: any;
 }
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
@@ -87,7 +88,7 @@ function getIcon(conditions: CommonConditions, isMetric: boolean, ignorePrecipPr
 }
 
 function convertForecast(dsForecast: DarkSkyForecast, isMetric: boolean): ForecastData {
-  const forecast: ForecastData = { source: 'darksky', isMetric } as ForecastData;
+  const forecast: ForecastData = { source: 'darksky', isMetric };
 
   Object.keys(dsForecast).forEach(key => {
     if (key === 'currently')
@@ -99,6 +100,9 @@ function convertForecast(dsForecast: DarkSkyForecast, isMetric: boolean): Foreca
     else if (ForecastDataKeys.includes(key))
       (forecast as any)[key] = (dsForecast as any)[key];
   });
+
+  if ((dsForecast.flags && dsForecast.flags['darksky-unavailable']) || !forecast.currently || !forecast.daily)
+    forecast.unavailable = true;
 
   return forecast;
 }

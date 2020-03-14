@@ -1,5 +1,6 @@
+import { processMillis } from 'ks-util';
 import { Socket } from 'net';
-import { processMillis, splitIpAndPort } from './util';
+import { splitIpAndPort } from './util';
 import { getDateFromDayNumber_SGC, getISOFormatDate } from 'ks-date-time-zone';
 
 export interface DaytimeData {

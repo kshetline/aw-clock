@@ -19,7 +19,8 @@ router.get('/', async (req: Request, res: Response) => {
   else
     forecast = await getWuForecast(req);
 
-  if (forecast instanceof Error && (triedDarksky || process.env.AWC_DARK_SKY_API_KEY))
+  if ((forecast instanceof Error && (triedDarksky || process.env.AWC_DARK_SKY_API_KEY)) ||
+      (!(forecast instanceof Error) && forecast.unavailable))
     forecast = await (triedDarksky ? getWuForecast(req) : getDsForecast(req));
 
   if (forecast instanceof Error)

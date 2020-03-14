@@ -4,14 +4,12 @@ import { Alert, ForecastData } from './forecast-types';
 
 export const router = Router();
 
-const parseError = new Error('Error parsing Weather Underground data');
-
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   try {
     const items = await getContent(req);
 
     if (!items)
-      return parseError;
+      return { source: 'wunderground', unavailable: true };
 
     const celsius = (req.query.du === 'c');
     const intermediateForecast: any = { alerts: [] };
@@ -33,10 +31,8 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
         intermediateForecast.alerts.push(item.value?.alertDetail);
     }
 
-    if (!intermediateForecast.location || !intermediateForecast.currently ||
-        !intermediateForecast.hourly || !intermediateForecast.daily) {
-      return parseError;
-    }
+    if (!intermediateForecast.location)
+      return new Error('Error parsing Weather Underground data');
 
     return convertForecast(intermediateForecast, celsius);
   }
@@ -109,6 +105,11 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
   forecast.longitude = wuForecast.location.longitude;
   forecast.timezone = wuForecast.location.ianaTimeZone;
   forecast.isMetric = isMetric;
+
+  if (!wuForecast.currently || !wuForecast.hourly || !wuForecast.daily) {
+    forecast.unavailable = true;
+    return forecast;
+  }
 
   const wc = wuForecast.currently;
   const wh = wuForecast.hourly;
