@@ -2,6 +2,7 @@ import { Request, Response, Router } from 'express';
 import { jsonOrJsonp } from './common';
 import request from 'request';
 import { noCache } from './util';
+import { processMillis } from 'ks-util';
 
 export interface TempHumidityData {
   batteryLow: boolean;
@@ -17,9 +18,11 @@ export const router = Router();
 
 let callbackId = -1;
 const MAX_DATA_AGE = 900_000; // 15 minutes
+const DEAD_AIR_WARINING_DURATION = 90_000; // 90 seconds
 const readings: Record<string, TempHumidityData> = {};
 let addSensorDataListener: (pin: number | string, callback: (data: any) => void) => number;
 let removeSensorDataListener: (id: number) => void;
+let lastDeadAir = -1;
 
 function removeOldData() {
   const oldestAllowed = Date.now() - MAX_DATA_AGE;
@@ -36,6 +39,11 @@ if (process.env.AWC_WIRELESS_TEMP && !process.env.AWC_ALT_DEV_SERVER) {
 
     callbackId = addSensorDataListener(process.env.AWC_WIRELESS_TEMP, originalData => {
       removeOldData();
+
+      if (originalData.channel === '-') {
+        lastDeadAir = processMillis();
+        return;
+      }
 
       const data = {
         batteryLow: originalData.batteryLow,
@@ -79,7 +87,11 @@ router.get('/', (req: Request, res: Response) => {
   }
   else if (callbackId >= 0) {
     removeOldData();
-    result = readings;
+    result = {};
+    Object.keys(readings).forEach(key => result[key] = readings[key]);
+
+    if (lastDeadAir >= 0 && lastDeadAir + DEAD_AIR_WARINING_DURATION < processMillis())
+      result.deadAir = true;
   }
   else
     result = { error: 'n/a' };

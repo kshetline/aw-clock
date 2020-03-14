@@ -200,7 +200,7 @@ export class Forecast {
               data.frequent = true;
           }
 
-          if (data.forecastUnavailable)
+          if (data.unavailable)
             reject(new Error('Forecast unavailable'));
           else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
             reject(new Error('Incomplete data'));

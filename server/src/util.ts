@@ -1,42 +1,9 @@
 import { Response } from 'express';
 
-let performanceCopy: any;
-
-try {
-  performanceCopy = performance;
-}
-catch (err) {}
-
 export function noCache(res: Response): void {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   res.header('Expires', '-1');
   res.header('Pragma', 'no-cache');
-}
-
-export function processMillis(): number {
-  if (performanceCopy)
-    return performanceCopy.now();
-  else if ((process.hrtime as any).bigint)
-    return Number((process.hrtime as any).bigint()) / 1_000_000;
-  else {
-    const time = process.hrtime();
-
-    return time[0] * 1000 + time[1] / 1_000_000;
-  }
-}
-
-export function toBoolean(str: string): boolean {
-  if (/^(true|t|yes|y)$/i.test(str))
-    return true;
-  else if (/^(false|f|no|n)$/i.test(str))
-    return false;
-
-  const n = Number(str);
-
-  if (!isNaN(n))
-    return n !== 0;
-
-  return undefined;
 }
 
 export function average(values: number[]): number {
@@ -51,16 +18,6 @@ export function stdDev(values: number[]): number {
   });
 
   return Math.sqrt(average(squaredDiffs));
-}
-
-export function mod(x: number, y: number): number {
-  const m = x % y;
-
-  if ((m < 0 && y > 0) || (m > 0 && y < 0)) {
-    return y + m;
-  }
-
-  return m;
 }
 
 /**

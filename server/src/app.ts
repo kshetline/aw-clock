@@ -5,13 +5,14 @@ import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
 import express, { Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import * as http from 'http';
+import { toBoolean } from 'ks-util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
 import * as path from 'path';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { noCache, normalizePort, toBoolean } from './util';
+import { noCache, normalizePort } from './util';
 
 const debug = require('debug')('express:server');
 

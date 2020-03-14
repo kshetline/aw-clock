@@ -1,5 +1,5 @@
+import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
-import { processMillis } from './util';
 
 const MILLIS_PER_DAY = 86_400_000;
 const MAX_ERRORS = 5;

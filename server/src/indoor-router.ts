@@ -1,7 +1,8 @@
 import { jsonOrJsonp } from './common';
 import { Request, Response, Router } from 'express';
+import { toBoolean } from 'ks-util';
 import request from 'request';
-import { average, noCache, stdDev, toBoolean } from './util';
+import { average, noCache, stdDev } from './util';
 
 export const router = Router();
 

@@ -49,18 +49,18 @@ export interface Alert {
   url?: string;
 }
 
-export const ForecastDataKeys = ['latitude', 'longitude', 'timezone', 'currently', 'daily', 'alerts', 'forecastUnavailable',
+export const ForecastDataKeys = ['latitude', 'longitude', 'timezone', 'currently', 'daily', 'alerts', 'unavailable',
                                  'frequent', 'isMetric', 'source'];
 
 export interface ForecastData {
-  latitude: number;
-  longitude: number;
-  timezone: string;
-  currently: CurrentConditions;
-  daily: DailySummaryConditions;
+  latitude?: number;
+  longitude?: number;
+  timezone?: string;
+  currently?: CurrentConditions;
+  daily?: DailySummaryConditions;
   alerts?: Alert[];
-  forecastUnavailable?: boolean;
+  unavailable?: boolean;
   frequent?: boolean;
-  isMetric: boolean;
-  source: string;
+  isMetric?: boolean;
+  source?: string;
 }
