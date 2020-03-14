@@ -26,14 +26,14 @@ let doI2c = false;
 let doStdDeploy = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
-let isRaspberryPi = false;
+let isRaspberryPi = process.argv.includes('--frpi');
 
 const chalk = new Chalk.Instance();
 let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
 
-if (process.platform === 'linux') {
+if (!isRaspberryPi && process.platform === 'linux') {
   try {
     if (fs.existsSync('/proc/cpuinfo')) {
       const lines = fs.readFileSync('/proc/cpuinfo').toString().split('\n');
@@ -52,10 +52,10 @@ if (process.platform === 'linux') {
 }
 
 // Remove extraneous command line args, if present.
-if (/\bts-node\b/.test(process.argv[0] ?? ''))
+if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
 
-if (/\bbuild\.ts\b/.test(process.argv[0] ?? ''))
+if (/\bbuild(\.[jt]s)?\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
 
 if (process.argv.length === 0 && isRaspberryPi) {
@@ -115,7 +115,7 @@ function spin(): void {
   }
 }
 
-function monitorProcess(proc: ChildProcess, doSpin = true): Promise<string> {
+function monitorProcess(proc: ChildProcess, doSpin = true, anyError = false): Promise<string> {
   let errors = '';
   let output = '';
 
@@ -147,12 +147,23 @@ function monitorProcess(proc: ChildProcess, doSpin = true): Promise<string> {
     proc.on('close', () => {
       clearInterval(slowSpin);
 
-      if (errors && (/\b(error|exception)\b/i.test(errors) || /[_0-9a-z](Error|Exception)\b/.test(errors)))
-        reject(errors);
+      if (errors && (
+            anyError ||
+            /\b(error|exception)\b/i.test(errors) ||
+            /[_0-9a-z](Error|Exception)\b/.test(errors)
+         ))
+        reject(errors.replace(/\bE:\s+/g, ''));
       else
         resolve(output);
     });
   });
+}
+
+async function install(cmdPkg: string): Promise<void> {
+  const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), true, true)).trim();
+
+  if (!installed)
+    await monitorProcess(spawn('apt-get', ['install', '-y', cmdPkg]), true, true);
 }
 
 function getWebpackSummary(s: string): string {
@@ -181,6 +192,11 @@ async function npmInit(): Promise<void> {
 
 (async () => {
   try {
+    // await install('unclutter');
+    await install('foo-unknown-blargh');
+    console.log('\ngot here');
+    process.exit(0);
+
     console.log(chalk.cyan('Starting build...'));
     process.stdout.write('Updating client' + trailingSpace);
     await monitorProcess(spawn('npm', ['--dev', 'update']));
