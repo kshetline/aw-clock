@@ -20,7 +20,7 @@
 import { AppService } from './app.service';
 import { DhtSensorData } from '../server/src/indoor-router';
 import * as $ from 'jquery';
-import { TempHumidityData } from '../server/src/temp-humidity-router';
+import { TempHumidityData, TempHumidityItem } from '../server/src/temp-humidity-router';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { updateSvgFlowItems } from './svg-flow';
 import { localServer, runningDev } from './settings';
@@ -126,9 +126,9 @@ export class Sensors {
     Promise.all(promises)
       .then(data => {
         const wired: DhtSensorData = data[0];
-        const wireless: Record<string, TempHumidityData> | { error: string } = data[1];
+        const wireless: TempHumidityData = data[1];
         const lowBatteries: string[] = [];
-        let thd: TempHumidityData;
+        let thd: TempHumidityItem;
         const cth: CurrentTemperatureHumidity = {
           indoorHumidity: null,
           indoorTemp: null,
@@ -166,6 +166,8 @@ export class Sensors {
           this.wirelessAvailable = !(/not found/i.test(err));
         }
         else if (wireless) {
+          this.appService.sensorDeadAir(!!wireless.deadAir);
+
           if ((thd = wireless[indoorOption])) {
             if (thd.reliable) {
               cth.indoorTemp = adjustTemp(thd.temperature);

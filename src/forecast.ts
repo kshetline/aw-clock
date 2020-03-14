@@ -22,7 +22,7 @@ import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { ForecastData } from '../server/src/forecast-types';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
-import { setSvgHref } from './util';
+import { htmlEncode, setSvgHref } from './util';
 import { AppService } from './app.service';
 import { reflow } from './svg-flow';
 
@@ -36,6 +36,9 @@ const WATCH_BACKGROUND = 'orange';
 const WATCH_FOREGROUND = 'black';
 const WARNING_BACKGROUND = 'red';
 const WARNING_FOREGROUND = 'white';
+
+const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
+const CLOSE_ERROR_TAG = '&nbsp;</span>';
 
 const MARQUEE_SPEED = 100; // pixels per second
 
@@ -224,8 +227,7 @@ export class Forecast {
   private displayForecast(forecastData: ForecastData) {
     this.timezone = KsTimeZone.getTimeZone(forecastData.timezone);
 
-    const now = this.appService.getCurrentTime();
-    const today = new KsDateTime(now, this.timezone);
+    const today = new KsDateTime(this.appService.getCurrentTime(), this.timezone);
     const todayIndex = forecastData.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, this.timezone).wallTime.d === today.wallTime.d);
 
     if (todayIndex < 0) {
@@ -280,67 +282,75 @@ export class Forecast {
         }
       });
 
-      let newText;
-      let maxSeverity = 0;
-      const alerts: string[] = [];
-
-      if (forecastData.daily.summary)
-        alerts.push(forecastData.daily.summary);
-
-      if (forecastData.alerts) {
-        forecastData.alerts.forEach(alert => {
-          const expires = alert.expires * 1000;
-
-          if (expires >= now) {
-            const severities = ['advisory', 'watch', 'warning'];
-            maxSeverity = Math.max(severities.indexOf(alert.severity) + 1, maxSeverity);
-            alerts.push(alert.title + ': ' + alert.description);
-          }
-        });
-      }
-
-      const alertText = alerts.join(' \u2022 '); // Bullet
-
-      if (alertText) {
-        let background;
-        let color;
-
-        switch (maxSeverity) {
-          case 0:
-            background = DEFAULT_BACKGROUND;
-            color = DEFAULT_FOREGROUND;
-            break;
-
-          case 1:
-            background = ADVISORY_BACKGROUND;
-            color = ADVISORY_FOREGROUND;
-            break;
-
-          case 2:
-            background = WATCH_BACKGROUND;
-            color = WATCH_FOREGROUND;
-            break;
-
-          case 3:
-            background = WARNING_BACKGROUND;
-            color = WARNING_FOREGROUND;
-            break;
-        }
-
-        newText = alertText;
-        this.marqueeOuterWrapper.css('background-color', background);
-        this.marqueeOuterWrapper.css('color', color);
-      }
-      else {
-        newText = '\u00A0';
-        this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
-        this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
-      }
-
-      this.updateMarqueeAnimation(newText);
+      this.refreshAlerts(forecastData);
     }
 
     setTimeout(reflow);
+  }
+
+  public refreshAlerts(forecastData = this.lastForecastData) {
+    let newText;
+    let maxSeverity = 0;
+    const alerts: string[] = [];
+    const now = this.appService.getCurrentTime();
+
+    if (this.appService.sensorDeadAir())
+      alerts.push('{{WIRELESS TEMPERATURE/HUMIDITY SIGNAL NOT PRESENT - possible disconnect or bad pin assignment}}');
+
+    if (forecastData?.daily.summary)
+      alerts.push(forecastData.daily.summary);
+
+    if (forecastData?.alerts) {
+      forecastData.alerts.forEach(alert => {
+        const expires = alert.expires * 1000;
+
+        if (expires >= now) {
+          const severities = ['advisory', 'watch', 'warning'];
+          maxSeverity = Math.max(severities.indexOf(alert.severity) + 1, maxSeverity);
+          alerts.push(alert.title + ': ' + alert.description);
+        }
+      });
+    }
+
+    const alertText = alerts.join(' \u2022 '); // Bullet
+
+    if (alertText) {
+      let background;
+      let color;
+
+      switch (maxSeverity) {
+        case 0:
+          background = DEFAULT_BACKGROUND;
+          color = DEFAULT_FOREGROUND;
+          break;
+
+        case 1:
+          background = ADVISORY_BACKGROUND;
+          color = ADVISORY_FOREGROUND;
+          break;
+
+        case 2:
+          background = WATCH_BACKGROUND;
+          color = WATCH_FOREGROUND;
+          break;
+
+        case 3:
+          background = WARNING_BACKGROUND;
+          color = WARNING_FOREGROUND;
+          break;
+      }
+
+      newText = alertText;
+      this.marqueeOuterWrapper.css('background-color', background);
+      this.marqueeOuterWrapper.css('color', color);
+    }
+    else {
+      newText = '\u00A0';
+      this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
+      this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
+    }
+
+    this.updateMarqueeAnimation(newText);
   }
 
   private updateMarqueeAnimation(newText: string): void {
@@ -354,13 +364,14 @@ export class Forecast {
       newText = this.marqueeText;
 
     const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
-    const textWidth = getTextWidth(newText, this.marquee[0]);
+    const textWidth = getTextWidth(newText.replace(/{{|}}/g, '\u00A0'), this.marquee[0]);
 
+    newText = htmlEncode(newText).replace(/{{/g, START_ERROR_TAG).replace(/}}/g, CLOSE_ERROR_TAG);
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
     if (textWidth <= marqueeWidth) {
-      this.marquee.text(newText);
+      this.marquee.html(newText);
       this.animationStart = 0;
       this.appService.updateMarqueeState(false);
 
@@ -372,7 +383,7 @@ export class Forecast {
       return;
     }
 
-    this.marquee.text(newText + this.marqueeJoiner + newText);
+    this.marquee.html(newText + this.marqueeJoiner + newText);
     this.animationStart = performance.now();
     this.animationWidth = textWidth + getTextWidth(this.marqueeJoiner, this.marquee[0]);
     this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;

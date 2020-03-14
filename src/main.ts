@@ -42,6 +42,7 @@ const ntpPoller = new HttpTimePoller(weatherServer);
 const baseTime = ntpPoller.getTimeInfo().time;
 const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
 const debugTimeRate = 60;
+let sensorDeadAirState = false;
 
 function parseTime(s: string): number {
   const parts = s.split(':');
@@ -158,6 +159,18 @@ class AwClockApp implements AppService {
     }));
 
     return this.proxyStatus;
+  }
+
+  sensorDeadAir(isDead?: boolean): boolean {
+    const wasDead = sensorDeadAirState;
+
+    if (isDead != null)
+      sensorDeadAirState = isDead;
+
+    if (wasDead !== isDead)
+      setTimeout(() => this.forecast.refreshAlerts());
+
+    return sensorDeadAirState;
   }
 
   getWeatherServer(): string {

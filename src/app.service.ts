@@ -12,6 +12,7 @@ export interface AppService {
   getWeatherServer(): string;
   isTimeAccelerated(): boolean;
   proxySensorUpdate(): Promise<boolean>;
+  sensorDeadAir(isDead?: boolean): boolean;
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
   updateSettings(newSettings: Settings);
