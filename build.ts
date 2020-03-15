@@ -148,10 +148,10 @@ function monitorProcess(proc: ChildProcess, doSpin = true, anyError = false): Pr
       clearInterval(slowSpin);
 
       if (errors && (
-            anyError ||
-            /\b(error|exception)\b/i.test(errors) ||
-            /[_0-9a-z](Error|Exception)\b/.test(errors)
-         ))
+        anyError ||
+        /\b(error|exception)\b/i.test(errors) ||
+        /[_0-9a-z](Error|Exception)\b/.test(errors)
+      ))
         reject(errors.replace(/\bE:\s+/g, ''));
       else
         resolve(output);
