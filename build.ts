@@ -309,7 +309,7 @@ function showStep(): void {
     const user = process.env.SUDO_USER || process.env.USER || 'pi';
     const uid = Number((await monitorProcess(spawn('id', ['-u', user]), false)).trim() || '1000');
 
-    userHome = (await monitorProcess(spawn('grep', [user, '/etc/passwd'])))
+    userHome = (await monitorProcess(spawn('grep', [user, '/etc/passwd']), false))
       .split(':')[5] || userHome;
     sudoUser = user;
 
@@ -446,7 +446,9 @@ function showStep(): void {
       fs.writeFileSync(settingsPath, settingsText);
       await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']));
       await monitorProcess(spawn('systemctl', ['enable', 'weatherService']));
+      await monitorProcess(spawn('service', ['weatherService', 'start']));
       stepDone();
+      process.exit(0);
     }
   }
   catch (err) {
