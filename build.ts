@@ -32,7 +32,7 @@ const chalk = new Chalk.Instance();
 let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 7;
+let totalSteps = 9;
 let currentStep = 0;
 
 if (!isRaspberryPi && process.platform === 'linux') {
@@ -175,22 +175,38 @@ function monitorProcess(proc: ChildProcess, doSpin = true, anyError = false): Pr
   });
 }
 
+function sleep(delay: number, doSpin = true): Promise<void> {
+  doSpin = doSpin && canSpin;
+
+  return new Promise<void>(resolve => {
+    const slowSpin = setInterval(doSpin ? spin : NO_OP, MAX_SPIN_DELAY);
+
+    setTimeout(() => {
+      clearInterval(slowSpin);
+      resolve();
+    }, delay);
+  });
+}
+
 function stepDone(): void {
   console.log(backspace + chalk.green(CHECK_MARK));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function install(cmdPkg: string): Promise<void> {
+async function install(cmdPkg: string): Promise<boolean> {
   showStep();
 
   const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), false, true)).trim();
 
-  if (installed)
+  if (installed) {
     console.log(`${cmdPkg} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
+    return false;
+  }
   else {
     write(`Installing ${cmdPkg}` + trailingSpace);
     await monitorProcess(spawn('apt-get', ['install', '-y', cmdPkg]), true, true);
     stepDone();
+    return true;
   }
 }
 
@@ -224,8 +240,38 @@ function showStep(): void {
 
 (async () => {
   try {
+    const user = process.env.SUDO_USER || process.env.USER || 'pi';
+    const uid = Number((await monitorProcess(spawn('id', ['-u', user]), false)).trim() || '1000');
     await install('chromium');
     await install('unclutter');
+
+    const screenSaverJustInstalled = await install('xscreensaver');
+    const settingsFile = `/home/${user}/.xscreensaver`;
+
+    showStep();
+    write('Disabling screen saver' + trailingSpace);
+
+    if (screenSaverJustInstalled || !fs.existsSync(settingsFile)) {
+      const procList = await monitorProcess(spawn('ps', ['-ax']));
+      const saverRunning = /\d\s+xscreensaver\b/.test(procList);
+
+      if (!saverRunning) {
+        spawn('xscreensaver', [], { uid, detached: true });
+        sleep(500);
+      }
+
+      const settingsProcess = spawn('xscreensaver-demo', [], { uid });
+
+      await sleep(3000);
+      settingsProcess.kill('SIGTERM');
+      await sleep(500);
+    }
+
+    await monitorProcess(spawn('sed',
+      ['-i', '-r', "'s/^(mode:\\s+)\\w+$/\\1off/'", settingsFile],
+      { uid, shell: true }), true, true);
+    stepDone();
+
     process.exit(0);
 
     console.log(chalk.cyan('Starting build...'));
