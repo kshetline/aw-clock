@@ -29,6 +29,7 @@ const app = getApp();
 const httpServer = http.createServer(app);
 
 // listen on provided ports
+console.log('*** starting server ***');
 httpServer.listen(httpPort);
 
 function shutdown() {

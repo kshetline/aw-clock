@@ -35,13 +35,15 @@ const chalk = new Chalk.Instance();
 let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 4;
+let totalSteps = 5;
 let currentStep = 0;
 const settings: any = {
   AWC_ALLOW_CORS: true
 };
 
 let spawnUid = -1;
+let userHome = '/home/pi';
+let sudoUser = 'pi';
 const cpuPath = '/proc/cpuinfo';
 const settingsPath = '/etc/default/weatherService';
 const serviceSrc = path.join(__dirname, 'raspberry_pi_setup/weatherService');
@@ -155,6 +157,16 @@ function spawn(command: string, args: string[] = [], options?: any): ChildProces
   if (spawnUid >= 0 && (!options || !('uid' in options))) {
     options = options ?? {};
     options.uid = spawnUid;
+
+    if (!options.env) {
+      options.env = {};
+      Object.assign(options.env, process.env);
+    }
+
+    options.env.HOME = userHome;
+    options.env.LOGNAME = sudoUser;
+    options.env.npm_config_cache = userHome + '/.npm';
+    options.env.USER = sudoUser;
   }
 
   if (isWindows) {
@@ -297,6 +309,10 @@ function showStep(): void {
     const user = process.env.SUDO_USER || process.env.USER || 'pi';
     const uid = Number((await monitorProcess(spawn('id', ['-u', user]), false)).trim() || '1000');
 
+    userHome = (await monitorProcess(spawn('grep', [user, '/etc/passwd'])))
+      .split(':')[5] || userHome;
+    sudoUser = user;
+
     if (doTools) {
       console.log(chalk.cyan('- Tools installation -'));
       showStep();
@@ -309,7 +325,7 @@ function showStep(): void {
       await install('forever', true);
 
       const screenSaverJustInstalled = await install('xscreensaver');
-      const settingsFile = `/home/${user}/.xscreensaver`;
+      const settingsFile = `${userHome}/.xscreensaver`;
 
       showStep();
       write('Disabling screen saver' + trailingSpace);
@@ -346,9 +362,9 @@ function showStep(): void {
     }
 
     console.log(chalk.cyan('- Building application -'));
-    spawnUid = uid;
     showStep();
     write('Updating client' + trailingSpace);
+    spawnUid = uid;
     await monitorProcess(spawn('npm', ['--dev', 'update']));
     stepDone();
 
@@ -406,12 +422,12 @@ function showStep(): void {
       showStep();
       write('Moving server to ~/weather directory' + trailingSpace);
 
-      if (!fs.existsSync(process.env.HOME + '/weather'))
-        fs.mkdirSync(process.env.HOME + '/weather');
+      if (!fs.existsSync(userHome + '/weather'))
+        await monitorProcess(spawn('mkdir', [userHome + '/weather']));
       else
-        await monitorProcess(spawn('rm', ['-Rf', '~/weather/*'], { shell: true }), true, ErrorMode.ANY_ERROR);
+        await monitorProcess(spawn('rm', ['-Rf', userHome + '/weather/*'], { shell: true }), true, ErrorMode.ANY_ERROR);
 
-      await monitorProcess(spawn('mv', ['dist/*', '~/weather'], { shell: true }), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('mv', ['dist/*', userHome + '/weather'], { shell: true }), true, ErrorMode.ANY_ERROR);
       stepDone();
     }
 
@@ -436,5 +452,6 @@ function showStep(): void {
   catch (err) {
     console.log(backspace + chalk.red(FAIL_MARK));
     console.error(err);
+    process.exit(1);
   }
 })();

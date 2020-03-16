@@ -26,7 +26,7 @@ export const router = Router();
 
 let callbackId = -1;
 const MAX_DATA_AGE = 900_000; // 15 minutes
-const DEAD_AIR_WARINING_DURATION = 90_000; // 90 seconds
+const DEAD_AIR_WARNING_DURATION = 90_000; // 90 seconds
 const readings: Record<string, TempHumidityItem> = {};
 let addSensorDataListener: (pin: number | string, callback: (data: any) => void) => number;
 let removeSensorDataListener: (id: number) => void;
@@ -101,7 +101,7 @@ router.get('/', (req: Request, res: Response) => {
     result = {};
     Object.keys(readings).forEach(key => (result as any)[key] = readings[key]);
 
-    if (lastDeadAir >= 0 && lastDeadAir + DEAD_AIR_WARINING_DURATION > processMillis())
+    if (lastDeadAir >= 0 && lastDeadAir + DEAD_AIR_WARNING_DURATION > processMillis())
       result.deadAir = true;
   }
   else
