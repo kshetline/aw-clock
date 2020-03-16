@@ -6,6 +6,8 @@ import { processMillis } from 'ks-util';
 import * as path from 'path';
 import { promisify } from 'util';
 
+enum ErrorMode { DEFAULT, ANY_ERROR, NO_ERRORS }
+
 const CHECK_MARK = '\u2714';
 const FAIL_MARK = '\u2718';
 const SPIN_CHARS = '|/-\\';
@@ -24,6 +26,7 @@ let doDht = false;
 let doGps = false;
 let doI2c = false;
 let doStdDeploy = false;
+let doTools = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
 let isRaspberryPi = process.argv.includes('--frpi');
@@ -32,13 +35,22 @@ const chalk = new Chalk.Instance();
 let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 9;
+let totalSteps = 4;
 let currentStep = 0;
+const settings: any = {
+  AWC_ALLOW_CORS: true
+};
+
+let spawnUid = -1;
+const cpuPath = '/proc/cpuinfo';
+const settingsPath = '/etc/default/weatherService';
+const serviceSrc = path.join(__dirname, 'raspberry_pi_setup/weatherService');
+const serviceDst = '/etc/init.d/.';
 
 if (!isRaspberryPi && process.platform === 'linux') {
   try {
-    if (fs.existsSync('/proc/cpuinfo')) {
-      const lines = fs.readFileSync('/proc/cpuinfo').toString().split('\n');
+    if (fs.existsSync(cpuPath)) {
+      const lines = fs.readFileSync(cpuPath).toString().split('\n');
 
       for (const line of lines) {
         if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
@@ -89,11 +101,16 @@ process.argv.forEach(arg => {
     totalSteps += doStdDeploy ? 0 : 1;
     doStdDeploy = true;
   }
+  else if (arg === '--tools') {
+    totalSteps += (doTools ? 0 : 7) + (doStdDeploy ? 0 : 1);
+    doStdDeploy = true;
+    doTools = true;
+  }
   else if (arg === '--wwvb') {
     totalSteps += (doWwvb ? 0 : 1) + (doI2c ? 0 : 1);
     doWwvb = doI2c = true;
   }
-  else {
+  else if (arg !== '--frpi') {
     if (arg !== '--help')
       console.error('Unrecognized option "' + chalk.red(arg) + '"');
 
@@ -107,11 +124,39 @@ if (doStdDeploy && !isRaspberryPi) {
   process.exit(0);
 }
 
+if (doTools && !isRaspberryPi) {
+  console.error(chalk.red('--tools option is only valid on Raspberry Pi'));
+  process.exit(0);
+}
+
+if (isRaspberryPi) {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const lines = fs.readFileSync(settingsPath).toString().split('\n');
+
+      lines.forEach(line => {
+        const $ = /(\w+)\s*=\s*(\S+)/.exec(line);
+
+        if ($)
+          settings[$[1]] = $[2];
+      });
+    }
+  }
+  catch (err) {
+    console.error(chalk.red('Existing settings check failed'));
+  }
+}
+
 function write(s: string): void {
   process.stdout.write(s);
 }
 
 function spawn(command: string, args: string[] = [], options?: any): ChildProcess {
+  if (spawnUid >= 0 && (!options || !('uid' in options))) {
+    options = options ?? {};
+    options.uid = spawnUid;
+  }
+
   if (isWindows) {
     const cmd = process.env.comspec || 'cmd';
 
@@ -131,7 +176,7 @@ function spin(): void {
   }
 }
 
-function monitorProcess(proc: ChildProcess, doSpin = true, anyError = false): Promise<string> {
+function monitorProcess(proc: ChildProcess, doSpin = true, errorMode = ErrorMode.DEFAULT): Promise<string> {
   let errors = '';
   let output = '';
 
@@ -158,13 +203,17 @@ function monitorProcess(proc: ChildProcess, doSpin = true, anyError = false): Pr
     });
     proc.on('error', err => {
       clearInterval(slowSpin);
-      reject(err);
+
+      if (errorMode !== ErrorMode.NO_ERRORS)
+        resolve();
+      else
+        reject(err);
     });
     proc.on('close', () => {
       clearInterval(slowSpin);
 
-      if (errors && (
-        anyError ||
+      if (errorMode !== ErrorMode.NO_ERRORS && errors && (
+        errorMode === ErrorMode.ANY_ERROR ||
         /\b(error|exception)\b/i.test(errors) ||
         /[_0-9a-z](Error|Exception)\b/.test(errors)
       ))
@@ -193,10 +242,10 @@ function stepDone(): void {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function install(cmdPkg: string): Promise<boolean> {
+async function install(cmdPkg: string, viaNpm = false): Promise<boolean> {
   showStep();
 
-  const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), false, true)).trim();
+  const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), false, ErrorMode.ANY_ERROR)).trim();
 
   if (installed) {
     console.log(`${cmdPkg} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
@@ -204,7 +253,12 @@ async function install(cmdPkg: string): Promise<boolean> {
   }
   else {
     write(`Installing ${cmdPkg}` + trailingSpace);
-    await monitorProcess(spawn('apt-get', ['install', '-y', cmdPkg]), true, true);
+
+    if (viaNpm)
+      await monitorProcess(spawn('npm', ['install', '-g', cmdPkg]), true, ErrorMode.ANY_ERROR);
+    else
+      await monitorProcess(spawn('apt-get', ['install', '-y', cmdPkg]), true, ErrorMode.ANY_ERROR);
+
     stepDone();
     return true;
   }
@@ -242,39 +296,57 @@ function showStep(): void {
   try {
     const user = process.env.SUDO_USER || process.env.USER || 'pi';
     const uid = Number((await monitorProcess(spawn('id', ['-u', user]), false)).trim() || '1000');
-    await install('chromium');
-    await install('unclutter');
 
-    const screenSaverJustInstalled = await install('xscreensaver');
-    const settingsFile = `/home/${user}/.xscreensaver`;
+    if (doTools) {
+      console.log(chalk.cyan('- Tools installation -'));
+      showStep();
+      write('Shutdown weatherService if running' + trailingSpace);
+      await monitorProcess(spawn('service', ['weatherService', 'stop']), true, ErrorMode.NO_ERRORS);
+      stepDone();
 
-    showStep();
-    write('Disabling screen saver' + trailingSpace);
+      await install('chromium');
+      await install('unclutter');
+      await install('forever', true);
 
-    if (screenSaverJustInstalled || !fs.existsSync(settingsFile)) {
-      const procList = await monitorProcess(spawn('ps', ['-ax']));
-      const saverRunning = /\d\s+xscreensaver\b/.test(procList);
+      const screenSaverJustInstalled = await install('xscreensaver');
+      const settingsFile = `/home/${user}/.xscreensaver`;
 
-      if (!saverRunning) {
-        spawn('xscreensaver', [], { uid, detached: true });
-        sleep(500);
+      showStep();
+      write('Disabling screen saver' + trailingSpace);
+
+      if (screenSaverJustInstalled || !fs.existsSync(settingsFile)) {
+        const procList = await monitorProcess(spawn('ps', ['-ax']));
+        const saverRunning = /\d\s+xscreensaver\b/.test(procList);
+
+        if (!saverRunning) {
+          spawn('xscreensaver', [], { uid, detached: true });
+          sleep(500);
+        }
+
+        const settingsProcess = spawn('xscreensaver-demo', [], { uid });
+
+        await sleep(3000);
+        settingsProcess.kill('SIGTERM');
+        await sleep(500);
       }
 
-      const settingsProcess = spawn('xscreensaver-demo', [], { uid });
+      await monitorProcess(spawn('sed',
+        ['-i', '-r', "'s/^(mode:\\s+)\\w+$/\\1off/'", settingsFile],
+        { uid, shell: true }), true, ErrorMode.ANY_ERROR);
 
-      await sleep(3000);
-      settingsProcess.kill('SIGTERM');
-      await sleep(500);
+      // Stop and restart screen saver to make sure modified settings are read
+      const procList = await monitorProcess(spawn('ps', ['-ax']));
+      const ssProcessNo = (/^(\d+)\s+.*\d\s+xscreensaver\b/.exec(procList) ?? [])[1];
+
+      if (ssProcessNo)
+        await monitorProcess(spawn('kill', [ssProcessNo]));
+
+      spawn('xscreensaver', [], { uid, detached: true });
+      stepDone();
     }
 
-    await monitorProcess(spawn('sed',
-      ['-i', '-r', "'s/^(mode:\\s+)\\w+$/\\1off/'", settingsFile],
-      { uid, shell: true }), true, true);
-    stepDone();
-
-    process.exit(0);
-
-    console.log(chalk.cyan('Starting build...'));
+    console.log(chalk.cyan('- Building application -'));
+    spawnUid = uid;
     showStep();
     write('Updating client' + trailingSpace);
     await monitorProcess(spawn('npm', ['--dev', 'update']));
@@ -337,9 +409,27 @@ function showStep(): void {
       if (!fs.existsSync(process.env.HOME + '/weather'))
         fs.mkdirSync(process.env.HOME + '/weather');
       else
-        await monitorProcess(spawn('rm', ['-Rf', '~/weather/*'], { shell: true }));
+        await monitorProcess(spawn('rm', ['-Rf', '~/weather/*'], { shell: true }), true, ErrorMode.ANY_ERROR);
 
-      await monitorProcess(spawn('mv', ['dist/*', '~/weather'], { shell: true }));
+      await monitorProcess(spawn('mv', ['dist/*', '~/weather'], { shell: true }), true, ErrorMode.ANY_ERROR);
+      stepDone();
+    }
+
+    if (doTools) {
+      spawnUid = -1;
+      console.log(chalk.cyan('- Service deployment -'));
+
+      showStep();
+      write('Create or redeploy weatherService' + trailingSpace);
+      await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
+
+      const settingsText = Object.keys(settings).map(key =>
+        key + '=' + settings[key]).join('\n') + '\n';
+
+      fs.writeFileSync(settingsPath, settingsText);
+      await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']));
+      await monitorProcess(spawn('systemctl', ['enable', 'weatherService']));
       stepDone();
     }
   }
