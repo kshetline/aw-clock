@@ -32,6 +32,8 @@ const chalk = new Chalk.Instance();
 let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
+let totalSteps = 7;
+let currentStep = 0;
 
 if (!isRaspberryPi && process.platform === 'linux') {
   try {
@@ -65,22 +67,32 @@ if (process.argv.length === 0 && isRaspberryPi) {
 }
 
 process.argv.forEach(arg => {
-  if (arg === '--acu')
+  if (arg === '--acu') {
+    totalSteps += doAcu ? 0 : 1;
     doAcu = true;
-  else if (arg === '--dht')
+  }
+  else if (arg === '--dht') {
+    totalSteps += doDht ? 0 : 1;
     doDht = true;
-  else if (arg === '--gps')
+  }
+  else if (arg === '--gps') {
+    totalSteps += (doGps ? 0 : 1) + (doI2c ? 0 : 1);
     doGps = doI2c = true;
+  }
   else if (arg === '--pt') {
     canSpin = false;
     chalk.level = 0;
     backspace = '';
     trailingSpace = ' ';
   }
-  else if (arg === '--sd')
+  else if (arg === '--sd') {
+    totalSteps += doStdDeploy ? 0 : 1;
     doStdDeploy = true;
-  else if (arg === '--wwvb')
+  }
+  else if (arg === '--wwvb') {
+    totalSteps += (doWwvb ? 0 : 1) + (doI2c ? 0 : 1);
     doWwvb = doI2c = true;
+  }
   else {
     if (arg !== '--help')
       console.error('Unrecognized option "' + chalk.red(arg) + '"');
@@ -93,6 +105,10 @@ process.argv.forEach(arg => {
 if (doStdDeploy && !isRaspberryPi) {
   console.error(chalk.red('--sd option is only valid on Raspberry Pi'));
   process.exit(0);
+}
+
+function write(s: string): void {
+  process.stdout.write(s);
 }
 
 function spawn(command: string, args: string[] = [], options?: any): ChildProcess {
@@ -110,7 +126,7 @@ function spin(): void {
 
   if (lastSpin < now - SPIN_DELAY) {
     lastSpin = now;
-    process.stdout.write(backspace + SPIN_CHARS.charAt(spinStep));
+    write(backspace + SPIN_CHARS.charAt(spinStep));
     spinStep = (spinStep + 1) % 4;
   }
 }
@@ -159,11 +175,23 @@ function monitorProcess(proc: ChildProcess, doSpin = true, anyError = false): Pr
   });
 }
 
-async function install(cmdPkg: string): Promise<void> {
-  const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), true, true)).trim();
+function stepDone(): void {
+  console.log(backspace + chalk.green(CHECK_MARK));
+}
 
-  if (!installed)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function install(cmdPkg: string): Promise<void> {
+  showStep();
+
+  const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), false, true)).trim();
+
+  if (installed)
+    console.log(`${cmdPkg} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
+  else {
+    write(`Installing ${cmdPkg}` + trailingSpace);
     await monitorProcess(spawn('apt-get', ['install', '-y', cmdPkg]), true, true);
+    stepDone();
+  }
 }
 
 function getWebpackSummary(s: string): string {
@@ -190,63 +218,75 @@ async function npmInit(): Promise<void> {
   }
 }
 
+function showStep(): void {
+  write(`Step ${++currentStep} of ${totalSteps}: `);
+}
+
 (async () => {
   try {
-    // await install('unclutter');
-    await install('foo-unknown-blargh');
-    console.log('\ngot here');
+    await install('chromium');
+    await install('unclutter');
     process.exit(0);
 
     console.log(chalk.cyan('Starting build...'));
-    process.stdout.write('Updating client' + trailingSpace);
+    showStep();
+    write('Updating client' + trailingSpace);
     await monitorProcess(spawn('npm', ['--dev', 'update']));
-    console.log(backspace + chalk.green(CHECK_MARK));
+    stepDone();
 
-    process.stdout.write('Building client' + trailingSpace);
+    showStep();
+    write('Building client' + trailingSpace);
     if (fs.existsSync('dist'))
       await monitorProcess(spawn('rm', ['-Rf', 'dist']));
     let output = await monitorProcess(spawn('webpack'));
-    console.log(backspace + chalk.green(CHECK_MARK));
+    stepDone();
     console.log(chalk.hex('#808080')(getWebpackSummary(output)));
 
-    process.stdout.write('Updating server' + trailingSpace);
+    showStep();
+    write('Updating server' + trailingSpace);
     await monitorProcess(spawn('npm', ['--dev', 'update'], { cwd: path.join(__dirname, 'server') }));
-    console.log(backspace + chalk.green(CHECK_MARK));
+    stepDone();
 
-    process.stdout.write('Building server' + trailingSpace);
+    showStep();
+    write('Building server' + trailingSpace);
     if (fs.existsSync('server/dist'))
       await monitorProcess(spawn('rm', ['-Rf', 'server/dist']));
     output = await monitorProcess(spawn('npm', ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }));
-    console.log(backspace + chalk.green(CHECK_MARK));
+    stepDone();
     console.log(chalk.hex('#808080')(getWebpackSummary(output)));
 
     if (doAcu) {
-      process.stdout.write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
+      showStep();
+      write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
       await npmInit();
       await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature@2.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      console.log(backspace + chalk.green(CHECK_MARK));
+      stepDone();
     }
 
     if (doDht) {
-      process.stdout.write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
+      showStep();
+      write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
       await npmInit();
       await monitorProcess(spawn('npm', ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      console.log(backspace + chalk.green(CHECK_MARK));
+      stepDone();
     }
 
     if (doI2c) {
-      process.stdout.write('Adding I²C serial bus support' + trailingSpace);
+      showStep();
+      write('Adding I²C serial bus support' + trailingSpace);
       await npmInit();
       await monitorProcess(spawn('npm', ['i', 'i2c-bus'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      console.log(backspace + chalk.green(CHECK_MARK));
+      stepDone();
     }
 
-    process.stdout.write('Copying server to top-level dist directory' + trailingSpace);
+    showStep();
+    write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
-    console.log(backspace + chalk.green(CHECK_MARK));
+    stepDone();
 
     if (doStdDeploy) {
-      process.stdout.write('Moving server to ~/weather directory' + trailingSpace);
+      showStep();
+      write('Moving server to ~/weather directory' + trailingSpace);
 
       if (!fs.existsSync(process.env.HOME + '/weather'))
         fs.mkdirSync(process.env.HOME + '/weather');
@@ -254,7 +294,7 @@ async function npmInit(): Promise<void> {
         await monitorProcess(spawn('rm', ['-Rf', '~/weather/*'], { shell: true }));
 
       await monitorProcess(spawn('mv', ['dist/*', '~/weather'], { shell: true }));
-      console.log(backspace + chalk.green(CHECK_MARK));
+      stepDone();
     }
   }
   catch (err) {
