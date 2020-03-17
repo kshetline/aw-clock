@@ -26,7 +26,7 @@ let doDht = false;
 let doGps = false;
 let doI2c = false;
 let doStdDeploy = false;
-let doTools = false;
+let doDedicated = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
@@ -49,7 +49,7 @@ let sudoUser = 'pi';
 const cpuPath = '/proc/cpuinfo';
 const settingsPath = '/etc/default/weatherService';
 const rpiSetupStuff = path.join(__dirname, 'raspberry_pi_setup');
-const serviceSrc = rpiSetupStuff + 'weatherService';
+const serviceSrc = rpiSetupStuff + '/weatherService';
 const serviceDst = '/etc/init.d/.';
 const fontSrc = rpiSetupStuff + '/fonts/';
 const fontDst = '/usr/local/share/fonts/';
@@ -94,6 +94,11 @@ process.argv.forEach(arg => {
     totalSteps += doAcu ? 0 : 1;
     doAcu = true;
   }
+  else if (arg === '--ddev') {
+    totalSteps += (doDedicated ? 0 : 8) + (doStdDeploy ? 0 : 1);
+    doStdDeploy = true;
+    doDedicated = true;
+  }
   else if (arg === '--dht') {
     totalSteps += doDht ? 0 : 1;
     doDht = true;
@@ -111,11 +116,6 @@ process.argv.forEach(arg => {
   else if (arg === '--sd') {
     totalSteps += doStdDeploy ? 0 : 1;
     doStdDeploy = true;
-  }
-  else if (arg === '--tools') {
-    totalSteps += (doTools ? 0 : 8) + (doStdDeploy ? 0 : 1);
-    doStdDeploy = true;
-    doTools = true;
   }
   else if (arg === '--wwvb') {
     totalSteps += (doWwvb ? 0 : 1) + (doI2c ? 0 : 1);
@@ -135,8 +135,8 @@ if (doStdDeploy && !treatAsRaspberryPi) {
   process.exit(0);
 }
 
-if (doTools && !treatAsRaspberryPi) {
-  console.error(chalk.red('--tools option is only valid on Raspberry Pi'));
+if (doDedicated && !treatAsRaspberryPi) {
+  console.error(chalk.red('--ddev option is only valid on Raspberry Pi'));
   process.exit(0);
 }
 
@@ -447,7 +447,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
   await monitorProcess(spawn('systemctl', ['enable', 'weatherService']));
   spawnUid = uid;
   await monitorProcess(spawn('mkdir', ['-p', autostartDir]));
-  await monitorProcess(spawn('cp', [rpiSetupStuff + 'autostart_extra.sh', autostartDir]),
+  await monitorProcess(spawn('cp', [rpiSetupStuff + '/autostart_extra.sh', autostartDir]),
     true, ErrorMode.ANY_ERROR);
 
   const autostartPath = autostartDir + '/autostart';
@@ -485,8 +485,8 @@ async function doServiceDeployment(uid: number): Promise<void> {
       .split(':')[5] || userHome;
     sudoUser = user;
 
-    if (doTools) {
-      console.log(chalk.cyan('- Tools installation -'));
+    if (doDedicated) {
+      console.log(chalk.cyan('- Dedicated device setup -'));
       showStep();
       write('Shutdown weatherService if running' + trailingSpace);
       await monitorProcess(spawn('service', ['weatherService', 'stop']), true, ErrorMode.NO_ERRORS);
@@ -496,14 +496,13 @@ async function doServiceDeployment(uid: number): Promise<void> {
       await install('unclutter');
       await install('forever', true);
       await installFonts();
-      process.exit(0);
       await disableScreenSaver(uid);
     }
 
     console.log(chalk.cyan('- Building application -'));
     spawnUid = uid;
-    doClientBuild();
-    doServerBuild();
+    await doClientBuild();
+    await doServerBuild();
 
     showStep();
     write('Copying server to top-level dist directory' + trailingSpace);
@@ -523,10 +522,10 @@ async function doServiceDeployment(uid: number): Promise<void> {
       stepDone();
     }
 
-    if (doTools) {
+    if (doDedicated) {
       spawnUid = -1;
-      console.log(chalk.cyan('- Service deployment -'));
-      doServiceDeployment(uid);
+      console.log(chalk.cyan('- Dedicated device service deployment -'));
+      await doServiceDeployment(uid);
       process.exit(0);
     }
   }
