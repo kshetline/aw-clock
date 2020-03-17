@@ -29,7 +29,9 @@ let doStdDeploy = false;
 let doTools = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
-let isRaspberryPi = process.argv.includes('--frpi');
+let treatAsRaspberryPi = process.argv.includes('--tarp');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let isRaspberryPi = false;
 
 const chalk = new Chalk.Instance();
 let canSpin = true;
@@ -46,17 +48,24 @@ let userHome = '/home/pi';
 let sudoUser = 'pi';
 const cpuPath = '/proc/cpuinfo';
 const settingsPath = '/etc/default/weatherService';
-const serviceSrc = path.join(__dirname, 'raspberry_pi_setup/weatherService');
+const rpiSetupStuff = path.join(__dirname, 'raspberry_pi_setup');
+const serviceSrc = rpiSetupStuff + 'weatherService';
 const serviceDst = '/etc/init.d/.';
+const fontSrc = rpiSetupStuff + '/fonts/';
+const fontDst = '/usr/local/share/fonts/';
+let chromium = 'chromium';
+let autostartDst = '.config/lxsession/LXDE';
 
-if (!isRaspberryPi && process.platform === 'linux') {
+if (process.platform === 'linux') {
   try {
     if (fs.existsSync(cpuPath)) {
       const lines = fs.readFileSync(cpuPath).toString().split('\n');
 
       for (const line of lines) {
         if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
-          isRaspberryPi = true;
+          isRaspberryPi = treatAsRaspberryPi = true;
+          autostartDst += '-pi';
+          chromium += '-browser';
           break;
         }
       }
@@ -74,7 +83,7 @@ if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
 if (/\bbuild(\.[jt]s)?\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
 
-if (process.argv.length === 0 && isRaspberryPi) {
+if (process.argv.length === 0 && treatAsRaspberryPi) {
   console.warn(chalk.yellow('Warning: no build options specified.'));
   console.warn(chalk.yellow('This could be OK, or this could mean you forgot the leading ') +
                chalk.white('--') + chalk.yellow(' before your options.'));
@@ -104,7 +113,7 @@ process.argv.forEach(arg => {
     doStdDeploy = true;
   }
   else if (arg === '--tools') {
-    totalSteps += (doTools ? 0 : 7) + (doStdDeploy ? 0 : 1);
+    totalSteps += (doTools ? 0 : 8) + (doStdDeploy ? 0 : 1);
     doStdDeploy = true;
     doTools = true;
   }
@@ -112,7 +121,7 @@ process.argv.forEach(arg => {
     totalSteps += (doWwvb ? 0 : 1) + (doI2c ? 0 : 1);
     doWwvb = doI2c = true;
   }
-  else if (arg !== '--frpi') {
+  else if (arg !== '--tarp') {
     if (arg !== '--help')
       console.error('Unrecognized option "' + chalk.red(arg) + '"');
 
@@ -121,17 +130,17 @@ process.argv.forEach(arg => {
   }
 });
 
-if (doStdDeploy && !isRaspberryPi) {
+if (doStdDeploy && !treatAsRaspberryPi) {
   console.error(chalk.red('--sd option is only valid on Raspberry Pi'));
   process.exit(0);
 }
 
-if (doTools && !isRaspberryPi) {
+if (doTools && !treatAsRaspberryPi) {
   console.error(chalk.red('--tools option is only valid on Raspberry Pi'));
   process.exit(0);
 }
 
-if (isRaspberryPi) {
+if (treatAsRaspberryPi) {
   try {
     if (fs.existsSync(settingsPath)) {
       const lines = fs.readFileSync(settingsPath).toString().split('\n');
@@ -260,11 +269,11 @@ async function install(cmdPkg: string, viaNpm = false): Promise<boolean> {
   const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), false, ErrorMode.ANY_ERROR)).trim();
 
   if (installed) {
-    console.log(`${cmdPkg} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
+    console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
     return false;
   }
   else {
-    write(`Installing ${cmdPkg}` + trailingSpace);
+    write(`Installing ${chalk.bold(cmdPkg)}` + trailingSpace);
 
     if (viaNpm)
       await monitorProcess(spawn('npm', ['install', '-g', cmdPkg]), true, ErrorMode.ANY_ERROR);
@@ -304,6 +313,169 @@ function showStep(): void {
   write(`Step ${++currentStep} of ${totalSteps}: `);
 }
 
+async function installFonts(): Promise<void> {
+  showStep();
+
+  const fonts = fs.readdirSync(fontSrc).filter(name => /.\.ttf/i.test(name));
+  const fontsToAdd = fonts.filter(font => !fs.existsSync(fontDst + font));
+
+  if (fontsToAdd.length > 0) {
+    write('Installing fonts' + trailingSpace);
+
+    for (const font of fontsToAdd)
+      await monitorProcess(spawn('cp', [fontSrc + font, fontDst + font]), true, ErrorMode.ANY_ERROR);
+
+    await monitorProcess(spawn('fc-cache', ['-f']), true, ErrorMode.ANY_ERROR);
+  }
+  else
+    write('Fonts already installed' + trailingSpace);
+
+  stepDone();
+}
+
+async function disableScreenSaver(uid: number): Promise<void> {
+  const screenSaverJustInstalled = await install('xscreensaver');
+  const settingsFile = `${userHome}/.xscreensaver`;
+
+  showStep();
+  write('Disabling screen saver' + trailingSpace);
+
+  if (screenSaverJustInstalled || !fs.existsSync(settingsFile)) {
+    const procList = await monitorProcess(spawn('ps', ['-ax']));
+    const saverRunning = /\d\s+xscreensaver\b/.test(procList);
+
+    if (!saverRunning) {
+      spawn('xscreensaver', [], { uid, detached: true });
+      await sleep(500);
+    }
+
+    const settingsProcess = spawn('xscreensaver-demo', [], { uid });
+
+    await sleep(3000);
+    settingsProcess.kill('SIGTERM');
+    await sleep(500);
+  }
+
+  await monitorProcess(spawn('sed',
+    ['-i', '-r', "'s/^(mode:\\s+)\\w+$/\\1off/'", settingsFile],
+    { uid, shell: true }), true, ErrorMode.ANY_ERROR);
+
+  // Stop and restart screen saver to make sure modified settings are read
+  const procList = await monitorProcess(spawn('ps', ['-ax']));
+  const ssProcessNo = (/^(\d+)\s+.*\d\s+xscreensaver\b/.exec(procList) ?? [])[1];
+
+  if (ssProcessNo)
+    await monitorProcess(spawn('kill', [ssProcessNo]));
+
+  spawn('xscreensaver', [], { uid, detached: true });
+  stepDone();
+}
+
+async function doClientBuild(): Promise<void> {
+  showStep();
+  write('Updating client' + trailingSpace);
+  await monitorProcess(spawn('npm', ['--dev', 'update']));
+  stepDone();
+
+  showStep();
+  write('Building client' + trailingSpace);
+
+  if (fs.existsSync('dist'))
+    await monitorProcess(spawn('rm', ['-Rf', 'dist']));
+
+  const output = await monitorProcess(spawn('webpack'));
+
+  stepDone();
+  console.log(chalk.hex('#808080')(getWebpackSummary(output)));
+}
+
+async function doServerBuild(): Promise<void> {
+  showStep();
+  write('Updating server' + trailingSpace);
+  await monitorProcess(spawn('npm', ['--dev', 'update'], { cwd: path.join(__dirname, 'server') }));
+  stepDone();
+
+  showStep();
+  write('Building server' + trailingSpace);
+
+  if (fs.existsSync('server/dist'))
+    await monitorProcess(spawn('rm', ['-Rf', 'server/dist']));
+
+  const output = await monitorProcess(spawn('npm', ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }));
+
+  stepDone();
+  console.log(chalk.hex('#808080')(getWebpackSummary(output)));
+
+  if (doAcu) {
+    showStep();
+    write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
+    await npmInit();
+    await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature@2.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
+    stepDone();
+  }
+
+  if (doDht) {
+    showStep();
+    write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
+    await npmInit();
+    await monitorProcess(spawn('npm', ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
+    stepDone();
+  }
+
+  if (doI2c) {
+    showStep();
+    write('Adding I²C serial bus support' + trailingSpace);
+    await npmInit();
+    await monitorProcess(spawn('npm', ['i', 'i2c-bus'], { cwd: path.join(__dirname, 'server', 'dist') }));
+    stepDone();
+  }
+}
+
+async function doServiceDeployment(uid: number): Promise<void> {
+  const autostartDir = path.join(userHome, autostartDst);
+
+  showStep();
+  write('Create or redeploy weatherService' + trailingSpace);
+  await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
+
+  const settingsText = Object.keys(settings).map(key =>
+    key + '=' + settings[key]).join('\n') + '\n';
+
+  fs.writeFileSync(settingsPath, settingsText);
+  await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']));
+  await monitorProcess(spawn('systemctl', ['enable', 'weatherService']));
+  spawnUid = uid;
+  await monitorProcess(spawn('mkdir', ['-p', autostartDir]));
+  await monitorProcess(spawn('cp', [rpiSetupStuff + 'autostart_extra.sh', autostartDir]),
+    true, ErrorMode.ANY_ERROR);
+
+  const autostartPath = autostartDir + '/autostart';
+  const autostartLine1 = autostartDir + '/autostart_extra.sh';
+  const autostartLine2 = `@${chromium} --kiosk http://localhost:8080`;
+  const lines = fs.readFileSync(autostartPath).toString().split('\n');
+  let update = false;
+
+  if (!lines.includes(autostartLine1)) {
+    lines.push(autostartLine1);
+    update = true;
+  }
+
+  if (!lines.includes(autostartLine2)) {
+    lines.push(autostartLine2);
+    update = true;
+  }
+
+  if (update)
+    fs.writeFileSync(autostartPath, lines.join('\n') + '\n');
+
+  await monitorProcess(spawn('chmod', ['+x', autostartDir + '/autostart*'],
+    { shell: true }), true, ErrorMode.ANY_ERROR);
+  spawnUid = -1;
+  await monitorProcess(spawn('service', ['weatherService', 'start']));
+  stepDone();
+}
+
 (async () => {
   try {
     const user = process.env.SUDO_USER || process.env.USER || 'pi';
@@ -320,98 +492,18 @@ function showStep(): void {
       await monitorProcess(spawn('service', ['weatherService', 'stop']), true, ErrorMode.NO_ERRORS);
       stepDone();
 
-      await install('chromium');
+      await install(chromium);
       await install('unclutter');
       await install('forever', true);
-
-      const screenSaverJustInstalled = await install('xscreensaver');
-      const settingsFile = `${userHome}/.xscreensaver`;
-
-      showStep();
-      write('Disabling screen saver' + trailingSpace);
-
-      if (screenSaverJustInstalled || !fs.existsSync(settingsFile)) {
-        const procList = await monitorProcess(spawn('ps', ['-ax']));
-        const saverRunning = /\d\s+xscreensaver\b/.test(procList);
-
-        if (!saverRunning) {
-          spawn('xscreensaver', [], { uid, detached: true });
-          sleep(500);
-        }
-
-        const settingsProcess = spawn('xscreensaver-demo', [], { uid });
-
-        await sleep(3000);
-        settingsProcess.kill('SIGTERM');
-        await sleep(500);
-      }
-
-      await monitorProcess(spawn('sed',
-        ['-i', '-r', "'s/^(mode:\\s+)\\w+$/\\1off/'", settingsFile],
-        { uid, shell: true }), true, ErrorMode.ANY_ERROR);
-
-      // Stop and restart screen saver to make sure modified settings are read
-      const procList = await monitorProcess(spawn('ps', ['-ax']));
-      const ssProcessNo = (/^(\d+)\s+.*\d\s+xscreensaver\b/.exec(procList) ?? [])[1];
-
-      if (ssProcessNo)
-        await monitorProcess(spawn('kill', [ssProcessNo]));
-
-      spawn('xscreensaver', [], { uid, detached: true });
-      stepDone();
+      await installFonts();
+      process.exit(0);
+      await disableScreenSaver(uid);
     }
 
     console.log(chalk.cyan('- Building application -'));
-    showStep();
-    write('Updating client' + trailingSpace);
     spawnUid = uid;
-    await monitorProcess(spawn('npm', ['--dev', 'update']));
-    stepDone();
-
-    showStep();
-    write('Building client' + trailingSpace);
-    if (fs.existsSync('dist'))
-      await monitorProcess(spawn('rm', ['-Rf', 'dist']));
-    let output = await monitorProcess(spawn('webpack'));
-    stepDone();
-    console.log(chalk.hex('#808080')(getWebpackSummary(output)));
-
-    showStep();
-    write('Updating server' + trailingSpace);
-    await monitorProcess(spawn('npm', ['--dev', 'update'], { cwd: path.join(__dirname, 'server') }));
-    stepDone();
-
-    showStep();
-    write('Building server' + trailingSpace);
-    if (fs.existsSync('server/dist'))
-      await monitorProcess(spawn('rm', ['-Rf', 'server/dist']));
-    output = await monitorProcess(spawn('npm', ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }));
-    stepDone();
-    console.log(chalk.hex('#808080')(getWebpackSummary(output)));
-
-    if (doAcu) {
-      showStep();
-      write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
-      await npmInit();
-      await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature@2.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      stepDone();
-    }
-
-    if (doDht) {
-      showStep();
-      write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
-      await npmInit();
-      await monitorProcess(spawn('npm', ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      stepDone();
-    }
-
-    if (doI2c) {
-      showStep();
-      write('Adding I²C serial bus support' + trailingSpace);
-      await npmInit();
-      await monitorProcess(spawn('npm', ['i', 'i2c-bus'], { cwd: path.join(__dirname, 'server', 'dist') }));
-      stepDone();
-    }
+    doClientBuild();
+    doServerBuild();
 
     showStep();
     write('Copying server to top-level dist directory' + trailingSpace);
@@ -434,20 +526,7 @@ function showStep(): void {
     if (doTools) {
       spawnUid = -1;
       console.log(chalk.cyan('- Service deployment -'));
-
-      showStep();
-      write('Create or redeploy weatherService' + trailingSpace);
-      await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
-      await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
-
-      const settingsText = Object.keys(settings).map(key =>
-        key + '=' + settings[key]).join('\n') + '\n';
-
-      fs.writeFileSync(settingsPath, settingsText);
-      await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']));
-      await monitorProcess(spawn('systemctl', ['enable', 'weatherService']));
-      await monitorProcess(spawn('service', ['weatherService', 'start']));
-      stepDone();
+      doServiceDeployment(uid);
       process.exit(0);
     }
   }

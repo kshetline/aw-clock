@@ -1,6 +1,0 @@
-@lxpanel --profile LXDE-pi
-@pcmanfm --desktop --profile LXDE-pi
-/home/pi/.config/lxsession/LXDE-pi/autostart_extra.sh
-@xscreensaver -no-splash
-@point-rpi
-@chromium-browser --kiosk http://localhost:8080/
