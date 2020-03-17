@@ -30,7 +30,6 @@ let doDedicated = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let isRaspberryPi = false;
 
 const chalk = new Chalk.Instance();
@@ -374,7 +373,7 @@ async function disableScreenSaver(uid: number): Promise<void> {
 async function doClientBuild(): Promise<void> {
   showStep();
   write('Updating client' + trailingSpace);
-  await monitorProcess(spawn('npm', ['--dev', 'update']));
+  await monitorProcess(spawn('npm', ['i']));
   stepDone();
 
   showStep();
@@ -392,7 +391,7 @@ async function doClientBuild(): Promise<void> {
 async function doServerBuild(): Promise<void> {
   showStep();
   write('Updating server' + trailingSpace);
-  await monitorProcess(spawn('npm', ['--dev', 'update'], { cwd: path.join(__dirname, 'server') }));
+  await monitorProcess(spawn('npm', ['i'], { cwd: path.join(__dirname, 'server') }));
   stepDone();
 
   showStep();
@@ -478,6 +477,16 @@ async function doServiceDeployment(uid: number): Promise<void> {
 
 (async () => {
   try {
+    if (treatAsRaspberryPi && !isRaspberryPi) {
+      const isDebian = /Linux Debian/i.test(await monitorProcess(spawn('uname', ['-a']), false));
+      const isLxde = !!(await monitorProcess(spawn('which', ['lxpanel'], { shell: true }), false)).trim();
+
+      if (!isDebian || !isLxde) {
+        console.error(chalk.red('--tarp option (Treat As Raspberry Pi) only available for Linux Debian with LXDE'));
+        process.exit(0);
+      }
+    }
+
     const user = process.env.SUDO_USER || process.env.USER || 'pi';
     const uid = Number((await monitorProcess(spawn('id', ['-u', user]), false)).trim() || '1000');
 

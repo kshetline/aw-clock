@@ -24,7 +24,8 @@ if (process.env.AWC_HAS_INDOOR_SENSOR || process.env.AWC_ALT_DEV_SERVER)
 const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);
 
 // create http server
-const httpPort = normalizePort(process.env.AWC_PORT || 8080);
+const defaultPort = process.argv.includes('-d') ? 4201 : 8080;
+const httpPort = normalizePort(process.env.AWC_PORT || defaultPort);
 const app = getApp();
 const httpServer = http.createServer(app);
 

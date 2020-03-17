@@ -117,7 +117,7 @@ export class Forecast {
       const ds = (forecastData.source === 'darksky');
       const wu = (forecastData.source === 'wunderground');
       const buttonWidth = this.settingsBtn.width();
-      const logoWidth = (ds ? 125 : (wu ? 190 : 8)) + 10;
+      const logoWidth = (ds ? 118 : (wu ? 183 : 8)) + 10;
 
       this.darkskyLogo.css('display', ds ? 'inline-block' : 'none');
       this.wundergroundLogo.css('display', wu ? 'inline-block' : 'none');

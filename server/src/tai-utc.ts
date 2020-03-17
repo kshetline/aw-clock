@@ -113,12 +113,12 @@ export class TaiUtc {
     await new Promise<void>(resolve => {
       // Randomly delay polling so that multiple TaiUtc instances don't all poll at the same time every day.
       const delay = (this.firstLeapSecondPoll ? 0 : Math.floor(Math.random() * MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
-      this.firstLeapSecondPoll = false;
       setTimeout(() => resolve(), delay);
     });
 
     try {
       await this.getIersBulletinA();
+      this.firstLeapSecondPoll = false;
     }
     catch (err) {
       console.error(err);
