@@ -1,9 +1,10 @@
 import * as Chalk from 'chalk';
-import { ChildProcess, spawn as nodeSpawn } from 'child_process';
+import { ChildProcess, exec, spawn as nodeSpawn } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
 import { processMillis } from 'ks-util';
 import * as path from 'path';
+import * as readline from 'readline';
 import { promisify } from 'util';
 
 enum ErrorMode { DEFAULT, ANY_ERROR, NO_ERRORS }
@@ -27,6 +28,8 @@ let doGps = false;
 let doI2c = false;
 let doStdDeploy = false;
 let doDedicated = false;
+let doLaunch = false;
+let doReboot = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
@@ -75,6 +78,8 @@ if (process.platform === 'linux') {
   }
 }
 
+const launchChromium = chromium + ' --kiosk http://localhost:8080';
+
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
@@ -88,54 +93,75 @@ if (process.argv.length === 0 && treatAsRaspberryPi) {
                chalk.white('--') + chalk.yellow(' before your options.'));
 }
 
-process.argv.forEach(arg => {
-  if (arg === '--acu') {
-    totalSteps += doAcu ? 0 : 1;
-    doAcu = true;
-  }
-  else if (arg === '--ddev') {
-    totalSteps += (doDedicated ? 0 : 8) + (doStdDeploy ? 0 : 1);
-    doStdDeploy = true;
-    doDedicated = true;
-  }
-  else if (arg === '--dht') {
-    totalSteps += doDht ? 0 : 1;
-    doDht = true;
-  }
-  else if (arg === '--gps') {
-    totalSteps += (doGps ? 0 : 1) + (doI2c ? 0 : 1);
-    doGps = doI2c = true;
-  }
-  else if (arg === '--pt') {
-    canSpin = false;
-    chalk.level = 0;
-    backspace = '';
-    trailingSpace = ' ';
-  }
-  else if (arg === '--sd') {
-    totalSteps += doStdDeploy ? 0 : 1;
-    doStdDeploy = true;
-  }
-  else if (arg === '--wwvb') {
-    totalSteps += (doWwvb ? 0 : 1) + (doI2c ? 0 : 1);
-    doWwvb = doI2c = true;
-  }
-  else if (arg !== '--tarp') {
-    if (arg !== '--help')
-      console.error('Unrecognized option "' + chalk.red(arg) + '"');
+const onlyOnRasperryPi: string[] = [];
 
-    console.log('Usage: npm run build [-- [--acu] [--dht] [--help] [--pt] [--sd]]');
-    process.exit(0);
+process.argv.forEach(arg => {
+  switch (arg) {
+    case '--acu':
+      totalSteps += doAcu ? 0 : 1;
+      doAcu = true;
+      break;
+    case '--ddev':
+      totalSteps += (doDedicated ? 0 : 9) + (doStdDeploy ? 0 : 1);
+      doStdDeploy = true;
+      doDedicated = true;
+      onlyOnRasperryPi.push(arg);
+      break;
+    case '--dht':
+      totalSteps += doDht ? 0 : 1;
+      doDht = true;
+      onlyOnRasperryPi.push(arg);
+      break;
+    case '--gps':
+      totalSteps += (doGps ? 0 : 1) + (doI2c ? 0 : 1);
+      doGps = doI2c = true;
+      break;
+    case '--launch':
+      totalSteps += (doLaunch || doReboot ? 0 : 1);
+      doLaunch = true;
+      onlyOnRasperryPi.push(arg);
+      break;
+    case '--pt':
+      canSpin = false;
+      chalk.level = 0;
+      backspace = '';
+      trailingSpace = ' ';
+      break;
+    case '--reboot':
+      totalSteps += (doLaunch || doReboot ? 0 : 1);
+      doReboot = true;
+      doLaunch = false;
+      onlyOnRasperryPi.push(arg);
+      break;
+    case '--sd':
+      totalSteps += doStdDeploy ? 0 : 1;
+      doStdDeploy = true;
+      onlyOnRasperryPi.push(arg);
+      break;
+    case '--wwvb':
+      totalSteps += (doWwvb ? 0 : 1) + (doI2c ? 0 : 1);
+      doWwvb = doI2c = true;
+      break;
+    case '--tarp':
+      break; // ignore - already handled
+    default:
+      if (arg !== '--help')
+        console.error('Unrecognized option "' + chalk.red(arg) + '"');
+
+      console.log('Usage: npm run build [-- [--acu] [--dht] [--help] [--pt] [--sd] [--launch] [--reboot]]');
+      process.exit(0);
   }
 });
 
-if (doStdDeploy && !treatAsRaspberryPi) {
-  console.error(chalk.red('--sd option is only valid on Raspberry Pi'));
+if (!treatAsRaspberryPi && onlyOnRasperryPi.length > 0) {
+  onlyOnRasperryPi.forEach(opt =>
+    console.error(chalk.red(opt) + ' option is only valid on Raspberry Pi'));
   process.exit(0);
 }
 
-if (doDedicated && !treatAsRaspberryPi) {
-  console.error(chalk.red('--ddev option is only valid on Raspberry Pi'));
+if (!doStdDeploy && (doLaunch || doReboot)) {
+  console.error(chalk.red(doLaunch ? '--launch' : '--reboot') +
+    ' option is only valid when used with --ddev option');
   process.exit(0);
 }
 
@@ -244,16 +270,26 @@ function monitorProcess(proc: ChildProcess, doSpin = true, errorMode = ErrorMode
   });
 }
 
-function sleep(delay: number, doSpin = true): Promise<void> {
+function sleep(delay: number, doSpin = true, stopOnKeypress = false): Promise<boolean> {
   doSpin = doSpin && canSpin;
 
-  return new Promise<void>(resolve => {
+  return new Promise<boolean>(resolve => {
     const slowSpin = setInterval(doSpin ? spin : NO_OP, MAX_SPIN_DELAY);
-
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       clearInterval(slowSpin);
-      resolve();
+      resolve(false);
     }, delay);
+
+    if (stopOnKeypress) {
+      readline.emitKeypressEvents(process.stdin);
+      process.stdin.setRawMode(true);
+
+      process.stdin.on('keypress', () => {
+        clearInterval(slowSpin);
+        clearTimeout(timeout);
+        resolve(true);
+      });
+    }
   });
 }
 
@@ -262,10 +298,21 @@ function stepDone(): void {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function install(cmdPkg: string, viaNpm = false): Promise<boolean> {
+async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promise<boolean> {
+  let packageArgs = [cmdPkg];
+
   showStep();
 
-  const installed = !!(await monitorProcess(spawn('which', [cmdPkg]), false, ErrorMode.ANY_ERROR)).trim();
+  if (realOnly && !isRaspberryPi) {
+    console.log(`${chalk.bold(cmdPkg)} won't be installed (not real Raspberry Pi)` +
+      trailingSpace + backspace + chalk.green(CHECK_MARK));
+    return false;
+  }
+
+  if (cmdPkg === 'pigpio')
+    packageArgs = ['pigpiop', 'python-pigpio', 'python3-pigpio'];
+
+  const installed = !!(await monitorProcess(spawn('which', [packageArgs[0]]), false, ErrorMode.ANY_ERROR)).trim();
 
   if (installed) {
     console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
@@ -275,9 +322,9 @@ async function install(cmdPkg: string, viaNpm = false): Promise<boolean> {
     write(`Installing ${chalk.bold(cmdPkg)}` + trailingSpace);
 
     if (viaNpm)
-      await monitorProcess(spawn('npm', ['install', '-g', cmdPkg]), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('npm', ['install', '-g', ...packageArgs]), true, ErrorMode.ANY_ERROR);
     else
-      await monitorProcess(spawn('apt-get', ['install', '-y', cmdPkg]), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('apt-get', ['install', '-y', ...packageArgs]), true, ErrorMode.ANY_ERROR);
 
     stepDone();
     return true;
@@ -373,7 +420,7 @@ async function disableScreenSaver(uid: number): Promise<void> {
 async function doClientBuild(): Promise<void> {
   showStep();
   write('Updating client' + trailingSpace);
-  await monitorProcess(spawn('npm', ['i']));
+  await monitorProcess(spawn('npm', ['i', '--no-save']));
   stepDone();
 
   showStep();
@@ -391,7 +438,7 @@ async function doClientBuild(): Promise<void> {
 async function doServerBuild(): Promise<void> {
   showStep();
   write('Updating server' + trailingSpace);
-  await monitorProcess(spawn('npm', ['i'], { cwd: path.join(__dirname, 'server') }));
+  await monitorProcess(spawn('npm', ['i', '--no-save'], { cwd: path.join(__dirname, 'server') }));
   stepDone();
 
   showStep();
@@ -451,7 +498,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
 
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';
-  const autostartLine2 = `@${chromium} --kiosk http://localhost:8080`;
+  const autostartLine2 = '@' + launchChromium;
   const lines = fs.readFileSync(autostartPath).toString().split('\n');
   let update = false;
 
@@ -501,6 +548,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
       await monitorProcess(spawn('service', ['weatherService', 'stop']), true, ErrorMode.NO_ERRORS);
       stepDone();
 
+      await install('pigpio', false, true);
       await install(chromium);
       await install('unclutter');
       await install('forever', true);
@@ -535,8 +583,32 @@ async function doServiceDeployment(uid: number): Promise<void> {
       spawnUid = -1;
       console.log(chalk.cyan('- Dedicated device service deployment -'));
       await doServiceDeployment(uid);
-      process.exit(0);
     }
+
+    if (doLaunch) {
+      spawnUid = uid;
+      console.log(chalk.cyan('- Launching Astronomy/Weather Clock -'));
+      showStep();
+      write(' ');
+      await sleep(3000, true);
+      stepDone();
+      exec(launchChromium + ' --user-data-dir=' + userHome, { uid });
+      await sleep(1000, false);
+    }
+
+    if (doReboot) {
+      spawnUid = -1;
+      console.log(chalk.cyan('- Rebooting system in 5 seconds... -'));
+      showStep();
+      write('Press any key to stop reboot:' + trailingSpace);
+
+      if (!(await sleep(3000, true, true)))
+        exec('reboot');
+      else
+        console.log();
+    }
+
+    process.exit(0);
   }
   catch (err) {
     console.log(backspace + chalk.red(FAIL_MARK));
