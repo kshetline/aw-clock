@@ -33,6 +33,7 @@ let doReboot = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
 let viaBash = false;
+let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 
@@ -100,6 +101,7 @@ if (process.argv.length === 0 && treatAsRaspberryPi && !viaBash) {
 }
 
 const onlyOnRasperryPi: string[] = [];
+const onlyDedicated: string[] = [];
 
 process.argv.forEach(arg => {
   switch (arg) {
@@ -125,10 +127,15 @@ process.argv.forEach(arg => {
       totalSteps += (doGps ? 0 : 1) + (doI2c ? 0 : 1);
       doGps = doI2c = true;
       break;
+    case '-i':
+      interactive = true;
+      onlyDedicated.push(arg);
+      break;
     case '--launch':
       totalSteps += (doLaunch || doReboot ? 0 : 1);
       doLaunch = true;
       onlyOnRasperryPi.push(arg);
+      onlyDedicated.push(arg);
       break;
     case '--pt':
       canSpin = false;
@@ -141,6 +148,7 @@ process.argv.forEach(arg => {
       doReboot = true;
       doLaunch = false;
       onlyOnRasperryPi.push(arg);
+      onlyDedicated.push(arg);
       break;
     case '--sd':
       totalSteps += doStdDeploy ? 0 : 1;
@@ -157,7 +165,7 @@ process.argv.forEach(arg => {
       if (arg !== '--help')
         console.error('Unrecognized option "' + chalk.red(arg) + '"');
 
-      console.log('Usage: npm run build [-- [--acu] [--dht] [--help] [--pt] [--sd] [--launch] [--reboot]]');
+      console.log('Usage: npm run build [-- [--acu] [--dht] [--help] [-i] [--pt] [--sd] [--launch] [--reboot]]');
       process.exit(0);
   }
 });
@@ -168,9 +176,9 @@ if (!treatAsRaspberryPi && onlyOnRasperryPi.length > 0) {
   process.exit(0);
 }
 
-if (!doDedicated && (doLaunch || doReboot)) {
-  console.error(chalk.red(doLaunch ? '--launch' : '--reboot') +
-    ' option is only valid when used with --ddev option');
+if (!doDedicated && onlyDedicated.length > 0) {
+  onlyDedicated.forEach(opt =>
+    console.error(chalk.red(opt) + ' option is only valid when used with the --ddev option'));
   process.exit(0);
 }
 
@@ -208,6 +216,20 @@ if (treatAsRaspberryPi) {
   catch (err) {
     console.warn(chalk.yellow('Existing settings check failed. Defaults will be used.'));
   }
+}
+
+if (isRaspberryPi && doAcu)
+  console.warn(chalk.yellow('Warning: this setup will only generate fake wireless sensor data'));
+
+async function readLine(): Promise<string> {
+  return new Promise<string>(resolve => {
+    const callback = (data: any) => {
+      process.stdin.off('data', callback);
+      resolve(data.toString().trim());
+    };
+
+    process.stdin.on('data', callback);
+  });
 }
 
 function write(s: string): void {
@@ -384,6 +406,76 @@ async function npmInit(): Promise<void> {
 
 function showStep(): void {
   write(`Step ${++currentStep} of ${totalSteps}: `);
+}
+
+function portValidate(s: string): boolean {
+  const port = Number(s);
+
+  if (isNaN(port) || port < 1 || port > 65535) {
+    console.log(chalk.red('Port must be a number from 1 to 65535'));
+    return false;
+  }
+
+  return true;
+}
+
+function ntpValidate(s: string): boolean {
+  if (/^(((?!-))(xn--|_{1,1})?[-a-z0-9]{0,61}[a-z0-9]{1,1}\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i.test(s))
+    return true;
+
+  console.log(chalk.red('NTP server must be a valid domain name (with optional port number)'));
+  return false;
+}
+
+function wsValidate(s: string): boolean | string {
+  if (/^w/i.test(s))
+    return 'wunderground';
+  else if (/^d/i.test(s))
+    return 'darksky';
+
+  console.log(chalk.red('Weather service must be either "wunderground" or "darksky"'));
+  return false;
+}
+
+const questions = [
+  { name: 'AWC_PORT', descr: 'HTTP server port', ask: true, validate: portValidate },
+  { name: 'AWC_NTP_SERVER', descr: 'time server', ask: true, validate: ntpValidate },
+  { name: 'AWC_PREFERRED_WS', descr: 'preferred weather service ("wunderground" or "darksky")', ask: true, validate: wsValidate },
+  { name: 'AWC_DARK_SKY_API_KEY', descr: 'Dark Sky API key (uses "wunderground" if left blank)', ask: true }
+  // AWC_WIRED_TH_GPIO: '4',
+  // AWC_WIRELESS_TH_GPIO: '27'
+];
+
+async function promptForConfiguration(): Promise<void> {
+  console.log(chalk.cyan('- Configuration -'));
+
+  for (let i = 0; i < questions.length; ++i) {
+    const q = questions[i];
+
+    if (!q.ask)
+      continue;
+
+    write(chalk.bold(q.name) + ' - ' + q.descr + '\n    ' +
+      (settings[q.name] ? '(default: ' + chalk.hex('#FFFFAA')(settings[q.name]) + ')' : '') + ': ');
+
+    const response = await readLine();
+
+    if (response) {
+      const validation = q.validate ? q.validate(response) : true;
+
+      if (typeof validation === 'string')
+        settings[q.name] = validation;
+      else if (!validation) {
+        --i;
+        continue;
+      }
+      else
+        settings[q.name] = response;
+    }
+  }
+
+  console.log(settings);
+  process.exit(0);
 }
 
 async function installFonts(): Promise<void> {
@@ -582,6 +674,9 @@ async function doServiceDeployment(uid: number): Promise<void> {
     sudoUser = user;
 
     if (doDedicated) {
+      if (interactive)
+        await promptForConfiguration();
+
       console.log(chalk.cyan('- Dedicated device setup -'));
       showStep();
       write('Shutdown weatherService if running' + trailingSpace);
