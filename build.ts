@@ -437,13 +437,24 @@ function wsValidate(s: string): boolean | string {
   return false;
 }
 
+function pinValidate(s: string): boolean {
+  const pin = Number(s);
+
+  if (isNaN(pin) || pin < 0 || pin > 32) {
+    console.log(chalk.red('GPIO pin must be a number from 0 to 31'));
+    return false;
+  }
+
+  return true;
+}
+
 const questions = [
   { name: 'AWC_PORT', descr: 'HTTP server port', ask: true, validate: portValidate },
   { name: 'AWC_NTP_SERVER', descr: 'time server', ask: true, validate: ntpValidate },
   { name: 'AWC_PREFERRED_WS', descr: 'preferred weather service ("wunderground" or "darksky")', ask: true, validate: wsValidate },
-  { name: 'AWC_DARK_SKY_API_KEY', descr: 'Dark Sky API key (uses "wunderground" if left blank)', ask: true }
-  // AWC_WIRED_TH_GPIO: '4',
-  // AWC_WIRELESS_TH_GPIO: '27'
+  { name: 'AWC_DARK_SKY_API_KEY', descr: 'Dark Sky API key (uses "wunderground" if left blank)', ask: true },
+  { name: 'AWC_WIRED_TH_GPIO', descr: 'GPIO pin number for wired temp/humidity sensor', ask: doDht, validate: pinValidate },
+  { name: 'AWC_WIRELESS_TH_GPIO', descr: 'GPIO pin number for wireless temp/humidity sensors', ask: doAcu, validate: pinValidate }
 ];
 
 async function promptForConfiguration(): Promise<void> {
