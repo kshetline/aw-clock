@@ -2,7 +2,7 @@ import * as Chalk from 'chalk';
 import { ChildProcess, exec, spawn as nodeSpawn } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
-import { processMillis } from 'ks-util';
+import { processMillis, toBoolean } from 'ks-util';
 import * as path from 'path';
 import * as readline from 'readline';
 import { promisify } from 'util';
@@ -32,6 +32,7 @@ let doLaunch = false;
 let doReboot = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doWwvb = false;
+let viaBash = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 
@@ -42,7 +43,12 @@ let trailingSpace = '  '; // Two spaces
 let totalSteps = 5;
 let currentStep = 0;
 const settings: any = {
-  AWC_ALLOW_CORS: true
+  AWC_ALLOW_CORS: true,
+  AWC_NTP_SERVER: 'pool.ntp.org',
+  AWC_PORT: '8080',
+  AWC_PREFERRED_WS: 'wunderground',
+  AWC_WIRED_TH_GPIO: '4',
+  AWC_WIRELESS_TH_GPIO: '27'
 };
 
 let spawnUid = -1;
@@ -87,7 +93,7 @@ if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
 if (/\bbuild(\.[jt]s)?\b/.test(process.argv[0] ?? ''))
   process.argv.splice(0, 1);
 
-if (process.argv.length === 0 && treatAsRaspberryPi) {
+if (process.argv.length === 0 && treatAsRaspberryPi && !viaBash) {
   console.warn(chalk.yellow('Warning: no build options specified.'));
   console.warn(chalk.yellow('This could be OK, or this could mean you forgot the leading ') +
                chalk.white('--') + chalk.yellow(' before your options.'));
@@ -100,6 +106,9 @@ process.argv.forEach(arg => {
     case '--acu':
       totalSteps += doAcu ? 0 : 1;
       doAcu = true;
+      break;
+    case '--bash':
+      viaBash = true;
       break;
     case '--ddev':
       totalSteps += (doDedicated ? 0 : 9) + (doStdDeploy ? 0 : 1);
@@ -159,7 +168,7 @@ if (!treatAsRaspberryPi && onlyOnRasperryPi.length > 0) {
   process.exit(0);
 }
 
-if (!doStdDeploy && (doLaunch || doReboot)) {
+if (!doDedicated && (doLaunch || doReboot)) {
   console.error(chalk.red(doLaunch ? '--launch' : '--reboot') +
     ' option is only valid when used with --ddev option');
   process.exit(0);
@@ -171,15 +180,33 @@ if (treatAsRaspberryPi) {
       const lines = fs.readFileSync(settingsPath).toString().split('\n');
 
       lines.forEach(line => {
-        const $ = /(\w+)\s*=\s*(\S+)/.exec(line);
+        const $ = /^\s*(\w+)\s*=\s*(\S+)/.exec(line);
 
         if ($)
           settings[$[1]] = $[2];
       });
+
+      // Convert deprecated environment variables
+      if (!settings.AWC_WIRED_TH_GPIO &&
+          toBoolean(settings.AWC_HAS_INDOOR_SENSOR) && settings.AWC_TH_SENSOR_GPIO)
+        settings.AWC_WIRED_TH_GPIO = settings.AWC_TH_SENSOR_GPIO;
+
+      if (!settings.AWC_WIRELESS_TH_GPIO && settings.AWC_WIRELESS_TEMP)
+        settings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TEMP;
+
+      delete settings.AWC_HAS_INDOOR_SENSOR;
+      delete settings.AWC_TH_SENSOR_GPIO;
+      delete settings.AWC_WIRELESS_TEMP;
+
+      if (!doDht)
+        delete settings.AWC_WIRED_TH_GPIO;
+
+      if (!doAcu)
+        delete settings.AWC_WIRELESS_TH_GPIO;
     }
   }
   catch (err) {
-    console.error(chalk.red('Existing settings check failed'));
+    console.warn(chalk.yellow('Existing settings check failed. Defaults will be used.'));
   }
 }
 
@@ -340,12 +367,12 @@ function getWebpackSummary(s: string): string {
     const line = lines[i];
 
     if (line && !line.startsWith('>')) {
-      summary += line + '\n';
+      summary += '    ' + line.trim() + (count < 3 ? '\n' : '');
       ++count;
     }
   }
 
-  return (summary || s).trim();
+  return summary || s.trim();
 }
 
 async function npmInit(): Promise<void> {
@@ -485,8 +512,9 @@ async function doServiceDeployment(uid: number): Promise<void> {
   await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
   await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
 
-  const settingsText = Object.keys(settings).map(key =>
-    key + '=' + settings[key]).join('\n') + '\n';
+  const settingsText =
+    `# If you edit AWC_PORT below, be sure to update\n# ${userHome}/${autostartDst}/autostart accordingly.\n` +
+    Object.keys(settings).sort().map(key => key + '=' + settings[key]).join('\n') + '\n';
 
   fs.writeFileSync(settingsPath, settingsText);
   await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']));
@@ -498,7 +526,9 @@ async function doServiceDeployment(uid: number): Promise<void> {
 
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';
-  const autostartLine2 = '@' + launchChromium;
+  const autostartLine2 = '@' + launchChromium.replace(/:8080\b/, ':' + settings.AWC_PORT);
+  const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}/, ':!!!')
+    .replace(/[^- /:!@0-9a-z]/g, '.').replace(/\//g, '\\/').replace(':!!!', ':\\d+\\b') + '$');
   const lines = fs.readFileSync(autostartPath).toString().split('\n');
   let update = false;
 
@@ -507,9 +537,19 @@ async function doServiceDeployment(uid: number): Promise<void> {
     update = true;
   }
 
-  if (!lines.includes(autostartLine2)) {
-    lines.push(autostartLine2);
-    update = true;
+  for (let i = 0; i <= lines.length; ++i) {
+    if (i === lines.length) {
+      lines.push(autostartLine2);
+      update = true;
+      break;
+    }
+    else if (lines[i] === autostartLine2)
+      break;
+    else if (line2Matcher.test(lines[i])) {
+      lines[i] = autostartLine2;
+      update = true;
+      break;
+    }
   }
 
   if (update)
