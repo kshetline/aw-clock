@@ -25,7 +25,7 @@ To build and run this project you can use the following commands:
 
 As of v2.1.0 of this software no API key is required to get weather data. The default weather data, however, is now being acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
 
-Obtaining a Dark Sky API key for back-up weather data is still, therefore, a good idea. Use the environment variable `AWC_DARK_SKY_API_KEY` to set the key. (See https://darksky.net/ for further details.) You can also set the environment variable `AWS_PREFERRED_WS` to `darksky` to make Dark Sky your primary weather source, with Weather Underground as a backup.
+Obtaining a Dark Sky API key for back-up weather data is still, therefore, a good idea. Use the environment variable `AWC_DARK_SKY_API_KEY` to set the key. (See https://darksky.net/ for further details.) You can also set the environment variable `AWC_PREFERRED_WS` to `darksky` to make Dark Sky your primary weather source, with Weather Underground as a backup.
 
 By default the server uses `pool.ntp.org` as an NTP time server. Use the environment variable `AWC_NTP_SERVER` to change the time server. Do not use a Google time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to display leap seconds.
 
@@ -52,7 +52,7 @@ resistor.
 
 First, you must install the BCM 2835 library as described here: http://www.airspayce.com/mikem/bcm2835/
 
-Then, with your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 4 (physical pin 7 on the 40-pin GPIO header). You can use the environment variable `AWC_TH_SENSOR_GPIO` to set a different GPIO number. The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin GPIO header) and the `-` lead needs to be connected to ground (I chose pin 6).
+Then, with your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 4 (physical pin 7 on the 40-pin GPIO header). You can use the environment variable `AWC_WIRED_TH_GPIO` to set a different GPIO number. The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin GPIO header) and the `-` lead needs to be connected to ground (I chose pin 6).
 
 ![Picture of wiring](https://shetline.com/misc/rpi-dht22-wiring.jpg)
 
@@ -82,7 +82,7 @@ I can’t guarantee that I’m recalling every important step I took to create m
 1. If you wish to use an indoor wired temperature/humidity sensor, follow the previously mentioned steps to install the BCM 2835 library and connect the sensor.
 1. If you wish to use wireless temperature/humidity sensors, follow those previous instructions.
 1. Copy the included file `weatherService` (located in the `raspberry_pi_setup` folder) to `/etc/init.d/`. Make sure the file is owned by `root` and is set to be executable with `chmod +x`. Follow the instructions listed inside that file to set up the necessary environment variables, which will
-be saved in `/etc/defaults/weatherService`. This is where you add your Dark Sky API key if you're using one, set `AWC_HAS_INDOOR_SENSOR` to `true` if you’re
+be saved in `/etc/defaults/weatherService`. This is where you add your Dark Sky API key if you're using one, set `AWC_WIRED_TH_GPIO` to a GPIO pin number if you’re
 connecting an indoor temperature/humidity sensor. and set other environment variable options.
     * _Don’t forget that if you update this project, you may need to manually update `/etc/init.d/weatherService` too._
 1. Use the command `sudo update-rc.d weatherService defaults` to establish the service that starts up the weather server.

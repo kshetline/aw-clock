@@ -12,7 +12,7 @@ router.get('/', async (req: Request, res: Response) => {
   let forecast: ForecastData | Error;
   let triedDarksky = false;
 
-  if (process.env.AWC_DARK_SKY_API_KEY && process.env.AWS_PREFERRED_WS === 'darksky') {
+  if (process.env.AWC_DARK_SKY_API_KEY && process.env.AWC_PREFERRED_WS === 'darksky') {
     forecast = await getDsForecast(req);
     triedDarksky = true;
   }

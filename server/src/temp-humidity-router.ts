@@ -41,11 +41,15 @@ function removeOldData() {
   });
 }
 
-if (process.env.AWC_WIRELESS_TEMP && !process.env.AWC_ALT_DEV_SERVER) {
+// Convert deprecated environment variable
+if (!process.env.AWC_WIRELESS_TH_GPIO && process.env.AWC_WIRELESS_TEMP)
+  process.env.AWC_WIRELESS_TH_GPIO = process.env.AWC_WIRELESS_TEMP;
+
+if (process.env.AWC_WIRELESS_TH_GPIO && !process.env.AWC_ALT_DEV_SERVER) {
   try {
     ({ addSensorDataListener, removeSensorDataListener } = require('rpi-acu-rite-temperature'));
 
-    callbackId = addSensorDataListener(process.env.AWC_WIRELESS_TEMP, originalData => {
+    callbackId = addSensorDataListener(process.env.AWC_WIRELESS_TH_GPIO, originalData => {
       removeOldData();
 
       if (originalData.channel === '-') {

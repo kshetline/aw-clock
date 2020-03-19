@@ -21,7 +21,8 @@ import * as Cookies from 'js-cookie';
 import { toBoolean } from 'ks-util';
 
 export const runningDev = (document.location.port === '4200');
-export const localServer = (document.location.port === '4200' || document.location.port === '8080');
+export const localServer = (document.location.port &&
+  document.location.port !== '80' && document.location.port !== '443');
 
 export class Settings {
   latitude = 42.75;

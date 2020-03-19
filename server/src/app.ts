@@ -18,7 +18,12 @@ const debug = require('debug')('express:server');
 
 let indoorRouter: Router;
 
-if (process.env.AWC_HAS_INDOOR_SENSOR || process.env.AWC_ALT_DEV_SERVER)
+// Convert deprecated environment variables
+if (!process.env.AWC_WIRED_TH_GPIO &&
+    toBoolean(process.env.AWC_HAS_INDOOR_SENSOR) && process.env.AWC_TH_SENSOR_GPIO)
+  process.env.AWC_WIRED_TH_GPIO = process.env.AWC_TH_SENSOR_GPIO;
+
+if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER)
   indoorRouter = require('./indoor-router').router;
 
 const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);

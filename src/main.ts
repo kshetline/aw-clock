@@ -35,7 +35,7 @@ import { updateSvgFlowItems, reflow } from './svg-flow';
 
 initTimeZoneSmall();
 
-const weatherPort = (runningDev ? '4201' : '8080');
+const weatherPort = (runningDev ? '4201' : document.location.port || '8080');
 const weatherServer = new URL(window.location.href).searchParams.get('weather_server') ||
   (runningDev ? 'http://localhost:' + weatherPort : '');
 const ntpPoller = new HttpTimePoller(weatherServer);
