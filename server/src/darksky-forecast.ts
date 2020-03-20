@@ -1,3 +1,4 @@
+import { requestJson } from 'by-request';
 import { Request } from 'express';
 import {
   Alert, AlertKeys,
@@ -7,8 +8,7 @@ import {
   DailyConditions, DailyConditionsKeys, DailySummaryConditions, DailySummaryConditionsKeys,
   ForecastData,
   ForecastDataKeys
-} from './forecast-types';
-import { requestJson } from 'by-request';
+} from './weather-types';
 
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;

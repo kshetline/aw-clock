@@ -19,10 +19,10 @@
 
 import { AppService } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/forecast-types';
 import * as $ from 'jquery';
 import { localServer, runningDev } from './settings';
 import { updateSvgFlowItems } from './svg-flow';
+import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/weather-types';
 
 const DEV_SENSOR_URL = 'http://localhost:4201';
 

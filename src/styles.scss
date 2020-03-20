@@ -264,15 +264,15 @@ body {
 }
 
 .user-options {
-  display: -ms-grid;
   display: grid;
-  -ms-grid-columns: max-content auto auto;
+  display: grid;
+  grid-columns: max-content auto auto;
   grid-template-columns: max-content auto auto;
   grid-column-gap: 4px;
   grid-row-gap: 3px;
 
   &>* {
-    -ms-grid-row-align: center;
+    grid-row-align: center;
     align-self: center;
     display: block; // Needed to make IE grid layout work
   }
@@ -282,85 +282,85 @@ body {
   }
 
   &>*:nth-child(1) {
-    -ms-grid-row: 1;
-    -ms-grid-column: 1;
+    grid-row: 1;
+    grid-column: 1;
   }
 
   &>*:nth-child(2) {
-    -ms-grid-row: 1;
-    -ms-grid-column: 2;
+    grid-row: 1;
+    grid-column: 2;
   }
 
   &>*:nth-child(3) {
-    -ms-grid-row: 1;
-    -ms-grid-column: 3;
+    grid-row: 1;
+    grid-column: 3;
   }
 
   &>*:nth-child(4) {
-    -ms-grid-row: 2;
-    -ms-grid-column: 1;
+    grid-row: 2;
+    grid-column: 1;
   }
 
   &>*:nth-child(5) {
-    -ms-grid-row: 2;
-    -ms-grid-column: 2;
+    grid-row: 2;
+    grid-column: 2;
   }
 
   &>*:nth-child(6) {
-    -ms-grid-row: 2;
-    -ms-grid-column: 3;
+    grid-row: 2;
+    grid-column: 3;
   }
 
   &>*:nth-child(7) {
-    -ms-grid-row: 3;
-    -ms-grid-column: 1;
+    grid-row: 3;
+    grid-column: 1;
   }
 
   &>*:nth-child(8) {
-    -ms-grid-row: 3;
-    -ms-grid-column: 2;
+    grid-row: 3;
+    grid-column: 2;
   }
 
   &>*:nth-child(9) {
-    -ms-grid-row: 3;
-    -ms-grid-column: 3;
+    grid-row: 3;
+    grid-column: 3;
   }
 
   &>*:nth-child(10) {
-    -ms-grid-row: 4;
-    -ms-grid-column: 1;
+    grid-row: 4;
+    grid-column: 1;
   }
 
   &>*:nth-child(11) {
-    -ms-grid-row: 4;
-    -ms-grid-column: 2;
+    grid-row: 4;
+    grid-column: 2;
   }
 
   &>*:nth-child(12) {
-    -ms-grid-row: 4;
-    -ms-grid-column: 3;
+    grid-row: 4;
+    grid-column: 3;
   }
 
   &>*:nth-child(13) {
-    -ms-grid-row: 5;
-    -ms-grid-column: 1;
+    grid-row: 5;
+    grid-column: 1;
   }
 
   &>*:nth-child(14) {
-    -ms-grid-row: 5;
-    -ms-grid-column: 2;
-    -ms-grid-column-span: 2;
+    grid-row: 5;
+    grid-column: 2;
+    grid-column-span: 2;
   }
 
   &>*:nth-child(15) {
-    -ms-grid-row: 6;
-    -ms-grid-column: 1;
+    grid-row: 6;
+    grid-column: 1;
   }
 
   &>*:nth-child(16) {
-    -ms-grid-row: 6;
-    -ms-grid-column: 2;
-    -ms-grid-column-span: 2;
+    grid-row: 6;
+    grid-column: 2;
+    grid-column-span: 2;
   }
 }
 

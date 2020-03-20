@@ -1,9 +1,9 @@
 import { jsonOrJsonp } from './common';
 import { Request, Response, Router } from 'express';
-import { DhtSensorData } from './forecast-types';
 import { toBoolean } from 'ks-util';
 import request from 'request';
 import { average, noCache, stdDev } from './util';
+import { DhtSensorData } from './weather-types';
 
 export const router = Router();
 

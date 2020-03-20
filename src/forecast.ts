@@ -17,14 +17,14 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import * as $ from 'jquery';
+import { AppService } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import { ForecastData } from '../server/src/forecast-types';
+import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
-import { htmlEncode, setSvgHref } from './util';
-import { AppService } from './app.service';
 import { reflow } from './svg-flow';
+import { htmlEncode, setSvgHref } from './util';
+import { ForecastData } from '../server/src/weather-types';
 
 const DEFAULT_BACKGROUND = 'midnightblue';
 const DEFAULT_FOREGROUND = 'white';

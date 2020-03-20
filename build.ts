@@ -370,7 +370,7 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
 
   if (cmdPkg === 'pigpio') {
     packageArgs = ['pigpio', 'python-pigpio', 'python3-pigpio'];
-    name = 'pigpiop';
+    name = 'pigpiod';
   }
 
   const installed = !!(await monitorProcess(spawn('which', [name]), false, ErrorMode.ANY_ERROR)).trim();
