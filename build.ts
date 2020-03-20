@@ -675,6 +675,8 @@ async function doServiceDeployment(uid: number): Promise<void> {
   if (update)
     fs.writeFileSync(autostartPath, lines.join('\n') + '\n');
 
+  await monitorProcess(spawn('chown', [sudoUser, autostartDir + '/autostart*'],
+    { shell: true, uid: 0 }), true, ErrorMode.ANY_ERROR);
   await monitorProcess(spawn('chmod', ['+x', autostartDir + '/autostart*'],
     { shell: true }), true, ErrorMode.ANY_ERROR);
   spawnUid = -1;
