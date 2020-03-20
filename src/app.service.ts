@@ -8,6 +8,7 @@ export interface AppService {
   getCurrentTime(bias?: number): number;
   getIndoorOption(): string;
   getOutdoorOption(): string;
+  getSettings(): Settings;
   getTimeInfo(bias?: number): TimeInfo;
   getWeatherServer(): string;
   isTimeAccelerated(): boolean;

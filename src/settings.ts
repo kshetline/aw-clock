@@ -39,6 +39,10 @@ export class Settings {
   hideSeconds = false;
   hidePlanets = false;
 
+  public defaultsSet(): boolean {
+    return !!(Cookies.get('indoor') || Cookies.get('outdoor'));
+  }
+
   public load(): void {
     this.latitude = Number(Cookies.get('latitude')) || defaultSettings.latitude;
     this.longitude = Number(Cookies.get('longitude')) || defaultSettings.longitude;
@@ -56,21 +60,21 @@ export class Settings {
   }
 
   public save(): void {
-    const expiration = 36525;
+    const expiration = { expires: 36525 }; // One century from now.
 
-    Cookies.set('city', this.city, { expires: expiration });
-    Cookies.set('latitude', this.latitude.toString(), { expires: expiration });
-    Cookies.set('longitude', this.longitude.toString(), { expires: expiration });
-    Cookies.set('indoor', this.indoorOption, { expires: expiration });
-    Cookies.set('outdoor', this.outdoorOption, { expires: expiration });
-    Cookies.set('id', this.userId, { expires: expiration });
-    Cookies.set('dimming', this.dimming.toString(), { expires: expiration });
-    Cookies.set('dimming_start', this.dimmingStart, { expires: expiration });
-    Cookies.set('dimming_end', this.dimmingEnd, { expires: expiration });
-    Cookies.set('celsius', this.celsius.toString(), { expires: expiration });
-    Cookies.set('ampm', this.amPm.toString(), { expires: expiration });
-    Cookies.set('hides', this.hideSeconds.toString(), { expires: expiration });
-    Cookies.set('hidep', this.hidePlanets.toString(), { expires: expiration });
+    Cookies.set('city', this.city, expiration);
+    Cookies.set('latitude', this.latitude.toString(), expiration);
+    Cookies.set('longitude', this.longitude.toString(), expiration);
+    Cookies.set('indoor', this.indoorOption, expiration);
+    Cookies.set('outdoor', this.outdoorOption, expiration);
+    Cookies.set('id', this.userId, expiration);
+    Cookies.set('dimming', this.dimming.toString(), expiration);
+    Cookies.set('dimming_start', this.dimmingStart, expiration);
+    Cookies.set('dimming_end', this.dimmingEnd, expiration);
+    Cookies.set('celsius', this.celsius.toString(), expiration);
+    Cookies.set('ampm', this.amPm.toString(), expiration);
+    Cookies.set('hides', this.hideSeconds.toString(), expiration);
+    Cookies.set('hidep', this.hidePlanets.toString(), expiration);
   }
 }
 

@@ -33,6 +33,10 @@ const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
 const sensorGpio = parseInt(process.env.AWC_WIRED_TH_GPIO, 10) || 4;
 
+export function hasWiredIndoorSensor(): boolean {
+  return !!indoorSensor;
+}
+
 function readSensor() {
   indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {
     if (err || temperature < -10 || temperature > 50 || humidity < 0 || humidity > 100)

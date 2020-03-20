@@ -729,6 +729,8 @@ async function doServiceDeployment(uid: number): Promise<void> {
     showStep();
     write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
+    await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'],
+      { shell: true, uid: 0 }), true, ErrorMode.ANY_ERROR);
     stepDone();
 
     if (doStdDeploy) {

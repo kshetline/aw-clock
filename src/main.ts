@@ -243,6 +243,10 @@ class AwClockApp implements AppService {
     this.lastForecast = this.getCurrentTime();
   }
 
+  getSettings(): Settings {
+    return this.settings;
+  }
+
   updateSettings(newSettings: Settings): void {
     this.settings = newSettings;
     newSettings.save();

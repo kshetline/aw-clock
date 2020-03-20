@@ -16,6 +16,7 @@ import { noCache, normalizePort } from './util';
 
 const debug = require('debug')('express:server');
 
+let indoorModule: any;
 let indoorRouter: Router;
 
 // Convert deprecated environment variables
@@ -23,8 +24,10 @@ if (!process.env.AWC_WIRED_TH_GPIO &&
     toBoolean(process.env.AWC_HAS_INDOOR_SENSOR) && process.env.AWC_TH_SENSOR_GPIO)
   process.env.AWC_WIRED_TH_GPIO = process.env.AWC_TH_SENSOR_GPIO;
 
-if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER)
-  indoorRouter = require('./indoor-router').router;
+if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
+  indoorModule = require('./indoor-router');
+  indoorRouter = indoorModule.router;
+}
 
 const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);
 
@@ -149,6 +152,14 @@ function getApp() {
       jsonOrJsonp(req, res, { temperature: 0, humidity: -1, error: 'n/a' });
     });
   }
+
+  theApp.get('/defaults', (req, res) => {
+    noCache(res);
+    jsonOrJsonp(req, res, {
+      indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
+      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F')
+    });
+  });
 
   theApp.get('/ntp', (req, res) => {
     noCache(res);

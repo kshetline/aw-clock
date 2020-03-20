@@ -95,35 +95,29 @@ export class Sensors {
     const site = (runningDev ? DEV_SENSOR_URL : '');
     const wiredUrl = `${site}/indoor`;
     const wirelessUrl = `${site}/wireless-th`;
-    const indoorOption = this.appService.getIndoorOption();
-    const outdoorOption = this.appService.getOutdoorOption();
-    const flowSpec = this.outdoorMeter[0].getAttributeNS(null, 'svg-flow');
-    let newFlowSpec: string;
+    let indoorOption = this.appService.getIndoorOption();
+    let outdoorOption = this.appService.getOutdoorOption();
+    const settings = this.appService.getSettings();
 
-    this.indoorMeter.css('display', this.wirelessAvailable && /[ABC]/.test(indoorOption) ? 'block' : 'none');
-    this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
-
-    if (outdoorOption.length === 2 && this.wirelessAvailable) {
-      this.outdoorMeter2.css('display', 'block');
-      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
-    }
-    else {
-      this.outdoorMeter2.css('display', 'none');
-      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-5$2');
-    }
-
-    if (newFlowSpec !== flowSpec) {
-      this.outdoorMeter[0].setAttribute('svg-flow', newFlowSpec);
-      updateSvgFlowItems();
-    }
+    this.configureDisplay(indoorOption, outdoorOption);
 
     const promises = [
       this.wiredAvailable && indoorOption !== 'X' ? getJson(wiredUrl) : Promise.resolve(null),
       this.wirelessAvailable ? getJson(wirelessUrl) : Promise.resolve(null)
     ];
 
+    if (!settings.defaultsSet())
+      promises.push(getJson(`${site}/defaults`));
+
     Promise.all(promises)
       .then(data => {
+        if (data[2] && data[2].indoorOption && data[2].outdoorOption) {
+          indoorOption = settings.indoorOption = data[2].indoorOption;
+          outdoorOption = settings.outdoorOption = data[2].outdoorOption;
+          settings.save();
+          this.configureDisplay(indoorOption, outdoorOption);
+        }
+
         const wired: DhtSensorData = data[0];
         const wireless: TempHumidityData = data[1];
         const lowBatteries: string[] = [];
@@ -248,5 +242,27 @@ export class Sensors {
         cth.sensorTempDetail = sensorDetail.join(', ');
         this.appService.updateCurrentTemp(cth);
       });
+  }
+
+  private configureDisplay(indoorOption: string, outdoorOption: string): void {
+    const flowSpec = this.outdoorMeter[0].getAttributeNS(null, 'svg-flow');
+    let newFlowSpec: string;
+
+    this.indoorMeter.css('display', this.wirelessAvailable && /[ABC]/.test(indoorOption) ? 'block' : 'none');
+    this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
+
+    if (outdoorOption.length === 2 && this.wirelessAvailable) {
+      this.outdoorMeter2.css('display', 'block');
+      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
+    }
+    else {
+      this.outdoorMeter2.css('display', 'none');
+      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-5$2');
+    }
+
+    if (newFlowSpec !== flowSpec) {
+      this.outdoorMeter[0].setAttribute('svg-flow', newFlowSpec);
+      updateSvgFlowItems();
+    }
   }
 }
