@@ -358,6 +358,7 @@ function stepDone(): void {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promise<boolean> {
   let packageArgs = [cmdPkg];
+  let name = cmdPkg;
 
   showStep();
 
@@ -367,10 +368,12 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
     return false;
   }
 
-  if (cmdPkg === 'pigpio')
-    packageArgs = ['pigpiop', 'python-pigpio', 'python3-pigpio'];
+  if (cmdPkg === 'pigpio') {
+    packageArgs = ['pigpio', 'python-pigpio', 'python3-pigpio'];
+    name = 'pigpiop';
+  }
 
-  const installed = !!(await monitorProcess(spawn('which', [packageArgs[0]]), false, ErrorMode.ANY_ERROR)).trim();
+  const installed = !!(await monitorProcess(spawn('which', [name]), false, ErrorMode.ANY_ERROR)).trim();
 
   if (installed) {
     console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
