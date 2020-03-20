@@ -1,4 +1,11 @@
 #!/bin/bash
+
+if [[ "$1" =~ ^--help|-h$ ]]; then
+  echo "Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i]\n'"
+  echo "                       [--launch] [--pt] [--reboot] [--sd] [--tarp]"
+  exit
+fi
+
 if [ "$EUID" -ne 0 ]; then
   echo "This installer must be run as root (sudo ./build.sh)"
   exit
@@ -20,4 +27,5 @@ if (( version < 12 )); then
   apt-get install -y nodejs
 fi
 
+npm i
 npm run build -- --bash $*

@@ -163,7 +163,7 @@ process.argv.forEach(arg => {
     case '--tarp':
       break; // ignore - already handled
     default:
-      if (arg !== '--help')
+      if (arg !== '--help' && arg !== '-h')
         console.error('Unrecognized option "' + chalk.red(arg) + '"');
 
       if (viaBash)
