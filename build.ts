@@ -47,9 +47,7 @@ const settings: any = {
   AWC_ALLOW_CORS: true,
   AWC_NTP_SERVER: 'pool.ntp.org',
   AWC_PORT: '8080',
-  AWC_PREFERRED_WS: 'wunderground',
-  AWC_WIRED_TH_GPIO: '4',
-  AWC_WIRELESS_TH_GPIO: '27'
+  AWC_PREFERRED_WS: 'wunderground'
 };
 
 let spawnUid = -1;
@@ -108,6 +106,7 @@ process.argv.forEach(arg => {
     case '--acu':
       totalSteps += doAcu ? 0 : 1;
       doAcu = true;
+      settings.AWC_WIRELESS_TH_GPIO = '27';
       break;
     case '--bash':
       viaBash = true;
@@ -121,6 +120,7 @@ process.argv.forEach(arg => {
     case '--dht':
       totalSteps += doDht ? 0 : 1;
       doDht = true;
+      settings.AWC_WIRED_TH_GPIO = '4';
       onlyOnRasperryPi.push(arg);
       break;
     case '--gps':

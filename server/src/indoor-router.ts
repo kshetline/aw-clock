@@ -17,8 +17,12 @@ interface NodeDhtSensor {
 
 let indoorSensor: NodeDhtSensor;
 
-if (toBoolean(process.env.AWC_WIRED_TH_GPIO))
-  indoorSensor = require('node-dht-sensor');
+if (toBoolean(process.env.AWC_WIRED_TH_GPIO)) {
+  try {
+    indoorSensor = require('node-dht-sensor');
+  }
+  catch (err) {}
+}
 
 let lastTemp: number;
 let lastHumidity: number;
