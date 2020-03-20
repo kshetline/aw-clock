@@ -129,6 +129,7 @@ process.argv.forEach(arg => {
       break;
     case '-i':
       interactive = true;
+      delete process.env.SHLVL;
       onlyDedicated.push(arg);
       break;
     case '--launch':
@@ -165,7 +166,15 @@ process.argv.forEach(arg => {
       if (arg !== '--help')
         console.error('Unrecognized option "' + chalk.red(arg) + '"');
 
-      console.log('Usage: npm run build [-- [--acu] [--dht] [--help] [-i] [--pt] [--sd] [--launch] [--reboot]]');
+      if (viaBash)
+        console.log(
+          'Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i]\n' +
+          '                       [--launch] [--pt] [--reboot] [--sd] [--tarp]');
+      else
+        console.log(
+          'Usage: npm run build [-- [--acu] [--ddev] [--dht] [--help] [-i]\n' +
+          '                         [--launch] [--pt] [--reboot] [--sd] [--tarp]]');
+
       process.exit(0);
   }
 });
@@ -218,7 +227,7 @@ if (treatAsRaspberryPi) {
   }
 }
 
-if (isRaspberryPi && doAcu)
+if (!isRaspberryPi && doAcu)
   console.warn(chalk.yellow('Warning: this setup will only generate fake wireless sensor data'));
 
 async function readLine(): Promise<string> {
@@ -484,9 +493,6 @@ async function promptForConfiguration(): Promise<void> {
         settings[q.name] = response;
     }
   }
-
-  console.log(settings);
-  process.exit(0);
 }
 
 async function installFonts(): Promise<void> {
