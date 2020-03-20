@@ -641,7 +641,15 @@ async function doServiceDeployment(uid: number): Promise<void> {
   const autostartLine2 = '@' + launchChromium.replace(/:8080\b/, ':' + settings.AWC_PORT);
   const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}/, ':!!!')
     .replace(/[^- /:!@0-9a-z]/g, '.').replace(/\//g, '\\/').replace(':!!!', ':\\d+\\b') + '$');
-  const lines = fs.readFileSync(autostartPath).toString().split('\n');
+  let lines: string[];
+
+  try {
+    lines = fs.readFileSync(autostartPath).toString().split('\n');
+  }
+  catch (err) {
+    lines = [];
+  }
+
   let update = false;
 
   if (!lines.includes(autostartLine1)) {
