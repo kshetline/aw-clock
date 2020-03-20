@@ -1,16 +1,11 @@
 import { jsonOrJsonp } from './common';
 import { Request, Response, Router } from 'express';
+import { DhtSensorData } from './forecast-types';
 import { toBoolean } from 'ks-util';
 import request from 'request';
 import { average, noCache, stdDev } from './util';
 
 export const router = Router();
-
-export interface DhtSensorData {
-  temperature: number;
-  humidity: number;
-  error?: string;
-}
 
 const DHT22_OR_AM2302 = 22;
 

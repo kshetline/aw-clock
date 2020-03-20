@@ -1,5 +1,6 @@
 import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
+import { TimeInfo } from './time-types';
 
 const MILLIS_PER_DAY = 86_400_000;
 const MAX_ERRORS = 5;
@@ -13,13 +14,6 @@ const RETRY_POLLING_DELAY = 5000;
 const BACK_IN_TIME_THRESHOLD = 2000;
 const CLOCK_SPEED_WINDOW = 10_800_000; // 3 hours
 const MIDNIGHT_POLLING_AVOIDANCE = 5000;
-
-export interface TimeInfo {
-  time: number;
-  leapSecond: number;
-  leapExcess: number;
-  text: string;
-}
 
 export interface ClockReferencePoint {
   t: number;

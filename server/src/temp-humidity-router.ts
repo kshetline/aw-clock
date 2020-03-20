@@ -1,26 +1,9 @@
 import { Request, Response, Router } from 'express';
 import { jsonOrJsonp } from './common';
+import { TempHumidityItem, TempHumidityData } from './forecast-types';
+import { processMillis } from 'ks-util';
 import request from 'request';
 import { noCache } from './util';
-import { processMillis } from 'ks-util';
-
-export interface TempHumidityItem {
-  batteryLow: boolean;
-  channel: string;
-  humidity: number;
-  reliable: boolean;
-  signalQuality: number;
-  temperature: number;
-  time: number;
-}
-
-export interface TempHumidityData {
-  A?: TempHumidityItem;
-  B?: TempHumidityItem;
-  C?: TempHumidityItem;
-  deadAir?: boolean;
-  error?: string;
-}
 
 export const router = Router();
 

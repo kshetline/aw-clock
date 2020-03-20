@@ -64,3 +64,27 @@ export interface ForecastData {
   isMetric?: boolean;
   source?: string;
 }
+
+export interface DhtSensorData {
+  temperature: number;
+  humidity: number;
+  error?: string;
+}
+
+export interface TempHumidityItem {
+  batteryLow: boolean;
+  channel: string;
+  humidity: number;
+  reliable: boolean;
+  signalQuality: number;
+  temperature: number;
+  time: number;
+}
+
+export interface TempHumidityData {
+  A?: TempHumidityItem;
+  B?: TempHumidityItem;
+  C?: TempHumidityItem;
+  deadAir?: boolean;
+  error?: string;
+}

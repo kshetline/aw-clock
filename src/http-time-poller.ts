@@ -1,6 +1,7 @@
 import * as $ from 'jquery';
 import { NtpData } from '../server/src/ntp-data';
-import { TimePoller, TimeInfo } from '../server/src/time-poller';
+import { TimePoller } from '../server/src/time-poller';
+import { TimeInfo } from '../server/src/time-types';
 
 export class HttpTimePoller extends TimePoller {
   constructor(private weatherServer: string) {

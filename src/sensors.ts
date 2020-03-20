@@ -18,12 +18,11 @@
 */
 
 import { AppService } from './app.service';
-import { DhtSensorData } from '../server/src/indoor-router';
-import * as $ from 'jquery';
-import { TempHumidityData, TempHumidityItem } from '../server/src/temp-humidity-router';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import { updateSvgFlowItems } from './svg-flow';
+import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/forecast-types';
+import * as $ from 'jquery';
 import { localServer, runningDev } from './settings';
+import { updateSvgFlowItems } from './svg-flow';
 
 const DEV_SENSOR_URL = 'http://localhost:4201';
 

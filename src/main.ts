@@ -30,7 +30,7 @@ import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
 import { Sensors } from './sensors';
 import { HttpTimePoller } from './http-time-poller';
-import { TimeInfo } from '../server/src/time-poller';
+import { TimeInfo } from '../server/src/time-types';
 import { updateSvgFlowItems, reflow } from './svg-flow';
 
 initTimeZoneSmall();

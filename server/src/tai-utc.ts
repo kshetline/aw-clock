@@ -2,14 +2,8 @@ import { requestText } from 'by-request';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from 'ks-date-time-zone';
 import { interpolate } from 'ks-math';
 import PromiseFtp from 'promise-ftp';
+import { CurrentDelta } from './time-types';
 import { URL } from 'url';
-
-export interface CurrentDelta {
-  delta: number;
-  dut1: number[] | null;
-  pendingLeap: number;
-  pendingLeapDate: string;
-}
 
 export interface LeapSecond {
   ntp: number;
