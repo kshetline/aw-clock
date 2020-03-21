@@ -230,7 +230,7 @@ export class Clock {
   }
 
   private adjustTimeFontSize(): void {
-    this.timeCaption.style['font-size'] = (this._amPm && !this._hideSeconds ? '7.5' : '10');
+    this.timeCaption.style['font-size'] = (this._amPm && !this._hideSeconds ? '8.5' : '10');
     this.dut1PositionAdjustmentNeeded = true;
   }
 
@@ -384,7 +384,8 @@ export class Clock {
         else if (displayHour > 12)
           displayHour -= 12;
 
-        suffix = (hour < 12 ? ' AM' : ' PM');
+        suffix = '<tspan style="font-size: 0.5em" dy="-1.4">\u2009' +
+          (hour < 12 ? 'AM' : 'PM') + '</tspan>';
       }
 
       this.timeCaption.innerHTML =

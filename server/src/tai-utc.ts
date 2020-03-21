@@ -27,11 +27,12 @@ interface DebugTime {
 
 const IERS_BULLETIN_A_URL = 'ftp://ftp.iers.org/products/eop/rapid/daily/finals.daily';
 
-const NTP_BASE = 2_208_988_800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
-const MILLIS_PER_DAY = 86_400_000;
 const DAYS_BETWEEN_POLLS = 7;
+const FTP_TIMEOUT = 7500;
+const HTTP_TIMEOUT = 5000;
 const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180_000; // Three minutes
-const TIMEOUT = 5000;
+const MILLIS_PER_DAY = 86_400_000;
+const NTP_BASE = 2_208_988_800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const TIME_AND_DELTA = /^(\d{10,})\s+(\d{2,4})\s*#\s*1\s+[A-Za-z]{3}\s+\d{4}/;
 
 function makeError(err: any): Error {
@@ -100,8 +101,10 @@ export class TaiUtc {
     const now = this.getUtcMillis();
     const day = Math.floor(now / MILLIS_PER_DAY);
     const month = new Date(now).getMonth() + 1;
+    let gotBulletinA = false;
 
-    if (this.leapSeconds.length > 1 && this.lastPollDay < day + DAYS_BETWEEN_POLLS && this.lastPollMonth === month)
+    if (this.leapSeconds.length > 1 && this.deltaUt1s.length > 0 &&
+        this.lastPollDay < day + DAYS_BETWEEN_POLLS && this.lastPollMonth === month)
       return;
 
     await new Promise<void>(resolve => {
@@ -112,9 +115,10 @@ export class TaiUtc {
 
     try {
       await this.getIersBulletinA();
-      this.firstLeapSecondPoll = false;
+      gotBulletinA = true;
     }
     catch (err) {
+      console.error('Failed to read IERS Bulletin A from ' + IERS_BULLETIN_A_URL);
       console.error(err);
     }
 
@@ -122,17 +126,21 @@ export class TaiUtc {
 
     this.urls.forEach(url => {
       if (new URL(url).protocol === 'ftp:')
-        promises.push(TaiUtc.getFtpText(url));
+        promises.push(TaiUtc.getFtpText(url, false));
       else
-        promises.push(requestText(url, { timeout: TIMEOUT }).catch(err => makeError(err)));
+        promises.push(requestText(url, { timeout: HTTP_TIMEOUT }).catch(err => makeError(err)));
     });
 
     const docs = await Promise.all(promises);
     let newLeaps: LeapSecond[] = [];
 
-    docs.forEach(doc => {
-      if (typeof doc !== 'string')
+    docs.forEach((doc, index) => {
+      if (typeof doc !== 'string') {
+        console.error('Failed to leap seconds from ' + this.urls[index]);
+        console.error(doc);
+
         return;
+      }
 
       const lines = doc.split(/\r\n|\r|\n/).filter(line => TIME_AND_DELTA.test(line));
 
@@ -148,8 +156,12 @@ export class TaiUtc {
 
     if (newLeaps.length > 1) {
       this.leapSeconds = newLeaps;
-      this.lastPollDay = day;
-      this.lastPollMonth = month;
+
+      if (gotBulletinA) {
+        this.lastPollDay = day;
+        this.lastPollMonth = month;
+        this.firstLeapSecondPoll = false;
+      }
 
       const dt = TaiUtc.getDebugTime();
 
@@ -227,7 +239,7 @@ export class TaiUtc {
   private static getFtpText(url: string, throwError = false): Promise<string | Error> {
     const parsed = new URL(url);
     const port = Number(parsed.port || 21);
-    const options: PromiseFtp.Options = { host: parsed.hostname, port, connTimeout: TIMEOUT, pasvTimeout: TIMEOUT };
+    const options: PromiseFtp.Options = { host: parsed.hostname, port, connTimeout: FTP_TIMEOUT, pasvTimeout: FTP_TIMEOUT };
 
     if (parsed.username)
       options.user = parsed.username;
