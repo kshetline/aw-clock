@@ -63,6 +63,20 @@ $.fn.extend({
   }
 });
 
+export function getJson(url: string, jsonp = false): Promise<any> {
+  return new Promise(resolve => {
+    // `$.ajax()` returns a Promise, but if I try to use that Promise directly, I can't find a way to get
+    //   around "Uncaught (in promise)" errors, when what I want is a Promise resolved with an Error value.
+    // noinspection JSIgnoredPromiseFromCall
+    $.ajax({
+      url,
+      dataType: jsonp ? 'jsonp' : 'json',
+      success: data => resolve(data),
+      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => resolve(new Error(textStatus + ': ' + errorThrown))
+    });
+  });
+}
+
 const basicEntities: Record<string, string> = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
 
 export function htmlEncode(s: string): string {

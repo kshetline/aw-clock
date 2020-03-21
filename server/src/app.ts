@@ -29,16 +29,17 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
   indoorRouter = indoorModule.router;
 }
 
-const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);
+const devMode = process.argv.includes('-d');
+const allowCors = toBoolean(process.env.AWC_ALLOW_CORS) || devMode;
 
 // create http server
-const defaultPort = process.argv.includes('-d') ? 4201 : 8080;
+const defaultPort = devMode ? 4201 : 8080;
 const httpPort = normalizePort(process.env.AWC_PORT || defaultPort);
 const app = getApp();
 const httpServer = http.createServer(app);
 
 // listen on provided ports
-console.log('*** starting server ***');
+console.log(`*** starting server on port ${httpPort} ***`);
 httpServer.listen(httpPort);
 
 function shutdown() {

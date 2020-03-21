@@ -17,33 +17,18 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { AppService } from './app.service';
+import { AppService, DEV_URL } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import * as $ from 'jquery';
 import { localServer, runningDev } from './settings';
 import { updateSvgFlowItems } from './svg-flow';
+import { getJson } from './util';
 import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/weather-types';
-
-const DEV_SENSOR_URL = 'http://localhost:4201';
 
 function errorText(err: any): string {
   err = err instanceof Error ? err.message : err.error;
 
   return err.replace(/error:\s*/i, '');
-}
-
-function getJson(url: string): Promise<any> {
-  return new Promise(resolve => {
-    // `$.ajax()` returns a Promise, but if I try to use that Promise directly, I can't find a way to get
-    //   around "Uncaught (in promise)" errors, when what I want is a Promise resolved with an Error value.
-    // noinspection JSIgnoredPromiseFromCall
-    $.ajax({
-      url,
-      dataType: 'json',
-      success: data => resolve(data),
-      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => resolve(new Error(textStatus + ': ' + errorThrown))
-    });
-  });
 }
 
 function setSignalLevel(elem: JQuery, quality: number): void {
@@ -92,12 +77,11 @@ export class Sensors {
 
   public update(celsius: boolean) {
     const adjustTemp = (temp: number) => (celsius || temp == null ? temp : temp * 1.8 + 32);
-    const site = (runningDev ? DEV_SENSOR_URL : '');
+    const site = (runningDev ? DEV_URL : '');
     const wiredUrl = `${site}/indoor`;
     const wirelessUrl = `${site}/wireless-th`;
-    let indoorOption = this.appService.getIndoorOption();
-    let outdoorOption = this.appService.getOutdoorOption();
-    const settings = this.appService.getSettings();
+    const indoorOption = this.appService.getIndoorOption();
+    const outdoorOption = this.appService.getOutdoorOption();
 
     this.configureDisplay(indoorOption, outdoorOption);
 
@@ -106,18 +90,8 @@ export class Sensors {
       this.wirelessAvailable ? getJson(wirelessUrl) : Promise.resolve(null)
     ];
 
-    if (!settings.defaultsSet())
-      promises.push(getJson(`${site}/defaults`));
-
     Promise.all(promises)
       .then(data => {
-        if (data[2] && data[2].indoorOption && data[2].outdoorOption) {
-          indoorOption = settings.indoorOption = data[2].indoorOption;
-          outdoorOption = settings.outdoorOption = data[2].outdoorOption;
-          settings.save();
-          this.configureDisplay(indoorOption, outdoorOption);
-        }
-
         const wired: DhtSensorData = data[0];
         const wireless: TempHumidityData = data[1];
         const lowBatteries: string[] = [];

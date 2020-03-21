@@ -25,9 +25,9 @@ export const localServer = (document.location.port &&
   document.location.port !== '80' && document.location.port !== '443');
 
 export class Settings {
-  latitude = 42.75;
-  longitude = -71.48;
-  city = 'Nashua, NH';
+  latitude = 40.75;
+  longitude = -73.99;
+  city = 'New York, NY';
   indoorOption = localServer ? 'D' : 'X';
   outdoorOption = 'F';
   userId = '';
@@ -35,12 +35,12 @@ export class Settings {
   dimmingStart = '23:00';
   dimmingEnd = '7:00';
   celsius = false;
-  amPm = false;
+  amPm = /[a-z]/i.test(new Date().toLocaleTimeString());
   hideSeconds = false;
   hidePlanets = false;
 
   public defaultsSet(): boolean {
-    return !!(Cookies.get('indoor') || Cookies.get('outdoor'));
+    return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
   }
 
   public load(): void {
@@ -54,7 +54,7 @@ export class Settings {
     this.dimmingStart = Cookies.get('dimming_start') || defaultSettings.dimmingStart;
     this.dimmingEnd = Cookies.get('dimming_end') || defaultSettings.dimmingEnd;
     this.celsius = toBoolean(Cookies.get('celsius'), false);
-    this.amPm = toBoolean(Cookies.get('ampm'), false);
+    this.amPm = toBoolean(Cookies.get('ampm'), defaultSettings.amPm);
     this.hideSeconds = toBoolean(Cookies.get('hides'), false);
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
   }
