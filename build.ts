@@ -20,6 +20,7 @@ const isWindows = (process.platform === 'win32');
 
 let spinStep = 0;
 let lastSpin = 0;
+let doUpdateUpgrade = true;
 let npmInitDone = false;
 let doAcu = false;
 let doDht = false;
@@ -157,6 +158,10 @@ process.argv.forEach(arg => {
       break;
     case '--sd':
       doStdDeploy = true;
+      onlyOnRasperryPi.push(arg);
+      break;
+    case '--skip-upgrade':
+      doUpdateUpgrade = false;
       onlyOnRasperryPi.push(arg);
       break;
     case '--wwvb':
@@ -358,7 +363,9 @@ function stepDone(): void {
   console.log(backspace + chalk.green(CHECK_MARK));
 }
 
-let firstAptGet = true;
+async function isInstalled(command: string): Promise<boolean> {
+  return !!(await monitorProcess(spawn('which', [command]), false, ErrorMode.ANY_ERROR)).trim();
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promise<boolean> {
@@ -378,9 +385,7 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
     name = 'pigpiod';
   }
 
-  const installed = !!(await monitorProcess(spawn('which', [name]), false, ErrorMode.ANY_ERROR)).trim();
-
-  if (installed) {
+  if (await isInstalled(name)) {
     console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
     return false;
   }
@@ -389,14 +394,8 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
 
     if (viaNpm)
       await monitorProcess(spawn('npm', ['install', '-g', ...packageArgs]), true, ErrorMode.ANY_ERROR);
-    else {
-      if (firstAptGet) {
-        await monitorProcess(spawn('apt-get', ['update']), true, ErrorMode.ANY_ERROR);
-        firstAptGet = false;
-      }
-
+    else
       await monitorProcess(spawn('apt-get', ['install', '-y', ...packageArgs]), true, ErrorMode.ANY_ERROR);
-    }
 
     stepDone();
     return true;
@@ -481,6 +480,10 @@ function yesOrNo(s: string, assign: (isYes: boolean) => void): boolean {
   return false;
 }
 
+function upgradeValidate(s: string): boolean {
+  return yesOrNo(s, isYes => doUpdateUpgrade = isYes);
+}
+
 function acuValidate(s: string): boolean {
   return yesOrNo(s, isYes => doAcu = isYes);
 }
@@ -526,10 +529,16 @@ const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : 'N');
 const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 
 const questions = [
+  { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port', ask: true, validate: portValidate },
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
   { name: 'AWC_PREFERRED_WS', prompt: 'preferred weather service, (w)underground or (d)arksky)', ask: true, validate: wsValidate, after: wsAfter },
-  { name: 'AWC_DARK_SKY_API_KEY', prompt: 'Dark Sky API key (uses "wunderground" if left blank)', ask: true },
+  {
+    name: 'AWC_DARK_SKY_API_KEY',
+    prompt: 'Dark Sky API key (uses "wunderground" if left blank)' +
+      (settings.AWC_DARK_SKY_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
+    ask: true
+  },
   { prompt: 'Use wired DHT temperature/humidity sensor?', ask: true, yn: true, deflt: doDht ? 'Y' : 'N', validate: dhtValidate },
   { name: 'AWC_WIRED_TH_GPIO', prompt: 'GPIO pin number for wired temp/humidity sensor', ask: () => doDht, validate: pinValidate },
   { prompt: 'Use wireless temperature/humidity sensors?', ask: true, yn: true, deflt: doAcu ? 'Y' : 'N', validate: acuValidate },
@@ -570,8 +579,12 @@ async function promptForConfiguration(): Promise<void> {
         --i;
         continue;
       }
-      else if (q.name)
-        settings[q.name] = response;
+      else if (q.name) {
+        if (response === '-')
+          delete settings[q.name];
+        else
+          settings[q.name] = response;
+      }
     }
 
     if (q.after)
@@ -722,13 +735,22 @@ async function doServiceDeployment(uid: number): Promise<void> {
   const autostartLine2 = '@' + launchChromium.replace(/:8080\b/, ':' + settings.AWC_PORT);
   const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}/, ':!!!')
     .replace(/[^- /:!@0-9a-z]/g, '.').replace(/\//g, '\\/').replace(':!!!', ':\\d+\\b') + '$');
-  let lines: string[];
+  let lines: string[] = [];
 
   try {
-    lines = fs.readFileSync(autostartPath).toString().split('\n');
+    lines = fs.readFileSync(autostartPath).toString().split('\n').filter(line => !!line.trim());
   }
   catch (err) {
-    lines = [];
+    if (isRaspberryPi) {
+      lines = [
+        '@lxpanel --profile LXDE-pi',
+        '@pcmanfm --desktop --profile LXDE-pi',
+        '@xscreensaver -no-splash'
+      ];
+
+      if (await isInstalled('point-rpi'))
+        lines.push('@point-rpi');
+    }
   }
 
   let update = false;
@@ -769,7 +791,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
   try {
     if (treatAsRaspberryPi && !isRaspberryPi) {
       const isDebian = /Linux Debian/i.test(await monitorProcess(spawn('uname', ['-a']), false));
-      const isLxde = !!(await monitorProcess(spawn('which', ['lxpanel'], { shell: true }), false)).trim();
+      const isLxde = await isInstalled('lxpanel');
 
       if (!isDebian || !isLxde) {
         console.error(chalk.redBright('--tarp option (Treat As Raspberry Pi) only available for Linux Debian with LXDE'));
@@ -799,12 +821,20 @@ async function doServiceDeployment(uid: number): Promise<void> {
       delete settings.AWC_WIRELESS_TH_GPIO;
 
     if (doDedicated) {
-      totalSteps += 9;
+      totalSteps += 9 + (doUpdateUpgrade ? 1 : 0);
       console.log(chalk.cyan('- Dedicated device setup -'));
       showStep();
       write('Shutdown weatherService if running' + trailingSpace);
       await monitorProcess(spawn('service', ['weatherService', 'stop']), true, ErrorMode.NO_ERRORS);
       stepDone();
+
+      if (doUpdateUpgrade) {
+        showStep();
+        write('Updating/upgrading packages' + trailingSpace);
+        await monitorProcess(spawn('apt-get', ['update', '-y']), true, ErrorMode.NO_ERRORS);
+        await monitorProcess(spawn('apt-get', ['upgrade', '-y']), true, ErrorMode.NO_ERRORS);
+        stepDone();
+      }
 
       await install('pigpio', false, true);
       await install(chromium);
