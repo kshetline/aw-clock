@@ -37,17 +37,30 @@ let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 
-const chalk = new Chalk.Instance();
+interface ExtendedChalk extends Chalk.Chalk {
+  mediumGray: (s: string) => string;
+  paleBlue: (s: string) => string;
+  paleYellow: (s: string) => string;
+}
+
+const chalk = new Chalk.Instance() as ExtendedChalk;
+
+chalk.mediumGray = chalk.hex('#808080');
+chalk.paleBlue = chalk.hex('#66CCFF');
+chalk.paleYellow = chalk.hex('#FFFFAA');
+
 let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
 let totalSteps = 5;
 let currentStep = 0;
-const settings: any = {
-  AWC_ALLOW_CORS: true,
+const settings: Record<string, string> = {
+  AWC_ALLOW_CORS: 'true',
   AWC_NTP_SERVER: 'pool.ntp.org',
   AWC_PORT: '8080',
-  AWC_PREFERRED_WS: 'wunderground'
+  AWC_PREFERRED_WS: 'wunderground',
+  AWC_WIRED_TH_GPIO: '4',
+  AWC_WIRELESS_TH_GPIO: '27'
 };
 
 let spawnUid = -1;
@@ -79,7 +92,7 @@ if (process.platform === 'linux') {
     }
   }
   catch (err) {
-    console.error(chalk.red('Raspberry Pi check failed'));
+    console.error(chalk.redBright('Raspberry Pi check failed'));
   }
 }
 
@@ -104,36 +117,28 @@ const onlyDedicated: string[] = [];
 process.argv.forEach(arg => {
   switch (arg) {
     case '--acu':
-      totalSteps += doAcu ? 0 : 1;
       doAcu = true;
-      settings.AWC_WIRELESS_TH_GPIO = '27';
       break;
     case '--bash':
       viaBash = true;
+      delete process.env.SHLVL;
       break;
     case '--ddev':
-      totalSteps += (doDedicated ? 0 : 9) + (doStdDeploy ? 0 : 1);
-      doStdDeploy = true;
-      doDedicated = true;
+      doDedicated = doStdDeploy = true;
       onlyOnRasperryPi.push(arg);
       break;
     case '--dht':
-      totalSteps += doDht ? 0 : 1;
       doDht = true;
-      settings.AWC_WIRED_TH_GPIO = '4';
       onlyOnRasperryPi.push(arg);
       break;
     case '--gps':
-      totalSteps += (doGps ? 0 : 1) + (doI2c ? 0 : 1);
       doGps = doI2c = true;
       break;
     case '-i':
-      interactive = true;
+      interactive = doStdDeploy = doDedicated = true;
       delete process.env.SHLVL;
-      onlyDedicated.push(arg);
       break;
     case '--launch':
-      totalSteps += (doLaunch || doReboot ? 0 : 1);
       doLaunch = true;
       onlyOnRasperryPi.push(arg);
       onlyDedicated.push(arg);
@@ -145,26 +150,23 @@ process.argv.forEach(arg => {
       trailingSpace = ' ';
       break;
     case '--reboot':
-      totalSteps += (doLaunch || doReboot ? 0 : 1);
       doReboot = true;
       doLaunch = false;
       onlyOnRasperryPi.push(arg);
       onlyDedicated.push(arg);
       break;
     case '--sd':
-      totalSteps += doStdDeploy ? 0 : 1;
       doStdDeploy = true;
       onlyOnRasperryPi.push(arg);
       break;
     case '--wwvb':
-      totalSteps += (doWwvb ? 0 : 1) + (doI2c ? 0 : 1);
       doWwvb = doI2c = true;
       break;
     case '--tarp':
       break; // ignore - already handled
     default:
       if (arg !== '--help' && arg !== '-h')
-        console.error('Unrecognized option "' + chalk.red(arg) + '"');
+        console.error('Unrecognized option "' + chalk.redBright(arg) + '"');
 
       if (viaBash)
         console.log(
@@ -181,13 +183,13 @@ process.argv.forEach(arg => {
 
 if (!treatAsRaspberryPi && onlyOnRasperryPi.length > 0) {
   onlyOnRasperryPi.forEach(opt =>
-    console.error(chalk.red(opt) + ' option is only valid on Raspberry Pi'));
+    console.error(chalk.redBright(opt) + ' option is only valid on Raspberry Pi'));
   process.exit(0);
 }
 
 if (!doDedicated && onlyDedicated.length > 0) {
   onlyDedicated.forEach(opt =>
-    console.error(chalk.red(opt) + ' option is only valid when used with the --ddev option'));
+    console.error(chalk.redBright(opt) + ' option is only valid when used with the --ddev or -i options'));
   process.exit(0);
 }
 
@@ -195,31 +197,32 @@ if (treatAsRaspberryPi) {
   try {
     if (fs.existsSync(settingsPath)) {
       const lines = fs.readFileSync(settingsPath).toString().split('\n');
+      const oldSettings: Record<string, string> = {};
 
       lines.forEach(line => {
         const $ = /^\s*(\w+)\s*=\s*(\S+)/.exec(line);
 
         if ($)
-          settings[$[1]] = $[2];
+          oldSettings[$[1]] = settings[$[1]] = $[2];
       });
 
       // Convert deprecated environment variables
-      if (!settings.AWC_WIRED_TH_GPIO &&
-          toBoolean(settings.AWC_HAS_INDOOR_SENSOR) && settings.AWC_TH_SENSOR_GPIO)
-        settings.AWC_WIRED_TH_GPIO = settings.AWC_TH_SENSOR_GPIO;
+      if (!oldSettings.AWC_WIRED_TH_GPIO &&
+          toBoolean(oldSettings.AWC_HAS_INDOOR_SENSOR) && oldSettings.AWC_TH_SENSOR_GPIO)
+        oldSettings.AWC_WIRED_TH_GPIO = settings.AWC_WIRED_TH_GPIO = settings.AWC_TH_SENSOR_GPIO;
 
-      if (!settings.AWC_WIRELESS_TH_GPIO && settings.AWC_WIRELESS_TEMP)
-        settings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TEMP;
+      if (interactive && oldSettings.AWC_WIRED_TH_GPIO)
+        doDht = true;
+
+      if (!settings.AWC_WIRELESS_TH_GPIO && oldSettings.AWC_WIRELESS_TEMP)
+        oldSettings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TEMP;
+
+      if (interactive && oldSettings.AWC_WIRELESS_TH_GPIO)
+        doAcu = true;
 
       delete settings.AWC_HAS_INDOOR_SENSOR;
       delete settings.AWC_TH_SENSOR_GPIO;
       delete settings.AWC_WIRELESS_TEMP;
-
-      if (!doDht)
-        delete settings.AWC_WIRED_TH_GPIO;
-
-      if (!doAcu)
-        delete settings.AWC_WIRELESS_TH_GPIO;
     }
   }
   catch (err) {
@@ -355,6 +358,8 @@ function stepDone(): void {
   console.log(backspace + chalk.green(CHECK_MARK));
 }
 
+let firstAptGet = true;
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promise<boolean> {
   let packageArgs = [cmdPkg];
@@ -384,8 +389,14 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
 
     if (viaNpm)
       await monitorProcess(spawn('npm', ['install', '-g', ...packageArgs]), true, ErrorMode.ANY_ERROR);
-    else
+    else {
+      if (firstAptGet) {
+        await monitorProcess(spawn('apt-get', ['update']), true, ErrorMode.ANY_ERROR);
+        firstAptGet = false;
+      }
+
       await monitorProcess(spawn('apt-get', ['install', '-y', ...packageArgs]), true, ErrorMode.ANY_ERROR);
+    }
 
     stepDone();
     return true;
@@ -424,7 +435,7 @@ function portValidate(s: string): boolean {
   const port = Number(s);
 
   if (isNaN(port) || port < 1 || port > 65535) {
-    console.log(chalk.red('Port must be a number from 1 to 65535'));
+    console.log(chalk.redBright('Port must be a number from 1 to 65535'));
     return false;
   }
 
@@ -435,7 +446,7 @@ function ntpValidate(s: string): boolean {
   if (/^(((?!-))(xn--|_{1,1})?[-a-z0-9]{0,61}[a-z0-9]{1,1}\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i.test(s))
     return true;
 
-  console.log(chalk.red('NTP server must be a valid domain name (with optional port number)'));
+  console.log(chalk.redBright('NTP server must be a valid domain name (with optional port number)'));
   return false;
 }
 
@@ -445,28 +456,85 @@ function wsValidate(s: string): boolean | string {
   else if (/^d/i.test(s))
     return 'darksky';
 
-  console.log(chalk.red('Weather service must be either "wunderground" or "darksky"'));
+  console.log(chalk.redBright('Weather service must be either (w)underground or (d)arksky'));
   return false;
+}
+
+function wsAfter(s: string): void {
+  if (/^w/i.test(s)) {
+    console.log(chalk.paleBlue('    Weather Underground choosen, but Dark Sky can be used'));
+    console.log(chalk.paleBlue('    as a fallback weather service.'));
+  }
+  else if (/^d/i.test(s)) {
+    console.log(chalk.paleBlue('    Dark Sky choosen, but Weather Underground will be used'));
+    console.log(chalk.paleBlue('    as a fallback weather service.'));
+  }
+}
+
+function yesOrNo(s: string, assign: (isYes: boolean) => void): boolean {
+  if (/^[yn]/i.test(s)) {
+    assign(/^y/i.test(s));
+    return true;
+  }
+
+  console.log(chalk.redBright('Response must be (y)es or (n)o'));
+  return false;
+}
+
+function acuValidate(s: string): boolean {
+  return yesOrNo(s, isYes => doAcu = isYes);
+}
+
+function dhtValidate(s: string): boolean {
+  return yesOrNo(s, isYes => doDht = isYes);
 }
 
 function pinValidate(s: string): boolean {
   const pin = Number(s);
 
   if (isNaN(pin) || pin < 0 || pin > 32) {
-    console.log(chalk.red('GPIO pin must be a number from 0 to 31'));
+    console.log(chalk.redBright('GPIO pin must be a number from 0 to 31'));
     return false;
   }
 
   return true;
 }
 
+function finalActionValidate(s: string): boolean {
+  let $: string[];
+
+  if (($ = /^([lrn])/i.exec(s.toLowerCase()))) {
+    if ($[1] === 'l') {
+      doLaunch = true;
+      doReboot = false;
+    }
+    else if ($[1] === 'r') {
+      doLaunch = false;
+      doReboot = true;
+    }
+    else
+      doLaunch = doReboot = false;
+
+    return true;
+  }
+
+  console.log(chalk.redBright('Response must be (l)aunch, (r)eboot, or (n)o action'));
+  return false;
+}
+
+const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : 'N');
+const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
+
 const questions = [
-  { name: 'AWC_PORT', descr: 'HTTP server port', ask: true, validate: portValidate },
-  { name: 'AWC_NTP_SERVER', descr: 'time server', ask: true, validate: ntpValidate },
-  { name: 'AWC_PREFERRED_WS', descr: 'preferred weather service ("wunderground" or "darksky")', ask: true, validate: wsValidate },
-  { name: 'AWC_DARK_SKY_API_KEY', descr: 'Dark Sky API key (uses "wunderground" if left blank)', ask: true },
-  { name: 'AWC_WIRED_TH_GPIO', descr: 'GPIO pin number for wired temp/humidity sensor', ask: doDht, validate: pinValidate },
-  { name: 'AWC_WIRELESS_TH_GPIO', descr: 'GPIO pin number for wireless temp/humidity sensors', ask: doAcu, validate: pinValidate }
+  { name: 'AWC_PORT', prompt: 'HTTP server port', ask: true, validate: portValidate },
+  { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
+  { name: 'AWC_PREFERRED_WS', prompt: 'preferred weather service, (w)underground or (d)arksky)', ask: true, validate: wsValidate, after: wsAfter },
+  { name: 'AWC_DARK_SKY_API_KEY', prompt: 'Dark Sky API key (uses "wunderground" if left blank)', ask: true },
+  { prompt: 'Use wired DHT temperature/humidity sensor?', ask: true, yn: true, deflt: doDht ? 'Y' : 'N', validate: dhtValidate },
+  { name: 'AWC_WIRED_TH_GPIO', prompt: 'GPIO pin number for wired temp/humidity sensor', ask: () => doDht, validate: pinValidate },
+  { prompt: 'Use wireless temperature/humidity sensors?', ask: true, yn: true, deflt: doAcu ? 'Y' : 'N', validate: acuValidate },
+  { name: 'AWC_WIRELESS_TH_GPIO', prompt: 'GPIO pin number for wireless temp/humidity sensors', ask: () => doAcu, validate: pinValidate },
+  { prompt: `When finished, (l)aunch A/W clock, (r)eboot, or (n)o action ${finalOptions}?`, ask: true, deflt: finalAction, validate: finalActionValidate }
 ];
 
 async function promptForConfiguration(): Promise<void> {
@@ -475,11 +543,21 @@ async function promptForConfiguration(): Promise<void> {
   for (let i = 0; i < questions.length; ++i) {
     const q = questions[i];
 
-    if (!q.ask)
+    if (!(typeof q.ask === 'function' ? q.ask() : q.ask))
       continue;
 
-    write(chalk.bold(q.name) + ' - ' + q.descr + '\n    ' +
-      (settings[q.name] ? '(default: ' + chalk.hex('#FFFFAA')(settings[q.name]) + ')' : '') + ': ');
+    if (q.name) {
+      write(chalk.bold(q.name) + ' - ' + q.prompt + '\n    ' +
+        (settings[q.name] ? '(default: ' + chalk.paleYellow(settings[q.name]) + ')' : '') + ': ');
+    }
+    else {
+      write(q.prompt);
+
+      if (q.yn)
+        write(q.deflt === 'Y' ? ' (Y/n)' : ' (y/N)');
+
+      write(': ');
+    }
 
     const response = await readLine();
 
@@ -492,9 +570,12 @@ async function promptForConfiguration(): Promise<void> {
         --i;
         continue;
       }
-      else
+      else if (q.name)
         settings[q.name] = response;
     }
+
+    if (q.after)
+      q.after(settings[q.name]);
   }
 }
 
@@ -571,7 +652,7 @@ async function doClientBuild(): Promise<void> {
   const output = await monitorProcess(spawn('webpack'));
 
   stepDone();
-  console.log(chalk.hex('#808080')(getWebpackSummary(output)));
+  console.log(chalk.mediumGray(getWebpackSummary(output)));
 }
 
 async function doServerBuild(): Promise<void> {
@@ -589,7 +670,7 @@ async function doServerBuild(): Promise<void> {
   const output = await monitorProcess(spawn('npm', ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }));
 
   stepDone();
-  console.log(chalk.hex('#808080')(getWebpackSummary(output)));
+  console.log(chalk.mediumGray(getWebpackSummary(output)));
 
   if (doAcu) {
     showStep();
@@ -691,7 +772,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
       const isLxde = !!(await monitorProcess(spawn('which', ['lxpanel'], { shell: true }), false)).trim();
 
       if (!isDebian || !isLxde) {
-        console.error(chalk.red('--tarp option (Treat As Raspberry Pi) only available for Linux Debian with LXDE'));
+        console.error(chalk.redBright('--tarp option (Treat As Raspberry Pi) only available for Linux Debian with LXDE'));
         process.exit(0);
       }
     }
@@ -703,10 +784,22 @@ async function doServiceDeployment(uid: number): Promise<void> {
       .split(':')[5] || userHome;
     sudoUser = user;
 
-    if (doDedicated) {
-      if (interactive)
-        await promptForConfiguration();
+    if (interactive)
+      await promptForConfiguration();
 
+    totalSteps += doAcu ? 1 : 0;
+    totalSteps += doDht ? 1 : 0;
+    totalSteps += (doStdDeploy || doDedicated ? 1 : 0);
+    totalSteps += (doLaunch || doReboot ? 1 : 0);
+
+    if (!doDht)
+      delete settings.AWC_WIRED_TH_GPIO;
+
+    if (!doAcu)
+      delete settings.AWC_WIRELESS_TH_GPIO;
+
+    if (doDedicated) {
+      totalSteps += 9;
       console.log(chalk.cyan('- Dedicated device setup -'));
       showStep();
       write('Shutdown weatherService if running' + trailingSpace);
