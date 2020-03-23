@@ -17,14 +17,14 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import * as $ from 'jquery';
+import { AppService } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import { ForecastData } from '../server/src/forecast-types';
+import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
-import { htmlEncode, setSvgHref } from './util';
-import { AppService } from './app.service';
 import { reflow } from './svg-flow';
+import { htmlEncode, setSvgHref } from './util';
+import { ForecastData } from '../server/src/weather-types';
 
 const DEFAULT_BACKGROUND = 'midnightblue';
 const DEFAULT_FOREGROUND = 'white';
@@ -117,7 +117,7 @@ export class Forecast {
       const ds = (forecastData.source === 'darksky');
       const wu = (forecastData.source === 'wunderground');
       const buttonWidth = this.settingsBtn.width();
-      const logoWidth = (ds ? 125 : (wu ? 190 : 8)) + 10;
+      const logoWidth = (ds ? 118 : (wu ? 183 : 8)) + 10;
 
       this.darkskyLogo.css('display', ds ? 'inline-block' : 'none');
       this.wundergroundLogo.css('display', wu ? 'inline-block' : 'none');

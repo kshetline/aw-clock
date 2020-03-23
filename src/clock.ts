@@ -19,12 +19,12 @@
 
 // Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed *quite* a bit from there.
 
-import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { isIE, isRaspbian, padLeft } from 'ks-util';
 import { AppService } from './app.service';
-import { CurrentDelta } from '../server/src/tai-utc';
 import * as $ from 'jquery';
+import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { interpolate } from 'ks-math';
+import { isIE, isRaspbian, padLeft } from 'ks-util';
+import { CurrentDelta } from '../server/src/time-types';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -230,7 +230,7 @@ export class Clock {
   }
 
   private adjustTimeFontSize(): void {
-    this.timeCaption.style['font-size'] = (this._amPm && !this._hideSeconds ? '7.5' : '10');
+    this.timeCaption.style['font-size'] = (this._amPm && !this._hideSeconds ? '8.5' : '10');
     this.dut1PositionAdjustmentNeeded = true;
   }
 
@@ -384,7 +384,8 @@ export class Clock {
         else if (displayHour > 12)
           displayHour -= 12;
 
-        suffix = (hour < 12 ? ' AM' : ' PM');
+        suffix = '<tspan style="font-size: 0.5em" dy="-1.4">\u2009' +
+          (hour < 12 ? 'AM' : 'PM') + '</tspan>';
       }
 
       this.timeCaption.innerHTML =

@@ -1,6 +1,6 @@
 import { requestJson, requestText } from 'by-request';
 import { Request, Router } from 'express';
-import { Alert, ForecastData } from './forecast-types';
+import { Alert, ForecastData } from './weather-types';
 
 export const router = Router();
 

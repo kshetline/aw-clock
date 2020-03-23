@@ -16,19 +16,30 @@ import { noCache, normalizePort } from './util';
 
 const debug = require('debug')('express:server');
 
+let indoorModule: any;
 let indoorRouter: Router;
 
-if (process.env.AWC_HAS_INDOOR_SENSOR || process.env.AWC_ALT_DEV_SERVER)
-  indoorRouter = require('./indoor-router').router;
+// Convert deprecated environment variables
+if (!process.env.AWC_WIRED_TH_GPIO &&
+    toBoolean(process.env.AWC_HAS_INDOOR_SENSOR) && process.env.AWC_TH_SENSOR_GPIO)
+  process.env.AWC_WIRED_TH_GPIO = process.env.AWC_TH_SENSOR_GPIO;
 
-const allowCors = toBoolean(process.env.AWC_ALLOW_CORS);
+if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
+  indoorModule = require('./indoor-router');
+  indoorRouter = indoorModule.router;
+}
+
+const devMode = process.argv.includes('-d');
+const allowCors = toBoolean(process.env.AWC_ALLOW_CORS) || devMode;
 
 // create http server
-const httpPort = normalizePort(process.env.AWC_PORT || 8080);
+const defaultPort = devMode ? 4201 : 8080;
+const httpPort = normalizePort(process.env.AWC_PORT || defaultPort);
 const app = getApp();
 const httpServer = http.createServer(app);
 
 // listen on provided ports
+console.log(`*** starting server on port ${httpPort} ***`);
 httpServer.listen(httpPort);
 
 function shutdown() {
@@ -142,6 +153,14 @@ function getApp() {
       jsonOrJsonp(req, res, { temperature: 0, humidity: -1, error: 'n/a' });
     });
   }
+
+  theApp.get('/defaults', (req, res) => {
+    noCache(res);
+    jsonOrJsonp(req, res, {
+      indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
+      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F')
+    });
+  });
 
   theApp.get('/ntp', (req, res) => {
     noCache(res);

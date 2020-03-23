@@ -36,6 +36,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
+.first-time-install
 
 # e2e
 /e2e/*.js

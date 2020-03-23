@@ -20,7 +20,7 @@
 import * as $ from 'jquery';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { Clock } from './clock';
-import { AppService } from './app.service';
+import { AppService, DEV_URL } from './app.service';
 import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
 import { Forecast } from './forecast';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
@@ -30,12 +30,13 @@ import { SettingsDialog } from './settings-dialog';
 import { Ephemeris } from './ephemeris';
 import { Sensors } from './sensors';
 import { HttpTimePoller } from './http-time-poller';
-import { TimeInfo } from '../server/src/time-poller';
+import { TimeInfo } from '../server/src/time-types';
 import { updateSvgFlowItems, reflow } from './svg-flow';
+import { getJson } from './util';
 
 initTimeZoneSmall();
 
-const weatherPort = (runningDev ? '4201' : '8080');
+const weatherPort = (runningDev ? '4201' : document.location.port || '8080');
 const weatherServer = new URL(window.location.href).searchParams.get('weather_server') ||
   (runningDev ? 'http://localhost:' + weatherPort : '');
 const ntpPoller = new HttpTimePoller(weatherServer);
@@ -79,6 +80,7 @@ class AwClockApp implements AppService {
   private proxyStatus: boolean | Promise<boolean> = undefined;
 
   private settings = new Settings();
+  private settingsChecked = false;
 
   constructor() {
     this.settings.load();
@@ -204,10 +206,46 @@ class AwClockApp implements AppService {
     if (hour < this.lastHour || (hour === 0 && minute === 0))
       this.forecast.refreshFromCache();
 
+    this.lastHour = hour;
+    this.updateWeather(minute, now, forceRefresh);
+  }
+
+  private updateWeather(minute: number, now: number, forceRefresh: boolean): void {
+    if (!this.settingsChecked) {
+      if (this.settings.defaultsSet())
+        this.settingsChecked = true;
+      else {
+        const site = (runningDev ? DEV_URL : '');
+        const promises = [
+          getJson(`${site}/defaults`),
+          getJson('https://skyviewcafe.com/ip/json/?callback=?')
+        ];
+
+        Promise.all(promises)
+          .then(data => {
+            if (data[0]?.indoorOption && data[0].outdoorOption) {
+              this.settings.indoorOption = data[0].indoorOption;
+              this.settings.outdoorOption = data[0].outdoorOption;
+            }
+
+            if (data[1]?.status === 'success') {
+              this.settings.latitude = data[1].lat;
+              this.settings.longitude = data[1].lon;
+              const city = [data[1].city, data[1].region, data[1].countryCode].join(', ')
+                .replace(/(, [A-Z]{2}), US$/, '$1');
+              this.settings.city = city;
+            }
+
+            this.settingsChecked = true;
+            this.updateSettings(this.settings);
+          });
+
+        return;
+      }
+    }
+
     if (this.sensors.available)
       this.sensors.update(this.settings.celsius);
-
-    this.lastHour = hour;
 
     let interval = (this.frequent ? 5 : 15);
 

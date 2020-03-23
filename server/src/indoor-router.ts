@@ -3,14 +3,9 @@ import { Request, Response, Router } from 'express';
 import { toBoolean } from 'ks-util';
 import request from 'request';
 import { average, noCache, stdDev } from './util';
+import { DhtSensorData } from './weather-types';
 
 export const router = Router();
-
-export interface DhtSensorData {
-  temperature: number;
-  humidity: number;
-  error?: string;
-}
 
 const DHT22_OR_AM2302 = 22;
 
@@ -22,8 +17,12 @@ interface NodeDhtSensor {
 
 let indoorSensor: NodeDhtSensor;
 
-if (toBoolean(process.env.AWC_HAS_INDOOR_SENSOR))
-  indoorSensor = require('node-dht-sensor');
+if (toBoolean(process.env.AWC_WIRED_TH_GPIO)) {
+  try {
+    indoorSensor = require('node-dht-sensor');
+  }
+  catch (err) {}
+}
 
 let lastTemp: number;
 let lastHumidity: number;
@@ -32,7 +31,11 @@ let humidities: number[] = [];
 let consecutiveSensorErrors = 0;
 const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
-const sensorGpio = parseInt(process.env.AWC_TH_SENSOR_GPIO, 10) || 4;
+const sensorGpio = parseInt(process.env.AWC_WIRED_TH_GPIO, 10) || 4;
+
+export function hasWiredIndoorSensor(): boolean {
+  return !!indoorSensor;
+}
 
 function readSensor() {
   indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {

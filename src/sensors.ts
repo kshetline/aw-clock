@@ -17,34 +17,18 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { AppService } from './app.service';
-import { DhtSensorData } from '../server/src/indoor-router';
-import * as $ from 'jquery';
-import { TempHumidityData, TempHumidityItem } from '../server/src/temp-humidity-router';
+import { AppService, DEV_URL } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import { updateSvgFlowItems } from './svg-flow';
+import * as $ from 'jquery';
 import { localServer, runningDev } from './settings';
-
-const DEV_SENSOR_URL = 'http://localhost:4201';
+import { updateSvgFlowItems } from './svg-flow';
+import { getJson } from './util';
+import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/weather-types';
 
 function errorText(err: any): string {
   err = err instanceof Error ? err.message : err.error;
 
   return err.replace(/error:\s*/i, '');
-}
-
-function getJson(url: string): Promise<any> {
-  return new Promise(resolve => {
-    // `$.ajax()` returns a Promise, but if I try to use that Promise directly, I can't find a way to get
-    //   around "Uncaught (in promise)" errors, when what I want is a Promise resolved with an Error value.
-    // noinspection JSIgnoredPromiseFromCall
-    $.ajax({
-      url,
-      dataType: 'json',
-      success: data => resolve(data),
-      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => resolve(new Error(textStatus + ': ' + errorThrown))
-    });
-  });
 }
 
 function setSignalLevel(elem: JQuery, quality: number): void {
@@ -93,30 +77,13 @@ export class Sensors {
 
   public update(celsius: boolean) {
     const adjustTemp = (temp: number) => (celsius || temp == null ? temp : temp * 1.8 + 32);
-    const site = (runningDev ? DEV_SENSOR_URL : '');
+    const site = (runningDev ? DEV_URL : '');
     const wiredUrl = `${site}/indoor`;
     const wirelessUrl = `${site}/wireless-th`;
     const indoorOption = this.appService.getIndoorOption();
     const outdoorOption = this.appService.getOutdoorOption();
-    const flowSpec = this.outdoorMeter[0].getAttributeNS(null, 'svg-flow');
-    let newFlowSpec: string;
 
-    this.indoorMeter.css('display', this.wirelessAvailable && /[ABC]/.test(indoorOption) ? 'block' : 'none');
-    this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
-
-    if (outdoorOption.length === 2 && this.wirelessAvailable) {
-      this.outdoorMeter2.css('display', 'block');
-      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
-    }
-    else {
-      this.outdoorMeter2.css('display', 'none');
-      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-5$2');
-    }
-
-    if (newFlowSpec !== flowSpec) {
-      this.outdoorMeter[0].setAttribute('svg-flow', newFlowSpec);
-      updateSvgFlowItems();
-    }
+    this.configureDisplay(indoorOption, outdoorOption);
 
     const promises = [
       this.wiredAvailable && indoorOption !== 'X' ? getJson(wiredUrl) : Promise.resolve(null),
@@ -249,5 +216,27 @@ export class Sensors {
         cth.sensorTempDetail = sensorDetail.join(', ');
         this.appService.updateCurrentTemp(cth);
       });
+  }
+
+  private configureDisplay(indoorOption: string, outdoorOption: string): void {
+    const flowSpec = this.outdoorMeter[0].getAttributeNS(null, 'svg-flow');
+    let newFlowSpec: string;
+
+    this.indoorMeter.css('display', this.wirelessAvailable && /[ABC]/.test(indoorOption) ? 'block' : 'none');
+    this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
+
+    if (outdoorOption.length === 2 && this.wirelessAvailable) {
+      this.outdoorMeter2.css('display', 'block');
+      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
+    }
+    else {
+      this.outdoorMeter2.css('display', 'none');
+      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-5$2');
+    }
+
+    if (newFlowSpec !== flowSpec) {
+      this.outdoorMeter[0].setAttribute('svg-flow', newFlowSpec);
+      updateSvgFlowItems();
+    }
   }
 }

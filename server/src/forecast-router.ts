@@ -1,8 +1,8 @@
 import { jsonOrJsonp } from './common';
 import { getForecast as getDsForecast } from './darksky-forecast';
 import { Request, Response, Router } from 'express';
-import { ForecastData } from './forecast-types';
 import { noCache } from './util';
+import { ForecastData } from './weather-types';
 import { getForecast as getWuForecast } from './wunderground-forecast';
 
 export const router = Router();
@@ -12,7 +12,7 @@ router.get('/', async (req: Request, res: Response) => {
   let forecast: ForecastData | Error;
   let triedDarksky = false;
 
-  if (process.env.AWC_DARK_SKY_API_KEY && process.env.AWS_PREFERRED_WS === 'darksky') {
+  if (process.env.AWC_DARK_SKY_API_KEY && process.env.AWC_PREFERRED_WS === 'darksky') {
     forecast = await getDsForecast(req);
     triedDarksky = true;
   }

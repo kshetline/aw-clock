@@ -23,7 +23,7 @@ LOGFILE="/var/log/weatherService.log"
 MIN_UPTIME="5000"
 SPIN_SLEEP_TIME="2000"
 
-# Define AWC_DARK_SKY_API_KEY, AWC_HAS_INDOOR_SENSOR, AWC_NTP_SERVER, etc., in the file below:
+# Define AWC_DARK_SKY_API_KEY, AWC_WIRED_TH_GPIO, AWC_NTP_SERVER, etc., in the file below:
 [ -f /etc/default/weatherService ] && . /etc/default/weatherService
 
 PATH=$NODE_BIN_DIR:$PATH
@@ -31,13 +31,14 @@ export NODE_PATH=$NODE_PATH
 export AWC_ALLOW_CORS=$AWC_ALLOW_CORS
 export AWC_DARK_SKY_API_KEY=$AWC_DARK_SKY_API_KEY
 export AWC_DAYTIME_SERVER=$AWC_DAYTIME_SERVER
+export AWC_ALT_DEV_SERVER=$AWC_ALT_DEV_SERVER
 export AWC_FREQUENT_ID=$AWC_FREQUENT_ID
-export AWC_HAS_INDOOR_SENSOR=$AWC_HAS_INDOOR_SENSOR
 export AWC_LEAP_SECONDS_URL=$AWC_LEAP_SECONDS_URL
 export AWC_NTP_SERVER=$AWC_NTP_SERVER
 export AWC_PORT=$AWC_PORT
-export AWC_TH_SENSOR_GPIO=$AWC_TH_SENSOR_GPIO
-export AWC_WIRELESS_TEMP=$AWC_WIRELESS_TEMP
+export AWC_PREFERRED_WS=$AWC_PREFERRED_WS
+export AWC_WIRED_TH_GPIO=$AWC_WIRED_TH_GPIO
+export AWC_WIRELESS_TH_GPIO=$AWC_WIRELESS_TH_GPIO
 
 start() {
   echo "Starting $NAME"
@@ -80,8 +81,13 @@ case "$1" in
   restart)
     restart
     ;;
+  status)
+    if [ -f $PIDFILE ]; then
+      echo "+"
+    fi
+    ;;
   *)
-    echo "Usage: {start|stop|restart}"
+    echo "Usage: {start|stop|restart|status}"
     exit 1
     ;;
 esac
