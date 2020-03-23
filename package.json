@@ -1,13 +1,13 @@
 {
   "name": "aw-clock",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "first-install": "npm i && cd server && npm i && cd ..",
     "start": "webpack-dev-server --port=4200",
     "start-server": "cd server && npm start",
-    "start-server-win": "cd server && npm start-win",
+    "start-server-win": "cd server && npm run start-win",
     "build": "ts-node build.ts",
     "test": "karma start ./karma.conf.js",
     "lint": "eslint \"**/*.ts\" \"**/*.js\"",

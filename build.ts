@@ -112,7 +112,7 @@ if (process.argv.length === 0 && treatAsRaspberryPi && !viaBash) {
                chalk.white('--') + chalk.yellow(' before your options.'));
 }
 
-const onlyOnRasperryPi: string[] = [];
+const onlyOnRaspberryPi: string[] = [];
 const onlyDedicated: string[] = [];
 
 process.argv.forEach(arg => {
@@ -126,11 +126,11 @@ process.argv.forEach(arg => {
       break;
     case '--ddev':
       doDedicated = doStdDeploy = true;
-      onlyOnRasperryPi.push(arg);
+      onlyOnRaspberryPi.push(arg);
       break;
     case '--dht':
       doDht = true;
-      onlyOnRasperryPi.push(arg);
+      onlyOnRaspberryPi.push(arg);
       break;
     case '--gps':
       doGps = doI2c = true;
@@ -141,7 +141,7 @@ process.argv.forEach(arg => {
       break;
     case '--launch':
       doLaunch = true;
-      onlyOnRasperryPi.push(arg);
+      onlyOnRaspberryPi.push(arg);
       onlyDedicated.push(arg);
       break;
     case '--pt':
@@ -153,16 +153,16 @@ process.argv.forEach(arg => {
     case '--reboot':
       doReboot = true;
       doLaunch = false;
-      onlyOnRasperryPi.push(arg);
+      onlyOnRaspberryPi.push(arg);
       onlyDedicated.push(arg);
       break;
     case '--sd':
       doStdDeploy = true;
-      onlyOnRasperryPi.push(arg);
+      onlyOnRaspberryPi.push(arg);
       break;
     case '--skip-upgrade':
       doUpdateUpgrade = false;
-      onlyOnRasperryPi.push(arg);
+      onlyOnRaspberryPi.push(arg);
       break;
     case '--wwvb':
       doWwvb = doI2c = true;
@@ -186,8 +186,8 @@ process.argv.forEach(arg => {
   }
 });
 
-if (!treatAsRaspberryPi && onlyOnRasperryPi.length > 0) {
-  onlyOnRasperryPi.forEach(opt =>
+if (!treatAsRaspberryPi && onlyOnRaspberryPi.length > 0) {
+  onlyOnRaspberryPi.forEach(opt =>
     console.error(chalk.redBright(opt) + ' option is only valid on Raspberry Pi'));
   process.exit(0);
 }
@@ -270,7 +270,27 @@ function spawn(command: string, args: string[] = [], options?: any): ChildProces
   }
 
   if (isWindows) {
+    console.log();
+    console.log(command, args);
+    if (/^(chmod|chown|id)$/.test(command)) {
+      // Effectively a "noop"
+      command = 'rundll32';
+      args = [];
+    }
+    else if (command === 'rm') {
+      // Ad hoc, not a general solution conversion of rm!
+      command = 'rmdir';
+      args = ['/S', '/Q', args[1].replace(/\//g, '\\')];
+    }
+
     const cmd = process.env.comspec || 'cmd';
+
+    if (options?.uid != null) {
+      options = Object.assign({}, options);
+      delete options.uid;
+    }
+
+    console.log(command, args);
 
     return nodeSpawn(cmd, ['/c', command, ...args], options);
   }
@@ -802,7 +822,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
     const user = process.env.SUDO_USER || process.env.USER || 'pi';
     const uid = Number((await monitorProcess(spawn('id', ['-u', user]), false)).trim() || '1000');
 
-    userHome = (await monitorProcess(spawn('grep', [user, '/etc/passwd']), false))
+    userHome = (isWindows ? process.env.USERPROFILE : await monitorProcess(spawn('grep', [user, '/etc/passwd']), false))
       .split(':')[5] || userHome;
     sudoUser = user;
 
