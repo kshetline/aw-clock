@@ -175,12 +175,12 @@ process.argv.forEach(arg => {
 
       if (viaBash)
         console.log(
-          'Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i]\n' +
-          '                       [--launch] [--pt] [--reboot] [--sd] [--tarp]');
+          'Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i] [--launch]\n' +
+          '                       [--pt] [--reboot] [--sd] [--skip-upgrade] [--tarp]');
       else
         console.log(
-          'Usage: npm run build [-- [--acu] [--ddev] [--dht] [--help] [-i]\n' +
-          '                         [--launch] [--pt] [--reboot] [--sd] [--tarp]]');
+          'Usage: npm run build [-- [--acu] [--ddev] [--dht] [--help] [-i] [--launch]\n' +
+          '                         [--pt] [--reboot] [--sd] [--skip-upgrade] [--tarp]]');
 
       process.exit(0);
   }
@@ -442,7 +442,7 @@ function portValidate(s: string): boolean {
 }
 
 function ntpValidate(s: string): boolean {
-  if (/^(((?!-))(xn--|_{1,1})?[-a-z0-9]{0,61}[a-z0-9]{1,1}\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i.test(s))
+  if (/^(((?!-))(xn--|_)?[-a-z0-9]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i.test(s))
     return true;
 
   console.log(chalk.redBright('NTP server must be a valid domain name (with optional port number)'));
@@ -461,11 +461,11 @@ function wsValidate(s: string): boolean | string {
 
 function wsAfter(s: string): void {
   if (/^w/i.test(s)) {
-    console.log(chalk.paleBlue('    Weather Underground choosen, but Dark Sky can be used'));
+    console.log(chalk.paleBlue('    Weather Underground chosen, but Dark Sky can be used'));
     console.log(chalk.paleBlue('    as a fallback weather service.'));
   }
   else if (/^d/i.test(s)) {
-    console.log(chalk.paleBlue('    Dark Sky choosen, but Weather Underground will be used'));
+    console.log(chalk.paleBlue('    Dark Sky chosen, but Weather Underground will be used'));
     console.log(chalk.paleBlue('    as a fallback weather service.'));
   }
 }
@@ -824,7 +824,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
       totalSteps += 9 + (doUpdateUpgrade ? 1 : 0);
       console.log(chalk.cyan('- Dedicated device setup -'));
       showStep();
-      write('Shutdown weatherService if running' + trailingSpace);
+      write('Stopping weatherService if currently running' + trailingSpace);
       await monitorProcess(spawn('service', ['weatherService', 'stop']), true, ErrorMode.NO_ERRORS);
       stepDone();
 
@@ -853,7 +853,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
     write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
     await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'],
-      { shell: true, uid: 0 }), true, ErrorMode.ANY_ERROR);
+      { shell: true, uid: viaBash ? 0 : uid }), true, ErrorMode.ANY_ERROR);
     stepDone();
 
     if (doStdDeploy) {

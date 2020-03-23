@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if [[ "$1" =~ ^--help|-h$ ]]; then
-  echo "Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i]"
-  echo "                       [--launch] [--pt] [--reboot] [--sd] [--tarp]"
+  echo "Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i] [--launch]"
+  echo "                       [--pt] [--reboot] [--sd] [--skip-upgrade] [--tarp]"
   exit
 fi
 
