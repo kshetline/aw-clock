@@ -222,7 +222,7 @@ if (treatAsRaspberryPi) {
       if (!settings.AWC_WIRELESS_TH_GPIO && oldSettings.AWC_WIRELESS_TEMP)
         oldSettings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TEMP;
 
-      if (interactive && oldSettings.AWC_WIRELESS_TEMP)
+      if (interactive && oldSettings.AWC_WIRELESS_TH_GPIO)
         doAcu = true;
 
       delete settings.AWC_HAS_INDOOR_SENSOR;
