@@ -212,9 +212,9 @@ if (treatAsRaspberryPi) {
       });
 
       // Convert deprecated environment variables
-      if (!oldSettings.AWC_WIRED_TH_GPIO &&
-          toBoolean(oldSettings.AWC_HAS_INDOOR_SENSOR) && oldSettings.AWC_TH_SENSOR_GPIO)
-        oldSettings.AWC_WIRED_TH_GPIO = settings.AWC_WIRED_TH_GPIO = settings.AWC_TH_SENSOR_GPIO;
+      if (!oldSettings.AWC_WIRED_TH_GPIO && toBoolean(oldSettings.AWC_HAS_INDOOR_SENSOR))
+        oldSettings.AWC_WIRED_TH_GPIO = settings.AWC_WIRED_TH_GPIO =
+          settings.AWC_TH_SENSOR_GPIO || '4';
 
       if (interactive && oldSettings.AWC_WIRED_TH_GPIO)
         doDht = true;
@@ -222,7 +222,7 @@ if (treatAsRaspberryPi) {
       if (!settings.AWC_WIRELESS_TH_GPIO && oldSettings.AWC_WIRELESS_TEMP)
         oldSettings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TEMP;
 
-      if (interactive && oldSettings.AWC_WIRELESS_TH_GPIO)
+      if (interactive && oldSettings.AWC_WIRELESS_TEMP)
         doAcu = true;
 
       delete settings.AWC_HAS_INDOOR_SENSOR;
