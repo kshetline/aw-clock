@@ -97,7 +97,7 @@ if (process.platform === 'linux') {
   }
 }
 
-const launchChromium = chromium + ' --kiosk http://localhost:8080';
+let launchChromium = chromium + ' --kiosk http://localhost:8080';
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
@@ -903,9 +903,11 @@ async function doServiceDeployment(uid: number): Promise<void> {
       write(' ');
       await sleep(3000, true);
       stepDone();
-      await monitorProcess(spawn('pkill', ['-x', chromium], { uid }), true, ErrorMode.NO_ERRORS);
+      await monitorProcess(spawn('pkill', ['-o', chromium], { uid }), true, ErrorMode.NO_ERRORS);
+      await monitorProcess(spawn('pkill', ['-o', chromium.substr(0, 15)], { uid }), true, ErrorMode.NO_ERRORS);
       await sleep(500);
-      exec(launchChromium + ' --user-data-dir=' + userHome, { uid });
+      const display = process.env.DISPLAY ?? ':0.0';
+      exec(`DISPLAY=${display} ${launchChromium} --user-data-dir='${userHome}'`, { uid });
       await sleep(1000, false);
     }
 
