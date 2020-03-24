@@ -137,9 +137,16 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
     if (!precipType || precipTypeNight === 'snow')
       precipType = precipTypeNight;
 
+    let precipAccumulation = wd.qpf[i];
+
+    if (precipType === 'snow' || (wd.qpfSnow[i] > 0 && precipType === 'precip')) {
+      precipType = 'snow';
+      precipAccumulation = wd.qpfSnow[i];
+    }
+
     daily.push({
       icon: getIcon(wd.daypart[0]?.iconCode[i * 2] ?? wd.daypart[0]?.iconCode[i * 2 + 1] ?? -1),
-      precipAccumulation: precipType === 'snow' ? wd.qpfSnow[i] : wd.qpf[i],
+      precipAccumulation,
       precipIntensityMax: 0,
       precipProbability: Math.max(wd.daypart[0]?.precipChance[i * 2] ?? 0, wd.daypart[0]?.precipChance[i * 2 + 1] ?? 0) / 100,
       precipType,

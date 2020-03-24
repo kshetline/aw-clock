@@ -902,6 +902,8 @@ async function doServiceDeployment(uid: number): Promise<void> {
       write(' ');
       await sleep(3000, true);
       stepDone();
+      await monitorProcess(spawn('pkill', ['-x', chromium], { uid }), true, ErrorMode.NO_ERRORS);
+      await sleep(500);
       exec(launchChromium + ' --user-data-dir=' + userHome, { uid });
       await sleep(1000, false);
     }

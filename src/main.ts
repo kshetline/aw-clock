@@ -218,7 +218,7 @@ class AwClockApp implements AppService {
         const site = (runningDev ? DEV_URL : '');
         const promises = [
           getJson(`${site}/defaults`),
-          getJson('https://skyviewcafe.com/ip/json/?callback=?')
+          getJson('http://ip-api.com/json/?callback=?')
         ];
 
         Promise.all(promises)
@@ -231,9 +231,9 @@ class AwClockApp implements AppService {
             if (data[1]?.status === 'success') {
               this.settings.latitude = data[1].lat;
               this.settings.longitude = data[1].lon;
-              const city = [data[1].city, data[1].region, data[1].countryCode].join(', ')
+              this.settings.city = [data[1].city, data[1].region, data[1].countryCode].join(', ')
                 .replace(/(, [A-Z]{2}), US$/, '$1');
-              this.settings.city = city;
+              this.settings.celsius = !/AS|BS|BZ|FM|GU|MH|PW|US|VI/i.test(data[1].countryCode);
             }
 
             this.settingsChecked = true;
