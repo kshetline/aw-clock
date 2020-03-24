@@ -137,6 +137,7 @@ process.argv.forEach(arg => {
       break;
     case '-i':
       interactive = doStdDeploy = doDedicated = true;
+      onlyOnRaspberryPi.push(arg);
       delete process.env.SHLVL;
       break;
     case '--launch':
@@ -205,7 +206,7 @@ if (treatAsRaspberryPi) {
       const oldSettings: Record<string, string> = {};
 
       lines.forEach(line => {
-        const $ = /^\s*(\w+)\s*=\s*(\S+)/.exec(line);
+        const $ = /^\s*(\w+?)\s*=\s*(\S+)/.exec(line);
 
         if ($)
           oldSettings[$[1]] = settings[$[1]] = $[2];
