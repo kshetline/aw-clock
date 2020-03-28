@@ -39,11 +39,11 @@ const app = getApp();
 const httpServer = http.createServer(app);
 
 // listen on provided ports
-console.log(`*** starting server on port ${httpPort} ***`);
+console.log(`*** starting server on port ${httpPort} at ${new Date().toISOString()} ***`);
 httpServer.listen(httpPort);
 
 function shutdown() {
-  console.log('\n*** closing server ***');
+  console.log(`\n*** closing server  at ${new Date().toISOString()} ***`);
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
   setTimeout(() => process.exit(0), 5000);
   cleanUp();

@@ -155,15 +155,6 @@ function convertHourly(forecast: ForecastData, wh: any): void {
       time: wh.validTimeUtc[i]
     });
   }
-
-  if (length > 0 && forecast.hourly[0].time > Date.now() / 1000) {
-    forecast.hourly.splice(0, 0, {
-      icon: forecast.currently.icon,
-      temperature: forecast.currently.temperature,
-      precipType: forecast.currently.precipType,
-      time: forecast.hourly[0].time - 3600
-    });
-  }
 }
 
 function convertDaily(forecast: ForecastData, wc: any, wd: any): void {

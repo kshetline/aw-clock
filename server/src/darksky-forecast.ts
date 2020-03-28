@@ -102,6 +102,8 @@ function convertForecast(dsForecast: DarkSkyForecast, isMetric: boolean): Foreca
   Object.keys(dsForecast).forEach(key => {
     if (key === 'currently')
       forecast.currently = convertConditions(dsForecast.currently, CurrentConditionsKeys, isMetric) as CurrentConditions;
+    else if (key === 'hourly')
+      forecast.hourly = convertHourly(dsForecast.hourly, isMetric);
     else if (key === 'daily')
       forecast.daily = convertDaily(dsForecast.daily, isMetric);
     else if (key === 'alerts')
@@ -109,9 +111,6 @@ function convertForecast(dsForecast: DarkSkyForecast, isMetric: boolean): Foreca
     else if (ForecastDataKeys.includes(key))
       (forecast as any)[key] = (dsForecast as any)[key];
   });
-
-  if (dsForecast.hourly)
-    forecast.hourly = convertHourly(dsForecast.hourly, forecast.currently, isMetric);
 
   if ((dsForecast.flags && dsForecast.flags['darksky-unavailable']) || !forecast.currently || !forecast.daily)
     forecast.unavailable = true;
@@ -134,7 +133,7 @@ function convertConditions(dsConditions: CommonConditions, keys: string[], isMet
   return conditions;
 }
 
-function convertHourly(dsHourly: DSHourlyConditions, current: CurrentConditions, isMetric: boolean): HourlyConditions[] {
+function convertHourly(dsHourly: DSHourlyConditions, isMetric: boolean): HourlyConditions[] {
   const hourly: HourlyConditions[] = [];
 
   if (dsHourly.data) {
@@ -147,15 +146,6 @@ function convertHourly(dsHourly: DSHourlyConditions, current: CurrentConditions,
         time: hour.time
       });
     }
-  }
-
-  if (length > 0 && hourly[0].time > Date.now() / 1000) {
-    hourly.splice(0, 0, {
-      icon: current.icon,
-      temperature: current.temperature,
-      precipType: current.precipType,
-      time: hourly[0].time - 3600
-    });
   }
 
   return hourly;
