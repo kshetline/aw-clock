@@ -22,7 +22,7 @@ interface DarkSkyForecast extends Omit<ForecastData, 'currently'> {
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
   const url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}/` +
-    `${req.query.lat},${req.query.lon}?exclude=minutely,hourly${isMetric ? '&units=ca' : ''}`;
+    `${req.query.lat},${req.query.lon}?exclude=minutely${isMetric ? '&units=ca' : ''}`;
 
   try {
     const origForecast = (await requestJson(url)) as DarkSkyForecast;

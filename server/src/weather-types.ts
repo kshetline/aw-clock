@@ -23,6 +23,13 @@ export interface CurrentConditions extends CommonConditions {
   feelsLikeTemperature: number;
 }
 
+export interface HourlyConditions {
+  icon: string;
+  temperature: number;
+  precipType: string;
+  time: number;
+}
+
 export const DailyConditionsKeys = [...CommonConditionsKeys, 'temperatureHigh', 'temperatureLow', 'precipAccumulation'];
 
 export interface DailyConditions extends CommonConditions {
@@ -57,6 +64,7 @@ export interface ForecastData {
   longitude?: number;
   timezone?: string;
   currently?: CurrentConditions;
+  hourly?: HourlyConditions[];
   daily?: DailySummaryConditions;
   alerts?: Alert[];
   unavailable?: boolean;

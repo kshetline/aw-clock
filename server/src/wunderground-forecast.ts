@@ -113,9 +113,16 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
 
   const wc = wuForecast.currently;
   const wh = wuForecast.hourly;
-  const wd = wuForecast.daily;
-  const wa = wuForecast.alerts;
 
+  convertCurrent(forecast, wc, wh);
+  convertHourly(forecast, wh);
+  convertDaily(forecast, wc, wuForecast.daily);
+  convertAlerts(forecast, wuForecast.alerts);
+
+  return forecast;
+}
+
+function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
   forecast.currently = {
     time: wc.validTimeUtc,
     summary: wc.wxPhraseMedium,
@@ -127,12 +134,48 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
     temperature: wc.temperature,
     feelsLikeTemperature: wc.temperatureFeelsLike
   };
+}
 
+function convertHourly(forecast: ForecastData, wh: any): void {
+  forecast.hourly = [];
+
+  const length = Math.min(20, wh.iconCode?.length ?? 0, wh.precipType?.length ?? 0, wh.qpf?.length ?? 0,
+                          wh.qpfSnow?.length ?? 0, wh.temperature?.length ?? 0, wh.validTimeUtc?.length ?? 0);
+
+  for (let i = 0; i < length; ++i) {
+    let precipType = wh.precipType[i];
+
+    if (wh.qpfSnow[i] > 0 && precipType === 'precip')
+      precipType = 'snow';
+
+    forecast.hourly.push({
+      icon: wh.iconCode[i],
+      temperature: wh.temperature[i],
+      precipType,
+      time: wh.validTimeUtc[i]
+    });
+  }
+
+  if (length > 0 && forecast.hourly[0].time > Date.now() / 1000) {
+    forecast.hourly.splice(0, 0, {
+      icon: forecast.currently.icon,
+      temperature: forecast.currently.temperature,
+      precipType: forecast.currently.precipType,
+      time: forecast.hourly[0].time - 3600
+    });
+  }
+}
+
+function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
   const daily: any[] = [];
+  const wddp = wd.daypart && wd.daypart[0];
+  const length = Math.min(10, (wddp?.iconCode?.length ?? 0) / 2, (wddp?.precipChance?.length ?? 0) / 2,
+    (wddp?.precipType?.length ?? 0) / 2, wd.qpf?.length ?? 0, wd.qpfSnow?.length ?? 0,
+    wd.temperatureMax?.length ?? 0, wd.temperatureMin?.length ?? 0, wd.validTimeUtc?.length ?? 0);
 
-  for (let i = 0; i < 10; ++i) {
-    let precipType = wd.daypart[0]?.precipType[i * 2];
-    const precipTypeNight = wd.daypart[0]?.precipType[i * 2 + 1];
+  for (let i = 0; i < length; ++i) {
+    let precipType = wddp?.precipType[i * 2];
+    const precipTypeNight = wddp?.precipType[i * 2 + 1];
 
     if (!precipType || precipTypeNight === 'snow')
       precipType = precipTypeNight;
@@ -145,10 +188,10 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
     }
 
     daily.push({
-      icon: getIcon(wd.daypart[0]?.iconCode[i * 2] ?? wd.daypart[0]?.iconCode[i * 2 + 1] ?? -1),
+      icon: getIcon(wddp?.iconCode[i * 2] ?? wddp?.iconCode[i * 2 + 1] ?? -1),
       precipAccumulation,
       precipIntensityMax: 0,
-      precipProbability: Math.max(wd.daypart[0]?.precipChance[i * 2] ?? 0, wd.daypart[0]?.precipChance[i * 2 + 1] ?? 0) / 100,
+      precipProbability: Math.max(wddp?.precipChance[i * 2] ?? 0, wddp?.precipChance[i * 2 + 1] ?? 0) / 100,
       precipType,
       summary: wd.narrative[i],
       temperatureHigh: wd.temperatureMax[i] ?? wc.temperatureMax24Hour,
@@ -161,7 +204,9 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
     summary: (wd.narrative && wd.narrative[0]) ?? '',
     data: daily
   };
+}
 
+function convertAlerts(forecast: ForecastData, wa: any): void {
   forecast.alerts = wa.map((wuAlert: any) => {
     const alert: Alert = {} as Alert;
 
@@ -186,6 +231,4 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
 
     return alert;
   });
-
-  return forecast;
 }
