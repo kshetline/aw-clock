@@ -7,15 +7,24 @@ import {
   CurrentConditionsKeys,
   DailyConditions, DailyConditionsKeys, DailySummaryConditions, DailySummaryConditionsKeys,
   ForecastData,
-  ForecastDataKeys
+  ForecastDataKeys, HourlyConditions
 } from './weather-types';
 
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;
 }
 
-interface DarkSkyForecast extends Omit<ForecastData, 'currently'> {
-  currently: DSCurrentConditions
+interface DSHourlyItems extends CommonConditions {
+  temperature: number;
+}
+
+interface DSHourlyConditions {
+  data: DSHourlyItems[];
+}
+
+interface DarkSkyForecast extends Omit<Omit<ForecastData, 'currently'>, 'hourly'> {
+  currently: DSCurrentConditions;
+  hourly: DSHourlyConditions;
   flags?: any;
 }
 
@@ -101,6 +110,9 @@ function convertForecast(dsForecast: DarkSkyForecast, isMetric: boolean): Foreca
       (forecast as any)[key] = (dsForecast as any)[key];
   });
 
+  if (dsForecast.hourly)
+    forecast.hourly = convertHourly(dsForecast.hourly, forecast.currently, isMetric);
+
   if ((dsForecast.flags && dsForecast.flags['darksky-unavailable']) || !forecast.currently || !forecast.daily)
     forecast.unavailable = true;
 
@@ -120,6 +132,33 @@ function convertConditions(dsConditions: CommonConditions, keys: string[], isMet
   });
 
   return conditions;
+}
+
+function convertHourly(dsHourly: DSHourlyConditions, current: CurrentConditions, isMetric: boolean): HourlyConditions[] {
+  const hourly: HourlyConditions[] = [];
+
+  if (dsHourly.data) {
+    for (const hour of dsHourly.data) {
+      hourly.push({
+        icon: getIcon(hour, isMetric),
+        temperature: hour.temperature,
+        precipType: hour.icon === 'snow' || /\bsnow\b/i.test(hour.summary || '') ? 'snow' :
+          hour.icon === 'rain' ? 'rain' : '',
+        time: hour.time
+      });
+    }
+  }
+
+  if (length > 0 && hourly[0].time > Date.now() / 1000) {
+    hourly.splice(0, 0, {
+      icon: current.icon,
+      temperature: current.temperature,
+      precipType: current.precipType,
+      time: hourly[0].time - 3600
+    });
+  }
+
+  return hourly;
 }
 
 function convertDaily(dsDaily: DailySummaryConditions, isMetric: boolean): DailySummaryConditions {

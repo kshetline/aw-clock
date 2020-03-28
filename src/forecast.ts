@@ -71,7 +71,7 @@ export class Forecast {
   private lastForecastTime = 0;
   private timezone = KsTimeZone.OS_ZONE;
 
-  private marqueeText = '';
+  private marqueeText = ' ';
   private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
   private animationStart: number;
   private animationWidth: number;
@@ -130,7 +130,7 @@ export class Forecast {
 
       if (!this.lastForecastData || now >= this.lastForecastTime + MAX_FORECAST_STALENESS) {
         this.appService.updateCurrentTemp(NO_DATA);
-        this.showUnknown(error);
+        this.showUnknown(error.toString());
       }
       else {
         if (now >= this.lastForecastTime + MAX_CURRENT_TEMP_STALENESS)
