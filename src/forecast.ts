@@ -76,6 +76,7 @@ export class Forecast {
 
   private readonly weatherServer: string;
 
+  private _hideHourlyForecast = false;
   private lastForecastData: ForecastData;
   private cachedHourly: HourlyConditions[] = [];
   private lastForecastTime = 0;
@@ -198,6 +199,15 @@ export class Forecast {
   public clearCache(): void {
     this.lastForecastData = undefined;
     this.cachedHourly = [];
+  }
+
+  get hideHourlyForecast(): boolean { return this._hideHourlyForecast; }
+  set hideHourlyForecast(value: boolean) {
+    if (this._hideHourlyForecast !== value) {
+      this._hideHourlyForecast = value;
+      this.hourIcons.forEach(icon => icon.style.display = value ? 'none' : 'block');
+      this.hourTemps.forEach(temp => temp.style.display = value ? 'none' : 'block');
+    }
   }
 
   private updateHourlyCache(forecastData: ForecastData): void {

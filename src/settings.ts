@@ -38,6 +38,7 @@ export class Settings {
   amPm = /[a-z]/i.test(new Date().toLocaleTimeString());
   hideSeconds = false;
   hidePlanets = false;
+  hideHourlyForecast = false;
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
@@ -57,6 +58,7 @@ export class Settings {
     this.amPm = toBoolean(Cookies.get('ampm'), defaultSettings.amPm);
     this.hideSeconds = toBoolean(Cookies.get('hides'), false);
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
+    this.hideHourlyForecast = toBoolean(Cookies.get('hidehf'), false);
   }
 
   public save(): void {
@@ -75,6 +77,13 @@ export class Settings {
     Cookies.set('ampm', this.amPm.toString(), expiration);
     Cookies.set('hides', this.hideSeconds.toString(), expiration);
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);
+    Cookies.set('hidehf', this.hideHourlyForecast.toString(), expiration);
+  }
+
+  public requiresWeatherReload(oldSettings: Settings) {
+    return this.latitude !== oldSettings.latitude ||
+           this.longitude !== oldSettings.longitude ||
+           this.celsius !== oldSettings.celsius;
   }
 }
 

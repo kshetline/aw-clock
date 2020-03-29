@@ -282,14 +282,22 @@ class AwClockApp implements AppService {
   }
 
   updateSettings(newSettings: Settings): void {
+    const oldSettings = this.settings;
+
     this.settings = newSettings;
     newSettings.save();
-    this.forecast.clearCache();
-    this.forecast.showUnknown();
+
     this.cityLabel.text(newSettings.city);
+    this.forecast.hideHourlyForecast = newSettings.hideHourlyForecast;
     this.clock.amPm = newSettings.amPm;
     this.clock.hideSeconds = newSettings.hideSeconds;
     this.ephemeris.hidePlanets = newSettings.hidePlanets;
+
+    if (this.settings.requiresWeatherReload(oldSettings)) {
+      this.forecast.clearCache();
+      this.forecast.showUnknown();
+    }
+
     this.clock.triggerRefresh();
   }
 
