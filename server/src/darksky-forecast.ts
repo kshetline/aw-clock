@@ -145,6 +145,9 @@ function convertHourly(dsHourly: DSHourlyConditions, isMetric: boolean): HourlyC
           hour.icon === 'rain' ? 'rain' : '',
         time: hour.time
       });
+
+      if (hourly.length >= 36)
+        break;
     }
   }
 

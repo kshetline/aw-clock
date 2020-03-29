@@ -40,9 +40,11 @@ const WARNING_BACKGROUND = 'red';
 const WARNING_FOREGROUND = 'white';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const CLOCK_ICON_RADIUS = 37;
-const CLOCK_TEMPS_RADIUS = 32;
-const CLOCK_ICON_SIZE = 4;
+const CLOCK_ICON_RADIUS = 38;
+const CLOCK_ICON_INNER_RADIUS = 31;
+const CLOCK_TEMPS_RADIUS = 34.5;
+const CLOCK_TEMPS_INNER_RADIUS = 27;
+const CLOCK_ICON_SIZE = 3.5;
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
 const CLOSE_ERROR_TAG = '&nbsp;</span>';
 
@@ -123,10 +125,11 @@ export class Forecast {
   private decorateClockFace(): void {
     const clock = document.getElementById('clock');
 
-    for (let i = 0; i < 12; ++i) {
+    for (let i = 0; i < 24; ++i) {
       const deg = i * 30 + 15;
-      let x = CLOCK_CENTER + CLOCK_ICON_RADIUS * cos_deg(deg - 90);
-      let y = CLOCK_CENTER + CLOCK_ICON_RADIUS * sin_deg(deg - 90);
+      let r = (i < 12 ? CLOCK_ICON_RADIUS : CLOCK_ICON_INNER_RADIUS);
+      let x = CLOCK_CENTER + r * cos_deg(deg - 90);
+      let y = CLOCK_CENTER + r * sin_deg(deg - 90);
       const hourIcon = document.createElementNS(SVG_NAMESPACE, 'image');
       const hourTemp = document.createElementNS(SVG_NAMESPACE, 'text');
 
@@ -140,8 +143,9 @@ export class Forecast {
       clock.appendChild(hourIcon);
       this.hourIcons[i] = hourIcon;
 
-      x = CLOCK_CENTER + CLOCK_TEMPS_RADIUS * cos_deg(deg - 90);
-      y = CLOCK_CENTER + CLOCK_TEMPS_RADIUS * sin_deg(deg - 90);
+      r = (i < 12 ? CLOCK_TEMPS_RADIUS : CLOCK_TEMPS_INNER_RADIUS);
+      x = CLOCK_CENTER + r * cos_deg(deg - 90);
+      y = CLOCK_CENTER + r * sin_deg(deg - 90);
       hourTemp.setAttribute('x', x.toString());
       hourTemp.setAttribute('y', y.toString());
       hourTemp.setAttribute('dy', '0.5em');
@@ -201,6 +205,7 @@ export class Forecast {
     this.cachedHourly = [];
   }
 
+  // noinspection JSUnusedGlobalSymbols
   get hideHourlyForecast(): boolean { return this._hideHourlyForecast; }
   set hideHourlyForecast(value: boolean) {
     if (this._hideHourlyForecast !== value) {
@@ -229,7 +234,7 @@ export class Forecast {
     earliestNew = forecastData.hourly[0]?.time ?? 0;
 
     // Still nothing to cover the current hour? Fake it from current conditions.
-    if (now < earliestNew)
+    if (now < earliestNew && forecastData?.currently)
       forecastData.hourly.splice(0, 0, {
         icon: forecastData.currently.icon,
         precipType: forecastData.currently.precipType,
@@ -330,21 +335,27 @@ export class Forecast {
     const firstHourInfo = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= now);
     const hour = today.wallTime.hrs % 12;
 
-    for (let i = 0; i < 12 && i < forecastData.hourly.length + firstHourInfo; ++i) {
+    for (let i = 0; i < 24; ++i) {
       let icon = EMPTY_ICON;
       let temp = '';
-      const index = (hour + i) % 12;
+      const index = (hour + i) % 24;
+      const hourInfo = forecastData.hourly[i + firstHourInfo];
 
-      if (i < 10) {
-        icon = this.getIconSource(forecastData.hourly[i + firstHourInfo].icon);
-        temp = forecastData.hourly[i + firstHourInfo].temperature.toFixed(0) + '°';
+      if (hourInfo && firstHourInfo >= 0 && i < 23) {
+        icon = this.getIconSource(hourInfo.icon);
+        temp = hourInfo.temperature.toFixed(0) + '°';
       }
 
       this.hourIcons[index].setAttribute('href', icon);
       this.hourTemps[index].textContent = temp;
+      this.hourTemps[index].style.fontSize = (temp.length > 3 ? '1.2px' : '1.6px');
     }
 
-    const todayIndex = forecastData.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, this.timezone).wallTime.d === today.wallTime.d);
+    const todayIndex = forecastData.daily.data.findIndex(cond => {
+      const wallTime = new KsDateTime(cond.time * 1000, this.timezone).wallTime;
+
+      return wallTime.y === today.wallTime.y && wallTime.m === today.wallTime.m && wallTime.d === today.wallTime.d;
+    });
 
     if (todayIndex < 0) {
       this.showUnknown('Missing data');

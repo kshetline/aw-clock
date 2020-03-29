@@ -23,7 +23,7 @@ import { AppService } from './app.service';
 import * as $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, interpolate, max, min, sin_deg } from 'ks-math';
-import { isIE, isRaspbian, padLeft } from 'ks-util';
+import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
 import { CurrentDelta } from '../server/src/time-types';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -44,6 +44,7 @@ export const CLOCK_CENTER = 50;
 
 const CLOCK_RADIUS = 41;
 const CLOCK_TEXT_RADIUS = 33.5;
+const CONSTELLATION_RADIUS = 23.75;
 
 export class Clock {
   private readonly secHand: HTMLElement;
@@ -129,6 +130,7 @@ export class Clock {
     }
   }
 
+  // noinspection JSUnusedGlobalSymbols
   get hideSeconds(): boolean { return this._hideSeconds; }
   set hideSeconds(value: boolean) {
     if (this._hideSeconds !== value) {
@@ -147,23 +149,25 @@ export class Clock {
   }
 
   private decorateClockFace(): void {
-    const constellationRadius = 24;
     const centerStr = CLOCK_CENTER.toString();
     const planetTracks = document.getElementById('planet-tracks');
     const risenTracks = document.getElementById('risen-tracks');
+    const faceColor = getCssValue(document.getElementById('face'), 'stroke');
+    let firstTick: SVGCircleElement;
 
     this.clock = document.getElementById('clock');
 
     for (let deg = 0; deg <= 360; deg += 6) { // 61 dots created, not just 60, so there's one for a possible leap second.
       const i = deg / 6;
+      const big = (i % 5 === 0 && i !== 60);
       const x1 = CLOCK_CENTER + CLOCK_RADIUS * cos_deg(deg - 90);
       const y1 = CLOCK_CENTER + CLOCK_RADIUS * sin_deg(deg - 90);
       const tickMark = document.createElementNS(SVG_NAMESPACE, 'circle');
 
       tickMark.setAttribute('cx', x1.toString());
       tickMark.setAttribute('cy', y1.toString());
-      tickMark.setAttribute('r', (i % 5 === 0 && i !== 60 ? 1 : 0.333).toString());
-      tickMark.setAttribute('fill', 'white');
+      tickMark.setAttribute('r', (big ? 1 : 0.333).toString());
+      tickMark.setAttribute('fill', (big ? 'white' : faceColor));
       tickMark.setAttribute('fill-opacity', '1');
 
       if (i > 55) {
@@ -171,7 +175,13 @@ export class Clock {
         tickMark.classList.add('moving-dot');
       }
 
-      this.clock.appendChild(tickMark);
+      if (i === 0)
+        firstTick = tickMark;
+
+      if (i < 60)
+        this.clock.appendChild(tickMark);
+      else
+        this.clock.insertBefore(tickMark, firstTick);
 
       if (deg % 30 === 0) {
         const h = (deg === 270 ? 12 : ((deg + 90) % 360) / 30);
@@ -196,15 +206,15 @@ export class Clock {
 
         this.clock.insertBefore(text2, this.hands);
 
-        const x3 = CLOCK_CENTER + constellationRadius * cos_deg(-deg - 15);
-        const y3 = CLOCK_CENTER + constellationRadius * sin_deg(-deg - 15);
+        const x3 = CLOCK_CENTER + CONSTELLATION_RADIUS * cos_deg(-deg - 15);
+        const y3 = CLOCK_CENTER + CONSTELLATION_RADIUS * sin_deg(-deg - 15);
         const text3 = document.createElementNS(SVG_NAMESPACE, 'text');
 
         text3.setAttribute('x', x3.toString());
         text3.setAttribute('y', y3.toString());
         text3.setAttribute('dy', '1');
         text3.classList.add('constellation');
-        text3.textContent = String.fromCodePoint(0x2648 + deg / 30);
+        text3.textContent = String.fromCodePoint(0x2648 + deg / 30); // zodiac codepoints
         planetTracks.appendChild(text3);
       }
     }
@@ -291,8 +301,8 @@ export class Clock {
     let secRotation = 6 * secs;
     const mins = wallTime.min;
     const hour = wallTime.hrs;
-    const minuteOfLeapSecond = !!timeInfo.leapSecond && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
-            wallTime.d === getLastDateInMonthGregorian(wallTime.y, wallTime.m);
+    const minuteOfLeapSecond = !!timeInfo.leapSecond && wallTimeUtc.min === 59 && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
+            wallTimeUtc.d === getLastDateInMonthGregorian(wallTimeUtc.y, wallTimeUtc.m);
     const leapSecondForMonth = (minuteOfLeapSecond && timeInfo.leapSecond) || this.checkPendingLeapSecondForMonth(wallTimeUtc);
 
     if (this.lastLeapSecondCheckDay !== wallTimeUtc.d) {

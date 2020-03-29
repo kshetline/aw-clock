@@ -139,7 +139,7 @@ function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
 function convertHourly(forecast: ForecastData, wh: any): void {
   forecast.hourly = [];
 
-  const length = Math.min(20, wh.iconCode?.length ?? 0, wh.precipType?.length ?? 0, wh.qpf?.length ?? 0,
+  const length = Math.min(36, wh.iconCode?.length ?? 0, wh.precipType?.length ?? 0, wh.qpf?.length ?? 0,
                           wh.qpfSnow?.length ?? 0, wh.temperature?.length ?? 0, wh.validTimeUtc?.length ?? 0);
 
   for (let i = 0; i < length; ++i) {
