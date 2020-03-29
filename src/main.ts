@@ -284,6 +284,7 @@ class AwClockApp implements AppService {
   updateSettings(newSettings: Settings): void {
     this.settings = newSettings;
     newSettings.save();
+    this.forecast.clearCache();
     this.forecast.showUnknown();
     this.cityLabel.text(newSettings.city);
     this.clock.amPm = newSettings.amPm;

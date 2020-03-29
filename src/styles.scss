@@ -130,6 +130,14 @@ body {
 .clock-face {
   font-family: $clock-face-font;
   font-size: 10px;
+  letter-spacing: -0.05em;
+  text-anchor: middle;
+  fill: white;
+  user-select: none;
+}
+
+.clock-temps {
+  font-size: 2px;
   text-anchor: middle;
   fill: white;
   user-select: none;

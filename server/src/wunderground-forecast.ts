@@ -149,7 +149,7 @@ function convertHourly(forecast: ForecastData, wh: any): void {
       precipType = 'snow';
 
     forecast.hourly.push({
-      icon: wh.iconCode[i],
+      icon: getIcon(wh.iconCode[i]),
       temperature: wh.temperature[i],
       precipType,
       time: wh.validTimeUtc[i]

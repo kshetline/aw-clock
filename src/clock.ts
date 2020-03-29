@@ -22,7 +22,7 @@
 import { AppService } from './app.service';
 import * as $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { interpolate } from 'ks-math';
+import { cos_deg, floor, interpolate, max, min, sin_deg } from 'ks-math';
 import { isIE, isRaspbian, padLeft } from 'ks-util';
 import { CurrentDelta } from '../server/src/time-types';
 
@@ -39,6 +39,11 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 interface SVGAnimationElement extends HTMLElement {
   beginElement: () => void;
 }
+
+export const CLOCK_CENTER = 50;
+
+const CLOCK_RADIUS = 41;
+const CLOCK_TEXT_RADIUS = 33.5;
 
 export class Clock {
   private readonly secHand: HTMLElement;
@@ -142,11 +147,8 @@ export class Clock {
   }
 
   private decorateClockFace(): void {
-    const radius = 41;
-    const textRadius = 33.5;
     const constellationRadius = 24;
-    const center = 50;
-    const centerStr = center.toString();
+    const centerStr = CLOCK_CENTER.toString();
     const planetTracks = document.getElementById('planet-tracks');
     const risenTracks = document.getElementById('risen-tracks');
 
@@ -154,8 +156,8 @@ export class Clock {
 
     for (let deg = 0; deg <= 360; deg += 6) { // 61 dots created, not just 60, so there's one for a possible leap second.
       const i = deg / 6;
-      const x1 = center + radius * Math.cos(Math.PI * (deg - 90) / 180);
-      const y1 = center + radius * Math.sin(Math.PI * (deg - 90) / 180);
+      const x1 = CLOCK_CENTER + CLOCK_RADIUS * cos_deg(deg - 90);
+      const y1 = CLOCK_CENTER + CLOCK_RADIUS * sin_deg(deg - 90);
       const tickMark = document.createElementNS(SVG_NAMESPACE, 'circle');
 
       tickMark.setAttribute('cx', x1.toString());
@@ -173,8 +175,8 @@ export class Clock {
 
       if (deg % 30 === 0) {
         const h = (deg === 270 ? 12 : ((deg + 90) % 360) / 30);
-        const x2 = center + textRadius * Math.cos(Math.PI * deg / 180);
-        const y2 = center + textRadius * Math.sin(Math.PI * deg / 180);
+        const x2 = CLOCK_CENTER + CLOCK_TEXT_RADIUS * cos_deg(deg);
+        const y2 = CLOCK_CENTER + CLOCK_TEXT_RADIUS * sin_deg(deg);
         const text2 = document.createElementNS(SVG_NAMESPACE, 'text');
 
         text2.setAttribute('x', x2.toString());
@@ -182,10 +184,20 @@ export class Clock {
         text2.setAttribute('dy', '3.5');
         text2.classList.add('clock-face');
         text2.textContent = h.toString();
+
+        if (h > 9) {
+          text2.style.transform = 'scale(0.8, 1)';
+          text2.setAttribute('dx', ['4', '8', '12.5'][h - 10]);
+          // text2.style.transformOrigin = [10, 19, 28][h - 10] + '%'; // Didn't work on Safari
+
+          if (h === 11)
+            text2.style.letterSpacing = '-0.1em';
+        }
+
         this.clock.insertBefore(text2, this.hands);
 
-        const x3 = center + constellationRadius * Math.cos(Math.PI * (-deg - 15) / 180);
-        const y3 = center + constellationRadius * Math.sin(Math.PI * (-deg - 15) / 180);
+        const x3 = CLOCK_CENTER + constellationRadius * cos_deg(-deg - 15);
+        const y3 = CLOCK_CENTER + constellationRadius * sin_deg(-deg - 15);
         const text3 = document.createElementNS(SVG_NAMESPACE, 'text');
 
         text3.setAttribute('x', x3.toString());
@@ -201,14 +213,14 @@ export class Clock {
     const planetIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
 
     planetSymbols.forEach((planet, index) => {
-      const x = center + 10 + index * 2;
+      const x = CLOCK_CENTER + 10 + index * 2;
       const dy = 0.75 + (index % 2) * 2;
       const rect = document.createElementNS(SVG_NAMESPACE, 'rect');
       const text = document.createElementNS(SVG_NAMESPACE, 'text');
       const path = document.createElementNS(SVG_NAMESPACE, 'path');
 
       rect.setAttribute('x', (x - 0.9).toString());
-      rect.setAttribute('y', (center + dy - 2).toString());
+      rect.setAttribute('y', (CLOCK_CENTER + dy - 2).toString());
       rect.setAttribute('width', '1.8');
       rect.setAttribute('height', '2.7');
       rect.setAttribute('fill', 'black');
@@ -242,7 +254,7 @@ export class Clock {
     const r2 = this.dut1Label.getBoundingClientRect();
     const r3 = this.dtaiLabel.getBoundingClientRect();
     const labelX = (r1.x + r1.width - r0.x) * scale;
-    const captionX = labelX + Math.max(r2.width, r3.width) * scale;
+    const captionX = labelX + max(r2.width, r3.width) * scale;
 
     this.dut1Label.setAttribute('x', labelX.toString());
     this.dtaiLabel.setAttribute('x', labelX.toString());
@@ -290,18 +302,15 @@ export class Clock {
     }
 
     if (this.inMinuteOfLeapSecond !== minuteOfLeapSecond) {
-      console.log(this.inMinuteOfLeapSecond, minuteOfLeapSecond);
       if (!minuteOfLeapSecond) {
         this.clock.classList.remove('leap-second');
         this.clock.classList.remove('neg-leap-second');
 
         if (this.upcomingLeapSecond) {
-          console.log('adjusting ' + this.upcomingLeapSecond.pendingLeap);
           // Use previous end-of-day TAI and dut1 values, adjusted by the last new leap second, until this info is re-polled.
           this.upcomingLeapSecond.delta += this.upcomingLeapSecond.pendingLeap;
 
           if (this.upcomingLeapSecond.dut1) {
-            console.log('adjusting.2 ' + this.upcomingLeapSecond.pendingLeap);
             this.upcomingLeapSecond.dut1[2] += this.upcomingLeapSecond.pendingLeap;
             this.upcomingLeapSecond.dut1[0] = this.upcomingLeapSecond.dut1[2];
           }
@@ -335,7 +344,7 @@ export class Clock {
 
     if (this.upcomingLeapSecond?.dut1) {
       const utcSec = now / 1000;
-      const utc_0h = Math.floor(utcSec / 86_400) * 86_400;
+      const utc_0h = floor(utcSec / 86_400) * 86_400;
       const utc_24h = utc_0h + 86_400;
       const value = interpolate(utc_0h, utcSec, utc_24h, this.upcomingLeapSecond.dut1[0], this.upcomingLeapSecond.dut1[2]) * 1000;
 
@@ -356,8 +365,8 @@ export class Clock {
 
     rotate(this.secHand, secRotation);
     this.lastSecRotation = secRotation;
-    rotate(this.minHand, 6 * mins + 0.1 * Math.min(secs, 59));
-    rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + Math.min(secs, 59) / 120);
+    rotate(this.minHand, 6 * mins + 0.1 * min(secs, 59));
+    rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120);
     setTimeout(() => this.tick(), 1000 - millis);
 
     setTimeout(() => {
@@ -432,6 +441,6 @@ export class Clock {
         }, LEAP_SECOND_RETRY_DELAY)
       });
       // Randomly delay polling so that multiple clock instances don't all poll at the same time every day.
-    }, this.firstLeapSecondPoll ? 0 : Math.floor(Math.random() * MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
+    }, this.firstLeapSecondPoll ? 0 : floor(Math.random() * MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
   }
 }
