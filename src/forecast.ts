@@ -371,30 +371,34 @@ export class Forecast {
     this.timezone = KsTimeZone.getTimeZone(forecastData.timezone);
 
     const now = this.appService.getCurrentTime();
-    const firstHourInfo = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= now);
-    const today = new KsDateTime(now, this.timezone);
-    const baseHour = today.wallTime.hrs;
-    const baseHour12 = baseHour % 12;
+    const today = new KsDateTime(now, this.timezone).wallTime;
+    const startOfHour = new KsDateTime({ y: today.y, m: today.m, d: today.d, hrs: today.hrs, min: 0, sec: 0 }, this.timezone).utcTimeMillis;
+    const firstHourIndex = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= startOfHour);
     const vertical = (this.hourlyForecast === HourlyForecast.VERTICAL);
     const amPm = this.appService.getAmPm();
 
     for (let i = 0; i < 24; ++i) {
       let icon = EMPTY_ICON;
       let temp = '';
-      const hourInfo = forecastData.hourly[i + firstHourInfo];
+      const hourInfo = forecastData.hourly[i + firstHourIndex];
+      const hour = new KsDateTime(hourInfo.time * 1000, this.timezone).wallTime;
       let index;
 
       if (vertical)
         index = i;
-      else
-        index = (baseHour12 + i) % 12 + floor(i / 12) * 12;
+      else {
+        // Account for skipped or repeated hours caused by DST change.
+        const hourDelta = hour.hrs - today.hrs + 24 * (hour.n - today.n);
 
-      if (hourInfo && firstHourInfo >= 0) {
+        index = (hour.hrs % 12) % 12 + floor(hourDelta / 12) * 12;
+      }
+
+      if (hourInfo && firstHourIndex >= 0) {
         icon = this.getIconSource(hourInfo.icon);
         temp = hourInfo.temperature.toFixed(0) + '°';
 
         if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
-          const hourText = `<tspan class="temp-by-hour">${formatHour((baseHour + i) % 24, amPm, true)}</tspan>`;
+          const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, amPm, true)}</tspan>`;
 
           if (i < 12)
             temp = temp + ' ' + hourText;
@@ -406,13 +410,13 @@ export class Forecast {
       this.hourIcons[index].setAttribute('href', icon);
       this.hourTemps[index].innerHTML = temp;
       this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
-      this.hourTemps[index].style.fontStyle = (baseHour + i > 23 ? 'italic' : 'normal');
+      this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
     }
 
     const todayIndex = forecastData.daily.data.findIndex(cond => {
       const wallTime = new KsDateTime(cond.time * 1000, this.timezone).wallTime;
 
-      return wallTime.y === today.wallTime.y && wallTime.m === today.wallTime.m && wallTime.d === today.wallTime.d;
+      return wallTime.y === today.y && wallTime.m === today.m && wallTime.d === today.d;
     });
 
     if (todayIndex < 0) {

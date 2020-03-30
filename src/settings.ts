@@ -39,7 +39,7 @@ export class Settings {
   amPm = /[a-z]/i.test(new Date().toLocaleTimeString());
   hideSeconds = false;
   hidePlanets = false;
-  hourlyForecast = HourlyForecast.CIRCULAR;
+  hourlyForecast = HourlyForecast.VERTICAL;
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));

@@ -275,7 +275,7 @@ body {
   position: absolute;
   margin: auto;
   top: 0; left: 0; bottom: 0; right: 0;
-  width: 660px;
+  width: 640px;
   height: 480px;
   padding: 1em;
   background-color: white;
@@ -298,6 +298,10 @@ body {
 
   &>.colspan {
     grid-column: 2 / span 2;
+  }
+
+  &>.colspan-full {
+    grid-column: 1 / span 3;
   }
 
   &>*:nth-child(1) {

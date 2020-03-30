@@ -279,7 +279,7 @@ class AwClockApp implements AppService {
     if (this.lastTimezone !== currentZone) {
       this.lastTimezone = currentZone;
       this.clock.timezone = currentZone;
-      this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone, this.settings.amPm);
+      this.updateEphemeris();
     }
 
     this.frequent = this.forecast.getFrequent();
@@ -301,9 +301,16 @@ class AwClockApp implements AppService {
     if (this.settings.requiresWeatherReload(oldSettings)) {
       this.forecast.clearCache();
       this.forecast.showUnknown();
+      this.clock.triggerRefresh();
     }
+    else {
+      this.forecast.refreshFromCache();
+      this.updateEphemeris();
+    }
+  }
 
-    this.clock.triggerRefresh();
+  private updateEphemeris(): void {
+    this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone, this.settings.amPm);
   }
 
   updateSunriseAndSunset(rise: string, set: string): void {
