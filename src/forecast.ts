@@ -23,7 +23,7 @@ import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
 import { reflow } from './svg-flow';
-import { htmlEncode, setSvgHref } from './util';
+import { formatHour, htmlEncode, setSvgHref } from './util';
 import { ForecastData, HourlyConditions } from '../server/src/weather-types';
 import { cos_deg, floor, sin_deg } from 'ks-math';
 import { CLOCK_CENTER } from './clock';
@@ -46,8 +46,8 @@ const CLOCK_TEMPS_RADIUS = 34.5;
 const CLOCK_TEMPS_INNER_RADIUS = 27;
 const HOURLY_ICON_SIZE = 3.5;
 const HOURLY_VERT_OFFSET = 2.5;
-const HOURLY_LEFT_COLUMN = 1;
-const HOURLY_RIGHT_COLUMN = 99;
+const HOURLY_LEFT_COLUMN = 0.5;
+const HOURLY_RIGHT_COLUMN = 99.5;
 const HOURLY_TEMP_VERT_OFFSET = 3.5;
 const HOURLY_VERT_SPACING = 6.7;
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
@@ -133,6 +133,7 @@ export class Forecast {
 
   private decorateClockFace(): void {
     const clock = document.getElementById('clock');
+    const halfIcon = HOURLY_ICON_SIZE / 2;
 
     for (let i = 0; i < 24; ++i) {
       const isNew = !this.hourIcons[i];
@@ -140,7 +141,7 @@ export class Forecast {
       const deg = i * 30 + 15;
       const hourIcon = isNew ? document.createElementNS(SVG_NAMESPACE, 'image') : this.hourIcons[i];
       const hourTemp = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourTemps[i];
-      const opacity = vertical ? '1' : '0.6';
+      const opacity = vertical ? '1' : '0.7';
       let r, x, y;
 
       if (vertical) {
@@ -153,8 +154,8 @@ export class Forecast {
         y = CLOCK_CENTER + r * sin_deg(deg - 90);
       }
 
-      hourIcon.setAttribute('x', (x - HOURLY_ICON_SIZE / 2).toString());
-      hourIcon.setAttribute('y', (y - HOURLY_ICON_SIZE / 2).toString());
+      hourIcon.setAttribute('x', (x - halfIcon).toString());
+      hourIcon.setAttribute('y', (y - halfIcon).toString());
       hourIcon.setAttribute('height', HOURLY_ICON_SIZE.toString());
       hourIcon.setAttribute('width', HOURLY_ICON_SIZE.toString());
       hourIcon.style.opacity = opacity;
@@ -165,14 +166,19 @@ export class Forecast {
       if (vertical) {
         y += HOURLY_TEMP_VERT_OFFSET;
         hourTemp.removeAttribute('dy');
+        hourTemp.setAttribute('dx', (i < 12 ? -halfIcon : halfIcon).toString());
+        hourTemp.style.textAnchor = (i < 12 ? 'start' : 'end');
       }
       else {
         r = (i < 12 ? CLOCK_TEMPS_RADIUS : CLOCK_TEMPS_INNER_RADIUS);
         x = CLOCK_CENTER + r * cos_deg(deg - 90);
         y = CLOCK_CENTER + r * sin_deg(deg - 90);
+        hourTemp.removeAttribute('dx');
         hourTemp.setAttribute('dy', '0.5em');
+        hourTemp.style.textAnchor = 'middle';
       }
 
+      hourTemp.innerHTML = '';
       hourTemp.setAttribute('x', x.toString());
       hourTemp.setAttribute('y', y.toString());
       hourTemp.classList.add('clock-temps');
@@ -369,6 +375,8 @@ export class Forecast {
     const today = new KsDateTime(now, this.timezone);
     const baseHour = today.wallTime.hrs;
     const baseHour12 = baseHour % 12;
+    const vertical = (this.hourlyForecast === HourlyForecast.VERTICAL);
+    const amPm = this.appService.getAmPm();
 
     for (let i = 0; i < 24; ++i) {
       let icon = EMPTY_ICON;
@@ -376,7 +384,7 @@ export class Forecast {
       const hourInfo = forecastData.hourly[i + firstHourInfo];
       let index;
 
-      if (this.hourlyForecast === HourlyForecast.VERTICAL)
+      if (vertical)
         index = i;
       else
         index = (baseHour12 + i) % 12 + floor(i / 12) * 12;
@@ -384,11 +392,21 @@ export class Forecast {
       if (hourInfo && firstHourInfo >= 0) {
         icon = this.getIconSource(hourInfo.icon);
         temp = hourInfo.temperature.toFixed(0) + '°';
+
+        if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
+          const hourText = `<tspan class="temp-by-hour">${formatHour((baseHour + i) % 24, amPm, true)}</tspan>`;
+
+          if (i < 12)
+            temp = temp + ' ' + hourText;
+          else
+            temp = hourText + ' ' + temp;
+        }
       }
 
       this.hourIcons[index].setAttribute('href', icon);
-      this.hourTemps[index].textContent = temp;
-      this.hourTemps[index].style.fontSize = (temp.length > 3 ? '1.2px' : '1.6px');
+      this.hourTemps[index].innerHTML = temp;
+      this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
+      this.hourTemps[index].style.fontStyle = (baseHour + i > 23 ? 'italic' : 'normal');
     }
 
     const todayIndex = forecastData.daily.data.findIndex(cond => {

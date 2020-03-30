@@ -126,6 +126,10 @@ class AwClockApp implements AppService {
     $('#settings-btn').on('click', () => this.settingsDialog.openSettings(this.settings));
   }
 
+  getAmPm(): boolean {
+    return this.settings.amPm;
+  }
+
   getCurrentTime(bias = 0): number {
     if (debugTime)
       return debugTime + (ntpPoller.getTimeInfo(bias).time - baseTime) * debugTimeRate;

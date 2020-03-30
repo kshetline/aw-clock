@@ -142,6 +142,10 @@ body {
   text-anchor: middle;
   fill: white;
   user-select: none;
+
+  & .temp-by-hour {
+    fill: #AAA;
+  }
 }
 
 #face {

@@ -7,6 +7,7 @@ export const DEV_URL = 'http://localhost:4201';
 
 export interface AppService {
   forecastHasBeenUpdated(): void;
+  getAmPm(): boolean;
   getCurrentTime(bias?: number): number;
   getIndoorOption(): string;
   getOutdoorOption(): string;

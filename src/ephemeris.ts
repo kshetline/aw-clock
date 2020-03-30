@@ -24,7 +24,7 @@ import {
 } from 'ks-astronomy';
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import * as $ from 'jquery';
-import { describeArc, setSvgHref } from './util';
+import { describeArc, formatTime, setSvgHref } from './util';
 import { AppService } from './app.service';
 import { padLeft } from 'ks-util';
 import { mod } from 'ks-math';
@@ -36,22 +36,6 @@ const planetIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn
 
 function getMoonPhaseIcon(phase: number) {
   return `assets/moon/phase-${padLeft(Math.round(phase / 360 * 28) % 28, 2, '0')}.svg`;
-}
-
-function formatTime(date: KsDateTime, amPm: boolean) {
-  let hours = date.wallTime.hrs;
-  let suffix = '';
-
-  if (amPm) {
-    if (hours === 0)
-      hours = 12;
-    else if (hours > 12)
-      hours -= 12;
-
-    suffix = (date.wallTime.hrs < 12 ? 'a' : 'p');
-  }
-
-  return padLeft(hours, 2, '0') + ':' + padLeft(date.wallTime.min, 2, '0') + suffix;
 }
 
 export class Ephemeris {
@@ -85,6 +69,7 @@ export class Ephemeris {
     }
   }
 
+  // noinspection JSUnusedGlobalSymbols
   get hidePlanets() { return this._hidePlanets; }
   set hidePlanets(newValue: boolean) {
     if (this._hidePlanets !== newValue) {
