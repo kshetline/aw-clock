@@ -41,7 +41,8 @@
           <line x1="60" y1="50" x2="72" y2="50" class="planet-track" transform="rotate(330, 50, 50)"/>
         </g>
         <g id="hands">
-          <polygon id="hour-hand" points="47.5,52.5 48.5,25.5 50,23 51.5,25.5 52.5,52.5"/>
+          <polygon id="hour-hand" points="47.25,52.5 48.5,27 50,24.5 51.5,27 52.75,52.5"/>
+          <rect id="hourly-forecast-divider" x="49.75" y="11" width="0.5" height="9"/>
           <polygon id="min-hand" points="48.5,52.5 49,15 50,13 51,15 51.5,52.5"/>
           <line id="sec-hand" x1="50" y1="50" x2="50" y2="12">
             <animateTransform id="sweep"
@@ -246,8 +247,9 @@
               <option value="H">Hide planets</option>
             </select>
             <select id="hourly-forecast-option">
-              <option value="S">Show hourly fcast</option>
-              <option value="H">Hide hourly fcast</option>
+              <option value="C">Hourly fcast circular</option>
+              <option value="V">Hourly fcast vertical</option>
+              <option value="N">No hourly forecast</option>
             </select>
           </span>
         </div>

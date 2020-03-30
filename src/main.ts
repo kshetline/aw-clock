@@ -93,6 +93,7 @@ class AwClockApp implements AppService {
     this.currentTempManager = new CurrentTempManager(this);
 
     this.forecast = new Forecast(this);
+    this.forecast.hourlyForecast = this.settings.hourlyForecast;
 
     this.ephemeris = new Ephemeris(this);
     this.ephemeris.hidePlanets = this.settings.hidePlanets;
@@ -288,7 +289,7 @@ class AwClockApp implements AppService {
     newSettings.save();
 
     this.cityLabel.text(newSettings.city);
-    this.forecast.hideHourlyForecast = newSettings.hideHourlyForecast;
+    this.forecast.hourlyForecast = newSettings.hourlyForecast;
     this.clock.amPm = newSettings.amPm;
     this.clock.hideSeconds = newSettings.hideSeconds;
     this.ephemeris.hidePlanets = newSettings.hidePlanets;

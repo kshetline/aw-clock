@@ -108,7 +108,7 @@ body {
   width: calc(1.556 * (100vh - 2em));
   padding: 1em;
   vertical-align: middle;
-  overflow: hidden;
+  overflow: visible;
   background: midnightblue;
 }
 
@@ -125,6 +125,7 @@ body {
 #clock {
   font-family: $std-font;
   fill: white;
+  overflow: visible;
 }
 
 .clock-face {
@@ -153,6 +154,12 @@ body {
   stroke-width: 1px;
   fill: #339;
   stroke: #66F;
+}
+
+#hourly-forecast-divider {
+  stroke-width: 0;
+  fill: #69C;
+  opacity: 0.6;
 }
 
 #sec-hand { stroke: #f55; }
