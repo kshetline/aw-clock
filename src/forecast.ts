@@ -23,7 +23,7 @@ import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
 import { reflow } from './svg-flow';
-import { formatHour, htmlEncode, setSvgHref } from './util';
+import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
 import { ForecastData, HourlyConditions } from '../server/src/weather-types';
 import { cos_deg, floor, sin_deg } from 'ks-math';
 import { CLOCK_CENTER } from './clock';
@@ -234,6 +234,35 @@ export class Forecast {
   public refreshFromCache(): void {
     if (this.lastForecastData)
       this.displayForecast(this.lastForecastData);
+  }
+
+  // Note: This is just for a temporary, quick update. The full forecast needs to be requested to get
+  // accurate temperature values, especially when only integer temperature values have been supplied,
+  // which don't allow for very good Celsius/Fahrenheit conversions.
+  public swapTemperatureUnits(makeCelsius: boolean): void {
+    if (this.lastForecastData && this.lastForecastData.isMetric !== makeCelsius) {
+      const forecast = this.lastForecastData;
+      const convert = (t: number) => convertTemp(t, makeCelsius);
+
+      if (forecast.currently) {
+        forecast.currently.feelsLikeTemperature = convert(forecast.currently.feelsLikeTemperature);
+        forecast.currently.temperature = convert(forecast.currently.temperature);
+      }
+
+      if (forecast.hourly)
+        forecast.hourly.forEach(hour => hour.temperature = convert(hour.temperature));
+
+      this.cachedHourly = [];
+
+      if (forecast.daily?.data)
+        forecast.daily.data.forEach(day => {
+          day.temperatureLow = convert(day.temperatureLow);
+          day.temperatureHigh = convert(day.temperatureHigh);
+        });
+
+      forecast.isMetric = makeCelsius;
+      this.displayForecast(forecast);
+    }
   }
 
   public clearCache(): void {

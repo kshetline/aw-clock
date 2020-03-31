@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -153,4 +153,8 @@ export function formatTime(date: KsDateTime, amPm: boolean) {
   const hours = formatHour(date.wallTime.hrs, amPm);
 
   return hours.substr(0, 2) + ':' + padLeft(date.wallTime.min, 2, '0') + hours.substr(2);
+}
+
+export function convertTemp(t: number, toCelsius: boolean): number {
+  return toCelsius ? (t - 32) / 1.8 : t * 1.8 + 32;
 }

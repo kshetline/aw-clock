@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -83,8 +83,7 @@ export class Settings {
   }
 
   public requiresWeatherReload(oldSettings: Settings) {
-    return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude ||
-           this.celsius !== oldSettings.celsius;
+    return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude;
   }
 }
 

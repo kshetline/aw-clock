@@ -6,7 +6,7 @@ This project is designed to create a desktop clock which provides weather and as
 
 The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, hourly conditions for 24 hours, a four-day forecast, sunrise and sunset times, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
-![app screenshot](https://shetline.com/misc/awc_screenshot.jpg)
+![app screenshot](https://shetline.com/misc/awc_2_3_0_screenshot.jpg)
 <br/><br/>
 ### Getting started
 
@@ -38,7 +38,7 @@ As soon as you’ve got the Astronomy/Weather Clock up and running the first tim
 
 Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you're using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
 
-![app screenshot](https://shetline.com/misc/awc_dlog.jpg)
+![app screenshot](https://shetline.com/misc/awc_2_3_0_dlog.jpg)
 
 To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
 

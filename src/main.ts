@@ -299,8 +299,14 @@ class AwClockApp implements AppService {
     this.ephemeris.hidePlanets = newSettings.hidePlanets;
 
     if (this.settings.requiresWeatherReload(oldSettings)) {
+      this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
       this.forecast.clearCache();
       this.forecast.showUnknown();
+      this.clock.triggerRefresh();
+    }
+    else if (this.settings.celsius !== oldSettings.celsius) {
+      this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
+      this.forecast.swapTemperatureUnits(this.settings.celsius);
       this.clock.triggerRefresh();
     }
     else {

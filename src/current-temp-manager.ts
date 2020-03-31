@@ -2,6 +2,7 @@ import { AppService } from './app.service';
 import * as $ from 'jquery';
 import { reflow } from './svg-flow';
 import { localServer } from './settings';
+import { convertTemp } from './util';
 
 const DD = '\u2012\u2012';
 
@@ -15,6 +16,7 @@ export interface CurrentTemperatureHumidity {
   outdoorHumidity?: number;
   outdoorTemp?: number;
   sensorTempDetail?: string;
+  celsius?: boolean;
 }
 
 export class CurrentTempManager {
@@ -58,8 +60,32 @@ export class CurrentTempManager {
     }
   }
 
+  public swapTemperatureUnits(makeCelsius: boolean): void {
+    if (this.cth.celsius !== makeCelsius) {
+      const convert = (t: number) => convertTemp(t, makeCelsius);
+
+      if (this.cth.forecastFeelsLike != null)
+        this.cth.forecastFeelsLike = convert(this.cth.forecastFeelsLike);
+
+      if (this.cth.forecastTemp != null)
+        this.cth.forecastTemp = convert(this.cth.forecastTemp);
+
+      if (this.cth.indoorTemp != null)
+        this.cth.indoorTemp = convert(this.cth.indoorTemp);
+
+      if (this.cth.outdoorTemp != null)
+        this.cth.outdoorTemp = convert(this.cth.outdoorTemp);
+
+      if (this.cth.sensorTempDetail != null)
+        this.cth.sensorTempDetail = this.cth.sensorTempDetail.replace(/-?\d+(?=°)/g, t => convert(Number(t)).toFixed(0));
+
+      this.updateCurrentTempAndHumidity(null, makeCelsius);
+    }
+  }
+
   // Null values erase old values, undefined values preserve old values, defined values replace old values
   updateCurrentTempAndHumidity(cthUpdate: CurrentTemperatureHumidity, celsius: boolean): void {
+    this.cth.celsius = celsius;
     Object.keys(cthUpdate ?? {}).forEach(key => {
       if (cthUpdate[key] !== undefined)
         this.cth[key] = cthUpdate[key];

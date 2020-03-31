@@ -1,4 +1,3 @@
-
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { Settings } from './settings';
 import { TimeInfo } from '../server/src/time-types';
