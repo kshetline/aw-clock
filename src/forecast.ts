@@ -23,8 +23,10 @@ import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
 import { reflow } from './svg-flow';
-import { htmlEncode, setSvgHref } from './util';
-import { ForecastData } from '../server/src/weather-types';
+import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
+import { ForecastData, HourlyConditions } from '../server/src/weather-types';
+import { cos_deg, floor, sin_deg } from 'ks-math';
+import { CLOCK_CENTER } from './clock';
 
 const DEFAULT_BACKGROUND = 'midnightblue';
 const DEFAULT_FOREGROUND = 'white';
@@ -37,6 +39,17 @@ const WATCH_FOREGROUND = 'black';
 const WARNING_BACKGROUND = 'red';
 const WARNING_FOREGROUND = 'white';
 
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const CLOCK_ICON_RADIUS = 38;
+const CLOCK_ICON_INNER_RADIUS = 31;
+const CLOCK_TEMPS_RADIUS = 34.5;
+const CLOCK_TEMPS_INNER_RADIUS = 27;
+const HOURLY_ICON_SIZE = 3.5;
+const HOURLY_VERT_OFFSET = 2.5;
+const HOURLY_LEFT_COLUMN = 0.5;
+const HOURLY_RIGHT_COLUMN = 99.5;
+const HOURLY_TEMP_VERT_OFFSET = 3.5;
+const HOURLY_VERT_SPACING = 6.7;
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
 const CLOSE_ERROR_TAG = '&nbsp;</span>';
 
@@ -47,8 +60,11 @@ const FREQUENT_THRESHOLD = 300;
 const MAX_FORECAST_STALENESS = 7200000; // 2 hours
 const MAX_CURRENT_TEMP_STALENESS = 1800000; // 30 minutes
 
+const EMPTY_ICON = 'assets/empty.svg';
 const UNKNOWN_ICON = 'assets/unknown.svg';
 const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
+
+export enum HourlyForecast { NONE = 'N', CIRCULAR = 'C', VERTICAL = 'V' }
 
 export class Forecast {
   private readonly currentIcon: JQuery;
@@ -64,14 +80,19 @@ export class Forecast {
   private dayLowHighs: JQuery[] = [];
   private dayChancePrecips: JQuery[] = [];
   private dayPrecipAccums: JQuery[] = [];
+  private hourIcons: SVGImageElement[] = [];
+  private hourTemps: SVGTextElement[] = [];
+  private forecastDivider: HTMLElement;
 
   private readonly weatherServer: string;
 
+  private _hourlyForecast = HourlyForecast.CIRCULAR;
   private lastForecastData: ForecastData;
+  private cachedHourly: HourlyConditions[] = [];
   private lastForecastTime = 0;
   private timezone = KsTimeZone.OS_ZONE;
 
-  private marqueeText = '';
+  private marqueeText = ' ';
   private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
   private animationStart: number;
   private animationWidth: number;
@@ -98,17 +119,83 @@ export class Forecast {
     this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
+    this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
     if (!isIE() && !isEdge())
       this.weatherServer = appService.getWeatherServer();
     else
       this.weatherServer = '';
 
+    this.decorateClockFace();
+
     window.addEventListener('resize', () => this.updateMarqueeAnimation(null));
+  }
+
+  private decorateClockFace(): void {
+    const clock = document.getElementById('clock');
+    const halfIcon = HOURLY_ICON_SIZE / 2;
+
+    for (let i = 0; i < 24; ++i) {
+      const isNew = !this.hourIcons[i];
+      const vertical = this.hourlyForecast === HourlyForecast.VERTICAL;
+      const deg = i * 30 + 15;
+      const hourIcon = isNew ? document.createElementNS(SVG_NAMESPACE, 'image') : this.hourIcons[i];
+      const hourTemp = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourTemps[i];
+      const opacity = vertical ? '1' : '0.7';
+      let r, x, y;
+
+      if (vertical) {
+        x = i < 12 ? HOURLY_LEFT_COLUMN : HOURLY_RIGHT_COLUMN;
+        y = (i % 12 - 6) * HOURLY_VERT_SPACING + CLOCK_CENTER + HOURLY_VERT_OFFSET;
+      }
+      else {
+        r = (i < 12 ? CLOCK_ICON_RADIUS : CLOCK_ICON_INNER_RADIUS);
+        x = CLOCK_CENTER + r * cos_deg(deg - 90);
+        y = CLOCK_CENTER + r * sin_deg(deg - 90);
+      }
+
+      hourIcon.setAttribute('x', (x - halfIcon).toString());
+      hourIcon.setAttribute('y', (y - halfIcon).toString());
+      hourIcon.setAttribute('height', HOURLY_ICON_SIZE.toString());
+      hourIcon.setAttribute('width', HOURLY_ICON_SIZE.toString());
+      hourIcon.style.opacity = opacity;
+
+      if (isNew)
+        hourIcon.setAttribute('href', EMPTY_ICON);
+
+      if (vertical) {
+        y += HOURLY_TEMP_VERT_OFFSET;
+        hourTemp.removeAttribute('dy');
+        hourTemp.setAttribute('dx', (i < 12 ? -halfIcon : halfIcon).toString());
+        hourTemp.style.textAnchor = (i < 12 ? 'start' : 'end');
+      }
+      else {
+        r = (i < 12 ? CLOCK_TEMPS_RADIUS : CLOCK_TEMPS_INNER_RADIUS);
+        x = CLOCK_CENTER + r * cos_deg(deg - 90);
+        y = CLOCK_CENTER + r * sin_deg(deg - 90);
+        hourTemp.removeAttribute('dx');
+        hourTemp.setAttribute('dy', '0.5em');
+        hourTemp.style.textAnchor = 'middle';
+      }
+
+      hourTemp.innerHTML = '';
+      hourTemp.setAttribute('x', x.toString());
+      hourTemp.setAttribute('y', y.toString());
+      hourTemp.classList.add('clock-temps');
+      hourTemp.style.opacity = opacity;
+
+      if (isNew) {
+        clock.appendChild(hourIcon);
+        this.hourIcons[i] = hourIcon;
+        clock.appendChild(hourTemp);
+        this.hourTemps[i] = hourTemp;
+      }
+    }
   }
 
   public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
     this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
+      this.updateHourlyCache(forecastData);
       this.lastForecastData = forecastData;
       this.lastForecastTime = performance.now();
       this.appService.updateCurrentTemp({ forecastStale: false });
@@ -130,7 +217,7 @@ export class Forecast {
 
       if (!this.lastForecastData || now >= this.lastForecastTime + MAX_FORECAST_STALENESS) {
         this.appService.updateCurrentTemp(NO_DATA);
-        this.showUnknown(error);
+        this.showUnknown(error.toString());
       }
       else {
         if (now >= this.lastForecastTime + MAX_CURRENT_TEMP_STALENESS)
@@ -149,9 +236,94 @@ export class Forecast {
       this.displayForecast(this.lastForecastData);
   }
 
+  // Note: This is just for a temporary, quick update. The full forecast needs to be requested to get
+  // accurate temperature values, especially when only integer temperature values have been supplied,
+  // which don't allow for very good Celsius/Fahrenheit conversions.
+  public swapTemperatureUnits(makeCelsius: boolean): void {
+    if (this.lastForecastData && this.lastForecastData.isMetric !== makeCelsius) {
+      const forecast = this.lastForecastData;
+      const convert = (t: number) => convertTemp(t, makeCelsius);
+
+      if (forecast.currently) {
+        forecast.currently.feelsLikeTemperature = convert(forecast.currently.feelsLikeTemperature);
+        forecast.currently.temperature = convert(forecast.currently.temperature);
+      }
+
+      if (forecast.hourly)
+        forecast.hourly.forEach(hour => hour.temperature = convert(hour.temperature));
+
+      this.cachedHourly = [];
+
+      if (forecast.daily?.data)
+        forecast.daily.data.forEach(day => {
+          day.temperatureLow = convert(day.temperatureLow);
+          day.temperatureHigh = convert(day.temperatureHigh);
+        });
+
+      forecast.isMetric = makeCelsius;
+      this.displayForecast(forecast);
+    }
+  }
+
+  public clearCache(): void {
+    this.lastForecastData = undefined;
+    this.cachedHourly = [];
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  get hourlyForecast(): HourlyForecast { return this._hourlyForecast; }
+  set hourlyForecast(value: HourlyForecast) {
+    if (this._hourlyForecast !== value) {
+      const display = (value === HourlyForecast.NONE ? 'none' : 'block');
+
+      this._hourlyForecast = value;
+      this.hourIcons.forEach(icon => icon.style.display = display);
+      this.hourTemps.forEach(temp => temp.style.display = display);
+      this.forecastDivider.style.display = (value === HourlyForecast.CIRCULAR ? 'block' : 'none');
+      this.decorateClockFace();
+    }
+  }
+
+  private updateHourlyCache(forecastData: ForecastData): void {
+    const now = this.appService.getCurrentTime() / 1000;
+    let earliestNew = forecastData.hourly[0]?.time ?? 0;
+    let inserted = 0;
+
+    this.cachedHourly = this.cachedHourly.filter(hour => hour.time > now - 7200 && hour.time < now);
+
+    if (now < earliestNew) {
+      this.cachedHourly.forEach(hour => {
+        if (hour.time < earliestNew) {
+          forecastData.hourly.splice(0, 0, hour);
+          ++inserted;
+        }
+      });
+    }
+
+    earliestNew = forecastData.hourly[0]?.time ?? 0;
+
+    // Still nothing to cover the current hour? Fake it from current conditions.
+    if (now < earliestNew && forecastData?.currently)
+      forecastData.hourly.splice(0, 0, {
+        icon: forecastData.currently.icon,
+        precipType: forecastData.currently.precipType,
+        temperature: forecastData.currently.temperature,
+        time: Math.floor(now / 3600) * 3600
+      });
+
+    for (let i = inserted; i < forecastData.hourly.length; ++i) {
+      if (forecastData.hourly[i].time < now + 7200)
+        this.cachedHourly.push(forecastData.hourly[i]);
+      else
+        break;
+    }
+  }
+
   public showUnknown(error?: string): void {
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
     this.appService.updateCurrentTemp(NO_DATA);
+    this.hourIcons.forEach(icon => icon.setAttribute('href', EMPTY_ICON));
+    this.hourTemps.forEach(icon => icon.textContent = '');
 
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
@@ -227,8 +399,54 @@ export class Forecast {
   private displayForecast(forecastData: ForecastData) {
     this.timezone = KsTimeZone.getTimeZone(forecastData.timezone);
 
-    const today = new KsDateTime(this.appService.getCurrentTime(), this.timezone);
-    const todayIndex = forecastData.daily.data.findIndex(cond => new KsDateTime(cond.time * 1000, this.timezone).wallTime.d === today.wallTime.d);
+    const now = this.appService.getCurrentTime();
+    const today = new KsDateTime(now, this.timezone).wallTime;
+    const startOfHour = new KsDateTime({ y: today.y, m: today.m, d: today.d, hrs: today.hrs, min: 0, sec: 0 }, this.timezone).utcTimeMillis;
+    const firstHourIndex = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= startOfHour);
+    const vertical = (this.hourlyForecast === HourlyForecast.VERTICAL);
+    const amPm = this.appService.getAmPm();
+
+    for (let i = 0; i < 24; ++i) {
+      let icon = EMPTY_ICON;
+      let temp = '';
+      const hourInfo = forecastData.hourly[i + firstHourIndex];
+      const hour = new KsDateTime(hourInfo.time * 1000, this.timezone).wallTime;
+      let index;
+
+      if (vertical)
+        index = i;
+      else {
+        // Account for skipped or repeated hours caused by DST change.
+        const hourDelta = hour.hrs - today.hrs + 24 * (hour.n - today.n);
+
+        index = (hour.hrs % 12) % 12 + floor(hourDelta / 12) * 12;
+      }
+
+      if (hourInfo && firstHourIndex >= 0) {
+        icon = this.getIconSource(hourInfo.icon);
+        temp = hourInfo.temperature.toFixed(0) + '°';
+
+        if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
+          const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, amPm, true)}</tspan>`;
+
+          if (i < 12)
+            temp = temp + ' ' + hourText;
+          else
+            temp = hourText + ' ' + temp;
+        }
+      }
+
+      this.hourIcons[index].setAttribute('href', icon);
+      this.hourTemps[index].innerHTML = temp;
+      this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
+      this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
+    }
+
+    const todayIndex = forecastData.daily.data.findIndex(cond => {
+      const wallTime = new KsDateTime(cond.time * 1000, this.timezone).wallTime;
+
+      return wallTime.y === today.y && wallTime.m === today.m && wallTime.d === today.d;
+    });
 
     if (todayIndex < 0) {
       this.showUnknown('Missing data');

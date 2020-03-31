@@ -7,22 +7,31 @@ import {
   CurrentConditionsKeys,
   DailyConditions, DailyConditionsKeys, DailySummaryConditions, DailySummaryConditionsKeys,
   ForecastData,
-  ForecastDataKeys
+  ForecastDataKeys, HourlyConditions
 } from './weather-types';
 
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;
 }
 
-interface DarkSkyForecast extends Omit<ForecastData, 'currently'> {
-  currently: DSCurrentConditions
+interface DSHourlyItems extends CommonConditions {
+  temperature: number;
+}
+
+interface DSHourlyConditions {
+  data: DSHourlyItems[];
+}
+
+interface DarkSkyForecast extends Omit<Omit<ForecastData, 'currently'>, 'hourly'> {
+  currently: DSCurrentConditions;
+  hourly: DSHourlyConditions;
   flags?: any;
 }
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
   const url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}/` +
-    `${req.query.lat},${req.query.lon}?exclude=minutely,hourly${isMetric ? '&units=ca' : ''}`;
+    `${req.query.lat},${req.query.lon}?exclude=minutely${isMetric ? '&units=ca' : ''}`;
 
   try {
     const origForecast = (await requestJson(url)) as DarkSkyForecast;
@@ -93,6 +102,8 @@ function convertForecast(dsForecast: DarkSkyForecast, isMetric: boolean): Foreca
   Object.keys(dsForecast).forEach(key => {
     if (key === 'currently')
       forecast.currently = convertConditions(dsForecast.currently, CurrentConditionsKeys, isMetric) as CurrentConditions;
+    else if (key === 'hourly')
+      forecast.hourly = convertHourly(dsForecast.hourly, isMetric);
     else if (key === 'daily')
       forecast.daily = convertDaily(dsForecast.daily, isMetric);
     else if (key === 'alerts')
@@ -120,6 +131,27 @@ function convertConditions(dsConditions: CommonConditions, keys: string[], isMet
   });
 
   return conditions;
+}
+
+function convertHourly(dsHourly: DSHourlyConditions, isMetric: boolean): HourlyConditions[] {
+  const hourly: HourlyConditions[] = [];
+
+  if (dsHourly.data) {
+    for (const hour of dsHourly.data) {
+      hourly.push({
+        icon: getIcon(hour, isMetric),
+        temperature: hour.temperature,
+        precipType: hour.icon === 'snow' || /\bsnow\b/i.test(hour.summary || '') ? 'snow' :
+          hour.icon === 'rain' ? 'rain' : '',
+        time: hour.time
+      });
+
+      if (hourly.length >= 36)
+        break;
+    }
+  }
+
+  return hourly;
 }
 
 function convertDaily(dsDaily: DailySummaryConditions, isMetric: boolean): DailySummaryConditions {

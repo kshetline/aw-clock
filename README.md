@@ -4,9 +4,9 @@
 
 This project is designed to create a desktop clock which provides weather and astronomical information. While primarily designed to run on a Raspberry Pi, the code will create a Node.js server and client web app that can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors.
 
-The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, a four-day forecast, sunrise and sunset times, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
+The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, hourly conditions for 24 hours, a four-day forecast, sunrise and sunset times, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
-![app screenshot](https://shetline.com/misc/awc_screenshot.jpg)
+![app screenshot](https://shetline.com/misc/awc_2_3_0_screenshot.jpg)
 <br/><br/>
 ### Getting started
 
@@ -26,7 +26,7 @@ As of v2.1.0 of this software no API key is required to get weather data. The de
 
 Obtaining a Dark Sky API key for back-up weather data is still, therefore, a good idea. (See https://darksky.net/ for further details.) You can also select Dark Sky as your primary weather source, using Weather Underground as a backup.
 
-By default this application uses `pool.ntp.org` as an NTP time server (keeping its own time, rather than using the system clock), but you can use a different time server. Do not use a Google time server, however, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to display leap seconds as shown below:
+By default this application uses `pool.ntp.org` as an NTP time server (keeping its own time, rather than using the system clock), but you can use a different time server. Do not use a Google or Facebook time server, however, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to display leap seconds as shown below:
 
 ![Hypothetical leap second](https://shetline.com/misc/moment_of_leap_second.jpg)
 
@@ -38,7 +38,7 @@ As soon as you’ve got the Astronomy/Weather Clock up and running the first tim
 
 Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you're using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
 
-![app screenshot](https://shetline.com/misc/awc_dlog.jpg)
+![app screenshot](https://shetline.com/misc/awc_2_3_0_dlog.jpg)
 
 To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
 

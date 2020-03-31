@@ -93,6 +93,7 @@ class AwClockApp implements AppService {
     this.currentTempManager = new CurrentTempManager(this);
 
     this.forecast = new Forecast(this);
+    this.forecast.hourlyForecast = this.settings.hourlyForecast;
 
     this.ephemeris = new Ephemeris(this);
     this.ephemeris.hidePlanets = this.settings.hidePlanets;
@@ -123,6 +124,10 @@ class AwClockApp implements AppService {
     });
 
     $('#settings-btn').on('click', () => this.settingsDialog.openSettings(this.settings));
+  }
+
+  getAmPm(): boolean {
+    return this.settings.amPm;
   }
 
   getCurrentTime(bias = 0): number {
@@ -274,7 +279,7 @@ class AwClockApp implements AppService {
     if (this.lastTimezone !== currentZone) {
       this.lastTimezone = currentZone;
       this.clock.timezone = currentZone;
-      this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone, this.settings.amPm);
+      this.updateEphemeris();
     }
 
     this.frequent = this.forecast.getFrequent();
@@ -282,14 +287,36 @@ class AwClockApp implements AppService {
   }
 
   updateSettings(newSettings: Settings): void {
+    const oldSettings = this.settings;
+
     this.settings = newSettings;
     newSettings.save();
-    this.forecast.showUnknown();
+
     this.cityLabel.text(newSettings.city);
+    this.forecast.hourlyForecast = newSettings.hourlyForecast;
     this.clock.amPm = newSettings.amPm;
     this.clock.hideSeconds = newSettings.hideSeconds;
     this.ephemeris.hidePlanets = newSettings.hidePlanets;
-    this.clock.triggerRefresh();
+
+    if (this.settings.requiresWeatherReload(oldSettings)) {
+      this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
+      this.forecast.clearCache();
+      this.forecast.showUnknown();
+      this.clock.triggerRefresh();
+    }
+    else if (this.settings.celsius !== oldSettings.celsius) {
+      this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
+      this.forecast.swapTemperatureUnits(this.settings.celsius);
+      this.clock.triggerRefresh();
+    }
+    else {
+      this.forecast.refreshFromCache();
+      this.updateEphemeris();
+    }
+  }
+
+  private updateEphemeris(): void {
+    this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone, this.settings.amPm);
   }
 
   updateSunriseAndSunset(rise: string, set: string): void {

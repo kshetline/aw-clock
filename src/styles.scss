@@ -108,7 +108,7 @@ body {
   width: calc(1.556 * (100vh - 2em));
   padding: 1em;
   vertical-align: middle;
-  overflow: hidden;
+  overflow: visible;
   background: midnightblue;
 }
 
@@ -125,14 +125,27 @@ body {
 #clock {
   font-family: $std-font;
   fill: white;
+  overflow: visible;
 }
 
 .clock-face {
   font-family: $clock-face-font;
   font-size: 10px;
+  letter-spacing: -0.05em;
   text-anchor: middle;
   fill: white;
   user-select: none;
+}
+
+.clock-temps {
+  font-size: 1.6px;
+  text-anchor: middle;
+  fill: white;
+  user-select: none;
+
+  & .temp-by-hour {
+    fill: #AAA;
+  }
 }
 
 #face {
@@ -145,6 +158,12 @@ body {
   stroke-width: 1px;
   fill: #339;
   stroke: #66F;
+}
+
+#hourly-forecast-divider {
+  stroke-width: 0;
+  fill: #69C;
+  opacity: 0.6;
 }
 
 #sec-hand { stroke: #f55; }
@@ -279,6 +298,10 @@ body {
 
   &>.colspan {
     grid-column: 2 / span 2;
+  }
+
+  &>.colspan-full {
+    grid-column: 1 / span 3;
   }
 
   &>*:nth-child(1) {

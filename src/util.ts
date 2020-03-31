@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -18,8 +18,9 @@
 */
 
 import * as $ from 'jquery';
-import { isEdge, isSafari } from 'ks-util';
+import { KsDateTime } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
+import { isEdge, isSafari, padLeft } from 'ks-util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -128,4 +129,32 @@ export function describeArc(x: number, y: number, radius: number, startAngle: nu
     'M', start.x, start.y,
     'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y
   ].join(' ');
+}
+
+export function formatHour(hours: number, amPm: boolean, withH = false) {
+  let hour = hours;
+  let suffix = '';
+
+  if (amPm) {
+    if (hour === 0)
+      hour = 12;
+    else if (hour > 12)
+      hour -= 12;
+
+    suffix = (hours < 12 ? 'a' : 'p');
+  }
+  else if (withH)
+    suffix = 'h';
+
+  return padLeft(hour, 2, '0') + suffix;
+}
+
+export function formatTime(date: KsDateTime, amPm: boolean) {
+  const hours = formatHour(date.wallTime.hrs, amPm);
+
+  return hours.substr(0, 2) + ':' + padLeft(date.wallTime.min, 2, '0') + hours.substr(2);
+}
+
+export function convertTemp(t: number, toCelsius: boolean): number {
+  return toCelsius ? (t - 32) / 1.8 : t * 1.8 + 32;
 }

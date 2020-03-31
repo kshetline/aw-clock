@@ -18,6 +18,7 @@
 */
 
 import { AppService } from './app.service';
+import { HourlyForecast } from './forecast';
 import * as $ from 'jquery';
 import { isIE, isSafari } from 'ks-util';
 import { localServer, Settings } from './settings';
@@ -78,6 +79,7 @@ export class SettingsDialog {
   private hours: JQuery;
   private seconds: JQuery;
   private planets: JQuery;
+  private hourlyForecast: JQuery;
   private searchSection: JQuery;
   private searchCity: JQuery;
   private submitSearch: JQuery;
@@ -109,6 +111,7 @@ export class SettingsDialog {
     this.hours = $('#hours-option');
     this.seconds = $('#seconds-option');
     this.planets = $('#planets-option');
+    this.hourlyForecast = $('#hourly-forecast-option');
     this.searchSection = $('.search-section');
     this.searchCity = $('#search-city');
     this.submitSearch = $('#submit-search');
@@ -294,6 +297,7 @@ export class SettingsDialog {
     this.hours.val(previousSettings.amPm ? 'AMPM' : '24');
     this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
     this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
+    this.hourlyForecast.val(previousSettings.hourlyForecast);
     (this.submitSearch as any).enable(true);
     (this.searchCity as any).enable(true);
     this.searchCity.val('');
@@ -338,6 +342,7 @@ export class SettingsDialog {
       newSettings.amPm = (this.hours.val() as string) === 'AMPM';
       newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
       newSettings.hidePlanets = (this.planets.val() as string) === 'H';
+      newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
 
       if (!newSettings.city) {
         domAlert('Current city must be specified.');

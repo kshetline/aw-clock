@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -17,6 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+import { HourlyForecast } from './forecast';
 import * as Cookies from 'js-cookie';
 import { toBoolean } from 'ks-util';
 
@@ -38,6 +39,7 @@ export class Settings {
   amPm = /[a-z]/i.test(new Date().toLocaleTimeString());
   hideSeconds = false;
   hidePlanets = false;
+  hourlyForecast = HourlyForecast.VERTICAL;
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
@@ -57,6 +59,8 @@ export class Settings {
     this.amPm = toBoolean(Cookies.get('ampm'), defaultSettings.amPm);
     this.hideSeconds = toBoolean(Cookies.get('hides'), false);
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
+    this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) ||
+      defaultSettings.hourlyForecast;
   }
 
   public save(): void {
@@ -75,6 +79,11 @@ export class Settings {
     Cookies.set('ampm', this.amPm.toString(), expiration);
     Cookies.set('hides', this.hideSeconds.toString(), expiration);
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);
+    Cookies.set('hourly_forecast', this.hourlyForecast, expiration);
+  }
+
+  public requiresWeatherReload(oldSettings: Settings) {
+    return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude;
   }
 }
 
