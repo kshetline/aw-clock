@@ -44,7 +44,7 @@ export const CLOCK_CENTER = 50;
 
 const CLOCK_RADIUS = 41;
 const CLOCK_TEXT_RADIUS = 33.5;
-const CONSTELLATION_RADIUS = 23.75;
+const CONSTELLATION_RADIUS = 24;
 
 export class Clock {
   private readonly secHand: HTMLElement;

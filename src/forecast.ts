@@ -178,18 +178,20 @@ export class Forecast {
         hourTemp.style.textAnchor = 'middle';
       }
 
-      hourTemp.innerHTML = '';
       hourTemp.setAttribute('x', x.toString());
       hourTemp.setAttribute('y', y.toString());
       hourTemp.classList.add('clock-temps');
       hourTemp.style.opacity = opacity;
 
       if (isNew) {
+        hourTemp.innerHTML = '';
         clock.appendChild(hourIcon);
         this.hourIcons[i] = hourIcon;
         clock.appendChild(hourTemp);
         this.hourTemps[i] = hourTemp;
       }
+      else
+        hourTemp.innerHTML = hourTemp.innerHTML.replace(/.*?(\b\d+°).*/, '$1');
     }
   }
 
