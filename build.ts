@@ -23,7 +23,9 @@ let lastSpin = 0;
 let doUpdateUpgrade = true;
 let npmInitDone = false;
 let doAcu = false;
+let clearAcu = false;
 let doDht = false;
+let clearDht = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let doGps = false;
 let doI2c = false;
@@ -97,7 +99,7 @@ if (process.platform === 'linux') {
   }
 }
 
-let launchChromium = chromium + ' --kiosk http://localhost:8080';
+const launchChromium = chromium + ' --kiosk http://localhost:8080';
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
@@ -120,6 +122,10 @@ process.argv.forEach(arg => {
     case '--acu':
       doAcu = true;
       break;
+    case '--acu-':
+      doAcu = false;
+      clearAcu = true;
+      break;
     case '--bash':
       viaBash = true;
       delete process.env.SHLVL;
@@ -131,6 +137,10 @@ process.argv.forEach(arg => {
     case '--dht':
       doDht = true;
       onlyOnRaspberryPi.push(arg);
+      break;
+    case '--dht-':
+      doDht = false;
+      clearDht = true;
       break;
     case '--gps':
       doGps = doI2c = true;
@@ -217,13 +227,13 @@ if (treatAsRaspberryPi) {
         oldSettings.AWC_WIRED_TH_GPIO = settings.AWC_WIRED_TH_GPIO =
           settings.AWC_TH_SENSOR_GPIO || '4';
 
-      if (interactive && oldSettings.AWC_WIRED_TH_GPIO)
+      if (!clearDht && oldSettings.AWC_WIRED_TH_GPIO)
         doDht = true;
 
       if (!settings.AWC_WIRELESS_TH_GPIO && oldSettings.AWC_WIRELESS_TEMP)
         oldSettings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TH_GPIO = settings.AWC_WIRELESS_TEMP;
 
-      if (interactive && oldSettings.AWC_WIRELESS_TH_GPIO)
+      if (!clearAcu && oldSettings.AWC_WIRELESS_TH_GPIO)
         doAcu = true;
 
       delete settings.AWC_HAS_INDOOR_SENSOR;

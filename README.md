@@ -82,8 +82,10 @@ To build the server along with the web client, use `npm run build`, possibly fol
 | &nbsp; | &nbsp; |
 | ------------------------------ | -------------------------------------------------------------- |
 | `‑‑acu` |     Install support for wireless temperature/humidity sensors using a 433 MHz receiver module. |
+| `‑‑acu‑` |     Clears saved `‑‑acu` setting when not using interactive mode. |
 | `‑‑ddev` |     This stands for “dedicated device”. This is for setting up a Raspberry Pi to primarily serve as an Astronomy/Weather Clock, automatically booting as a clock in full-screen mode. This implies the `‑‑sd` option. |
 | `‑‑dht` |     Install support for a wired DHT22/AM2302 temperature/humidity sensor. |
+| `‑‑dht‑` |     Clears saved `‑‑dht` setting when not using interactive mode. |
 | `‑‑help` |     Display brief help message. |
 | `‑i` |     Interactive mode. This prompts you to enter various configuration options, and implies the `‑‑ddev` option.
 | `‑‑launch` |     When installation is finished, launch the software. |
