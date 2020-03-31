@@ -20,7 +20,7 @@
 import * as $ from 'jquery';
 import { KsDateTime } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
-import { isEdge, isSafari, padLeft } from 'ks-util';
+import { isEdge, isSafari, last, padLeft } from 'ks-util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -36,7 +36,7 @@ export function popKeydownListener(): void {
 
 window.addEventListener('keydown', (event: KeyboardEvent) => {
   if (keydownListeners.length > 0)
-    keydownListeners[keydownListeners.length - 1](event);
+    last(keydownListeners)(event);
 });
 
 $.fn.extend({

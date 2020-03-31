@@ -1,9 +1,10 @@
 import { requestText } from 'by-request';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from 'ks-date-time-zone';
-import { interpolate } from 'ks-math';
+import { interpolate, irandom } from 'ks-math';
 import PromiseFtp from 'promise-ftp';
 import { CurrentDelta } from './time-types';
 import { URL } from 'url';
+import { last } from 'ks-util';
 
 export interface LeapSecond {
   ntp: number;
@@ -79,7 +80,7 @@ export class TaiUtc {
         pendingLeapDate: getISOFormatDate(getDateFromDayNumber_SGC(Math.floor((this.leapSeconds[nextIndex].utc - 1) / 86400)))
       };
 
-    return { delta: this.leapSeconds[this.leapSeconds.length - 1].delta, dut1, pendingLeap: 0, pendingLeapDate: null };
+    return { delta: last(this.leapSeconds).delta, dut1, pendingLeap: 0, pendingLeapDate: null };
   }
 
   async getLeapSecondHistory(): Promise<LeapSecond[]> {
@@ -109,7 +110,7 @@ export class TaiUtc {
 
     await new Promise<void>(resolve => {
       // Randomly delay polling so that multiple TaiUtc instances don't all poll at the same time every day.
-      const delay = (this.firstLeapSecondPoll ? 0 : Math.floor(Math.random() * MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
+      const delay = (this.firstLeapSecondPoll ? 0 : irandom(MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
       setTimeout(() => resolve(), delay);
     });
 

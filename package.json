@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -21,8 +21,8 @@
     "js-cookie": "^2.2.1",
     "ks-astronomy": "^1.0.6",
     "ks-date-time-zone": "^1.6.6",
-    "ks-math": "^1.1.6",
-    "ks-util": "^1.8.0",
+    "ks-math": "^1.2.0",
+    "ks-util": "^1.9.0",
     "rxjs": "^6.5.4"
   },
   "devDependencies": {

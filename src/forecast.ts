@@ -21,7 +21,7 @@ import { AppService } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE } from 'ks-util';
+import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';
 import { reflow } from './svg-flow';
 import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
 import { ForecastData, HourlyConditions } from '../server/src/weather-types';
@@ -288,21 +288,19 @@ export class Forecast {
 
   private updateHourlyCache(forecastData: ForecastData): void {
     const now = this.appService.getCurrentTime() / 1000;
-    let earliestNew = forecastData.hourly[0]?.time ?? 0;
+    let earliestNew = forecastData.hourly[0]?.time ?? Number.MAX_SAFE_INTEGER;
     let inserted = 0;
 
-    this.cachedHourly = this.cachedHourly.filter(hour => hour.time > now - 7200 && hour.time < now);
+    this.cachedHourly = this.cachedHourly.filter(hour => hour.time >= now - 7200 && hour.time <= now);
 
     if (now < earliestNew) {
       this.cachedHourly.forEach(hour => {
-        if (hour.time < earliestNew) {
-          forecastData.hourly.splice(0, 0, hour);
-          ++inserted;
-        }
+        if (hour.time < earliestNew)
+          forecastData.hourly.splice(inserted++, 0, hour);
       });
     }
 
-    earliestNew = forecastData.hourly[0]?.time ?? 0;
+    earliestNew = forecastData.hourly[0]?.time ?? Number.MAX_SAFE_INTEGER;
 
     // Still nothing to cover the current hour? Fake it from current conditions.
     if (now < earliestNew && forecastData?.currently)
@@ -314,7 +312,9 @@ export class Forecast {
       });
 
     for (let i = inserted; i < forecastData.hourly.length; ++i) {
-      if (forecastData.hourly[i].time < now + 7200)
+      const t = forecastData.hourly[i].time;
+
+      if (t <= now + 7200 && (this.cachedHourly.length === 0 || t > last(this.cachedHourly).time))
         this.cachedHourly.push(forecastData.hourly[i]);
       else
         break;

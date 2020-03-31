@@ -24,6 +24,7 @@ import { AppService, DEV_URL } from './app.service';
 import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
 import { Forecast } from './forecast';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+import { irandom } from 'ks-math';
 import { setFullScreen } from 'ks-util';
 import { runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
@@ -69,8 +70,8 @@ class AwClockApp implements AppService {
 
   // Make sure most clients stagger their polling so that the weather server isn't likely
   // to get lots of simultaneous requests.
-  private readonly pollingMinute = Math.floor(Math.random() * 15);
-  private readonly pollingMillis = Math.floor(Math.random() * 60_000);
+  private readonly pollingMinute = irandom(0, 14);
+  private readonly pollingMillis = irandom(0, 59_999);
 
   private lastCursorMove = 0;
   private lastForecast = 0;

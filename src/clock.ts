@@ -22,7 +22,7 @@
 import { AppService } from './app.service';
 import * as $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, floor, interpolate, max, min, sin_deg } from 'ks-math';
+import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
 import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
 import { CurrentDelta } from '../server/src/time-types';
 
@@ -454,6 +454,6 @@ export class Clock {
         }, LEAP_SECOND_RETRY_DELAY)
       });
       // Randomly delay polling so that multiple clock instances don't all poll at the same time every day.
-    }, this.firstLeapSecondPoll ? 0 : floor(Math.random() * MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
+    }, this.firstLeapSecondPoll ? 0 : irandom(MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
   }
 }
