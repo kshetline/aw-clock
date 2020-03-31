@@ -304,14 +304,27 @@ class AwClockApp implements AppService {
       this.forecast.showUnknown();
       this.clock.triggerRefresh();
     }
-    else if (this.settings.celsius !== oldSettings.celsius) {
-      this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
-      this.forecast.swapTemperatureUnits(this.settings.celsius);
-      this.clock.triggerRefresh();
-    }
     else {
-      this.forecast.refreshFromCache();
-      this.updateEphemeris();
+      let doRefresh = false;
+
+      if (this.settings.celsius !== oldSettings.celsius) {
+        this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
+        this.forecast.swapTemperatureUnits(this.settings.celsius);
+        doRefresh = true;
+      }
+
+      if (this.sensors.available &&
+          (this.settings.indoorOption !== oldSettings.indoorOption || this.settings.outdoorOption !== oldSettings.outdoorOption)) {
+        this.sensors.update(this.settings.celsius);
+        doRefresh = true;
+      }
+
+      if (doRefresh)
+        this.clock.triggerRefresh();
+      else {
+        this.forecast.refreshFromCache();
+        this.updateEphemeris();
+      }
     }
   }
 
