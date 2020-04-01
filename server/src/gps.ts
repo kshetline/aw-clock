@@ -33,6 +33,7 @@ export class Gps {
 
   public close(): void {
     this.parser.off('data', this.serialCallback);
+    rpiGpio.off('change', this.ppsCallback);
     this.serialPort.close();
   }
 
