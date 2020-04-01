@@ -69,9 +69,12 @@ export class Gps {
   }
 
   private gotPps(): void {
-    if (processMillis() > this.lastRead + 1000)
+    const procNow = processMillis();
+
+    if (procNow > this.lastRead + 1000)
       console.warn('missed data');
     else
-      console.log(this.lastDate.toISOString(), '*', this.lastDate.getTime() - Date.now());
+      console.log(this.lastDate.toISOString(), '*',
+        this.lastDate.getTime() - Date.now(), '*', procNow - this.lastRead);
   }
 }
