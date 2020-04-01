@@ -64,7 +64,7 @@ export class Gps {
     const m = Number($[2]);
     const y = Number($[3]) + 2000;
 
-    this.lastDate = new Date(Date.UTC(y, m - 1, d, hrs, min, sec));
+    this.lastDate = new Date(Date.UTC(y, m - 1, d, hrs, min, sec) + 1000);
     this.lastRead = processMillis();
   }
 
