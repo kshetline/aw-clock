@@ -27,8 +27,34 @@ export class Gps {
   }
 
   private parseGpsInfo(s: string): void {
-    if (/^\$GPGGA\b/.test(s)) {
-      console.log(s.trim());
-    }
+    if (!(/^\$GPRMC\b/.test(s)))
+      return;
+
+    const parts = s.split(',');
+
+    if (parts.length < 10 || parts[2] !== 'A')
+      return;
+
+    let $ = /(\d\d)(\d\d)(\d\d\.\d\d\d)/.exec(parts[1]);
+
+    if (!$)
+      return;
+
+    const hrs = Number($[1]);
+    const min = Number($[2]);
+    const sec = Number($[3]);
+
+    $ = /(\d\d)(\d\d)(\d\d)/.exec(parts[9]);
+
+    if (!$)
+      return;
+
+    const d = Number($[1]);
+    const m = Number($[2]);
+    const y = Number($[3]) + 2000;
+
+    const date = new Date(Date.UTC(y, m - 1, d, hrs, min, sec));
+
+    console.log(date.toISOString(), new Date().toISOString);
   }
 }
