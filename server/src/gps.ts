@@ -1,9 +1,16 @@
+import { processMillis } from 'ks-util';
 import SerialPort from 'serialport';
+
+const rpiGpio = require('rpi-gpio');
 
 export class Gps {
   private readonly parser: SerialPort.parsers.Readline;
-  private serialCallback = (data: any) => this.parseGpsInfo(data.toString());
+  private readonly ppsCallback = () => this.gotPps();
+  private readonly serialCallback = (data: any) => this.parseGpsInfo(data.toString());
   private readonly serialPort: SerialPort;
+
+  private lastDate: Date;
+  private lastRead = 0;
 
   constructor() {
     this.serialPort = new SerialPort('/dev/serial0', {
@@ -19,6 +26,9 @@ export class Gps {
       })
     );
     this.parser.on('data', this.serialCallback);
+
+    rpiGpio.setup(7, rpiGpio.DIR_IN, rpiGpio.EDGE_RISING);
+    rpiGpio.on('change', this.ppsCallback);
   }
 
   public close(): void {
@@ -53,8 +63,14 @@ export class Gps {
     const m = Number($[2]);
     const y = Number($[3]) + 2000;
 
-    const date = new Date(Date.UTC(y, m - 1, d, hrs, min, sec));
+    this.lastDate = new Date(Date.UTC(y, m - 1, d, hrs, min, sec));
+    this.lastRead = processMillis();
+  }
 
-    console.log(date.toISOString(), new Date().toISOString);
+  private gotPps(): void {
+    if (processMillis() > this.lastRead + 1000)
+      console.warn('missed data');
+    else
+      console.log(this.lastDate.toISOString(), '*', this.lastDate.getTime() - Date.now());
   }
 }
