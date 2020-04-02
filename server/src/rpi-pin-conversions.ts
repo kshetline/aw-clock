@@ -224,6 +224,7 @@ function convertPinImpl(pinNumber: number, pinSysFrom: PinSystem, pinSysTo: PinS
       }
   }
 }
+
 export function convertPin(pin: number, pinSystemFrom: PinSystem, pinSystemTo: PinSystem): number;
 export function convertPin(gpioPin: number, pinSystemTo: PinSystem): number;
 export function convertPin(pin: string, pinSystemTo: PinSystem): number;
