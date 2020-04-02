@@ -71,7 +71,8 @@ const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
 const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
 let taiUtc = new TaiUtc(leapSecondsUrl);
-const gps = new Gps();
+const gpsPps = process.env.AWC_GPS_PPS ?? '';
+let gps: Gps;
 
 if (process.env.AWC_DEBUG_TIME) {
   const parts = process.env.AWC_DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
@@ -79,6 +80,9 @@ if (process.env.AWC_DEBUG_TIME) {
   const debugDelta = Date.now() - new Date(parts[0]).getTime();
   taiUtc = new TaiUtc(leapSecondsUrl, () => Date.now() - debugDelta);
 }
+// GPS time disabled when using AWC_DEBUG_TIME
+else if (gpsPps !== '')
+  gps = new Gps(gpsPps);
 
 /**
  * Event listener for HTTP server 'error' event.
