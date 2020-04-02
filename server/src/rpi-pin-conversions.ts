@@ -125,9 +125,9 @@ enum GpioLayout {
     LAYOUT_1, // A, B, Rev 1, 1.1
     LAYOUT_2, // A2, B2, A+, B+, CM, Pi2, Pi3, Pi4, Zero
     UNKNOWN
-};
+}
 
-export enum PinSystem { GPIO, PHYS, WIRING_PI, VIRTUAL = 2 };
+export enum PinSystem { GPIO, PHYS, WIRING_PI, VIRTUAL = 2 }
 
 let gpioLayout = GpioLayout.UNCHECKED;
 let supportPhysPins = false;
