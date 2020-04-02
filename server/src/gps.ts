@@ -23,10 +23,12 @@ export class Gps {
 
   private lastCoordinates: Coordinates;
   private lastDate: Date;
-  private lastLeapExcess = 0;
   private lastDateRead = 0;
+  private lastFix = 0;
+  private lastLeapExcess = 0;
   private lastLocationRead = 0;
   private lastPulse = -1;
+  private lastSatCount = 0;
 
   constructor(pin: number | string) {
     this.serialPort = new SerialPort('/dev/serial0', {
@@ -134,6 +136,8 @@ export class Gps {
       const altitude = toNumber($[1]) * (parts[10] === 'M' ? 1 : 0);
 
       this.lastCoordinates = { latitude, longitude, altitude };
+      this.lastFix = toNumber(parts[6]);
+      this.lastSatCount = toNumber(parts[7]);
       this.lastLocationRead = processMillis();
     }
     catch (err) {
@@ -166,7 +170,8 @@ export class Gps {
       Math.round(procNow - this.lastLocationRead).toString().padStart(4),
       this.lastCoordinates?.latitude?.toFixed(4).toString().padStart(8),
       this.lastCoordinates?.longitude?.toFixed(4).toString().padStart(9),
-      this.lastCoordinates?.altitude?.toFixed(0).toString().padStart(4));
+      this.lastCoordinates?.altitude?.toFixed(0).toString().padStart(4),
+      this.lastFix + '/' + this.lastSatCount.toString().padStart(2, '0'));
 
     this.lastPulse = procNow;
   }
