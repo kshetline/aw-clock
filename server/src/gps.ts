@@ -1,9 +1,8 @@
 import { processMillis, toNumber } from 'ks-util';
 import SerialPort from 'serialport';
 import { floor, round } from 'ks-math';
+import rpiGpio from 'rpi-gpio';
 import { convertPin, PinSystem } from './rpi-pin-conversions';
-
-const rpiGpio = require('rpi-gpio');
 
 function parseError(msg?: string): string[] {
   throw new Error('Parsing error' + msg ? ': ' + msg : '');

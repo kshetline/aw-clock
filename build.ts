@@ -62,7 +62,7 @@ const settings: Record<string, string> = {
   AWC_NTP_SERVER: 'pool.ntp.org',
   AWC_PORT: '8080',
   AWC_PREFERRED_WS: 'wunderground',
-  AWC_WIRED_TH_GPIO: '4',
+  AWC_WIRED_TH_GPIO: '17',
   AWC_WIRELESS_TH_GPIO: '27'
 };
 

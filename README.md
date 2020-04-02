@@ -47,7 +47,7 @@ To close the web browser while it’s running in full-screen kiosk mode, press `
 If you are running the server on a Raspberry Pi you have the option to display indoor temperature and humidity using a direct-wired DHT22/AM2302 sensor, as seen here: https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/. The wiring I describe below is specifically for the AM2302 version of the DHT22, with a built-in pull-up
 resistor.
 
-With your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 4 (physical pin 7 on the 40-pin GPIO header). The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin GPIO header) and the `-` lead needs to be connected to ground (I chose pin 6).
+With your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 17 (physical pin 11 on the 40-pin J8 header). The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin J8 header) and the `-` lead needs to be connected to ground (I chose pin 6).
 
 ![Picture of DHT wiring](https://shetline.com/misc/rpi-dht22-wiring.jpg)
 
@@ -61,7 +61,7 @@ With either one or two outdoor sensors the temperature displayed (in the largest
 
 In small, gray print you can see the individual temperature values for each wireless sensor and from the forecast, regardless of what is displayed in large format. If any of your wireless sensors are running low on battery power, a red indicator will appear in the upper right corner of the display.
 
-When connecting the 433 MHz receiver module follow the same precautions as specified for connecting the DHT22/AM2302. For my own set-up, I’ve connected the receiver’s +5V lead to physical pin 4 of the 40-pin connector, ground to pin 14, and data to pin 13 (GPIO 27, the set-up default value).
+When connecting the 433 MHz receiver module follow the same precautions as specified for connecting the DHT22/AM2302. For my own set-up, I’ve connected the receiver’s +5V lead to physical pin 4 of the 40-pin J8 connector, ground to pin 14, and data to pin 13 (GPIO 27, the set-up default value).
 
 ![Picture of 433MHz wiring](https://shetline.com/misc/rpi-433MHz-wiring.jpg)
 <br/><br/>
