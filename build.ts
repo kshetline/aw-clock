@@ -1,9 +1,10 @@
 import * as Chalk from 'chalk';
-import { ChildProcess, exec, spawn as nodeSpawn } from 'child_process';
+import { exec } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
 import { processMillis, toBoolean } from 'ks-util';
 import * as path from 'path';
+import { getSudoUser, getUserHome, monitorProcess, spawn } from './server/src/process-util';
 import * as readline from 'readline';
 import { promisify } from 'util';
 
@@ -40,6 +41,16 @@ let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 
+let spin = () => {
+  const now = processMillis();
+
+  if (lastSpin < now - SPIN_DELAY) {
+    lastSpin = now;
+    write(backspace + SPIN_CHARS.charAt(spinStep));
+    spinStep = (spinStep + 1) % 4;
+  }
+};
+
 interface ExtendedChalk extends Chalk.Chalk {
   mediumGray: (s: string) => string;
   paleBlue: (s: string) => string;
@@ -52,7 +63,6 @@ chalk.mediumGray = chalk.hex('#808080');
 chalk.paleBlue = chalk.hex('#66CCFF');
 chalk.paleYellow = chalk.hex('#FFFFAA');
 
-let canSpin = true;
 let backspace = '\x08';
 let trailingSpace = '  '; // Two spaces
 let totalSteps = 5;
@@ -66,9 +76,10 @@ const settings: Record<string, string> = {
   AWC_WIRELESS_TH_GPIO: '27'
 };
 
-let spawnUid = -1;
-let userHome = '/home/pi';
-let sudoUser = 'pi';
+const userHome = getUserHome();
+const sudoUser = getSudoUser();
+const user = process.env.SUDO_USER || process.env.USER || 'pi';
+let uid: number;
 const cpuPath = '/proc/cpuinfo';
 const settingsPath = '/etc/default/weatherService';
 const rpiSetupStuff = path.join(__dirname, 'raspberry_pi_setup');
@@ -156,7 +167,7 @@ process.argv.forEach(arg => {
       onlyDedicated.push(arg);
       break;
     case '--pt':
-      canSpin = false;
+      spin = undefined;
       chalk.level = 0;
       backspace = '';
       trailingSpace = ' ';
@@ -264,114 +275,9 @@ function write(s: string): void {
   process.stdout.write(s);
 }
 
-function spawn(command: string, args: string[] = [], options?: any): ChildProcess {
-  if (spawnUid >= 0 && (!options || !('uid' in options))) {
-    options = options ?? {};
-    options.uid = spawnUid;
-
-    if (!options.env) {
-      options.env = {};
-      Object.assign(options.env, process.env);
-    }
-
-    options.env.HOME = userHome;
-    options.env.LOGNAME = sudoUser;
-    options.env.npm_config_cache = userHome + '/.npm';
-    options.env.USER = sudoUser;
-  }
-
-  if (isWindows) {
-    console.log();
-    console.log(command, args);
-    if (/^(chmod|chown|id)$/.test(command)) {
-      // Effectively a "noop"
-      command = 'rundll32';
-      args = [];
-    }
-    else if (command === 'rm') {
-      // Ad hoc, not a general solution conversion of rm!
-      command = 'rmdir';
-      args = ['/S', '/Q', args[1].replace(/\//g, '\\')];
-    }
-
-    const cmd = process.env.comspec || 'cmd';
-
-    if (options?.uid != null) {
-      options = Object.assign({}, options);
-      delete options.uid;
-    }
-
-    console.log(command, args);
-
-    return nodeSpawn(cmd, ['/c', command, ...args], options);
-  }
-  else
-    return nodeSpawn(command, args, options);
-}
-
-function spin(): void {
-  const now = processMillis();
-
-  if (lastSpin < now - SPIN_DELAY) {
-    lastSpin = now;
-    write(backspace + SPIN_CHARS.charAt(spinStep));
-    spinStep = (spinStep + 1) % 4;
-  }
-}
-
-function monitorProcess(proc: ChildProcess, doSpin = true, errorMode = ErrorMode.DEFAULT): Promise<string> {
-  let errors = '';
-  let output = '';
-
-  doSpin = doSpin && canSpin;
-
-  return new Promise<string>((resolve, reject) => {
-    const slowSpin = setInterval(doSpin ? spin : NO_OP, MAX_SPIN_DELAY);
-
-    proc.stderr.on('data', data => {
-      (doSpin ? spin : NO_OP)();
-      data = data.toString();
-      // This gets confusing, because a lot of non-error progress messaging goes to stderr, and the
-      //   webpack process doesn't exit with an error for compilation errors unless you make it do so.
-      if (/\[webpack.Progress]/.test(data))
-        return;
-
-      errors += data;
-    });
-    proc.stdout.on('data', data => {
-      (doSpin ? spin : NO_OP)();
-      data = data.toString();
-      output += data;
-      errors = '';
-    });
-    proc.on('error', err => {
-      clearInterval(slowSpin);
-
-      if (errorMode !== ErrorMode.NO_ERRORS)
-        resolve();
-      else
-        reject(err);
-    });
-    proc.on('close', () => {
-      clearInterval(slowSpin);
-
-      if (errorMode !== ErrorMode.NO_ERRORS && errors && (
-        errorMode === ErrorMode.ANY_ERROR ||
-        /\b(error|exception)\b/i.test(errors) ||
-        /[_0-9a-z](Error|Exception)\b/.test(errors)
-      ))
-        reject(errors.replace(/\bE:\s+/g, ''));
-      else
-        resolve(output);
-    });
-  });
-}
-
-function sleep(delay: number, doSpin = true, stopOnKeypress = false): Promise<boolean> {
-  doSpin = doSpin && canSpin;
-
+function sleep(delay: number, doSpin = spin, stopOnKeypress = false): Promise<boolean> {
   return new Promise<boolean>(resolve => {
-    const slowSpin = setInterval(doSpin ? spin : NO_OP, MAX_SPIN_DELAY);
+    const slowSpin = setInterval(doSpin ? doSpin : NO_OP, MAX_SPIN_DELAY);
     const timeout = setTimeout(() => {
       clearInterval(slowSpin);
       resolve(false);
@@ -395,7 +301,7 @@ function stepDone(): void {
 }
 
 async function isInstalled(command: string): Promise<boolean> {
-  return !!(await monitorProcess(spawn('which', [command]), false, ErrorMode.ANY_ERROR)).trim();
+  return !!(await monitorProcess(spawn('which', [command]), null, ErrorMode.ANY_ERROR)).trim();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -424,9 +330,9 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
     write(`Installing ${chalk.bold(cmdPkg)}` + trailingSpace);
 
     if (viaNpm)
-      await monitorProcess(spawn('npm', ['install', '-g', ...packageArgs]), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('npm', ['install', '-g', ...packageArgs]), spin, ErrorMode.ANY_ERROR);
     else
-      await monitorProcess(spawn('apt-get', ['install', '-y', ...packageArgs]), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('apt-get', ['install', '-y', ...packageArgs]), spin, ErrorMode.ANY_ERROR);
 
     stepDone();
     return true;
@@ -452,7 +358,7 @@ function getWebpackSummary(s: string): string {
 
 async function npmInit(): Promise<void> {
   if (!npmInitDone) {
-    await monitorProcess(spawn('npm', ['init', '--yes'], { cwd: path.join(__dirname, 'server', 'dist') }));
+    await monitorProcess(spawn('npm', ['init', '--yes'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     npmInitDone = true;
   }
 }
@@ -633,9 +539,9 @@ async function installFonts(): Promise<void> {
     write('Installing fonts' + trailingSpace);
 
     for (const font of fontsToAdd)
-      await monitorProcess(spawn('cp', [fontSrc + font, fontDst + font]), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('cp', [fontSrc + font, fontDst + font]), spin, ErrorMode.ANY_ERROR);
 
-    await monitorProcess(spawn('fc-cache', ['-f']), true, ErrorMode.ANY_ERROR);
+    await monitorProcess(spawn('fc-cache', ['-f']), spin, ErrorMode.ANY_ERROR);
   }
   else
     write('Fonts already installed' + trailingSpace);
@@ -651,7 +557,7 @@ async function disableScreenSaver(uid: number): Promise<void> {
   write('Disabling screen saver' + trailingSpace);
 
   if (screenSaverJustInstalled || !fs.existsSync(settingsFile)) {
-    const procList = await monitorProcess(spawn('ps', ['-ax']));
+    const procList = await monitorProcess(spawn('ps', ['-ax']), spin);
     const saverRunning = /\d\s+xscreensaver\b/.test(procList);
 
     if (!saverRunning) {
@@ -668,14 +574,14 @@ async function disableScreenSaver(uid: number): Promise<void> {
 
   await monitorProcess(spawn('sed',
     ['-i', '-r', "'s/^(mode:\\s+)\\w+$/\\1off/'", settingsFile],
-    { uid, shell: true }), true, ErrorMode.ANY_ERROR);
+    { uid, shell: true }), spin, ErrorMode.ANY_ERROR);
 
   // Stop and restart screen saver to make sure modified settings are read
-  const procList = await monitorProcess(spawn('ps', ['-ax']));
+  const procList = await monitorProcess(spawn('ps', ['-ax']), spin);
   const ssProcessNo = (/^(\d+)\s+.*\d\s+xscreensaver\b/.exec(procList) ?? [])[1];
 
   if (ssProcessNo)
-    await monitorProcess(spawn('kill', [ssProcessNo]));
+    await monitorProcess(spawn('kill', [ssProcessNo]), spin);
 
   spawn('xscreensaver', [], { uid, detached: true });
   stepDone();
@@ -684,16 +590,16 @@ async function disableScreenSaver(uid: number): Promise<void> {
 async function doClientBuild(): Promise<void> {
   showStep();
   write('Updating client' + trailingSpace);
-  await monitorProcess(spawn('npm', ['i', '--no-save']));
+  await monitorProcess(spawn('npm', uid, ['i', '--no-save']), spin);
   stepDone();
 
   showStep();
   write('Building client' + trailingSpace);
 
   if (fs.existsSync('dist'))
-    await monitorProcess(spawn('rm', ['-Rf', 'dist']));
+    await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
-  const output = await monitorProcess(spawn('webpack'));
+  const output = await monitorProcess(spawn('webpack', uid), spin);
 
   stepDone();
   console.log(chalk.mediumGray(getWebpackSummary(output)));
@@ -702,16 +608,16 @@ async function doClientBuild(): Promise<void> {
 async function doServerBuild(): Promise<void> {
   showStep();
   write('Updating server' + trailingSpace);
-  await monitorProcess(spawn('npm', ['i', '--no-save'], { cwd: path.join(__dirname, 'server') }));
+  await monitorProcess(spawn('npm', uid, ['i', '--no-save'], { cwd: path.join(__dirname, 'server') }), spin);
   stepDone();
 
   showStep();
   write('Building server' + trailingSpace);
 
   if (fs.existsSync('server/dist'))
-    await monitorProcess(spawn('rm', ['-Rf', 'server/dist']));
+    await monitorProcess(spawn('rm', uid, ['-Rf', 'server/dist']), spin);
 
-  const output = await monitorProcess(spawn('npm', ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }));
+  const output = await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }), spin);
 
   stepDone();
   console.log(chalk.mediumGray(getWebpackSummary(output)));
@@ -720,7 +626,7 @@ async function doServerBuild(): Promise<void> {
     showStep();
     write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
     await npmInit();
-    await monitorProcess(spawn('npm', ['i', 'rpi-acu-rite-temperature@2.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
+    await monitorProcess(spawn('npm', uid, ['i', 'rpi-acu-rite-temperature@2.x'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
 
@@ -728,7 +634,7 @@ async function doServerBuild(): Promise<void> {
     showStep();
     write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
     await npmInit();
-    await monitorProcess(spawn('npm', ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }));
+    await monitorProcess(spawn('npm', uid, ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
 
@@ -736,30 +642,29 @@ async function doServerBuild(): Promise<void> {
     showStep();
     write('Adding I²C serial bus support' + trailingSpace);
     await npmInit();
-    await monitorProcess(spawn('npm', ['i', 'i2c-bus'], { cwd: path.join(__dirname, 'server', 'dist') }));
+    await monitorProcess(spawn('npm', uid, ['i', 'i2c-bus'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
 }
 
-async function doServiceDeployment(uid: number): Promise<void> {
+async function doServiceDeployment(): Promise<void> {
   const autostartDir = path.join(userHome, autostartDst);
 
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
-  await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
-  await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), true, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   const settingsText =
     `# If you edit AWC_PORT below, be sure to update\n# ${userHome}/${autostartDst}/autostart accordingly.\n` +
     Object.keys(settings).sort().map(key => key + '=' + settings[key]).join('\n') + '\n';
 
   fs.writeFileSync(settingsPath, settingsText);
-  await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']));
-  await monitorProcess(spawn('systemctl', ['enable', 'weatherService']));
-  spawnUid = uid;
-  await monitorProcess(spawn('mkdir', ['-p', autostartDir]));
-  await monitorProcess(spawn('cp', [rpiSetupStuff + '/autostart_extra.sh', autostartDir]),
-    true, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']), spin);
+  await monitorProcess(spawn('systemctl', ['enable', 'weatherService']), spin);
+  await monitorProcess(spawn('mkdir', uid, ['-p', autostartDir]), spin);
+  await monitorProcess(spawn('cp', uid, [rpiSetupStuff + '/autostart_extra.sh', autostartDir]),
+    spin, ErrorMode.ANY_ERROR);
 
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';
@@ -809,19 +714,18 @@ async function doServiceDeployment(uid: number): Promise<void> {
   if (update)
     fs.writeFileSync(autostartPath, lines.join('\n') + '\n');
 
-  await monitorProcess(spawn('chown', [sudoUser, autostartDir + '/autostart*'],
-    { shell: true, uid: 0 }), true, ErrorMode.ANY_ERROR);
-  await monitorProcess(spawn('chmod', ['+x', autostartDir + '/autostart*'],
-    { shell: true }), true, ErrorMode.ANY_ERROR);
-  spawnUid = -1;
-  await monitorProcess(spawn('service', ['weatherService', 'start']));
+  await monitorProcess(spawn('chown', 0, [sudoUser, autostartDir + '/autostart*'],
+    { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chmod', uid, ['+x', autostartDir + '/autostart*'],
+    { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('service', ['weatherService', 'start']), spin);
   stepDone();
 }
 
 (async () => {
   try {
     if (treatAsRaspberryPi && !isRaspberryPi) {
-      const isDebian = /Linux Debian/i.test(await monitorProcess(spawn('uname', ['-a']), false));
+      const isDebian = /^Linux \w+ .*\bDebian\b/i.test(await monitorProcess(spawn('uname', ['-a']), spin));
       const isLxde = await isInstalled('lxpanel');
 
       if (!isDebian || !isLxde) {
@@ -830,12 +734,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
       }
     }
 
-    const user = process.env.SUDO_USER || process.env.USER || 'pi';
-    const uid = Number((await monitorProcess(spawn('id', ['-u', user]), false)).trim() || '1000');
-
-    userHome = (isWindows ? process.env.USERPROFILE : await monitorProcess(spawn('grep', [user, '/etc/passwd']), false))
-      .split(':')[5] || userHome;
-    sudoUser = user;
+    uid = Number((await monitorProcess(spawn('id', ['-u', user]))).trim() || '1000');
 
     if (interactive)
       await promptForConfiguration();
@@ -856,14 +755,14 @@ async function doServiceDeployment(uid: number): Promise<void> {
       console.log(chalk.cyan('- Dedicated device setup -'));
       showStep();
       write('Stopping weatherService if currently running' + trailingSpace);
-      await monitorProcess(spawn('service', ['weatherService', 'stop']), true, ErrorMode.NO_ERRORS);
+      await monitorProcess(spawn('service', ['weatherService', 'stop']), spin, ErrorMode.NO_ERRORS);
       stepDone();
 
       if (doUpdateUpgrade) {
         showStep();
         write('Updating/upgrading packages' + trailingSpace);
-        await monitorProcess(spawn('apt-get', ['update', '-y']), true, ErrorMode.NO_ERRORS);
-        await monitorProcess(spawn('apt-get', ['upgrade', '-y']), true, ErrorMode.NO_ERRORS);
+        await monitorProcess(spawn('apt-get', ['update', '-y']), spin, ErrorMode.NO_ERRORS);
+        await monitorProcess(spawn('apt-get', ['upgrade', '-y']), spin, ErrorMode.NO_ERRORS);
         stepDone();
       }
 
@@ -876,7 +775,6 @@ async function doServiceDeployment(uid: number): Promise<void> {
     }
 
     console.log(chalk.cyan('- Building application -'));
-    spawnUid = uid;
     await doClientBuild();
     await doServerBuild();
 
@@ -884,7 +782,7 @@ async function doServiceDeployment(uid: number): Promise<void> {
     write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
     await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'],
-      { shell: true, uid: viaBash ? 0 : uid }), true, ErrorMode.ANY_ERROR);
+      { shell: true, uid: viaBash ? 0 : uid }), spin, ErrorMode.ANY_ERROR);
     stepDone();
 
     if (doStdDeploy) {
@@ -892,42 +790,39 @@ async function doServiceDeployment(uid: number): Promise<void> {
       write('Moving server to ~/weather directory' + trailingSpace);
 
       if (!fs.existsSync(userHome + '/weather'))
-        await monitorProcess(spawn('mkdir', [userHome + '/weather']));
+        await monitorProcess(spawn('mkdir', [userHome + '/weather']), spin);
       else
-        await monitorProcess(spawn('rm', ['-Rf', userHome + '/weather/*'], { shell: true }), true, ErrorMode.ANY_ERROR);
+        await monitorProcess(spawn('rm', ['-Rf', userHome + '/weather/*'], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
-      await monitorProcess(spawn('mv', ['dist/*', userHome + '/weather'], { shell: true }), true, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('mv', ['dist/*', userHome + '/weather'], { shell: true }), spin, ErrorMode.ANY_ERROR);
       stepDone();
     }
 
     if (doDedicated) {
-      spawnUid = -1;
       console.log(chalk.cyan('- Dedicated device service deployment -'));
-      await doServiceDeployment(uid);
+      await doServiceDeployment();
     }
 
     if (doLaunch) {
-      spawnUid = uid;
       console.log(chalk.cyan('- Launching Astronomy/Weather Clock -'));
       showStep();
       write(' ');
-      await sleep(3000, true);
+      await sleep(3000, spin);
       stepDone();
-      await monitorProcess(spawn('pkill', ['-o', chromium], { uid }), true, ErrorMode.NO_ERRORS);
-      await monitorProcess(spawn('pkill', ['-o', chromium.substr(0, 15)], { uid }), true, ErrorMode.NO_ERRORS);
+      await monitorProcess(spawn('pkill', uid, ['-o', chromium]), spin, ErrorMode.NO_ERRORS);
+      await monitorProcess(spawn('pkill', uid, ['-o', chromium.substr(0, 15)]), spin, ErrorMode.NO_ERRORS);
       await sleep(500);
       const display = process.env.DISPLAY ?? ':0.0';
       exec(`DISPLAY=${display} ${launchChromium} --user-data-dir='${userHome}'`, { uid });
-      await sleep(1000, false);
+      await sleep(1000, null);
     }
 
     if (doReboot) {
-      spawnUid = -1;
       console.log(chalk.cyan('- Rebooting system in 5 seconds... -'));
       showStep();
       write('Press any key to stop reboot:' + trailingSpace);
 
-      if (!(await sleep(3000, true, true)))
+      if (!(await sleep(3000, spin, true)))
         exec('reboot');
       else
         console.log();

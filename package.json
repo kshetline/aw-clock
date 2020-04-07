@@ -23,7 +23,7 @@
     "ks-date-time-zone": "^1.6.6",
     "ks-math": "^1.2.0",
     "ks-util": "^1.9.0",
-    "rxjs": "^6.5.4"
+    "rxjs": "^6.5.5"
   },
   "devDependencies": {
     "@types/copyfiles": "^2.1.1",
@@ -32,10 +32,10 @@
     "@types/jasminewd2": "^2.0.8",
     "@types/jquery": "^3.3.34",
     "@types/js-cookie": "^2.2.5",
-    "@types/node": "^13.9.8",
-    "@typescript-eslint/eslint-plugin": "^2.26.0",
-    "@typescript-eslint/parser": "^2.26.0",
-    "autoprefixer": "^9.7.5",
+    "@types/node": "^13.11.0",
+    "@typescript-eslint/eslint-plugin": "^2.27.0",
+    "@typescript-eslint/parser": "^2.27.0",
+    "autoprefixer": "^9.7.6",
     "chalk": "^3.0.0",
     "circular-dependency-plugin": "^5.2.0",
     "copy-webpack-plugin": "~5.1.1",
@@ -48,6 +48,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
+    "extract-text-webpack-plugin": "^3.0.2",
     "file-loader": "^5.1.0",
     "html-webpack-plugin": "^3.2.0",
     "istanbul-instrumenter-loader": "^3.0.1",
@@ -78,6 +79,6 @@
     "url-loader": "^3.0.0",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
-    "webpack-dev-server": "^3.10.1"
+    "webpack-dev-server": "^3.10.3"
   }
 }
