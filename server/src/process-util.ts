@@ -1,13 +1,11 @@
 import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
 
 const isWindows = (process.platform === 'win32');
-const user = process.env.SUDO_USER || process.env.USER || 'pi';
+const sudoUser = process.env.SUDO_USER || process.env.USER || 'pi';
 let userHome = '/home/pi';
-let sudoUser = 'pi';
 
-userHome = (isWindows ? process.env.USERPROFILE : execSync(`grep ${user} /etc/passwd`).toString()
+userHome = (isWindows ? process.env.USERPROFILE : execSync(`grep ${sudoUser} /etc/passwd`).toString()
   .split(':')[5] || userHome);
-sudoUser = user;
 
 export function getUserHome(): string {
   return userHome;
@@ -64,6 +62,8 @@ export function spawn(command: string, uidOrArgs?: string[] | number, optionsOrA
       command = 'rmdir';
       args = ['/S', '/Q', args[1].replace(/\//g, '\\')];
     }
+    else if (command === 'which')
+      command = 'where';
 
     const cmd = process.env.comspec || 'cmd';
 
@@ -83,10 +83,10 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
   let output = '';
 
   return new Promise<string>((resolve, reject) => {
-    const slowSpin = setInterval(markTime ? markTime : NO_OP, MAX_MARK_TIME_DELAY);
+    const slowSpin = setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY);
 
     proc.stderr.on('data', data => {
-      (markTime ? markTime : NO_OP)();
+      (markTime || NO_OP)();
       data = data.toString();
       // This gets confusing, because a lot of non-error progress messaging goes to stderr, and the
       //   webpack process doesn't exit with an error for compilation errors unless you make it do so.
@@ -96,7 +96,7 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
       errors += data;
     });
     proc.stdout.on('data', data => {
-      (markTime ? markTime : NO_OP)();
+      (markTime || NO_OP)();
       data = data.toString();
       output += data;
       errors = '';

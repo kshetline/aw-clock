@@ -277,7 +277,7 @@ function write(s: string): void {
 
 function sleep(delay: number, doSpin = spin, stopOnKeypress = false): Promise<boolean> {
   return new Promise<boolean>(resolve => {
-    const slowSpin = setInterval(doSpin ? doSpin : NO_OP, MAX_SPIN_DELAY);
+    const slowSpin = setInterval(doSpin || NO_OP, MAX_SPIN_DELAY);
     const timeout = setTimeout(() => {
       clearInterval(slowSpin);
       resolve(false);

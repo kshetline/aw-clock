@@ -1,10 +1,5 @@
-// import { processMillis, toNumber } from 'ks-util';
-// import { floor, round } from 'ks-math';
-import { TaiUtc } from './tai-utc';
-import { CurrentDelta } from './time-types';
-
-const LEAP_SECOND_POLL_RATE = 86_400_000; // Once per day
-const LEAP_SECOND_RETRY_RATE = 300_000; // Once per five minutes
+import { ChildProcess } from 'child_process';
+import { ErrorMode, monitorProcess, spawn } from './process-util';
 
 export interface Coordinates {
   latitude: number;
@@ -12,24 +7,44 @@ export interface Coordinates {
   altitude: number;
 }
 
-export class Gps {
-  // private lastCoordinates: Coordinates;
-  // private lastLocationRead = 0;
-  // private lastSatCount = 0;
-  private leapSecondInfo: CurrentDelta;
+async function hasCommand(command: string): Promise<boolean> {
+  return !!(await monitorProcess(spawn('which', [command]), null, ErrorMode.ANY_ERROR)).trim();
+}
 
-  constructor(
-    pin: number | string,
-    private taiUtc: TaiUtc
-  ) {
-    this.leapSecondCheck();
+export async function hasGps(): Promise<boolean> {
+  return await hasCommand('gpspipe') || await hasCommand('ntpq');
+}
+
+export class Gps {
+  private gpspipe: ChildProcess;
+  private lastCoordinates: Coordinates = {} as Coordinates;
+  private lastFix = 0;
+  private lastSatCount = 0;
+
+  constructor() {
+    this.gpspipe = spawn('gpspipe', ['-w']);
+
+    this.gpspipe.stdout.on('data', data => {
+      try {
+        const obj = JSON.parse(data.toString());
+
+        if (obj?.class === 'TPV' && obj.lat != null) {
+          this.lastCoordinates = {
+            latitude: obj.lat,
+            longitude: obj.lon,
+            altitude: obj.altHAE ?? obj.alt ?? 0
+          };
+          this.lastFix = obj.mode ?? this.lastFix;
+          console.log(this.lastCoordinates, this.lastFix, this.lastSatCount);
+        }
+        else if (obj?.class === 'SKY' && Array.isArray(obj.satellites))
+          this.lastSatCount = obj.satellites.length;
+      }
+      catch {}
+    });
   }
 
-  private leapSecondCheck(): void {
-    this.taiUtc.getCurrentDelta().then(cd => {
-      this.leapSecondInfo = cd;
-      console.log(this.leapSecondInfo);
-      setTimeout(() => this.leapSecondCheck, LEAP_SECOND_POLL_RATE);
-    }).catch(() => setTimeout(() => this.leapSecondCheck, LEAP_SECOND_RETRY_RATE));
+  public close(): void {
+    this.gpspipe.kill('SIGINT');
   }
 }

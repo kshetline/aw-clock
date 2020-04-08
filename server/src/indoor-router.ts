@@ -8,6 +8,7 @@ import { DhtSensorData } from './weather-types';
 export const router = Router();
 
 const DHT22_OR_AM2302 = 22;
+const POLLING_INTERVAL = 10_000; // 10 seconds
 
 type DhtSensorCallback = (err: any, temperature: number, humidity: number) => void;
 
@@ -38,32 +39,41 @@ export function hasWiredIndoorSensor(): boolean {
 }
 
 function readSensor() {
-  indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {
-    if (err || temperature < -10 || temperature > 50 || humidity < 0 || humidity > 100)
-      ++consecutiveSensorErrors;
-    else {
-      consecutiveSensorErrors = 0;
-      temps.push(temperature);
-      humidities.push(humidity);
+  try {
+    indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {
+      if (err || temperature < -10 || temperature > 50 || humidity < 0 || humidity > 100)
+        ++consecutiveSensorErrors;
+      else {
+        consecutiveSensorErrors = 0;
+        temps.push(temperature);
+        humidities.push(humidity);
 
-      if (temps.length > MAX_POINTS) {
-        temps.shift();
-        humidities.shift();
+        if (temps.length > MAX_POINTS) {
+          temps.shift();
+          humidities.shift();
+        }
+
+        lastTemp = useLatestValueIfNotOutlier(temps);
+        lastHumidity = useLatestValueIfNotOutlier(humidities);
       }
 
-      lastTemp = useLatestValueIfNotOutlier(temps);
-      lastHumidity = useLatestValueIfNotOutlier(humidities);
-    }
+      if (consecutiveSensorErrors === MAX_ERRORS) {
+        lastTemp = undefined;
+        lastHumidity = undefined;
+        temps = [];
+        humidities = [];
+      }
 
-    if (consecutiveSensorErrors === MAX_ERRORS) {
-      lastTemp = undefined;
-      lastHumidity = undefined;
-      temps = [];
-      humidities = [];
-    }
-
-    setTimeout(readSensor, 10000);
-  });
+      setTimeout(readSensor, POLLING_INTERVAL);
+    });
+  }
+  catch (err) {
+    // I'm not sure if indoorSensor.read() can actually throw an error or not, but sometimes the indoor
+    // sensor never reports a value without restarting the server. One possible explanation is that the
+    // first read attempt fails, throws an error, and without the code below would never be polled again.
+    console.error('readSensor error: ' + err);
+    setTimeout(readSensor, POLLING_INTERVAL);
+  }
 }
 
 // Report the latest temperature and humidity values that are no more than two standard deviations from the average.

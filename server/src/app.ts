@@ -13,7 +13,7 @@ import * as path from 'path';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { noCache, normalizePort } from './util';
-// import { Gps } from './gps';
+import { hasGps, Gps } from './gps';
 
 const debug = require('debug')('express:server');
 
@@ -48,7 +48,10 @@ function shutdown() {
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
   setTimeout(() => process.exit(0), 5000);
   cleanUp();
-  // gps.close();
+
+  if (gps)
+    gps.close();
+
   NtpPoller.closeAll();
   httpServer.close(() => process.exit(0));
 }
@@ -72,7 +75,7 @@ const daytime = new Daytime(daytimeServer);
 const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
 let taiUtc = new TaiUtc(leapSecondsUrl);
 // const gpsPps = process.env.AWC_GPS_PPS ?? '';
-// let gps: Gps;
+let gps: Gps;
 
 if (process.env.AWC_DEBUG_TIME) {
   const parts = process.env.AWC_DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
@@ -81,8 +84,9 @@ if (process.env.AWC_DEBUG_TIME) {
   taiUtc = new TaiUtc(leapSecondsUrl, () => Date.now() - debugDelta);
 }
 // GPS time disabled when using AWC_DEBUG_TIME
-// else if (gpsPps !== '')
-//   gps = new Gps(gpsPps, taiUtc);
+else { // if (gpsPps !== '')
+  hasGps().then(hasIt => gps = hasIt ? new Gps() : null);
+}
 
 /**
  * Event listener for HTTP server 'error' event.
