@@ -1,5 +1,10 @@
 import { ChildProcess } from 'child_process';
+import { parseISODate } from 'ks-date-time-zone';
+import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
+import { TaiUtc } from './tai-utc';
+import { TimePoller } from './time-poller';
+import { TimeInfo } from './time-types';
 
 const BILLION = BigInt('1000000000');
 const THOUSAND = BigInt('1000');
@@ -20,16 +25,18 @@ export async function hasGps(): Promise<boolean> {
   return await hasCommand('gpspipe') || await hasCommand('ntpq');
 }
 
-export class Gps {
+export class Gps extends TimePoller {
   private clockCheckTimeout: any;
   private coordinates: Coordinates = {} as Coordinates;
   private deltaGps: number;
   private fix = 0;
   private gpspipe: ChildProcess;
+  private leapSecond = 0;
   private satelliteCount = 0;
   private systemTimeIsGps = false;
 
-  constructor() {
+  constructor(private taiUtc : TaiUtc) {
+    super();
     this.gpspipe = spawn('gpspipe', ['-w']);
 
     this.gpspipe.stdout.on('data', data => {
@@ -86,6 +93,25 @@ export class Gps {
       clearTimeout(this.clockCheckTimeout);
   }
 
+  getTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
+    const ti = super.getTimeInfo(internalAdjustOrBias);
+
+    if (this.isTimeGpsSynced())
+      ti.fromGps = true;
+
+    return ti;
+  }
+
+  protected getNtpData(requestTime: number): NtpData {
+    const now = Date.now() + Math.round(this.deltaGps || 0);
+
+    return {
+      li: [2, 0, 1][this.leapSecond + 1],
+      rxTm: now,
+      txTm: now,
+    } as NtpData;
+  }
+
   private async checkSystemTime(): Promise<void> {
     const ntpInfo = (await monitorProcess(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS)).split('\n');
     let gpsFound = false;
@@ -100,6 +126,21 @@ export class Gps {
     }
 
     this.systemTimeIsGps = gpsFound;
+    
+    const cd = await this.taiUtc.getCurrentDelta();
+
+    if (cd.pendingLeapDate) {
+      const ymd = parseISODate(cd.pendingLeapDate);
+      const now = new Date();
+
+      if (ymd.y === now.getUTCFullYear() && ymd.m === now.getUTCMonth() + 1)
+        this.leapSecond = cd.pendingLeap;
+      else
+        this.leapSecond = 0;
+    }
+    else
+      this.leapSecond = 0;
+
     this.clockCheckTimeout = setTimeout(() => {
       this.clockCheckTimeout = undefined;
       this.checkSystemTime();

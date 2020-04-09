@@ -85,7 +85,7 @@ if (process.env.AWC_DEBUG_TIME) {
 }
 // GPS time disabled when using AWC_DEBUG_TIME
 else { // if (gpsPps !== '')
-  hasGps().then(hasIt => gps = hasIt ? new Gps() : null);
+  hasGps().then(hasIt => gps = hasIt ? new Gps(taiUtc) : null);
 }
 
 /**
@@ -175,7 +175,7 @@ function getApp() {
 
   theApp.get('/ntp', (req, res) => {
     noCache(res);
-    jsonOrJsonp(req, res, ntpPoller.getTimeInfo());
+    jsonOrJsonp(req, res, (gps || ntpPoller).getTimeInfo());
   });
 
   theApp.get('/daytime', async (req, res) => {
