@@ -4,8 +4,13 @@ const isWindows = (process.platform === 'win32');
 const sudoUser = process.env.SUDO_USER || process.env.USER || 'pi';
 let userHome = '/home/pi';
 
-userHome = (isWindows ? process.env.USERPROFILE : execSync(`grep ${sudoUser} /etc/passwd`).toString()
-  .split(':')[5] || userHome);
+try {
+  userHome = (isWindows ? process.env.USERPROFILE : execSync(`grep ${sudoUser} /etc/passwd`).toString()
+    .split(':')[5] || userHome);
+}
+catch (err) {
+  console.error(err);
+}
 
 export function getUserHome(): string {
   return userHome;
