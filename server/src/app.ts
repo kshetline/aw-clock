@@ -237,7 +237,9 @@ function getApp() {
     if (gps) {
       const coords = gps.getGpsData();
 
-      if (coords && coords.latitude != null)
+      if (coords?.fix === 0)
+        result = { error: 'no-signal' };
+      else if (coords?.latitude != null)
         result = coords;
     }
 

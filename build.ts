@@ -110,7 +110,7 @@ if (process.platform === 'linux') {
   }
 }
 
-const launchChromium = chromium + ' --kiosk http://localhost:8080';
+const launchChromium = chromium + ' --kiosk http://localhost:8080/';
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
@@ -669,8 +669,8 @@ async function doServiceDeployment(): Promise<void> {
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';
   const autostartLine2 = '@' + launchChromium.replace(/:8080\b/, ':' + settings.AWC_PORT);
-  const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}/, ':!!!')
-    .replace(/[^- /:!@0-9a-z]/g, '.').replace(/\//g, '\\/').replace(':!!!', ':\\d+\\b') + '$');
+  const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}\/?/, ':!!!')
+    .replace(/[^- /:!@0-9a-z]/g, '.').replace(/\//g, '\\/').replace(':!!!', ':\\d+\\b') + '\\/?$');
   let lines: string[] = [];
 
   try {

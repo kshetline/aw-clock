@@ -61,6 +61,7 @@ export class Clock {
   private monthCaption: HTMLElement;
   private yearCaption: HTMLElement;
   private timeCaption: HTMLElement;
+  private gpsIcon: HTMLElement;
   private dut1Label: HTMLElement;
   private dut1Caption: HTMLElement;
   private dtaiLabel: HTMLElement;
@@ -101,6 +102,7 @@ export class Clock {
     this.monthCaption = document.getElementById('month');
     this.yearCaption = document.getElementById('year');
     this.timeCaption = document.getElementById('time');
+    this.gpsIcon = document.getElementById('gps-icon');
     this.dut1Label = document.getElementById('dut1-label');
     this.dut1Caption = document.getElementById('dut1');
     this.dtaiLabel = document.getElementById('dtai-label');
@@ -258,20 +260,23 @@ export class Clock {
     this.dut1PositionAdjustmentNeeded = true;
   }
 
-  private adjustDut1Position(): void {
+  private adjustTimeDecorations(): void {
     const viewWidth = (this.clock as any).viewBox?.baseVal?.width ?? 172;
     const r0 = this.clock.getBoundingClientRect();
     const scale = viewWidth / r0.width;
     const r1 = this.timeCaption.getBoundingClientRect();
     const r2 = this.dut1Label.getBoundingClientRect();
     const r3 = this.dtaiLabel.getBoundingClientRect();
+    const r4 = this.gpsIcon.getBoundingClientRect();
     const labelX = (r1.x + r1.width - r0.x) * scale;
     const captionX = labelX + max(r2.width, r3.width) * scale;
+    const iconX = (r1.x - r0.x) * scale - ((r4.width * scale) || 2.5) - 1;
 
     this.dut1Label.setAttribute('x', labelX.toString());
     this.dtaiLabel.setAttribute('x', labelX.toString());
     this.dut1Caption.setAttribute('x', captionX.toString());
     this.dtaiCaption.setAttribute('x', captionX.toString());
+    this.gpsIcon.setAttribute('x', iconX.toString());
   }
 
   private tick(): void {
@@ -380,6 +385,7 @@ export class Clock {
     rotate(this.minHand, 6 * mins + 0.1 * min(secs, 59));
     rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120);
     rotate(this.forecastDivider, 30 * (hour % 12) - 9.5);
+    this.gpsIcon.style.display = (timeInfo.fromGps ? 'block' : 'none');
     setTimeout(() => this.tick(), 1000 - millis);
 
     setTimeout(() => {
@@ -416,7 +422,7 @@ export class Clock {
 
       if (this.dut1PositionAdjustmentNeeded) {
         this.dut1PositionAdjustmentNeeded = false;
-        setTimeout(() => this.adjustDut1Position());
+        setTimeout(() => this.adjustTimeDecorations());
       }
 
       if (mins !== this.lastMinute || this.lastTick + 60_000 <= now) {
