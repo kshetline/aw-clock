@@ -48,6 +48,7 @@
       2,
       {
         "ArrayExpression": "first",
+        "ignoredNodes": ["IfStatement > :expression *", "WhileStatement > :expression *"],
         "ObjectExpression": "first",
         "SwitchCase": 1
       }

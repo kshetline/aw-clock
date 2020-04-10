@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
 import express, { Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
+import fs from 'fs';
 import * as http from 'http';
 import { toBoolean } from 'ks-util';
 import logger from 'morgan';
@@ -16,6 +17,23 @@ import { noCache, normalizePort } from './util';
 import { hasGps, Gps } from './gps';
 
 const debug = require('debug')('express:server');
+const ENV_FILE = '../.vscode/.env';
+
+try {
+  if (fs.existsSync(ENV_FILE)) {
+    const lines = fs.readFileSync(ENV_FILE).toString().split('\r?\n?');
+
+    for (const line of lines) {
+      const $ = /\s*(\w+)\s*=\s*([^#]+)/.exec(line);
+
+      if ($)
+        process.env[$[1]] = $[2].trim();
+    }
+  }
+}
+catch (err) {
+  console.log('Failed check for .env file.');
+}
 
 let indoorModule: any;
 let indoorRouter: Router;
@@ -47,17 +65,18 @@ function shutdown() {
   console.log(`\n*** closing server  at ${new Date().toISOString()} ***`);
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
   setTimeout(() => process.exit(0), 5000);
+  httpServer.close(() => process.exit(0));
   cleanUp();
 
   if (gps)
     gps.close();
 
   NtpPoller.closeAll();
-  httpServer.close(() => process.exit(0));
 }
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+process.on('SIGUSR2', shutdown);
 
 // add error handler
 httpServer.on('error', onError);
@@ -173,7 +192,7 @@ function getApp() {
     });
   });
 
-  theApp.get('/ntp', (req, res) => {
+  theApp.get(/\/(ntp|time)/, (req, res) => {
     noCache(res);
     jsonOrJsonp(req, res, (gps || ntpPoller).getTimeInfo());
   });
@@ -208,6 +227,21 @@ function getApp() {
   theApp.get('/ls-history', async (req, res) => {
     noCache(res);
     jsonOrJsonp(req, res, await taiUtc.getLeapSecondHistory());
+  });
+
+  theApp.get('/gps', async (req, res) => {
+    noCache(res);
+
+    let result: any = { error: 'n/a' };
+
+    if (gps) {
+      const coords = gps.getGpsData();
+
+      if (coords && coords.latitude != null)
+        result = coords;
+    }
+
+    jsonOrJsonp(req, res, result);
   });
 
   return theApp;
