@@ -1,5 +1,5 @@
-$std-font: Verdana, "DejaVu Sans", sans-serif;
-$clock-face-font: "Arial Unicode MS", Arial, Helvetica, sans-serif;
+$std-font: Verdana, 'DejaVu Sans', sans-serif;
+$clock-face-font: 'Arial Unicode MS', Arial, Helvetica, sans-serif;
 $constellation-font: Astronomy, sans-serif;
 $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
@@ -26,7 +26,7 @@ body {
 
 @font-face {
   font-family: Astronomy;
-  src: url("assets/Astronomy.ttf");
+  src: url('assets/Astronomy.ttf');
   unicode-range: U+263C-2653;
 }
 
@@ -116,7 +116,7 @@ body {
   height: 100%;
 }
 
-@media only screen and (max-aspect-ratio: 43/27) {
+@media only screen and (max-aspect-ratio: 43 / 27) {
   #clock-container {
     width: calc(100vw - 4em);
   }
@@ -166,11 +166,11 @@ body {
   opacity: 0.6;
 }
 
-#sec-hand { stroke: #f55; }
+#sec-hand { stroke: #F55; }
 
 #subhub { fill: #66F; }
 
-#hub { fill: #f55; }
+#hub { fill: #F55; }
 
 #day-of-week, #date, #month {
   font-size: 10px;
@@ -186,7 +186,7 @@ body {
 
 #dut1-label, #dut1, #dtai, #dtai-label {
   font-size: 2px;
-  fill: #888
+  fill: #888;
 }
 
 #city {
@@ -304,86 +304,126 @@ body {
     grid-column: 1 / span 3;
   }
 
+  // I'd like get rid of the -ms-prefixed properties, but Firefox styling doesn't come out right if I do. */
   &>*:nth-child(1) {
+    grid-row: 1;
     -ms-grid-row: 1;
+    grid-column: 1;
     -ms-grid-column: 1;
   }
 
   &>*:nth-child(2) {
+    grid-row: 1;
     -ms-grid-row: 1;
+    grid-column: 2;
     -ms-grid-column: 2;
   }
 
   &>*:nth-child(3) {
+    grid-row: 1;
     -ms-grid-row: 1;
+    grid-column: 3;
     -ms-grid-column: 3;
   }
 
   &>*:nth-child(4) {
+    grid-row: 2;
     -ms-grid-row: 2;
+    grid-column: 1;
     -ms-grid-column: 1;
   }
 
   &>*:nth-child(5) {
+    grid-row: 2;
     -ms-grid-row: 2;
+    grid-column: 2;
     -ms-grid-column: 2;
   }
 
   &>*:nth-child(6) {
+    grid-row: 2;
     -ms-grid-row: 2;
+    grid-column: 3;
     -ms-grid-column: 3;
+    white-space: nowrap;
   }
 
   &>*:nth-child(7) {
+    grid-row: 3;
     -ms-grid-row: 3;
+    grid-column: 1;
     -ms-grid-column: 1;
   }
 
   &>*:nth-child(8) {
+    grid-row: 3;
     -ms-grid-row: 3;
+    grid-column: 2;
     -ms-grid-column: 2;
   }
 
   &>*:nth-child(9) {
+    grid-row: 3;
     -ms-grid-row: 3;
+    grid-column: 3;
     -ms-grid-column: 3;
+    white-space: nowrap;
   }
 
   &>*:nth-child(10) {
+    grid-row: 4;
     -ms-grid-row: 4;
+    grid-column: 1;
     -ms-grid-column: 1;
   }
 
   &>*:nth-child(11) {
+    grid-row: 4;
     -ms-grid-row: 4;
+    grid-column: 2;
     -ms-grid-column: 2;
   }
 
   &>*:nth-child(12) {
+    grid-row: 4;
     -ms-grid-row: 4;
+    grid-column: 3;
     -ms-grid-column: 3;
   }
 
   &>*:nth-child(13) {
+    grid-row: 5;
     -ms-grid-row: 5;
+    grid-column: 1;
     -ms-grid-column: 1;
   }
 
   &>*:nth-child(14) {
+    grid-row: 5;
     -ms-grid-row: 5;
+    grid-column: 2;
     -ms-grid-column: 2;
     -ms-grid-column-span: 2;
   }
 
   &>*:nth-child(15) {
-    -ms-grid-row: 6;
-    -ms-grid-column: 1;
+    grid-row: 5;
+    -ms-grid-row: 5;
+    grid-column: 3;
+    -ms-grid-column: 3;
   }
 
   &>*:nth-child(16) {
+    grid-row: 6;
     -ms-grid-row: 6;
-    -ms-grid-column: 2;
-    -ms-grid-column-span: 2;
+    grid-column: 1;
+    -ms-grid-column: 1;
+  }
+}
+
+@supports (-moz-appearance: none) {
+  .user-options  {
+    grid-row-gap: 2px;
   }
 }
 
@@ -447,6 +487,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 #city-table {
   border-spacing: 0;
   width: 100%;
+
   &>tr:not(:first-child) {
     cursor: pointer;
   }
@@ -485,8 +526,8 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   height: 20px;
 }
 
-.searching:after {
-  content: " ";
+.searching::after {
+  content: ' ';
   display: block;
   width: 15px;
   height: 15px;
@@ -494,7 +535,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   border-radius: 50%;
   border-width: 2px;
   border-style: solid;
-  border-color: #0AF transparent #0AF transparent;
+  border-color: #0AF transparent;
   animation: searching 1.2s linear infinite;
 }
 
@@ -502,6 +543,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -569,19 +611,19 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .month-of-leap-second {
-  fill: #9F9
+  fill: #9F9;
 }
 
 .month-of-neg-leap-second {
-  fill: #C6F
+  fill: #C6F;
 }
 
 .signal-meter {
-  fill: rgba(63, 255, 63, 0.25)
+  fill: rgba(63, 255, 63, 0.25);
 }
 
 .meter-tint .signal-meter {
-  fill: rgba(63, 63, 255, 0.40)
+  fill: rgba(63, 63, 255, 0.40);
 }
 
 .signal-level-1 {
@@ -671,5 +713,5 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 #gps-icon {
-  display: none
+  display: none;
 }
