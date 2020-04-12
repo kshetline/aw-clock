@@ -1,8 +1,8 @@
 import * as $ from 'jquery';
 import { NtpData } from '../server/src/ntp-data';
 import { localServer } from './settings';
+import { TimeInfo } from '../server/src/shared-types';
 import { TimePoller } from '../server/src/time-poller';
-import { TimeInfo } from '../server/src/time-types';
 
 export class HttpTimePoller extends TimePoller {
   private fromGps = false;

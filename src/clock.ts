@@ -24,7 +24,7 @@ import * as $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
 import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
-import { CurrentDelta } from '../server/src/time-types';
+import { CurrentDelta } from '../server/src/shared-types';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 

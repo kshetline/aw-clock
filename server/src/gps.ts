@@ -4,9 +4,9 @@ import { parseISODate } from 'ks-date-time-zone';
 import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
+import { TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
-import { TimeInfo } from './time-types';
 import { roughDistanceBetweenLocationsInKm } from './util';
 
 const BILLION = BigInt('1000000000');

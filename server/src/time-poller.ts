@@ -1,6 +1,6 @@
 import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
-import { TimeInfo } from './time-types';
+import { TimeInfo } from './shared-types';
 
 const MILLIS_PER_DAY = 86_400_000;
 const MAX_ERRORS = 5;

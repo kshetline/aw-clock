@@ -21,9 +21,9 @@ import { AppService, DEV_URL } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import * as $ from 'jquery';
 import { localServer, runningDev } from './settings';
+import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/shared-types';
 import { updateSvgFlowItems } from './svg-flow';
 import { getJson } from './util';
-import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/weather-types';
 
 function errorText(err: any): string {
   err = err instanceof Error ? err.message : err.error;

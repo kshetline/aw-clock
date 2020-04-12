@@ -2,7 +2,7 @@ import { requestText } from 'by-request';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from 'ks-date-time-zone';
 import { interpolate, irandom } from 'ks-math';
 import PromiseFtp from 'promise-ftp';
-import { CurrentDelta } from './time-types';
+import { CurrentDelta } from './shared-types';
 import { URL } from 'url';
 import { last } from 'ks-util';
 

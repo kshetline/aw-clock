@@ -8,7 +8,7 @@ import {
   DailyConditions, DailyConditionsKeys, DailySummaryConditions, DailySummaryConditionsKeys,
   ForecastData,
   ForecastDataKeys, HourlyConditions
-} from './weather-types';
+} from './shared-types';
 
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;

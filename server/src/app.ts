@@ -141,7 +141,7 @@ function canReleasePortAndRestart(): boolean {
       const $ = new RegExp(String.raw`^tcp.*:${httpPort}\b.*\bLISTEN\b\D*(\d+)\/node`).exec(line);
 
       if ($) {
-        const signal = (startAttempts > 1 ? '-s SIGKILL ' : '');
+        const signal = (startAttempts > 1 ? '-9 ' : '');
 
         console.warn('Killing process: ' + $[1]);
         execSync(`kill ${signal}${$[1]}`);

@@ -17,21 +17,21 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import * as $ from 'jquery';
-import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
-import { Clock } from './clock';
 import { AppService, DEV_URL } from './app.service';
+import { Clock } from './clock';
 import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
+import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
+import { HttpTimePoller } from './http-time-poller';
+import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { irandom } from 'ks-math';
+import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { setFullScreen } from 'ks-util';
+import { Sensors } from './sensors';
 import { runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
-import { Ephemeris } from './ephemeris';
-import { Sensors } from './sensors';
-import { HttpTimePoller } from './http-time-poller';
-import { TimeInfo } from '../server/src/time-types';
+import { TimeInfo } from '../server/src/shared-types';
 import { updateSvgFlowItems, reflow } from './svg-flow';
 import { getJson } from './util';
 

@@ -3,7 +3,7 @@ import { Request, Response, Router } from 'express';
 import { toBoolean } from 'ks-util';
 import request from 'request';
 import { average, noCache, stdDev } from './util';
-import { DhtSensorData } from './weather-types';
+import { DhtSensorData } from './shared-types';
 
 export const router = Router();
 

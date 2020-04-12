@@ -96,3 +96,32 @@ export interface TempHumidityData {
   deadAir?: boolean;
   error?: string;
 }
+
+export interface GpsData {
+  altitude?: number; // in meters
+  averageSNR?: number, // in dBHz
+  estimatedPositionError?: number, // max of epx and epy, in meters.
+  fix: number; // 0 = invalid, 1 = GPS, 2 = DGPS
+  latitude?: number;
+  longitude?: number;
+  name?: string;
+  pps?: boolean;
+  satellites?: number;
+  signalQuality: number;
+  timezone?: string;
+}
+
+export interface CurrentDelta {
+  delta: number;
+  dut1: number[] | null;
+  pendingLeap: number;
+  pendingLeapDate: string;
+}
+
+export interface TimeInfo {
+  time: number;
+  leapSecond: number;
+  leapExcess: number;
+  text: string;
+  fromGps?: boolean;
+}
