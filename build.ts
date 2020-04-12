@@ -4,16 +4,13 @@ import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
 import { processMillis, toBoolean } from 'ks-util';
 import * as path from 'path';
-import { ErrorMode, getSudoUser, getUserHome, monitorProcess, spawn } from './server/src/process-util';
-import * as readline from 'readline';
+import { ErrorMode, getSudoUser, getUserHome, monitorProcess, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
 
 const CHECK_MARK = '\u2714';
 const FAIL_MARK = '\u2718';
 const SPIN_CHARS = '|/-\\';
 const SPIN_DELAY = 100;
-const MAX_SPIN_DELAY = 100;
-const NO_OP = () => {};
 
 const isWindows = (process.platform === 'win32');
 
@@ -271,27 +268,6 @@ async function readLine(): Promise<string> {
 
 function write(s: string): void {
   process.stdout.write(s);
-}
-
-function sleep(delay: number, doSpin = spin, stopOnKeypress = false): Promise<boolean> {
-  return new Promise<boolean>(resolve => {
-    const slowSpin = setInterval(doSpin || NO_OP, MAX_SPIN_DELAY);
-    const timeout = setTimeout(() => {
-      clearInterval(slowSpin);
-      resolve(false);
-    }, delay);
-
-    if (stopOnKeypress) {
-      readline.emitKeypressEvents(process.stdin);
-      process.stdin.setRawMode(true);
-
-      process.stdin.on('keypress', () => {
-        clearInterval(slowSpin);
-        clearTimeout(timeout);
-        resolve(true);
-      });
-    }
-  });
 }
 
 function stepDone(): void {
@@ -565,9 +541,9 @@ async function disableScreenSaver(uid: number): Promise<void> {
 
     const settingsProcess = spawn('xscreensaver-demo', [], { uid });
 
-    await sleep(3000);
+    await sleep(3000, spin);
     settingsProcess.kill('SIGTERM');
-    await sleep(500);
+    await sleep(500, spin);
   }
 
   await monitorProcess(spawn('sed',
@@ -809,10 +785,10 @@ async function doServiceDeployment(): Promise<void> {
       stepDone();
       await monitorProcess(spawn('pkill', uid, ['-o', chromium]), spin, ErrorMode.NO_ERRORS);
       await monitorProcess(spawn('pkill', uid, ['-o', chromium.substr(0, 15)]), spin, ErrorMode.NO_ERRORS);
-      await sleep(500);
+      await sleep(500, spin);
       const display = process.env.DISPLAY ?? ':0.0';
       exec(`DISPLAY=${display} ${launchChromium} --user-data-dir='${userHome}'`, { uid });
-      await sleep(1000, null);
+      await sleep(1000);
     }
 
     if (doReboot) {

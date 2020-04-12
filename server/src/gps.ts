@@ -1,6 +1,7 @@
 import { requestJson } from 'by-request';
 import { ChildProcess } from 'child_process';
 import { parseISODate } from 'ks-date-time-zone';
+import { abs, floor, max, round } from 'ks-math';
 import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
@@ -14,6 +15,7 @@ const THOUSAND = BigInt('1000');
 const TWO_MILLION = BigInt('2000000');
 const CLOCK_CHECK = 30_000; // Half minute
 const CHECK_LOCATION_RETRY_DELAY = 300_000; // 5 minutes
+const OVER_QUOTA_RETRY_DELAY = 86_400_000; // 1 day
 
 export class Gps extends TimePoller {
   private clockCheckTimeout: any;
@@ -21,6 +23,7 @@ export class Gps extends TimePoller {
   private checkLocationRetry = 0;
   private deltaGps: number;
   private gpsData: GpsData = { fix: 0, signalQuality: 0 };
+  private googleAccessDenied = false;
   private googleKey: string;
   private gpspipe: ChildProcess;
   private leapSecond = 0;
@@ -44,7 +47,7 @@ export class Gps extends TimePoller {
           this.gpsData.pps = this.systemTimeIsGps;
 
           if (obj.epx != null && obj.epy != null)
-            this.gpsData.estimatedPositionError = Math.max(obj.epx, obj.epy);
+            this.gpsData.estimatedPositionError = max(obj.epx, obj.epy);
           else
             delete this.gpsData.estimatedPositionError;
 
@@ -60,6 +63,11 @@ export class Gps extends TimePoller {
               this.gpsData.signalQuality /= 2;
             else if (this.gpsData.estimatedPositionError > 10)
               this.gpsData.signalQuality *= 3 / 4;
+
+            if (this.gpsData.averageSNR < 35)
+              this.gpsData.signalQuality *= (65 + this.gpsData.averageSNR) / 100;
+
+            this.gpsData.signalQuality = round(this.gpsData.signalQuality);
           }
 
           this.checkLocation();
@@ -77,7 +85,7 @@ export class Gps extends TimePoller {
             }
 
             if (usedCount > 0)
-              this.gpsData.averageSNR = Math.round(totalSNR / usedCount);
+              this.gpsData.averageSNR = round(totalSNR / usedCount);
             else
               delete this.gpsData.averageSNR;
           }
@@ -100,7 +108,7 @@ export class Gps extends TimePoller {
   }
 
   public isTimeGpsSynced(): boolean {
-    return this.systemTimeIsGps && Math.abs(this.deltaGps) < 2000;
+    return this.systemTimeIsGps && abs(this.deltaGps) < 2000;
   }
 
   public getGpsData(): GpsData {
@@ -108,8 +116,8 @@ export class Gps extends TimePoller {
 
     Object.assign(result, this.gpsData);
 
-    if (this.namedGpsData?.name)
-      result.name = this.namedGpsData.name;
+    if (this.namedGpsData?.city)
+      result.city = this.namedGpsData.city;
 
     if (this.namedGpsData?.timezone)
       result.timezone = this.namedGpsData.timezone;
@@ -134,7 +142,7 @@ export class Gps extends TimePoller {
   }
 
   protected getNtpData(): NtpData {
-    const now = Date.now() + Math.round(this.deltaGps || 0);
+    const now = Date.now() + round(this.deltaGps || 0);
 
     return {
       li: [2, 0, 1][this.leapSecond + 1],
@@ -189,9 +197,9 @@ export class Gps extends TimePoller {
 
     // If there are old coordinates wait for at least a tenth of a kilometer change in
     // position before looking up name and timezone for new location.
-    if (this.namedGpsData == null || now >= this.checkLocationRetry || roughDistanceBetweenLocationsInKm(
+    if ((this.namedGpsData == null && now >= this.checkLocationRetry) || roughDistanceBetweenLocationsInKm(
         this.namedGpsData.latitude, this.namedGpsData.longitude, coords.latitude, coords.longitude) >= 0.1) {
-      delete this.gpsData.name;
+      delete this.gpsData.city;
       delete this.gpsData.timezone;
 
       this.namedGpsData = coords = {
@@ -202,14 +210,24 @@ export class Gps extends TimePoller {
         altitude: coords.altitude
       };
 
-      if (this.googleKey) {
+      if (this.googleKey && !this.googleAccessDenied) {
         try {
           const url = `https://maps.googleapis.com/maps/api/geocode/json?key=${this.googleKey}` +
             `&result_type=locality|administrative_area_level_3&latlng=${coords.latitude},${coords.longitude}`;
           const data = await requestJson(url);
 
           if (data?.status === 'OK' && data.results?.length > 0)
-            coords.name = data.results[0].formatted_address;
+            coords.city = data.results[0].formatted_address;
+          else if (data?.errorMessage) {
+            console.error(data.errorMessage);
+
+            if (data.status === 'REQUEST_DENIED')
+              this.googleAccessDenied = true;
+            else if (data.status === 'OVER_DAILY_LIMIT')
+              this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
+            else
+              this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+          }
         }
         catch (err) {
           this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
@@ -218,11 +236,21 @@ export class Gps extends TimePoller {
 
         try {
           const url = `https://maps.googleapis.com/maps/api/timezone/json?key=${this.googleKey}` +
-            `&location=${coords.latitude},${coords.longitude}&timestamp=${Math.floor(Date.now() / 1000)}`;
+            `&location=${coords.latitude},${coords.longitude}&timestamp=${floor(Date.now() / 1000)}`;
           const data = await requestJson(url);
 
           if (data?.status === 'OK' && data.timeZoneId)
             coords.timezone = data.timeZoneId;
+          else if (data?.errorMessage) {
+            console.error(data.errorMessage);
+
+            if (data.status === 'REQUEST_DENIED')
+              this.googleAccessDenied = true;
+            else if (data.status === 'OVER_DAILY_LIMIT')
+              this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
+            else
+              this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+          }
         }
         catch (err) {
           this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;

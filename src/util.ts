@@ -169,3 +169,7 @@ export function setSignalLevel(elem: JQuery, quality: number): void {
   (elem[0].className as any).baseVal = classes;
   elem.attr('data-signal-quality', (quality < 0 ? 0 : quality) + '%');
 }
+
+export function adjustCityName(city: string): string {
+  return (city || '').replace(/(, [A-Z]{2}), USA?$/, '$1');
+}

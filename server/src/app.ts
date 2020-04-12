@@ -17,6 +17,7 @@ import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, noCache, normalizePort } from './util';
 import { Gps } from './gps';
 import { GpsData } from './shared-types';
+import { sleep } from './process-util';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -215,12 +216,31 @@ function getApp() {
     });
   }
 
-  theApp.get('/defaults', (req, res) => {
+  theApp.get('/defaults', async (req, res) => {
     noCache(res);
-    jsonOrJsonp(req, res, {
+
+    const defaults: any = {
       indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F')
-    });
+    };
+
+    if (gps) {
+      let gpsInfo = gps.getGpsData();
+
+      // Wait a little longer if necessary to see if a name for the current location is found.
+      if (!gpsInfo.city && process.env.AWC_GOOGLE_API_KEY) {
+        await sleep(2000);
+        gpsInfo = gps.getGpsData();
+      }
+
+      if (gpsInfo.latitude != null) {
+        defaults.latitude = Number(gpsInfo.latitude.toFixed(4));
+        defaults.longitude = Number(gpsInfo.longitude.toFixed(4));
+        defaults.city = gpsInfo.city || '';
+      }
+    }
+
+    jsonOrJsonp(req, res, defaults);
   });
 
   theApp.get(/\/(ntp|time)/, (req, res) => {

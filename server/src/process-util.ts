@@ -1,4 +1,5 @@
 import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
+import * as readline from 'readline';
 
 const isWindows = (process.platform === 'win32');
 const sudoUser = process.env.SUDO_USER || process.env.USER || 'pi';
@@ -126,5 +127,26 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
       else
         resolve(output);
     });
+  });
+}
+
+export function sleep(delay: number, markTime: () => void = undefined, stopOnKeypress = false): Promise<boolean> {
+  return new Promise<boolean>(resolve => {
+    const slowSpin = setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY);
+    const timeout = setTimeout(() => {
+      clearInterval(slowSpin);
+      resolve(false);
+    }, delay);
+
+    if (stopOnKeypress) {
+      readline.emitKeypressEvents(process.stdin);
+      process.stdin.setRawMode(true);
+
+      process.stdin.on('keypress', () => {
+        clearInterval(slowSpin);
+        clearTimeout(timeout);
+        resolve(true);
+      });
+    }
   });
 }

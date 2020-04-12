@@ -33,7 +33,7 @@ import { apiServer, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
 import { updateSvgFlowItems, reflow } from './svg-flow';
-import { getJson } from './util';
+import { adjustCityName, getJson } from './util';
 
 initTimeZoneSmall();
 
@@ -226,19 +226,33 @@ class AwClockApp implements AppService {
 
         Promise.all(promises)
           .then(data => {
+            let citySet = false;
+            let countryCode = '';
+
             if (data[0]?.indoorOption && data[0].outdoorOption) {
               this.settings.indoorOption = data[0].indoorOption;
               this.settings.outdoorOption = data[0].outdoorOption;
+
+              if (data[0].latitude != null) {
+                this.settings.latitude = data[0].latitude;
+                this.settings.longitude = data[0].longitude;
+                this.settings.city = data[0].city;
+                citySet = !!this.settings.city;
+                countryCode = (/,\s+([A-Z]{2,3})$/.exec(this.settings.city) || [])[1];
+              }
             }
 
-            if (data[1]?.status === 'success') {
+            if (data[1]?.status === 'success' && !citySet) {
               this.settings.latitude = data[1].lat;
               this.settings.longitude = data[1].lon;
-              this.settings.city = [data[1].city, data[1].region, data[1].countryCode].join(', ')
-                .replace(/(, [A-Z]{2}), US$/, '$1');
-              this.settings.celsius = !/AS|BS|BZ|FM|GU|MH|PW|US|VI/i.test(data[1].countryCode);
+              this.settings.city = [data[1].city, data[1].region, data[1].countryCode].join(', ');
+              countryCode = data[1].countryCode;
             }
 
+            if (countryCode)
+              this.settings.celsius = !/^(ASM?|BH?S|BL?Z|FS?M|GUM?|MHL?|PL?W|USA?|VIR?)$/i.test(data[1].countryCode);
+
+            this.settings.city = adjustCityName(this.settings.city);
             this.settingsChecked = true;
             this.updateSettings(this.settings);
           });

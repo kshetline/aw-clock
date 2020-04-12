@@ -105,7 +105,7 @@ export interface GpsData {
   fix: number; // 0 = invalid, 1 = GPS, 2 = DGPS
   latitude?: number;
   longitude?: number;
-  name?: string;
+  city?: string;
   pps?: boolean;
   satellites?: number;
   signalQuality: number;

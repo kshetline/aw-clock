@@ -21,8 +21,8 @@ import { AppService } from './app.service';
 import { HourlyForecast } from './forecast';
 import * as $ from 'jquery';
 import { isIE, isSafari } from 'ks-util';
-import { localServer, Settings } from './settings';
-import { domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
+import { apiServer, localServer, Settings } from './settings';
+import { adjustCityName, domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -83,6 +83,7 @@ export class SettingsDialog {
   private searchSection: JQuery;
   private searchCity: JQuery;
   private submitSearch: JQuery;
+  private getGps: JQuery;
   private searching: JQuery;
   private searchMessage: JQuery;
   private cityTableWrapper: JQuery;
@@ -91,6 +92,7 @@ export class SettingsDialog {
   private cancelButton: JQuery;
   private reloadButton: JQuery;
 
+  private defaultLocation: any;
   private searchFieldFocused = false;
   private searchButtonFocused = false;
 
@@ -115,6 +117,7 @@ export class SettingsDialog {
     this.searchSection = $('.search-section');
     this.searchCity = $('#search-city');
     this.submitSearch = $('#submit-search');
+    this.getGps = $('#get-gps');
     this.searching = $('.searching');
     this.searchMessage = $('#search-message');
     this.cityTableWrapper = $('.city-table-wrapper');
@@ -127,6 +130,7 @@ export class SettingsDialog {
     this.searchCity.on('blur', () => this.searchFieldFocused = false);
     this.submitSearch.on('focus', () => this.searchButtonFocused = true);
     this.submitSearch.on('blur', () => this.searchButtonFocused = false);
+    this.getGps.click(() => this.fillInGpsLocation());
 
     this.dimming.on('change', () => {
       this.enableDimmingRange(this.dimming.val() !== '0');
@@ -299,6 +303,9 @@ export class SettingsDialog {
     this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
     this.hourlyForecast.val(previousSettings.hourlyForecast);
     (this.submitSearch as any).enable(true);
+    (this.getGps as any).enable(false);
+    this.defaultLocation = undefined;
+    this.getDefaultLocation();
     (this.searchCity as any).enable(true);
     this.searchCity.val('');
     this.searchMessage.html('&nbsp;');
@@ -364,7 +371,7 @@ export class SettingsDialog {
       }
     };
 
-    this.okButton.on('click', doOK);
+    this.okButton.click(doOK);
 
     this.cancelButton.one('click', () => {
       popKeydownListener();
@@ -399,5 +406,32 @@ export class SettingsDialog {
         }
       });
     });
+  }
+
+  private getDefaultLocation(): void {
+    const url = `${apiServer}/defaults`;
+
+    $.ajax({
+      url: url,
+      dataType: 'json',
+      success: (data: any) => {
+        console.log(data);
+        if (data?.latitude != null) {
+          this.defaultLocation = data;
+          (this.getGps as any).enable(true);
+        }
+      },
+      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+        console.error(errorThrown);
+      }
+    });
+  }
+
+  private fillInGpsLocation(): void {
+    if (this.defaultLocation) {
+      this.currentCity.val(adjustCityName(this.defaultLocation.city));
+      this.latitude.val(this.defaultLocation.latitude.toString());
+      this.longitude.val(this.defaultLocation.longitude.toString());
+    }
   }
 }
