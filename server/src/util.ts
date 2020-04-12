@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { acos, cos_deg, PI, sin_deg } from 'ks-math';
+import { ErrorMode, monitorProcess, spawn } from './process-util';
 
 export function noCache(res: Response): void {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -67,4 +68,12 @@ export function roughDistanceBetweenLocationsInKm(lat1: number, long1: number, l
     deltaRad += PI;
 
   return deltaRad * 6378.14; // deltaRad * radius_of_earth_in_km
+}
+
+async function hasCommand(command: string): Promise<boolean> {
+  return !!(await monitorProcess(spawn('which', [command]), null, ErrorMode.ANY_ERROR)).trim();
+}
+
+export async function hasGps(): Promise<boolean> {
+  return await hasCommand('gpspipe') || await hasCommand('ntpq');
 }

@@ -1,4 +1,5 @@
 // #!/usr/bin/env node
+import { execSync } from 'child_process';
 import { jsonOrJsonp } from './common';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
@@ -13,15 +14,15 @@ import { NtpPoller } from './ntp-poller';
 import * as path from 'path';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { noCache, normalizePort } from './util';
-import { hasGps, Gps } from './gps';
+import { hasGps, noCache, normalizePort } from './util';
+import { Gps } from './gps';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
 
 try {
   if (fs.existsSync(ENV_FILE)) {
-    const lines = fs.readFileSync(ENV_FILE).toString().split('\r?\n?');
+    const lines = fs.readFileSync(ENV_FILE).toString().split(/\r\n|\r|\n/);
 
     for (const line of lines) {
       const $ = /\s*(\w+)\s*=\s*([^#]+)/.exec(line);
@@ -35,54 +36,34 @@ catch (err) {
   console.log('Failed check for .env file.');
 }
 
-let indoorModule: any;
-let indoorRouter: Router;
-
 // Convert deprecated environment variables
 if (!process.env.AWC_WIRED_TH_GPIO &&
     toBoolean(process.env.AWC_HAS_INDOOR_SENSOR) && process.env.AWC_TH_SENSOR_GPIO)
   process.env.AWC_WIRED_TH_GPIO = process.env.AWC_TH_SENSOR_GPIO;
+
+let indoorModule: any;
+let indoorRouter: Router;
 
 if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
   indoorModule = require('./indoor-router');
   indoorRouter = indoorModule.router;
 }
 
+// Create HTTP server
 const devMode = process.argv.includes('-d');
 const allowCors = toBoolean(process.env.AWC_ALLOW_CORS) || devMode;
-
-// create http server
 const defaultPort = devMode ? 4201 : 8080;
 const httpPort = normalizePort(process.env.AWC_PORT || defaultPort);
 const app = getApp();
-const httpServer = http.createServer(app);
-
-// listen on provided ports
-console.log(`*** starting server on port ${httpPort} at ${new Date().toISOString()} ***`);
-httpServer.listen(httpPort);
-
-function shutdown() {
-  console.log(`\n*** closing server  at ${new Date().toISOString()} ***`);
-  // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
-  setTimeout(() => process.exit(0), 5000);
-  httpServer.close(() => process.exit(0));
-  cleanUp();
-
-  if (gps)
-    gps.close();
-
-  NtpPoller.closeAll();
-}
+let httpServer: http.Server;
+const MAX_START_ATTEMPTS = 3;
+let startAttempts = 0;
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 process.on('SIGUSR2', shutdown);
 
-// add error handler
-httpServer.on('error', onError);
-
-// start listening on port
-httpServer.on('listening', onListening);
+createAndStartServer();
 
 // The DHT-22 temperature/humidity sensor appears to be prone to spurious bad readings, so we'll attempt to
 // screen out the noise.
@@ -107,9 +88,14 @@ else { // if (gpsPps !== '')
   hasGps().then(hasIt => gps = hasIt ? new Gps(taiUtc) : null);
 }
 
-/**
- * Event listener for HTTP server 'error' event.
- */
+function createAndStartServer(): void {
+  console.log(`*** starting server on port ${httpPort} at ${new Date().toISOString()} ***`);
+  httpServer = http.createServer(app);
+  httpServer.on('error', onError);
+  httpServer.on('listening', onListening);
+  httpServer.listen(httpPort);
+}
+
 function onError(error: any) {
   if (error.syscall !== 'listen')
     throw error;
@@ -126,22 +112,66 @@ function onError(error: any) {
       break;
     case 'EADDRINUSE':
       console.error(bind + ' is already in use');
-      process.exit(1);
+
+      if (!canReleasePortAndRestart())
+        process.exit(1);
+
       break;
     default:
       throw error;
   }
 }
 
-/**
- * Event listener for HTTP server 'listening' event.
- */
 function onListening() {
   const addr = httpServer.address();
   const bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+}
+
+function canReleasePortAndRestart(): boolean {
+  if (process.env.USER !== 'root' || !toBoolean(process.env.AWC_LICENSED_TO_KILL) || ++startAttempts > MAX_START_ATTEMPTS)
+    return false;
+
+  try {
+    const lines = execSync('netstat -pant').toString().split(/\r\n|\r|\n/);
+
+    for (const line of lines) {
+      const $ = new RegExp(String.raw`^tcp.*:${httpPort}\b.*\bLISTEN\b\D*(\d+)\/node`).exec(line);
+
+      if ($) {
+        const signal = (startAttempts > 1 ? '-s SIGKILL ' : '');
+
+        console.warn('Killing process: ' + $[1]);
+        execSync(`kill ${signal}${$[1]}`);
+        setTimeout(createAndStartServer, 3000);
+
+        return true;
+      }
+    }
+  }
+  catch (err) {
+    console.log(`Failed to kill process using port ${httpPort}: ` + err);
+  }
+
+  return false;
+}
+
+function shutdown(signal?: string) {
+  if (devMode && signal === 'SIGTERM')
+    return;
+
+  console.log(`\n*** ${signal || 'shutdown'}: closing server at ${new Date().toISOString()} ***`);
+  // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
+  setTimeout(() => process.exit(0), 5000);
+  httpServer.close(() => process.exit(0));
+  cleanUp();
+
+  if (gps)
+    gps.close();
+
+  NtpPoller.closeAll();
 }
 
 function getApp() {

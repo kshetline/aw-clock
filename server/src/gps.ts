@@ -1,6 +1,7 @@
 import { requestJson } from 'by-request';
 import { ChildProcess } from 'child_process';
 import { parseISODate } from 'ks-date-time-zone';
+import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { TaiUtc } from './tai-utc';
@@ -12,30 +13,28 @@ const BILLION = BigInt('1000000000');
 const THOUSAND = BigInt('1000');
 const TWO_MILLION = BigInt('2000000');
 const CLOCK_CHECK = 30_000; // Half minute
+const CHECK_LOCATION_RETRY_DELAY = 300_000; // 5 minutes
 
 export interface GpsData {
-  fix?: number;
+  altitude?: number; // in meters
+  averageSNR?: number, // in dBHz
+  estimatedPositionError?: number, // max of epx and epy, in meters.
+  fix: number; // 0 = invalid, 1 = GPS, 2 = DGPS
   latitude?: number;
   longitude?: number;
-  altitude?: number;
   name?: string;
+  pps?: boolean;
   satellites?: number;
+  signalQuality: number;
   timezone?: string;
-}
-
-async function hasCommand(command: string): Promise<boolean> {
-  return !!(await monitorProcess(spawn('which', [command]), null, ErrorMode.ANY_ERROR)).trim();
-}
-
-export async function hasGps(): Promise<boolean> {
-  return await hasCommand('gpspipe') || await hasCommand('ntpq');
 }
 
 export class Gps extends TimePoller {
   private clockCheckTimeout: any;
   private checkingLocation = false;
+  private checkLocationRetry = 0;
   private deltaGps: number;
-  private gpsData: GpsData = { fix: 0 };
+  private gpsData: GpsData = { fix: 0, signalQuality: 0 };
   private googleKey: string;
   private gpspipe: ChildProcess;
   private leapSecond = 0;
@@ -55,11 +54,48 @@ export class Gps extends TimePoller {
           this.gpsData.latitude = obj.lat;
           this.gpsData.longitude = obj.lon;
           this.gpsData.altitude = obj.altHAE ?? obj.alt ?? 0;
-          this.gpsData.fix = obj.mode ?? this.gpsData.fix;
+          this.gpsData.fix = obj.status ?? this.gpsData.fix ?? 0;
+          this.gpsData.pps = this.systemTimeIsGps;
+
+          if (obj.epx != null && obj.epy != null)
+            this.gpsData.estimatedPositionError = Math.max(obj.epx, obj.epy);
+          else
+            delete this.gpsData.estimatedPositionError;
+
+          if ((this.gpsData.fix || 0) === 0)
+            this.gpsData.signalQuality = 0;
+          else {
+            this.gpsData.signalQuality = (this.gpsData.fix === 1 ? 75 : 100);
+
+            if (!this.gpsData.pps)
+              this.gpsData.signalQuality /= 2;
+
+            if (this.gpsData.estimatedPositionError == null || this.gpsData.estimatedPositionError > 100)
+              this.gpsData.signalQuality /= 2;
+            else if (this.gpsData.estimatedPositionError > 10)
+              this.gpsData.signalQuality *= 3 / 4;
+          }
+
           this.checkLocation();
         }
-        else if (obj?.class === 'SKY' && Array.isArray(obj.satellites))
+        else if (obj?.class === 'SKY' && Array.isArray(obj.satellites)) {
           this.gpsData.satellites = obj.satellites.length;
+
+          let usedCount = 0;
+          let totalSNR = 0;
+
+          for (const sat of obj.satellites) {
+            if (sat.used && sat.ss != null) {
+              ++usedCount;
+              totalSNR += sat.ss;
+            }
+
+            if (usedCount > 0)
+              this.gpsData.averageSNR = Math.round(totalSNR / usedCount);
+            else
+              delete this.gpsData.averageSNR;
+          }
+        }
         else if (obj?.class === 'PPS' && obj.real_sec) {
           const gpsTime = BigInt(obj.real_sec) * BILLION + BigInt(obj.real_nsec);
           const clockTime = BigInt(obj.clock_sec) * BILLION + BigInt(obj.clock_nsec);
@@ -162,16 +198,19 @@ export class Gps extends TimePoller {
 
     this.checkingLocation = true;
 
+    const now = processMillis();
     let coords = this.gpsData;
 
     // If there are old coordinates wait for at least a tenth of a kilometer change in
     // position before looking up name and timezone for new location.
-    if (this.namedGpsData == null || roughDistanceBetweenLocationsInKm(
+    if (this.namedGpsData == null || now >= this.checkLocationRetry || roughDistanceBetweenLocationsInKm(
         this.namedGpsData.latitude, this.namedGpsData.longitude, coords.latitude, coords.longitude) >= 0.1) {
       delete this.gpsData.name;
       delete this.gpsData.timezone;
 
       this.namedGpsData = coords = {
+        fix: this.gpsData.fix,
+        signalQuality: this.gpsData.signalQuality,
         latitude: coords.latitude,
         longitude: coords.longitude,
         altitude: coords.altitude
@@ -186,7 +225,10 @@ export class Gps extends TimePoller {
           if (data?.status === 'OK' && data.results?.length > 0)
             coords.name = data.results[0].formatted_address;
         }
-        catch (err) { console.error(err); }
+        catch (err) {
+          this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+          console.error(err);
+        }
 
         try {
           const url = `https://maps.googleapis.com/maps/api/timezone/json?key=${this.googleKey}` +
@@ -196,7 +238,10 @@ export class Gps extends TimePoller {
           if (data?.status === 'OK' && data.timeZoneId)
             coords.timezone = data.timeZoneId;
         }
-        catch (err) { console.error(err); }
+        catch (err) {
+          this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+          console.error(err);
+        }
       }
     }
 

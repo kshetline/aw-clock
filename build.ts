@@ -4,11 +4,9 @@ import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
 import { processMillis, toBoolean } from 'ks-util';
 import * as path from 'path';
-import { getSudoUser, getUserHome, monitorProcess, spawn } from './server/src/process-util';
+import { ErrorMode, getSudoUser, getUserHome, monitorProcess, spawn } from './server/src/process-util';
 import * as readline from 'readline';
 import { promisify } from 'util';
-
-enum ErrorMode { DEFAULT, ANY_ERROR, NO_ERRORS }
 
 const CHECK_MARK = '\u2714';
 const FAIL_MARK = '\u2718';
