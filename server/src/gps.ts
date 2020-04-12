@@ -4,7 +4,7 @@ import { parseISODate } from 'ks-date-time-zone';
 import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
-import { TimeInfo } from './shared-types';
+import { GpsData, TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
 import { roughDistanceBetweenLocationsInKm } from './util';
@@ -14,20 +14,6 @@ const THOUSAND = BigInt('1000');
 const TWO_MILLION = BigInt('2000000');
 const CLOCK_CHECK = 30_000; // Half minute
 const CHECK_LOCATION_RETRY_DELAY = 300_000; // 5 minutes
-
-export interface GpsData {
-  altitude?: number; // in meters
-  averageSNR?: number, // in dBHz
-  estimatedPositionError?: number, // max of epx and epy, in meters.
-  fix: number; // 0 = invalid, 1 = GPS, 2 = DGPS
-  latitude?: number;
-  longitude?: number;
-  name?: string;
-  pps?: boolean;
-  satellites?: number;
-  signalQuality: number;
-  timezone?: string;
-}
 
 export class Gps extends TimePoller {
   private clockCheckTimeout: any;

@@ -17,7 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { AppService, DEV_URL } from './app.service';
+import { AppService } from './app.service';
 import { Clock } from './clock';
 import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
 import { Ephemeris } from './ephemeris';
@@ -29,7 +29,7 @@ import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { setFullScreen } from 'ks-util';
 import { Sensors } from './sensors';
-import { runningDev, Settings } from './settings';
+import { apiServer, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
 import { updateSvgFlowItems, reflow } from './svg-flow';
@@ -37,10 +37,7 @@ import { getJson } from './util';
 
 initTimeZoneSmall();
 
-const weatherPort = (runningDev ? '4201' : document.location.port || '8080');
-const weatherServer = new URL(window.location.href).searchParams.get('weather_server') ||
-  (runningDev ? 'http://localhost:' + weatherPort : '');
-const ntpPoller = new HttpTimePoller(weatherServer);
+const ntpPoller = new HttpTimePoller(apiServer);
 const baseTime = ntpPoller.getTimeInfo().time;
 const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
 const debugTimeRate = 60;
@@ -181,8 +178,8 @@ class AwClockApp implements AppService {
     return sensorDeadAirState;
   }
 
-  getWeatherServer(): string {
-    return weatherServer;
+  getApiServer(): string {
+    return apiServer;
   }
 
   isTimeAccelerated(): boolean {
@@ -190,6 +187,7 @@ class AwClockApp implements AppService {
   }
 
   start() {
+    this.removeSignalMeterShadowRoots();
     this.clock.start();
 
     setTimeout(() => {
@@ -221,9 +219,8 @@ class AwClockApp implements AppService {
       if (this.settings.defaultsSet())
         this.settingsChecked = true;
       else {
-        const site = (runningDev ? DEV_URL : '');
         const promises = [
-          getJson(`${site}/defaults`),
+          getJson(`${apiServer}/defaults`),
           getJson('http://ip-api.com/json/?callback=?')
         ];
 
@@ -386,5 +383,13 @@ class AwClockApp implements AppService {
     }
 
     this.dimmer.css('opacity', '0');
+  }
+
+  private removeSignalMeterShadowRoots(): void {
+    const signalMeter = $('#signal-meter');
+    const markup = signalMeter.html();
+    const uses = $('use[href="#signal-meter"]');
+
+    uses.parent().html(markup);
   }
 }

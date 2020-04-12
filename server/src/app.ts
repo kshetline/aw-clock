@@ -16,6 +16,7 @@ import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, noCache, normalizePort } from './util';
 import { Gps } from './gps';
+import { GpsData } from './shared-types';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -162,7 +163,7 @@ function shutdown(signal?: string) {
   if (devMode && signal === 'SIGTERM')
     return;
 
-  console.log(`\n*** ${signal || 'shutdown'}: closing server at ${new Date().toISOString()} ***`);
+  console.log(`\n*** ${signal ? signal + ': ' : ''}closing server at ${new Date().toISOString()} ***`);
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
   setTimeout(() => process.exit(0), 5000);
   httpServer.close(() => process.exit(0));
@@ -262,13 +263,13 @@ function getApp() {
   theApp.get('/gps', async (req, res) => {
     noCache(res);
 
-    let result: any = { error: 'n/a' };
+    let result: GpsData = { error: 'n/a', fix: 0, signalQuality: 0 };
 
     if (gps) {
       const coords = gps.getGpsData();
 
       if (coords?.fix === 0)
-        result = { error: 'no-signal' };
+        result.error = 'no-signal';
       else if (coords?.latitude != null)
         result = coords;
     }

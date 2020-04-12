@@ -158,3 +158,14 @@ export function formatTime(date: KsDateTime, amPm: boolean) {
 export function convertTemp(t: number, toCelsius: boolean): number {
   return toCelsius ? (t - 32) / 1.8 : t * 1.8 + 32;
 }
+
+export function setSignalLevel(elem: JQuery, quality: number): void {
+  const newLevel = 'signal-' + (quality < 0 ? 'lost' : 'level-' + Math.max(Math.floor((quality + 19) / 20), 1));
+  let classes = ((elem[0].className as any).baseVal || '').replace(/signal-[-\w]+/, newLevel);
+
+  if (!classes.includes(newLevel))
+    classes = (classes + ' ' + newLevel).trim();
+
+  (elem[0].className as any).baseVal = classes;
+  elem.attr('data-signal-quality', (quality < 0 ? 0 : quality) + '%');
+}

@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "first-install": "npm i && cd server && npm i && cd ..",
-    "start": "webpack-dev-server --port=4200",
+    "start": "webpack-dev-server --port=4200 --host 0.0.0.0",
     "start-server": "cd server && npm start",
     "start-server-win": "cd server && npm run start-win",
     "build": "ts-node build.ts",

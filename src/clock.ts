@@ -24,7 +24,8 @@ import * as $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
 import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
-import { CurrentDelta } from '../server/src/shared-types';
+import { CurrentDelta, GpsData } from '../server/src/shared-types';
+import { setSignalLevel } from './util';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -62,6 +63,7 @@ export class Clock {
   private yearCaption: HTMLElement;
   private timeCaption: HTMLElement;
   private gpsIcon: HTMLElement;
+  private gpsMeter: HTMLElement;
   private dut1Label: HTMLElement;
   private dut1Caption: HTMLElement;
   private dtaiLabel: HTMLElement;
@@ -72,6 +74,8 @@ export class Clock {
 
   private readonly hasBeginElement: boolean;
 
+  private gpsActive = false;
+  private gpsAvailable = true;
   private lastSecRotation = 0;
   private lastMinute = -1;
   private lastTick = -1;
@@ -103,6 +107,7 @@ export class Clock {
     this.yearCaption = document.getElementById('year');
     this.timeCaption = document.getElementById('time');
     this.gpsIcon = document.getElementById('gps-icon');
+    this.gpsMeter = document.getElementById('gps-meter');
     this.dut1Label = document.getElementById('dut1-label');
     this.dut1Caption = document.getElementById('dut1');
     this.dtaiLabel = document.getElementById('dtai-label');
@@ -270,13 +275,15 @@ export class Clock {
     const r4 = this.gpsIcon.getBoundingClientRect();
     const labelX = (r1.x + r1.width - r0.x) * scale;
     const captionX = labelX + max(r2.width, r3.width) * scale;
-    const iconX = (r1.x - r0.x) * scale - ((r4.width * scale) || 2.5) - 1;
+    const iconX = (r1.x - r0.x) * scale - ((r4.width * scale) || 2.5) - 0.5;
+    const meterX = iconX + 0.25;
 
     this.dut1Label.setAttribute('x', labelX.toString());
     this.dtaiLabel.setAttribute('x', labelX.toString());
     this.dut1Caption.setAttribute('x', captionX.toString());
     this.dtaiCaption.setAttribute('x', captionX.toString());
     this.gpsIcon.setAttribute('x', iconX.toString());
+    this.gpsMeter.setAttribute('x', meterX.toString());
   }
 
   private tick(): void {
@@ -385,7 +392,9 @@ export class Clock {
     rotate(this.minHand, 6 * mins + 0.1 * min(secs, 59));
     rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120);
     rotate(this.forecastDivider, 30 * (hour % 12) - 9.5);
-    this.gpsIcon.style.display = (timeInfo.fromGps ? 'block' : 'none');
+    this.gpsActive = timeInfo.fromGps;
+    this.gpsIcon.style.display = (this.gpsAvailable ? 'block' : 'none');
+    this.gpsMeter.style.display = (this.gpsAvailable ? 'block' : 'none');
     setTimeout(() => this.tick(), 1000 - millis);
 
     setTimeout(() => {
@@ -426,6 +435,7 @@ export class Clock {
       }
 
       if (mins !== this.lastMinute || this.lastTick + 60_000 <= now) {
+        this.checkGps();
         this.appService.updateTime(hour, mins, this.lastMinute < 0);
         this.lastMinute = mins;
         this.lastTick = now;
@@ -451,7 +461,7 @@ export class Clock {
 
       // noinspection JSIgnoredPromiseFromCall
       $.ajax({
-        url: this.appService.getWeatherServer() + '/tai-utc',
+        url: this.appService.getApiServer() + '/tai-utc',
         dataType: 'json',
         success: (data: CurrentDelta) => this.upcomingLeapSecond = data,
         error: () => setTimeout(() => {
@@ -461,5 +471,27 @@ export class Clock {
       });
       // Randomly delay polling so that multiple clock instances don't all poll at the same time every day.
     }, this.firstLeapSecondPoll ? 0 : irandom(MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
+  }
+
+  private checkGps(): void {
+    if (!this.gpsAvailable)
+      return;
+
+    // noinspection JSIgnoredPromiseFromCall
+    $.ajax({
+      url: this.appService.getApiServer() + '/gps',
+      dataType: 'json',
+      success: (data: GpsData) => {
+        if (data.error === 'n/a')
+          this.gpsAvailable = false;
+        else {
+          if (this.gpsActive !== !!data.pps)
+            this.lastMinute = -1; // trigger quick update
+
+          setSignalLevel($(this.gpsMeter), data.signalQuality > 0 ? data.signalQuality : -1);
+          this.gpsIcon.style.opacity = (data.pps && data.signalQuality > 0 ? '1' : '0.33');
+        }
+      }
+    });
   }
 }

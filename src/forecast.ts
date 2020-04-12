@@ -122,7 +122,7 @@ export class Forecast {
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
     if (!isIE() && !isEdge())
-      this.weatherServer = appService.getWeatherServer();
+      this.weatherServer = appService.getApiServer();
     else
       this.weatherServer = '';
 
