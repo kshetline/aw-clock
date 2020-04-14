@@ -1,9 +1,9 @@
 import { jsonOrJsonp } from './common';
 import { Request, Response, Router } from 'express';
-import { toBoolean } from 'ks-util';
 import request from 'request';
 import { average, noCache, stdDev } from './util';
 import { DhtSensorData } from './shared-types';
+import { convertPinToGpio } from './rpi-pin-conversions';
 
 export const router = Router();
 
@@ -18,7 +18,7 @@ interface NodeDhtSensor {
 
 let indoorSensor: NodeDhtSensor;
 
-if (toBoolean(process.env.AWC_WIRED_TH_GPIO)) {
+if (convertPinToGpio(process.env.AWC_WIRED_TH_GPIO) >= 0) {
   try {
     indoorSensor = require('node-dht-sensor');
   }
@@ -32,7 +32,12 @@ let humidities: number[] = [];
 let consecutiveSensorErrors = 0;
 const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
-const sensorGpio = parseInt(process.env.AWC_WIRED_TH_GPIO, 10) || 4;
+let sensorGpio = convertPinToGpio(process.env.AWC_WIRED_TH_GPIO);
+
+if (sensorGpio < 0) {
+  console.warn(`Invalid value "${process.env.AWC_WIRED_TH_GPIO}" for AWC_WIRED_TH_GPIO, using GPIO 27.`);
+  sensorGpio = 17;
+}
 
 export function hasWiredIndoorSensor(): boolean {
   return !!indoorSensor;

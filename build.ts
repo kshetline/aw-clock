@@ -2,9 +2,10 @@ import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
-import { processMillis, toBoolean } from 'ks-util';
+import { asLines, processMillis, toBoolean } from 'ks-util';
 import * as path from 'path';
-import { ErrorMode, getSudoUser, getUserHome, monitorProcess, sleep, spawn } from './server/src/process-util';
+import { convertPinToGpio } from './server/src/rpi-pin-conversions';
+import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
 
 const CHECK_MARK = '\u2714';
@@ -36,6 +37,29 @@ let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 
+// eslint-disable-next-line
+let cmdline_txt: string;
+// eslint-disable-next-line
+let config_txt: string;
+// eslint-disable-next-line
+let gpsTimeIsWorking = false;
+// eslint-disable-next-line
+let gpsd: string;
+// eslint-disable-next-line
+let gpsWorks = false;
+// eslint-disable-next-line
+let hasGpsTools = false;
+// eslint-disable-next-line
+let hasNtpTools = false;
+// eslint-disable-next-line
+let hadNtpConfig = false;
+// eslint-disable-next-line
+let hasPpsTools = false;
+// eslint-disable-next-line
+let ntp_conf: string;
+// eslint-disable-next-line
+let removeChrony = false;
+
 let spin = () => {
   const now = processMillis();
 
@@ -64,6 +88,7 @@ let totalSteps = 5;
 let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_CORS: 'true',
+  AWC_GPS_PPS_GPIO: '4',
   AWC_NTP_SERVER: 'pool.ntp.org',
   AWC_PORT: '8080',
   AWC_PREFERRED_WS: 'wunderground',
@@ -88,7 +113,7 @@ let autostartDst = '.config/lxsession/LXDE';
 if (process.platform === 'linux') {
   try {
     if (fs.existsSync(cpuPath)) {
-      const lines = fs.readFileSync(cpuPath).toString().split('\n');
+      const lines = asLines(fs.readFileSync(cpuPath).toString());
 
       for (const line of lines) {
         if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
@@ -218,7 +243,7 @@ if (!doDedicated && onlyDedicated.length > 0) {
 if (treatAsRaspberryPi) {
   try {
     if (fs.existsSync(settingsPath)) {
-      const lines = fs.readFileSync(settingsPath).toString().split('\n');
+      const lines = asLines(fs.readFileSync(settingsPath).toString());
       const oldSettings: Record<string, string> = {};
 
       lines.forEach(line => {
@@ -314,7 +339,7 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
 }
 
 function getWebpackSummary(s: string): string {
-  const lines = s.split(/\r\n|\r|\n/);
+  const lines = asLines(s);
   let summary = '';
   let count = 0;
 
@@ -339,6 +364,46 @@ async function npmInit(): Promise<void> {
 
 function showStep(): void {
   write(`Step ${++currentStep} of ${totalSteps}: `);
+}
+
+function getFile(path: string): string {
+  try {
+    if (fs.existsSync(path))
+      return fs.readFileSync(path).toString();
+  }
+  catch (err) {
+    console.warn(chalk.yellow('Failed to read ' + path));
+  }
+
+  return undefined;
+}
+
+async function checkForGps(): Promise<void> {
+  console.log('start GPS test');
+  hasGpsTools = (await isInstalled('gpsd')) && (await isInstalled('gpspipe'));
+  hasNtpTools = (await isInstalled('ntpd')) && (await isInstalled('ntpq'));
+  hasPpsTools = await isInstalled('ppstest');
+
+  if (hasNtpTools) {
+    const ntpInfo = await monitorProcessLines(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS);
+
+    for (const line of ntpInfo) {
+      if (/^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s-?[.\d]+\s+[.\d]+\s*$/.test(line)) {
+        gpsTimeIsWorking = false;
+        break;
+      }
+    }
+  }
+
+  if (!gpsTimeIsWorking) {
+    removeChrony = await isInstalled('chrony');
+    cmdline_txt = getFile('/boot/cmdline.txt');
+    config_txt = getFile('/boot/config.txt');
+    ntp_conf = getFile('/etc/ntp.conf');
+    gpsd = getFile('/etc/default/gpsd');
+  }
+
+  console.log(hasGpsTools, hasNtpTools, gpsTimeIsWorking, cmdline_txt, config_txt, ntp_conf, gpsd);
 }
 
 function portValidate(s: string): boolean {
@@ -404,10 +469,8 @@ function dhtValidate(s: string): boolean {
 }
 
 function pinValidate(s: string): boolean {
-  const pin = Number(s);
-
-  if (isNaN(pin) || pin < 0 || pin > 32) {
-    console.log(chalk.redBright('GPIO pin must be a number from 0 to 31'));
+  if (convertPinToGpio(s) < 0) {
+    console.log(chalk.redBright(s + ' is not a valid pin number'));
     return false;
   }
 
@@ -648,7 +711,7 @@ async function doServiceDeployment(): Promise<void> {
   let lines: string[] = [];
 
   try {
-    lines = fs.readFileSync(autostartPath).toString().split('\n').filter(line => !!line.trim());
+    lines = asLines(fs.readFileSync(autostartPath).toString()).filter(line => !!line.trim());
   }
   catch (err) {
     if (isRaspberryPi) {
@@ -709,6 +772,9 @@ async function doServiceDeployment(): Promise<void> {
     }
 
     uid = Number((await monitorProcess(spawn('id', ['-u', user]))).trim() || '1000');
+
+    if (isRaspberryPi)
+      await checkForGps();
 
     if (interactive)
       await promptForConfiguration();

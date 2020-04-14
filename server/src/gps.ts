@@ -2,7 +2,7 @@ import { requestJson } from 'by-request';
 import { ChildProcess } from 'child_process';
 import { parseISODate } from 'ks-date-time-zone';
 import { abs, floor, max, round } from 'ks-math';
-import { processMillis } from 'ks-util';
+import { asLines, processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { GpsData, TimeInfo } from './shared-types';
@@ -152,7 +152,7 @@ export class Gps extends TimePoller {
   }
 
   private async checkSystemTime(): Promise<void> {
-    const ntpInfo = (await monitorProcess(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS)).split('\n');
+    const ntpInfo = asLines(await monitorProcess(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS));
     let gpsFound = false;
 
     for (const line of ntpInfo) {

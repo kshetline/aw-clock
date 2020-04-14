@@ -1,5 +1,6 @@
 import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
 import * as readline from 'readline';
+import { asLines } from 'ks-util';
 
 const isWindows = (process.platform === 'win32');
 const sudoUser = process.env.SUDO_USER || process.env.USER || 'pi';
@@ -128,6 +129,10 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
         resolve(output);
     });
   });
+}
+
+export async function monitorProcessLines(proc: ChildProcess, markTime: () => void = undefined, errorMode = ErrorMode.DEFAULT): Promise<string[]> {
+  return asLines(await monitorProcess(proc, markTime, errorMode));
 }
 
 export function sleep(delay: number, markTime: () => void = undefined, stopOnKeypress = false): Promise<boolean> {

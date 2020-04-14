@@ -7,7 +7,7 @@ import express, { Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
-import { toBoolean } from 'ks-util';
+import { asLines, toBoolean } from 'ks-util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
@@ -24,7 +24,7 @@ const ENV_FILE = '../.vscode/.env';
 
 try {
   if (fs.existsSync(ENV_FILE)) {
-    const lines = fs.readFileSync(ENV_FILE).toString().split(/\r\n|\r|\n/);
+    const lines = asLines(fs.readFileSync(ENV_FILE).toString());
 
     for (const line of lines) {
       const $ = /\s*(\w+)\s*=\s*([^#]+)/.exec(line);
@@ -76,7 +76,7 @@ const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
 const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
 let taiUtc = new TaiUtc(leapSecondsUrl);
-// const gpsPps = process.env.AWC_GPS_PPS ?? '';
+const gpsPps = toBoolean(process.env.AWC_GPS_TIME);
 let gps: Gps;
 
 if (process.env.AWC_DEBUG_TIME) {
@@ -86,9 +86,8 @@ if (process.env.AWC_DEBUG_TIME) {
   taiUtc = new TaiUtc(leapSecondsUrl, () => Date.now() - debugDelta);
 }
 // GPS time disabled when using AWC_DEBUG_TIME
-else { // if (gpsPps !== '')
+else if (gpsPps)
   hasGps().then(hasIt => gps = hasIt ? new Gps(taiUtc) : null);
-}
 
 function createAndStartServer(): void {
   console.log(`*** starting server on port ${httpPort} at ${new Date().toISOString()} ***`);
@@ -137,7 +136,7 @@ function canReleasePortAndRestart(): boolean {
     return false;
 
   try {
-    const lines = execSync('netstat -pant').toString().split(/\r\n|\r|\n/);
+    const lines = asLines(execSync('netstat -pant').toString());
 
     for (const line of lines) {
       const $ = new RegExp(String.raw`^tcp.*:${httpPort}\b.*\bLISTEN\b\D*(\d+)\/node`).exec(line);

@@ -1,6 +1,7 @@
 /* eslint @typescript-eslint/indent: 0 */
 /* eslint no-multi-spaces: 0 */
 import fs from 'fs';
+import { asLines } from 'ks-util';
 
 // Pin conversion tables below taken from Gordon Henderson's WiringPi
 
@@ -139,7 +140,7 @@ function getLayout(): void {
     let lines: string[];
 
     try {
-      lines = fs.readFileSync('/proc/cpuinfo',  { encoding: 'ascii' }).split(/\r\n|\r|\n/);
+      lines = asLines(fs.readFileSync('/proc/cpuinfo',  { encoding: 'ascii' }));
     }
     catch {
       console.error("Can't read /proc/cpuinfo");
@@ -189,7 +190,7 @@ function getConversions(): void {
   convertInit = true;
 }
 
-function convertPinImpl(pinNumber: number, pinSysFrom: PinSystem, pinSysTo: PinSystem) {
+function convertPinImpl(pinNumber: number, pinSysFrom: PinSystem, pinSysTo: PinSystem): number {
   getConversions();
 
   if (!supportPhysPins && (pinSysFrom === PinSystem.PHYS || pinSysTo === PinSystem.PHYS))
@@ -223,6 +224,8 @@ function convertPinImpl(pinNumber: number, pinSysFrom: PinSystem, pinSysTo: PinS
         case PinSystem.WIRING_PI: return pinNumber;
       }
   }
+
+  return -1;
 }
 
 export function convertPin(pin: number, pinSystemFrom: PinSystem, pinSystemTo: PinSystem): number;
@@ -234,11 +237,17 @@ export function convertPin(pin: number | string, pinSystem0: PinSystem, pinSyste
   let pinSystemTo: number;
 
   if (typeof pin === 'string') {
-    pinNumber = parseFloat(pin);
-    pinNumber = (isNaN(pinNumber) ? 27 : pinNumber);
-    const pinSystemIndex = 'pwv'.indexOf(pin.substr(-1).toLowerCase()) + 1;
-    pinSystemFrom = [PinSystem.GPIO, PinSystem.PHYS, PinSystem.WIRING_PI, PinSystem.VIRTUAL][pinSystemIndex];
-    pinSystemTo = pinSystem0;
+    const $ = /^(\d+)\s*([gpvw])$/.exec(pin.trim().toLowerCase());
+
+    if ($) {
+      pinNumber = parseFloat($[1]);
+      pinNumber = (isNaN(pinNumber) ? -1 : pinNumber);
+      const pinSystemIndex = 'pvw'.indexOf($[2]) + 1;
+      pinSystemFrom = [PinSystem.GPIO, PinSystem.PHYS, PinSystem.VIRTUAL, PinSystem.WIRING_PI][pinSystemIndex];
+      pinSystemTo = pinSystem0;
+    }
+    else
+      return -1;
   }
   else {
     pinNumber = pin;
@@ -256,6 +265,9 @@ export function convertPin(pin: number | string, pinSystem0: PinSystem, pinSyste
   return convertPinImpl(pinNumber, pinSystemFrom, pinSystemTo);
 }
 
-export function convertPinToGpio(pinNumber: number, pinSys: PinSystem) {
-  return convertPin(pinNumber, pinSys, PinSystem.GPIO);
+export function convertPinToGpio(pinNumber: number | string, pinSys = PinSystem.GPIO) {
+  if (typeof pinNumber === 'string')
+    return convertPin(pinNumber as string, PinSystem.GPIO);
+
+  return convertPin(pinNumber as number, pinSys, PinSystem.GPIO);
 }
