@@ -35,7 +35,7 @@ const MAX_POINTS = 10;
 let sensorGpio = convertPinToGpio(process.env.AWC_WIRED_TH_GPIO);
 
 if (sensorGpio < 0) {
-  console.warn(`Invalid value "${process.env.AWC_WIRED_TH_GPIO}" for AWC_WIRED_TH_GPIO, using GPIO 27.`);
+  console.warn(`Invalid value "${process.env.AWC_WIRED_TH_GPIO}" for AWC_WIRED_TH_GPIO, using GPIO 17.`);
   sensorGpio = 17;
 }
 

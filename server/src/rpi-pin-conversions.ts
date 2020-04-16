@@ -237,12 +237,12 @@ export function convertPin(pin: number | string, pinSystem0: PinSystem, pinSyste
   let pinSystemTo: number;
 
   if (typeof pin === 'string') {
-    const $ = /^(\d+)\s*([gpvw])$/.exec(pin.trim().toLowerCase());
+    const $ = /^(\d+)\s*([gpvw]?)$/.exec(pin.trim().toLowerCase());
 
     if ($) {
       pinNumber = parseFloat($[1]);
       pinNumber = (isNaN(pinNumber) ? -1 : pinNumber);
-      const pinSystemIndex = 'pvw'.indexOf($[2]) + 1;
+      const pinSystemIndex = 'pvw'.indexOf($[2] || 'g') + 1;
       pinSystemFrom = [PinSystem.GPIO, PinSystem.PHYS, PinSystem.VIRTUAL, PinSystem.WIRING_PI][pinSystemIndex];
       pinSystemTo = pinSystem0;
     }
