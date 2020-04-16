@@ -12,10 +12,11 @@ export interface AppService {
   getApiServer(): string;
   isTimeAccelerated(): boolean;
   proxySensorUpdate(): Promise<boolean>;
+  resetGpsState(): void;
   sensorDeadAir(isDead?: boolean): boolean;
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
-  updateSettings(newSettings: Settings);
-  updateSunriseAndSunset(rise: string, set: string);
-  updateMarqueeState(isScrolling: boolean);
+  updateSettings(newSettings: Settings): void;
+  updateSunriseAndSunset(rise: string, set: string): void;
+  updateMarqueeState(isScrolling: boolean): void;
 }

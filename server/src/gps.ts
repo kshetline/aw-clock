@@ -14,6 +14,7 @@ const BILLION = BigInt('1000000000');
 const THOUSAND = BigInt('1000');
 const TWO_MILLION = BigInt('2000000');
 const CLOCK_CHECK = 30_000; // Half minute
+const GPS_DROPOUT_MAX = 60_0000; // 1 minute
 const CHECK_LOCATION_RETRY_DELAY = 300_000; // 5 minutes
 const OVER_QUOTA_RETRY_DELAY = 86_400_000; // 1 day
 
@@ -26,16 +27,68 @@ export class Gps extends TimePoller {
   private googleAccessDenied = false;
   private googleKey: string;
   private gpspipe: ChildProcess;
+  private lastGpsInfo = 0;
   private leapSecond = 0;
   private namedGpsData: GpsData;
   private systemTimeIsGps = false;
 
   constructor(private taiUtc : TaiUtc) {
     super();
+    this.monitorGps();
+    this.checkSystemTime();
+  }
+
+  public isTimeGpsSynced(): boolean {
+    return this.systemTimeIsGps && this.gpsData.fix > 0 && abs(this.deltaGps) < 2000;
+  }
+
+  public getGpsData(): GpsData {
+    const result = {} as GpsData;
+
+    Object.assign(result, this.gpsData);
+
+    if (this.namedGpsData?.city)
+      result.city = this.namedGpsData.city;
+
+    if (this.namedGpsData?.timezone)
+      result.timezone = this.namedGpsData.timezone;
+
+    return result;
+  }
+
+  public close(): void {
+    this.gpspipe.kill('SIGINT');
+
+    if (this.clockCheckTimeout)
+      clearTimeout(this.clockCheckTimeout);
+  }
+
+  getTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
+    const ti = super.getTimeInfo(internalAdjustOrBias);
+
+    if (this.isTimeGpsSynced())
+      ti.fromGps = true;
+
+    return ti;
+  }
+
+  protected getNtpData(): NtpData {
+    const now = Date.now() + round(this.deltaGps || 0);
+
+    return {
+      li: [2, 0, 1][this.leapSecond + 1],
+      rxTm: now,
+      txTm: now,
+    } as NtpData;
+  }
+
+  private monitorGps(): void {
     this.gpspipe = spawn('gpspipe', ['-w']);
     this.googleKey = process.env.AWC_GOOGLE_API_KEY;
 
     this.gpspipe.stdout.on('data', data => {
+      this.lastGpsInfo = processMillis();
+
       try {
         const obj = JSON.parse(data.toString());
 
@@ -104,67 +157,28 @@ export class Gps extends TimePoller {
       catch {}
     });
 
-    this.checkSystemTime();
-  }
-
-  public isTimeGpsSynced(): boolean {
-    return this.systemTimeIsGps && abs(this.deltaGps) < 2000;
-  }
-
-  public getGpsData(): GpsData {
-    const result = {} as GpsData;
-
-    Object.assign(result, this.gpsData);
-
-    if (this.namedGpsData?.city)
-      result.city = this.namedGpsData.city;
-
-    if (this.namedGpsData?.timezone)
-      result.timezone = this.namedGpsData.timezone;
-
-    return result;
-  }
-
-  public close(): void {
-    this.gpspipe.kill('SIGINT');
-
-    if (this.clockCheckTimeout)
-      clearTimeout(this.clockCheckTimeout);
-  }
-
-  getTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
-    const ti = super.getTimeInfo(internalAdjustOrBias);
-
-    if (this.isTimeGpsSynced())
-      ti.fromGps = true;
-
-    return ti;
-  }
-
-  protected getNtpData(): NtpData {
-    const now = Date.now() + round(this.deltaGps || 0);
-
-    return {
-      li: [2, 0, 1][this.leapSecond + 1],
-      rxTm: now,
-      txTm: now,
-    } as NtpData;
+    this.gpspipe.on('exit', () => this.lastGpsInfo = -1);
+    this.gpspipe.on('error', err => console.error('gpspipe error:', err));
   }
 
   private async checkSystemTime(): Promise<void> {
     const ntpInfo = asLines(await monitorProcess(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS));
     let gpsFound = false;
+    let ntpFallback = false;
 
     for (const line of ntpInfo) {
       const $ = /^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s(-?[.\d]+)\s+[.\d]+\s*$/.exec(line);
 
       if ($ && Number($[1]) < 0.1) {
-        gpsFound = true;
+        gpsFound = ntpFallback = true;
         break;
       }
+      else if (line.startsWith('*'))
+        ntpFallback = true;
     }
 
     this.systemTimeIsGps = gpsFound;
+    this.gpsData.ntpFallback = ntpFallback;
 
     const cd = await this.taiUtc.getCurrentDelta();
 
@@ -179,6 +193,14 @@ export class Gps extends TimePoller {
     }
     else
       this.leapSecond = 0;
+
+    if (this.lastGpsInfo + GPS_DROPOUT_MAX < processMillis()) {
+      this.gpsData.fix = 0;
+      this.gpsData.signalQuality = 0;
+    }
+
+    if (this.lastGpsInfo < 0)
+      this.monitorGps();
 
     this.clockCheckTimeout = setTimeout(() => {
       this.clockCheckTimeout = undefined;

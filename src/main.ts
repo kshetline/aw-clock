@@ -214,6 +214,10 @@ class AwClockApp implements AppService {
     this.updateWeather(minute, now, forceRefresh);
   }
 
+  resetGpsState(): void {
+    ntpPoller.resetGpsState();
+  }
+
   private updateWeather(minute: number, now: number, forceRefresh: boolean): void {
     if (!this.settingsChecked) {
       if (this.settings.defaultsSet())

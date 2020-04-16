@@ -423,8 +423,8 @@ module.exports = {
       title: 'Webpack App',
       xhtml: true,
       chunksSortMode: function sort(left, right) {
-        const leftIndex = entryPoints.indexOf(left.names[0]);
-        const rightIndex = entryPoints.indexOf(right.names[0]);
+        const leftIndex = entryPoints.indexOf((left.names && left.names[0]) || left.toString());
+        const rightIndex = entryPoints.indexOf((right.names && right.names[0]) || right.toString());
         if (leftIndex > rightIndex) {
           return 1;
         }

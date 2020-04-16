@@ -40,4 +40,9 @@ export class HttpTimePoller extends TimePoller {
 
     return ti;
   }
+
+  resetGpsState(): void {
+    this.fromGps = false;
+    this.getNtpData().catch(); // No need to handle returned Promise
+  }
 }

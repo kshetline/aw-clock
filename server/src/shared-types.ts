@@ -100,12 +100,13 @@ export interface TempHumidityData {
 export interface GpsData {
   altitude?: number; // in meters
   averageSNR?: number, // in dBHz
+  city?: string;
   error?: string,
   estimatedPositionError?: number, // max of epx and epy, in meters.
   fix: number; // 0 = invalid, 1 = GPS, 2 = DGPS
   latitude?: number;
   longitude?: number;
-  city?: string;
+  ntpFallback?: boolean;
   pps?: boolean;
   satellites?: number;
   signalQuality: number;

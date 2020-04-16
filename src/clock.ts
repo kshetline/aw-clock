@@ -392,7 +392,7 @@ export class Clock {
     rotate(this.minHand, 6 * mins + 0.1 * min(secs, 59));
     rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120);
     rotate(this.forecastDivider, 30 * (hour % 12) - 9.5);
-    this.gpsActive = timeInfo.fromGps;
+    this.gpsActive = !!timeInfo.fromGps;
     this.gpsIcon.style.display = (this.gpsAvailable ? 'block' : 'none');
     this.gpsMeter.style.display = (this.gpsAvailable ? 'block' : 'none');
     setTimeout(() => this.tick(), 1000 - millis);
@@ -485,8 +485,11 @@ export class Clock {
         if (data.error === 'n/a')
           this.gpsAvailable = false;
         else {
-          if (this.gpsActive !== !!data.pps)
+          if (this.gpsActive !== !!data.pps) {
             this.lastMinute = -1; // trigger quick update
+            this.gpsActive = !!data.pps;
+            this.appService.resetGpsState();
+          }
 
           setSignalLevel($(this.gpsMeter), data.signalQuality > 0 ? data.signalQuality : -1);
           this.gpsIcon.style.opacity = (data.pps && data.signalQuality > 0 ? '1' : '0.33');

@@ -76,7 +76,6 @@ const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
 const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
 let taiUtc = new TaiUtc(leapSecondsUrl);
-const gpsPps = toBoolean(process.env.AWC_GPS_TIME);
 let gps: Gps;
 
 if (process.env.AWC_DEBUG_TIME) {
@@ -86,7 +85,7 @@ if (process.env.AWC_DEBUG_TIME) {
   taiUtc = new TaiUtc(leapSecondsUrl, () => Date.now() - debugDelta);
 }
 // GPS time disabled when using AWC_DEBUG_TIME
-else if (gpsPps)
+else
   hasGps().then(hasIt => gps = hasIt ? new Gps(taiUtc) : null);
 
 function createAndStartServer(): void {
