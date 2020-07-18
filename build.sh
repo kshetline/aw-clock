@@ -1,5 +1,4 @@
 #!/bin/bash
-
 if [[ "$1" =~ ^--help|-h$ ]]; then
   echo "Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i] [--launch]"
   echo "                       [--pt] [--reboot] [--sd] [--skip-upgrade] [--tarp]"

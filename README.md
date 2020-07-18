@@ -114,7 +114,7 @@ Don't forget to run `sudo update-rc.d weatherService defaults` after editing the
 For reference, here’s a break down of the steps performed by a full installation:
 
 1. Node.js is installed if not present, or updated if earlier than version 12.
-1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and serveral npm packages to function. This can be very slow the first time because of one npm package in particular &mdash; node-sass &mdash; which can take ten minutes or more to install and build.
+1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time because of one npm package in particular &mdash; node-sass &mdash; which can take ten minutes or more to install and build.
 1. If running in interactive mode (`‑i`), the user is queried about various configuration and installation options.
 1. If the `weatherService` service is running, it’s stopped.
 1. `apt-get update` and `apt-get upgrade` are executed, unless defeated with the `‑‑skip‑upgrade` option.
