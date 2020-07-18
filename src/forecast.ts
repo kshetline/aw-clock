@@ -18,15 +18,15 @@
 */
 
 import { AppService } from './app.service';
+import { CLOCK_CENTER } from './clock';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import * as $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+import { cos_deg, floor, sin_deg } from 'ks-math';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';
+import { ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
-import { ForecastData, HourlyConditions } from '../server/src/weather-types';
-import { cos_deg, floor, sin_deg } from 'ks-math';
-import { CLOCK_CENTER } from './clock';
 
 const DEFAULT_BACKGROUND = 'midnightblue';
 const DEFAULT_FOREGROUND = 'white';
@@ -122,7 +122,7 @@ export class Forecast {
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
     if (!isIE() && !isEdge())
-      this.weatherServer = appService.getWeatherServer();
+      this.weatherServer = appService.getApiServer();
     else
       this.weatherServer = '';
 

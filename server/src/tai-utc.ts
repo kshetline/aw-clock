@@ -1,10 +1,10 @@
 import { requestText } from 'by-request';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from 'ks-date-time-zone';
 import { interpolate, irandom } from 'ks-math';
+import { asLines, last } from 'ks-util';
 import PromiseFtp from 'promise-ftp';
-import { CurrentDelta } from './time-types';
+import { CurrentDelta } from './shared-types';
 import { URL } from 'url';
-import { last } from 'ks-util';
 
 export interface LeapSecond {
   ntp: number;
@@ -143,7 +143,7 @@ export class TaiUtc {
         return;
       }
 
-      const lines = doc.split(/\r\n|\r|\n/).filter(line => TIME_AND_DELTA.test(line));
+      const lines = asLines(doc).filter(line => TIME_AND_DELTA.test(line));
 
       if (lines.length > 1 && lines.length > newLeaps.length) {
         newLeaps = [];
@@ -217,7 +217,7 @@ export class TaiUtc {
 
   // IERS Bulletin A provides (among other things) current and predicted UTC1-UTC values.
   private async getIersBulletinA(): Promise<void> {
-    const lines = (await TaiUtc.getFtpText(IERS_BULLETIN_A_URL, true)).toString().split(/\r\n|\r|\n/);
+    const lines = asLines((await TaiUtc.getFtpText(IERS_BULLETIN_A_URL, true)).toString());
     const newDeltas: DeltaUt1Utc[] = [];
 
     lines.forEach(line => {

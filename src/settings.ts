@@ -24,6 +24,10 @@ import { toBoolean } from 'ks-util';
 export const runningDev = (document.location.port === '4200');
 export const localServer = (document.location.port &&
   document.location.port !== '80' && document.location.port !== '443');
+const apiPort = (runningDev ? '4201' : document.location.port || '8080');
+const apiHost = ((document.location.hostname || '').startsWith('192.') ? document.location.hostname : 'localhost');
+export const apiServer = new URL(window.location.href).searchParams.get('weather_server') ||
+  (runningDev ? `http://${apiHost}:${apiPort}` : '');
 
 export class Settings {
   latitude = 40.75;

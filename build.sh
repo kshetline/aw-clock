@@ -10,6 +10,8 @@ if [ "$EUID" != 0 ]; then
   exit
 fi
 
+echo "Checking installation pre-requisites..."
+
 if [ ! `which node` ]; then
   version=0
 else
@@ -38,4 +40,5 @@ if [ ! -f ".first-time-install" ]; then
   touch .first-time-install
 fi
 
+echo "Starting main installer..."
 npm run build -- --bash $*

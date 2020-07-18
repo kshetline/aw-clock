@@ -1,4 +1,6 @@
 import { Response } from 'express';
+import { acos, cos_deg, PI, sin_deg } from 'ks-math';
+import { ErrorMode, monitorProcess, spawn } from './process-util';
 
 export function noCache(res: Response): void {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -54,4 +56,24 @@ export function splitIpAndPort(ipWithPossiblePort: string, defaultPort?: number)
     return [$[1], Number($[2])];
 
   return [ipWithPossiblePort, defaultPort];
+}
+
+export function roughDistanceBetweenLocationsInKm(lat1: number, long1: number, lat2: number, long2: number): number {
+  let deltaRad = acos(sin_deg(lat1) * sin_deg(lat2) + cos_deg(lat1) * cos_deg(lat2) * cos_deg(long1 - long2));
+
+  while (deltaRad > PI)
+    deltaRad -= PI;
+
+  while (deltaRad < -PI)
+    deltaRad += PI;
+
+  return deltaRad * 6378.14; // deltaRad * radius_of_earth_in_km
+}
+
+async function hasCommand(command: string): Promise<boolean> {
+  return !!(await monitorProcess(spawn('which', [command]), null, ErrorMode.ANY_ERROR)).trim();
+}
+
+export async function hasGps(): Promise<boolean> {
+  return await hasCommand('gpspipe') || await hasCommand('ntpq');
 }
