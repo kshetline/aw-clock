@@ -5,6 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "first-install": "npm i && cd server && npm i && cd ..",
+    "preinstall": "npx npm-force-resolutions",
     "start": "webpack-dev-server --port=4200 --host 0.0.0.0",
     "start-server": "cd server && npm start",
     "start-server-win": "cd server && npm run start-win",
@@ -62,6 +63,7 @@
     "karma-jquery": "^0.2.4",
     "karma-webpack": "^4.0.2",
     "less-loader": "^5.0.0",
+    "minimist": "^1.2.5",
     "node-sass": "^4.14.1",
     "postcss-import": "^12.0.1",
     "postcss-loader": "^3.0.0",
@@ -81,5 +83,8 @@
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.11.0"
+  },
+  "resolutions": {
+    "minimist": "^1.2.5"
   }
 }
