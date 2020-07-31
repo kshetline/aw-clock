@@ -144,6 +144,7 @@ function getLayout(): void {
     }
     catch {
       console.error("Can't read /proc/cpuinfo");
+      return;
     }
 
     for (const line of lines) {

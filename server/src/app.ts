@@ -1,4 +1,5 @@
 // #!/usr/bin/env node
+import { router as adminRouter } from './admin-router';
 import { execSync } from 'child_process';
 import { jsonOrJsonp } from './common';
 import cookieParser from 'cookie-parser';
@@ -53,6 +54,7 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
 
 // Create HTTP server
 const devMode = process.argv.includes('-d');
+const allowAdmin = toBoolean(process.env.AWC_ALLOW_ADMIN);
 const allowCors = toBoolean(process.env.AWC_ALLOW_CORS) || devMode;
 const defaultPort = devMode ? 4201 : 8080;
 const httpPort = normalizePort(process.env.AWC_PORT || defaultPort);
@@ -186,6 +188,9 @@ function getApp() {
     res.send('Static home file not found');
   });
 
+  if (allowAdmin)
+    theApp.use('/admin', adminRouter);
+
   if (allowCors) {
     // see: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs
     theApp.use((req, res, next) => {
@@ -219,7 +224,8 @@ function getApp() {
 
     const defaults: any = {
       indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
-      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F')
+      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
+      allowAdmin
     };
 
     if (gps) {

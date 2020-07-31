@@ -17,8 +17,9 @@ interface NodeDhtSensor {
 }
 
 let indoorSensor: NodeDhtSensor;
+let sensorGpio = process.env.AWC_WIRED_TH_GPIO ? convertPinToGpio(process.env.AWC_WIRED_TH_GPIO) : -1;
 
-if (convertPinToGpio(process.env.AWC_WIRED_TH_GPIO) >= 0) {
+if (sensorGpio >= 0) {
   try {
     indoorSensor = require('node-dht-sensor');
   }
@@ -32,9 +33,8 @@ let humidities: number[] = [];
 let consecutiveSensorErrors = 0;
 const MAX_ERRORS = 5;
 const MAX_POINTS = 10;
-let sensorGpio = convertPinToGpio(process.env.AWC_WIRED_TH_GPIO);
 
-if (sensorGpio < 0) {
+if (process.env.AWC_WIRED_TH_GPIO && sensorGpio < 0) {
   console.warn(`Invalid value "${process.env.AWC_WIRED_TH_GPIO}" for AWC_WIRED_TH_GPIO, using GPIO 17.`);
   sensorGpio = 17;
 }
