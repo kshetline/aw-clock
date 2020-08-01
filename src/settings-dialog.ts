@@ -22,7 +22,7 @@ import { HourlyForecast } from './forecast';
 import * as $ from 'jquery';
 import { isIE, isSafari } from 'ks-util';
 import { apiServer, localServer, Settings } from './settings';
-import { adjustCityName, domAlert, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
+import { adjustCityName, domAlert, domConfirm, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -91,6 +91,8 @@ export class SettingsDialog {
   private okButton: JQuery;
   private cancelButton: JQuery;
   private reloadButton: JQuery;
+  private rebootButton: JQuery;
+  private shutdownButton: JQuery;
 
   private defaultLocation: any;
   private searchFieldFocused = false;
@@ -125,12 +127,14 @@ export class SettingsDialog {
     this.okButton = $('#settings-ok');
     this.cancelButton = $('#settings-cancel');
     this.reloadButton = $('#settings-reload');
+    this.rebootButton = $('#settings-reboot');
+    this.shutdownButton = $('#settings-shutdown');
 
     this.searchCity.on('focus', () => this.searchFieldFocused = true);
     this.searchCity.on('blur', () => this.searchFieldFocused = false);
     this.submitSearch.on('focus', () => this.searchButtonFocused = true);
     this.submitSearch.on('blur', () => this.searchButtonFocused = false);
-    this.getGps.click(() => this.fillInGpsLocation());
+    this.getGps.on('click', () => this.fillInGpsLocation());
 
     this.dimming.on('change', () => {
       this.enableDimmingRange(this.dimming.val() !== '0');
@@ -147,6 +151,26 @@ export class SettingsDialog {
       event.preventDefault();
       this.doSearch();
     });
+
+    const adminAction = (btn: JQuery, msg: string, cmd: string) => {
+      btn.on('click', () => {
+        domConfirm(msg, yep => {
+          if (yep) {
+            $.ajax({
+              type: 'POST',
+              dataType: 'text',
+              url: this.appService.getApiServer() + `/admin/${cmd}`,
+              error: (jqXHR: JQueryXHR) => {
+                domAlert(jqXHR.responseText);
+              }
+            });
+          }
+        });
+      });
+    };
+
+    adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
+    adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
 
     if (!localServer) {
       // Hide indoor/outdoor options by default if this isn't a local server, but check if proxied data
@@ -291,6 +315,9 @@ export class SettingsDialog {
   }
 
   public openSettings(previousSettings: Settings) {
+    this.shutdownButton.css('display', this.appService.adminAllowed ? 'inline' : 'none');
+    this.rebootButton.css('display', this.appService.adminAllowed ? 'inline' : 'none');
+
     this.currentCity.val(previousSettings.city);
     this.latitude.val(previousSettings.latitude);
     this.longitude.val(previousSettings.longitude);
@@ -371,7 +398,7 @@ export class SettingsDialog {
       }
     };
 
-    this.okButton.click(doOK);
+    this.okButton.on('click', doOK);
 
     this.cancelButton.one('click', () => {
       popKeydownListener();

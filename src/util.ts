@@ -103,6 +103,35 @@ export function domAlert(message: string): void {
   });
 }
 
+export function domConfirm(message: string, callback: (isOk: boolean) => void): void {
+  const confirmElem = $('#confirm-dialog');
+  const confirmOk = $('#confirm-ok');
+  const confirmCancel = $('#confirm-cancel');
+
+  pushKeydownListener((event: KeyboardEvent) => {
+    if (event.code === 'Enter') {
+      event.preventDefault();
+      confirmOk.trigger('click');
+    }
+    else if (event.code === 'Escape') {
+      event.preventDefault();
+      confirmCancel.trigger('click');
+    }
+  });
+
+  const doCallback = isOk => {
+    popKeydownListener();
+    confirmElem.hide();
+    callback(isOk);
+  };
+
+  $('#confirm-message').text(message);
+  confirmElem.show();
+
+  confirmOk.one('click', () => doCallback(true));
+  confirmCancel.one('click', () => doCallback(false));
+}
+
 export function setSvgHref(elem: JQuery, href: string) {
   elem.attr('href', href);
 

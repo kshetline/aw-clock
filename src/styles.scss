@@ -255,7 +255,7 @@ body {
   font-size: smaller;
 }
 
-.alert-buttons {
+.alert-buttons, .confirm-buttons {
   position: absolute;
   bottom: 1em;
   left: auto;
@@ -427,15 +427,17 @@ body {
   }
 }
 
-#alert-dialog > div {
-  position: absolute;
-  margin: auto;
-  top: 0; left: 0; bottom: 0; right: 0;
-  width: 320px;
-  height: 240px;
-  padding: 1em;
-  background-color: white;
-  color: black;
+#alert-dialog, #confirm-dialog {
+  > div {
+    position: absolute;
+    margin: auto;
+    top: 0; left: 0; bottom: 0; right: 0;
+    width: 320px;
+    height: 240px;
+    padding: 1em;
+    background-color: white;
+    color: black;
+  }
 }
 
 input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome for input[type=submit]

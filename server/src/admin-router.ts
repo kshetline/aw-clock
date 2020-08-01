@@ -28,6 +28,6 @@ router.post('/*', async (req: Request, res: Response) => {
     res.status(200);
   }
   catch (e) {
-    res.status(500).send(`Command "${req.query.cmd}" failed: ${e.message}`);
+    res.status(500).send(`Command "${cmd}" failed: ${e.message}`);
   }
 });

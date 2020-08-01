@@ -188,9 +188,6 @@ function getApp() {
     res.send('Static home file not found');
   });
 
-  if (allowAdmin)
-    theApp.use('/admin', adminRouter);
-
   if (allowCors) {
     // see: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs
     theApp.use((req, res, next) => {
@@ -206,6 +203,9 @@ function getApp() {
       }
     });
   }
+
+  if (allowAdmin)
+    theApp.use('/admin', adminRouter);
 
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);

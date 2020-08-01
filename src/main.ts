@@ -79,6 +79,7 @@ class AwClockApp implements AppService {
 
   private settings = new Settings();
   private settingsChecked = false;
+  private admin = false;
 
   constructor() {
     this.settings.load();
@@ -233,6 +234,8 @@ class AwClockApp implements AppService {
             let citySet = false;
             let countryCode = '';
 
+            this.admin = !!data[0]?.admin;
+
             if (data[0]?.indoorOption && data[0].outdoorOption) {
               this.settings.indoorOption = data[0].indoorOption;
               this.settings.outdoorOption = data[0].outdoorOption;
@@ -362,6 +365,10 @@ class AwClockApp implements AppService {
 
   getOutdoorOption(): string {
     return this.settings.outdoorOption;
+  }
+
+  adminAllowed(): boolean {
+    return this.admin;
   }
 
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void {
