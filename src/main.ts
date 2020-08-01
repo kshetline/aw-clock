@@ -79,7 +79,6 @@ class AwClockApp implements AppService {
 
   private settings = new Settings();
   private settingsChecked = false;
-  private admin = false;
 
   constructor() {
     this.settings.load();
@@ -234,8 +233,6 @@ class AwClockApp implements AppService {
             let citySet = false;
             let countryCode = '';
 
-            this.admin = !!data[0]?.admin;
-
             if (data[0]?.indoorOption && data[0].outdoorOption) {
               this.settings.indoorOption = data[0].indoorOption;
               this.settings.outdoorOption = data[0].outdoorOption;
@@ -367,10 +364,6 @@ class AwClockApp implements AppService {
     return this.settings.outdoorOption;
   }
 
-  adminAllowed(): boolean {
-    return this.admin;
-  }
-
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void {
     this.currentTempManager.updateCurrentTempAndHumidity(cth, this.settings.celsius);
   }
@@ -410,6 +403,7 @@ class AwClockApp implements AppService {
     this.dimmer.css('opacity', '0');
   }
 
+  // noinspection JSMethodCanBeStatic
   private removeSignalMeterShadowRoots(): void {
     const signalMeter = $('#signal-meter');
     const markup = signalMeter.html();

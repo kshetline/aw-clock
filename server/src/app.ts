@@ -13,6 +13,7 @@ import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
 import * as path from 'path';
+import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, noCache, normalizePort } from './util';
@@ -222,10 +223,11 @@ function getApp() {
   theApp.get('/defaults', async (req, res) => {
     noCache(res);
 
+    const ip = requestIp.getClientIp(req);
     const defaults: any = {
       indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
-      allowAdmin
+      allowAdmin: allowAdmin && /^(::1|127\.0\.0\.1|localhost)$/.test(ip)
     };
 
     if (gps) {

@@ -91,8 +91,8 @@ export class SettingsDialog {
   private okButton: JQuery;
   private cancelButton: JQuery;
   private reloadButton: JQuery;
-  private rebootButton: JQuery;
-  private shutdownButton: JQuery;
+  private readonly rebootButton: JQuery;
+  private readonly shutdownButton: JQuery;
 
   private defaultLocation: any;
   private searchFieldFocused = false;
@@ -315,9 +315,6 @@ export class SettingsDialog {
   }
 
   public openSettings(previousSettings: Settings) {
-    this.shutdownButton.css('display', this.appService.adminAllowed ? 'inline' : 'none');
-    this.rebootButton.css('display', this.appService.adminAllowed ? 'inline' : 'none');
-
     this.currentCity.val(previousSettings.city);
     this.latitude.val(previousSettings.latitude);
     this.longitude.val(previousSettings.longitude);
@@ -332,7 +329,7 @@ export class SettingsDialog {
     (this.submitSearch as any).enable(true);
     (this.getGps as any).enable(false);
     this.defaultLocation = undefined;
-    this.getDefaultLocation();
+    this.getDefaults();
     (this.searchCity as any).enable(true);
     this.searchCity.val('');
     this.searchMessage.html('&nbsp;');
@@ -435,14 +432,16 @@ export class SettingsDialog {
     });
   }
 
-  private getDefaultLocation(): void {
+  private getDefaults(): void {
     const url = `${apiServer}/defaults`;
 
     $.ajax({
       url: url,
       dataType: 'json',
       success: (data: any) => {
-        console.log(data);
+        this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
+        this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
+
         if (data?.latitude != null) {
           this.defaultLocation = data;
           (this.getGps as any).enable(true);

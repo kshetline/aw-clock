@@ -3,7 +3,6 @@ import { Settings } from './settings';
 import { TimeInfo } from '../server/src/shared-types';
 
 export interface AppService {
-  adminAllowed(): boolean;
   forecastHasBeenUpdated(): void;
   getAmPm(): boolean;
   getCurrentTime(bias?: number): number;
