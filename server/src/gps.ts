@@ -35,6 +35,7 @@ export class Gps extends TimePoller {
   constructor(private taiUtc : TaiUtc) {
     super();
     this.monitorGps();
+    // noinspection JSIgnoredPromiseFromCall
     this.checkSystemTime();
   }
 
@@ -123,6 +124,7 @@ export class Gps extends TimePoller {
             this.gpsData.signalQuality = round(this.gpsData.signalQuality);
           }
 
+          // noinspection JSIgnoredPromiseFromCall
           this.checkLocation();
         }
         else if (obj?.class === 'SKY' && Array.isArray(obj.satellites)) {

@@ -264,7 +264,7 @@ if (treatAsRaspberryPi) {
       if (doAdmin === undefined)
         doAdmin = toBoolean(oldSettings.AWC_ALLOW_ADMIN);
       else
-        settings.AWC_ALLOW_ADMIN = doAdmin.toString();
+        settings.AWC_ALLOW_ADMIN = doAdmin?.toString();
 
       // Convert deprecated environment variables
       if (!oldSettings.AWC_WIRED_TH_GPIO && toBoolean(oldSettings.AWC_HAS_INDOOR_SENSOR))
@@ -522,7 +522,7 @@ const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 const questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port', ask: true, validate: portValidate },
-  { prompt: 'Allow reboot/shutdown from screen?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
+  { prompt: 'Allow user to reboot or shutdown?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
   { name: 'AWC_PREFERRED_WS', prompt: 'preferred weather service, (w)underground or (d)arksky)', ask: true, validate: wsValidate, after: wsAfter },
   {

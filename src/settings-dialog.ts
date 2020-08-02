@@ -420,7 +420,8 @@ export class SettingsDialog {
         dataType: 'jsonp',
         data: {
           q: query,
-          client: 'web'
+          client: 'web',
+          pt: 'false'
         },
         success: (data: SearchResults) => {
           resolve(data);
