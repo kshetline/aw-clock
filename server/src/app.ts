@@ -227,7 +227,7 @@ function getApp() {
     const defaults: any = {
       indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
-      allowAdmin: allowAdmin && /^(::1|127\.0\.0\.1|localhost)$/.test(ip)
+      allowAdmin: allowAdmin && /^(::1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip)
     };
 
     if (gps) {

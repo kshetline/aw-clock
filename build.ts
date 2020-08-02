@@ -21,6 +21,7 @@ let doUpdateUpgrade = true;
 let npmInitDone = false;
 let doAcu = false;
 let clearAcu = false;
+let doAdmin: boolean;
 let doDht = false;
 let clearDht = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -87,6 +88,7 @@ let trailingSpace = '  '; // Two spaces
 let totalSteps = 5;
 let currentStep = 0;
 const settings: Record<string, string> = {
+  AWC_ALLOW_ADMIN: 'false',
   AWC_ALLOW_CORS: 'true',
   AWC_GPS_PPS_GPIO: '4',
   AWC_NTP_SERVER: 'pool.ntp.org',
@@ -156,6 +158,12 @@ process.argv.forEach(arg => {
     case '--acu-':
       doAcu = false;
       clearAcu = true;
+      break;
+    case '--admin':
+      doAdmin = true;
+      break;
+    case '--admin-':
+      doAdmin = false;
       break;
     case '--bash':
       viaBash = true;
@@ -252,6 +260,11 @@ if (treatAsRaspberryPi) {
         if ($)
           oldSettings[$[1]] = settings[$[1]] = $[2];
       });
+
+      if (doAdmin === undefined)
+        doAdmin = toBoolean(oldSettings.AWC_ALLOW_ADMIN);
+      else
+        settings.AWC_ALLOW_ADMIN = doAdmin.toString();
 
       // Convert deprecated environment variables
       if (!oldSettings.AWC_WIRED_TH_GPIO && toBoolean(oldSettings.AWC_HAS_INDOOR_SENSOR))
@@ -456,6 +469,10 @@ function yesOrNo(s: string, assign: (isYes: boolean) => void): boolean {
   return false;
 }
 
+function adminValidate(s: string): boolean {
+  return yesOrNo(s, isYes => settings.AWC_ALLOW_ADMIN = isYes ? 'true' : 'false');
+}
+
 function upgradeValidate(s: string): boolean {
   return yesOrNo(s, isYes => doUpdateUpgrade = isYes);
 }
@@ -505,6 +522,7 @@ const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 const questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port', ask: true, validate: portValidate },
+  { prompt: 'Allow reboot/shutdown from screen?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
   { name: 'AWC_PREFERRED_WS', prompt: 'preferred weather service, (w)underground or (d)arksky)', ask: true, validate: wsValidate, after: wsAfter },
   {

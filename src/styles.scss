@@ -267,6 +267,7 @@ body {
   width: calc(100% - 2em);
 
   & button {
+    margin: 0 1em;
     min-width: 80px; // Ignored by macOS Chrome
   }
 }
