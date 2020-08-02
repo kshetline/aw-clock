@@ -24,7 +24,6 @@ import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import * as $ from 'jquery';
-import { Keyboard } from './keyboard';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
@@ -59,7 +58,6 @@ class AwClockApp implements AppService {
   private currentTempManager: CurrentTempManager;
   private forecast: Forecast;
   private ephemeris: Ephemeris;
-  private keyboard: Keyboard;
   private sensors: Sensors;
   private settingsDialog: SettingsDialog;
 
@@ -100,7 +98,6 @@ class AwClockApp implements AppService {
 
     this.sensors = new Sensors(this);
 
-    this.keyboard = new Keyboard();
     this.settingsDialog = new SettingsDialog(this);
 
     this.body = $('body');

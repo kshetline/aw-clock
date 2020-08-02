@@ -1,4 +1,10 @@
+import * as $ from 'jquery';
 import SimpleKeyboard from 'simple-keyboard';
+
+interface Point {
+  x: number;
+  y: number;
+}
 
 export class Keyboard {
   private capsOn = false;
@@ -76,5 +82,35 @@ export class Keyboard {
         }
       }
     });
+
+    const document = window.document;
+    const keyboardElem = $('.keyboard');
+    const dragArea = $('.keyboard-title');
+    let keyboardStart: Point;
+    let dragStart: Point;
+    let dragging = false;
+
+    document.addEventListener('mousedown', event => {
+      console.log('doc mousedown');
+      dragStart = { x: event.clientX, y: event.clientY };
+      keyboardStart = keyboardElem[0] && { x: keyboardElem[0].offsetLeft, y: keyboardElem[0].offsetTop };
+    }, { capture: true, passive: true });
+
+    // eslint-disable-next-line chai-friendly/no-unused-expressions
+    dragArea[0]?.addEventListener('mousedown', () => dragging = true);
+
+    document.addEventListener('mousemove', event => {
+      if (!dragging || !dragStart || !keyboardStart)
+        return;
+
+      const newPoint = { x: event.clientX, y: event.clientY };
+      const dx = newPoint.x - dragStart.x;
+      const dy = newPoint.y - dragStart.y;
+
+      keyboardElem[0].style.left = (keyboardStart.x + dx) + 'px';
+      keyboardElem[0].style.top = (keyboardStart.y + dy) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => dragging = false);
   }
 }

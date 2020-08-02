@@ -20,6 +20,7 @@
 import { AppService } from './app.service';
 import { HourlyForecast } from './forecast';
 import * as $ from 'jquery';
+import { Keyboard } from './keyboard';
 import { isIE, isSafari } from 'ks-util';
 import { apiServer, localServer, Settings } from './settings';
 import { adjustCityName, domAlert, domConfirm, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
@@ -93,12 +94,15 @@ export class SettingsDialog {
   private reloadButton: JQuery;
   private readonly rebootButton: JQuery;
   private readonly shutdownButton: JQuery;
+  private keyboard: Keyboard;
 
   private defaultLocation: any;
   private searchFieldFocused = false;
   private searchButtonFocused = false;
 
   constructor(private appService: AppService) {
+    this.keyboard = new Keyboard();
+
     this.dialog = $('#settings-dialog');
     this.currentCity = $('#current-city');
     this.latitude = $('#latitude');

@@ -735,7 +735,16 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   max-width: 800px;
   padding-top: 2px;
   text-align: center;
+  user-select: none;
   width: 60vw;
+
+  background-image: linear-gradient(0deg, #bbbbbb 16.67%, rgba(0, 0, 0, 0) 16.67%, rgba(0, 0, 0, 0) 50%, #bbbbbb 50%, #bbbbbb 66.67%, rgba(0, 0, 0, 0) 66.67%, rgba(0, 0, 0, 0) 100%);
+  background-size: 6.00px 6.00px;
+
+  span {
+    background-color: #ECECEC;
+    padding: 0 1em  ;
+  }
 }
 
 .simple-keyboard {
