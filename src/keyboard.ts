@@ -83,21 +83,22 @@ export class Keyboard {
       }
     });
 
+    this.keyboard.addButtonTheme('{space}', 'space-key');
+
     const document = window.document;
     const keyboardElem = $('.keyboard');
-    const dragArea = $('.keyboard-title');
+    const dragArea = $('.keyboard-title, .hg-row');
     let keyboardStart: Point;
     let dragStart: Point;
     let dragging = false;
 
     document.addEventListener('mousedown', event => {
-      console.log('doc mousedown');
       dragStart = { x: event.clientX, y: event.clientY };
       keyboardStart = keyboardElem[0] && { x: keyboardElem[0].offsetLeft, y: keyboardElem[0].offsetTop };
     }, { capture: true, passive: true });
 
-    // eslint-disable-next-line chai-friendly/no-unused-expressions
-    dragArea[0]?.addEventListener('mousedown', () => dragging = true);
+    dragArea.on('mousedown', () => dragging = true);
+    document.addEventListener('mouseup', () => dragging = false);
 
     document.addEventListener('mousemove', event => {
       if (!dragging || !dragStart || !keyboardStart)
@@ -110,7 +111,5 @@ export class Keyboard {
       keyboardElem[0].style.left = (keyboardStart.x + dx) + 'px';
       keyboardElem[0].style.top = (keyboardStart.y + dy) + 'px';
     });
-
-    document.addEventListener('mouseup', () => dragging = false);
   }
 }
