@@ -104,6 +104,7 @@ export class SettingsDialog {
     this.keyboard = new Keyboard();
 
     this.dialog = $('#settings-dialog');
+    this.keyboard.setTopElement(this.dialog[0]);
     this.currentCity = $('#current-city');
     this.latitude = $('#latitude');
     this.longitude = $('#longitude');
@@ -198,6 +199,24 @@ export class SettingsDialog {
     else if (isSafari()) {
       $('.user-options').css('grid-row-gap', '0');
     }
+
+    const allInputs = $('input');
+    let lastFocus: HTMLElement;
+
+    allInputs.on('focus', event => {
+      lastFocus = event.currentTarget;
+      this.keyboard.show();
+      this.keyboard.setInput(event.target as HTMLInputElement);
+    });
+
+    allInputs.on('blur', () => {
+      lastFocus = undefined;
+
+      setTimeout(() => {
+        if (lastFocus === undefined)
+          this.keyboard.hide();
+      }, 500);
+    });
   }
 
   private doSearch(): void {

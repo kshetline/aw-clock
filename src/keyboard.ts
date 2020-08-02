@@ -11,10 +11,12 @@ const KEEP_ONSCREEN_WIDTH = 100;
 
 export class Keyboard {
   private capsOn = false;
+  private input: HTMLInputElement;
   private readonly keyboard: SimpleKeyboard;
   private readonly keyboardElem: HTMLElement;
   private lastKeyboardCheck: any;
   private shiftOn = false;
+  private topElem: HTMLElement = document.body;
 
   constructor() {
     this.keyboard = new SimpleKeyboard({
@@ -56,15 +58,29 @@ export class Keyboard {
           '{space}'
         ]
       },
-      onChange: input => console.log(input),
+      onChange: input => {
+        if (this.input)
+          this.input.value = input;
+      },
       onKeyPress: button => {
-        console.log(button);
+        if (this.input && (button.length === 1 || button === '{space}')) {
+          const start = this.input.selectionStart;
+          const end = this.input.selectionEnd;
 
-        if (button === '{lock}' || button === '{shift}') {
+          if (end > start) {
+            this.input.value = this.input.value.substr(0, start) + this.input.value.substr(end);
+            this.keyboard.setInput(this.input.value);
+            setTimeout(() => this.input.selectionStart = this.input.selectionEnd = start + 1);
+          }
+        }
+
+        const wasShifted = this.shiftOn;
+
+        if (button === '{lock}' || button === '{shift}' || (this.shiftOn && button !== '{shift}')) {
           let layoutName = 'default';
 
           this.capsOn = (+this.capsOn ^ +(button === '{lock}')) === 1;
-          this.shiftOn = (+this.shiftOn ^ +(button === '{shift}')) === 1;
+          this.shiftOn = (+this.shiftOn ^ +(button !== '{lock}')) === 1;
           this.keyboard[this.capsOn ? 'addButtonTheme' : 'removeButtonTheme']('{lock}', 'key-locked');
           this.keyboard[this.shiftOn ? 'addButtonTheme' : 'removeButtonTheme']('{shift}', 'key-locked');
 
@@ -77,15 +93,29 @@ export class Keyboard {
 
           this.keyboard.setOptions({ layoutName });
         }
-      }
+
+        if (button === '{tab}' && document.hasFocus() && document.activeElement) {
+          const focusList = $('input, button, a, area, object, select, textarea, [contenteditable]', this.topElem);
+          const i = focusList.index(document.activeElement);
+          const len = focusList.length;
+
+          if (i < 0)
+            focusList[0].focus();
+          else if (wasShifted)
+            focusList[(i - 1 + len) % len].focus();
+          else
+            focusList[(i + 1) % len].focus();
+        }
+      },
+      preventMouseDownDefault: true,
+      tabCharOnTab: false
     });
 
     this.keyboard.addButtonTheme('{lock}', 'caps-lock');
     this.keyboard.addButtonTheme('{space}', 'space-key');
     this.keyboardElem = $('.keyboard')[0];
 
-    const document = window.document;
-    const dragArea = $('.keyboard-title, .hg-row');
+    const dragArea = $('.keyboard-title');
     let keyboardStart: Point;
     let dragStart: Point;
     let dragging = false;
@@ -95,7 +125,10 @@ export class Keyboard {
       keyboardStart = this.keyboardElem && { x: this.keyboardElem.offsetLeft, y: this.keyboardElem.offsetTop };
     }, { capture: true, passive: true });
 
-    dragArea.on('mousedown', () => dragging = true);
+    dragArea.on('mousedown', event => {
+      event.preventDefault();
+      dragging = true;
+    });
     document.addEventListener('mouseup', () => dragging = false);
     document.addEventListener('mouseleave', () => dragging = false);
 
@@ -123,6 +156,26 @@ export class Keyboard {
         }, 500);
       }
     });
+  }
+
+  setInput(input: HTMLInputElement): void {
+    if (input && this.input !== input)
+      this.keyboard.setInput(input.value ?? '', input.name);
+
+    this.input = input;
+  }
+
+  setTopElement(elem: HTMLElement): void {
+    this.topElem = elem;
+  }
+
+  show(isShown = true): void {
+    if (this.keyboardElem)
+      this.keyboardElem.style.display = isShown ? 'block' : 'none';
+  }
+
+  hide(): void {
+    this.show(false);
   }
 
   private keepKeyboardOnScreen(x: number, y: number): void {
