@@ -199,29 +199,6 @@ export class SettingsDialog {
     else if (isSafari()) {
       $('.user-options').css('grid-row-gap', '0');
     }
-
-    const allInputs = $('input, button, select');
-    let lastFocus: HTMLElement;
-
-    allInputs.on('focus', event => {
-      lastFocus = event.currentTarget;
-
-      if (lastFocus instanceof HTMLInputElement) {
-        this.keyboard.show();
-        this.keyboard.setInput(event.target as HTMLInputElement);
-      }
-      else
-        this.keyboard.setInput(null);
-    });
-
-    allInputs.on('blur', () => {
-      lastFocus = undefined;
-
-      setTimeout(() => {
-        if (lastFocus === undefined)
-          this.keyboard.hide();
-      }, 500);
-    });
   }
 
   private doSearch(): void {

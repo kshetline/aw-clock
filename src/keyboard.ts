@@ -10,12 +10,13 @@ const KEEP_ONSCREEN_HEIGHT = 32;
 const KEEP_ONSCREEN_WIDTH = 100;
 
 export class Keyboard {
+  private allInputs: JQuery;
   private capsOn = false;
-  private elem: HTMLElement;
   private focusHandler = () => this.gotFocus();
   private input: HTMLInputElement;
   private readonly keyboard: SimpleKeyboard;
   private readonly keyboardElem: HTMLElement;
+  private lastFocus: HTMLElement;
   private lastKeyboardCheck: any;
   private shiftOn = false;
   private shown = false;
@@ -135,13 +136,16 @@ export class Keyboard {
 
           if (len > 0) {
             if (i < 0)
-              this.elem = focusList[0];
+              this.lastFocus = focusList[0];
             else if (wasShifted)
-              this.elem = focusList[(i - 1 + len) % len];
+              this.lastFocus = focusList[(i - 1 + len) % len];
             else
-              this.elem = focusList[(i + 1) % len];
+              this.lastFocus = focusList[(i + 1) % len];
 
-            this.elem.focus();
+            if (!(this.lastFocus instanceof HTMLInputElement))
+              this.setInput(null);
+
+            this.lastFocus.focus();
           }
         }
 
@@ -214,13 +218,44 @@ export class Keyboard {
       if (this.input)
         this.input.removeEventListener('focus', this.focusHandler);
     }
+    else if (!input) {
+      this.keyboard.setInput(null);
+      return;
+    }
 
-    this.elem = this.input = input;
+    this.lastFocus = this.input = input;
     this.focusHandler();
   }
 
   setTopElement(elem: HTMLElement): void {
     this.topElem = elem;
+
+    if (this.allInputs) {
+      this.allInputs.off('focus');
+      this.allInputs.off('blur');
+    }
+
+    this.allInputs = $('input, button, select', elem);
+
+    this.allInputs.on('focus', event => {
+      this.lastFocus = event.currentTarget;
+
+      if (this.lastFocus instanceof HTMLInputElement) {
+        this.show();
+        this.setInput(event.target as HTMLInputElement);
+      }
+      else
+        this.setInput(null);
+    });
+
+    this.allInputs.on('blur', () => {
+      this.lastFocus = undefined;
+
+      setTimeout(() => {
+        if (this.lastFocus === undefined)
+          this.hide();
+      }, 500);
+    });
   }
 
   show(isShown = true): void {
@@ -243,7 +278,11 @@ export class Keyboard {
   }
 
   private gotFocus() {
-    const offset = $(this.input).offset();
+    const offset = this.lastFocus && $(this.lastFocus).offset();
+
+    if (!offset)
+      return;
+
     const bottom = offset.top + this.input.offsetHeight + 8;
 
     if (this.keyboardElem.offsetTop < bottom)

@@ -438,10 +438,14 @@ export class Forecast {
         }
       }
 
-      this.hourIcons[index].setAttribute('href', icon);
-      this.hourTemps[index].innerHTML = temp;
-      this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
-      this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
+      if (this.hourIcons[index])
+        this.hourIcons[index].setAttribute('href', icon);
+
+      if (this.hourTemps[index]) {
+        this.hourTemps[index].innerHTML = temp;
+        this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
+        this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
+      }
     }
 
     const todayIndex = forecastData.daily.data.findIndex(cond => {
