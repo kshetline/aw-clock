@@ -1,5 +1,6 @@
 import * as $ from 'jquery';
 import SimpleKeyboard from 'simple-keyboard';
+import { isTypeInInput } from './util';
 
 interface Point {
   x: number;
@@ -12,6 +13,7 @@ const KEEP_ONSCREEN_WIDTH = 100;
 export class Keyboard {
   private allInputs: JQuery;
   private capsOn = false;
+  private enabled = true;
   private enterListeners = new Set<() => void>();
   private focusHandler = () => this.gotFocus();
   private input: HTMLInputElement;
@@ -61,6 +63,9 @@ export class Keyboard {
           this.input.value = input;
       },
       onKeyPress: button => {
+        if (!this.enabled)
+          return;
+
         if (button === '{enter}') {
           Array.from(this.enterListeners).forEach(l => l());
           return;
@@ -138,7 +143,7 @@ export class Keyboard {
             else
               this.lastFocus = focusList[(i + 1) % len];
 
-            if (!(this.lastFocus instanceof HTMLInputElement))
+            if (!isTypeInInput(this.lastFocus))
               this.setInput(null);
 
             this.lastFocus.focus();
@@ -199,6 +204,9 @@ export class Keyboard {
     });
 
     window.addEventListener('resize', () => {
+      if (!this.enabled)
+        return;
+
       if (this.lastKeyboardCheck) {
         clearTimeout(this.lastKeyboardCheck);
         this.lastKeyboardCheck = undefined;
@@ -251,7 +259,7 @@ export class Keyboard {
     this.allInputs.on('focus', event => {
       this.lastFocus = event.currentTarget;
 
-      if (this.lastFocus instanceof HTMLInputElement) {
+      if (isTypeInInput(this.lastFocus)) {
         this.show();
         this.setInput(event.target as HTMLInputElement);
       }
@@ -270,7 +278,7 @@ export class Keyboard {
   }
 
   show(isShown = true): void {
-    if (!this.keyboardElem)
+    if (!this.keyboardElem || (!this.enabled && isShown))
       return;
 
     this.keyboardElem.style.display = isShown ? 'block' : 'none';
@@ -288,13 +296,24 @@ export class Keyboard {
     this.show(false);
   }
 
+  enable(isEnabled = true): void {
+    this.enabled = isEnabled;
+
+    if (!isEnabled)
+      this.hide();
+  }
+
+  disable(): void {
+    this.enable(false);
+  }
+
   private gotFocus() {
     const offset = this.lastFocus && $(this.lastFocus).offset();
 
     if (!offset)
       return;
 
-    const bottom = offset.top + this.input.offsetHeight + 8;
+    const bottom = offset.top + this.lastFocus.offsetHeight + 8;
 
     if (this.keyboardElem.offsetTop < bottom)
       this.keepKeyboardOnScreen(this.keyboardElem.offsetLeft, bottom);

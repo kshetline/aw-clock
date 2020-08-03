@@ -202,3 +202,12 @@ export function setSignalLevel(elem: JQuery, quality: number): void {
 export function adjustCityName(city: string): string {
   return (city || '').replace(/(, [A-Z]{2}), USA?$/, '$1');
 }
+
+export function isTypeInInput(elem: HTMLElement): boolean {
+  if (!(elem instanceof HTMLInputElement))
+    return false;
+
+  const type = elem.getAttribute('type');
+
+  return /^(date|datetime-local|email|file|month|number|password|search|tel|text|time|url|week)$/.test(type);
+}

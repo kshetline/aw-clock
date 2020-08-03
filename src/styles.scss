@@ -32,6 +32,10 @@ body {
   unicode-range: U+263C-2653;
 }
 
+label, span {
+  user-select: none;
+}
+
 #marquee-outer-wrapper {
   position: fixed;
   left: 0;

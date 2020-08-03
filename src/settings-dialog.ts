@@ -68,6 +68,7 @@ export class SettingsDialog {
 
   private readonly dialog: JQuery;
   private currentCity: JQuery;
+  private onscreenKB: JQuery;
   private latitude: JQuery;
   private longitude: JQuery;
   private indoor: JQuery;
@@ -82,7 +83,7 @@ export class SettingsDialog {
   private planets: JQuery;
   private hourlyForecast: JQuery;
   private searchSection: JQuery;
-  private searchCity: JQuery;
+  private readonly searchCity: JQuery;
   private submitSearch: JQuery;
   private getGps: JQuery;
   private searching: JQuery;
@@ -96,6 +97,7 @@ export class SettingsDialog {
   private readonly shutdownButton: JQuery;
   private keyboard: Keyboard;
 
+  private previousSettings: Settings;
   private defaultLocation: any;
   private searchFieldFocused = false;
   private searchButtonFocused = false;
@@ -106,6 +108,7 @@ export class SettingsDialog {
     this.dialog = $('#settings-dialog');
     this.keyboard.setTopElement(this.dialog[0]);
     this.currentCity = $('#current-city');
+    this.onscreenKB = $('#onscreen-kb');
     this.latitude = $('#latitude');
     this.longitude = $('#longitude');
     this.indoor = $('#indoor-option');
@@ -320,6 +323,8 @@ export class SettingsDialog {
   }
 
   public openSettings(previousSettings: Settings) {
+    this.previousSettings = previousSettings;
+
     this.currentCity.val(previousSettings.city);
     this.latitude.val(previousSettings.latitude);
     this.longitude.val(previousSettings.longitude);
@@ -331,6 +336,11 @@ export class SettingsDialog {
     this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
     this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
     this.hourlyForecast.val(previousSettings.hourlyForecast);
+    this.onscreenKB.prop('checked', previousSettings.onscreenKB);
+    this.keyboard.enable(previousSettings.onscreenKB);
+
+    this.enableAutocomplete(!previousSettings.onscreenKB);
+
     (this.submitSearch as any).enable(true);
     (this.getGps as any).enable(false);
     this.defaultLocation = undefined;
@@ -364,6 +374,15 @@ export class SettingsDialog {
 
     this.okButton.on('click', this.doOK);
     this.keyboard.addEnterListener(this.doReturnAction);
+    this.onscreenKB.on('click', () => setTimeout(() => {
+      const checked = this.onscreenKB.is(':checked');
+
+      this.keyboard.enable(checked);
+      this.previousSettings.onscreenKB = checked;
+      this.enableAutocomplete(!checked);
+      // "Onscreen keyboard" state is immediately saved, whether or not the dialog is OKed or canceled.
+      this.appService.updateSettings(this.previousSettings);
+    }));
 
     this.cancelButton.one('click', () => {
       popKeydownListener();
@@ -393,6 +412,7 @@ export class SettingsDialog {
     newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
     newSettings.hidePlanets = (this.planets.val() as string) === 'H';
     newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
+    newSettings.onscreenKB = this.onscreenKB.is(':checked');
 
     if (!newSettings.city) {
       domAlert('Current city must be specified.');
@@ -415,7 +435,7 @@ export class SettingsDialog {
   };
 
   private doReturnAction = () => {
-    if (document.hasFocus() && document.activeElement === this.searchCity[0])
+    if (this.searchFieldFocused)
       this.doSearch();
     else
       this.doOK();
@@ -473,5 +493,14 @@ export class SettingsDialog {
       this.latitude.val(this.defaultLocation.latitude.toString());
       this.longitude.val(this.defaultLocation.longitude.toString());
     }
+  }
+
+  private enableAutocomplete(enabled: boolean): void {
+    const texts = $(':text', this.dialog);
+
+    if (enabled)
+      texts.removeAttr('autocomplete');
+    else
+      texts.attr('autocomplete', 'off');
   }
 }

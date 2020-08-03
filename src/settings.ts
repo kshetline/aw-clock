@@ -44,6 +44,7 @@ export class Settings {
   hideSeconds = false;
   hidePlanets = false;
   hourlyForecast = HourlyForecast.VERTICAL;
+  onscreenKB = false;
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
@@ -65,6 +66,7 @@ export class Settings {
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
     this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) ||
       defaultSettings.hourlyForecast;
+    this.onscreenKB = toBoolean(Cookies.get('oskb'), false);
   }
 
   public save(): void {
@@ -84,6 +86,7 @@ export class Settings {
     Cookies.set('hides', this.hideSeconds.toString(), expiration);
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);
     Cookies.set('hourly_forecast', this.hourlyForecast, expiration);
+    Cookies.set('oskb', this.onscreenKB.toString(), expiration);
   }
 
   public requiresWeatherReload(oldSettings: Settings) {
