@@ -66,7 +66,7 @@ export class SettingsDialog {
   private readonly dimmingStart: JQuery;
   private readonly dimmingEnd: JQuery;
 
-  private dialog: JQuery;
+  private readonly dialog: JQuery;
   private currentCity: JQuery;
   private latitude: JQuery;
   private longitude: JQuery;
@@ -200,13 +200,18 @@ export class SettingsDialog {
       $('.user-options').css('grid-row-gap', '0');
     }
 
-    const allInputs = $('input');
+    const allInputs = $('input, button, select');
     let lastFocus: HTMLElement;
 
     allInputs.on('focus', event => {
       lastFocus = event.currentTarget;
-      this.keyboard.show();
-      this.keyboard.setInput(event.target as HTMLInputElement);
+
+      if (lastFocus instanceof HTMLInputElement) {
+        this.keyboard.show();
+        this.keyboard.setInput(event.target as HTMLInputElement);
+      }
+      else
+        this.keyboard.setInput(null);
     });
 
     allInputs.on('blur', () => {

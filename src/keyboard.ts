@@ -11,15 +11,18 @@ const KEEP_ONSCREEN_WIDTH = 100;
 
 export class Keyboard {
   private capsOn = false;
+  private elem: HTMLElement;
+  private focusHandler = () => this.gotFocus();
   private input: HTMLInputElement;
   private readonly keyboard: SimpleKeyboard;
   private readonly keyboardElem: HTMLElement;
   private lastKeyboardCheck: any;
   private shiftOn = false;
+  private shown = false;
   private topElem: HTMLElement = document.body;
 
-  constructor() {
-    this.keyboard = new SimpleKeyboard({
+  constructor(selector?: string | HTMLDivElement) {
+    const options = {
       display: {
         '{bksp}': 'delete',
         '{clear}': 'clear',
@@ -70,7 +73,7 @@ export class Keyboard {
           return;
 
         const start = this.input.selectionStart;
-        const end = this.input.selectionEnd;
+        let end = this.input.selectionEnd;
 
         if (button === '{clear}') {
           this.input.value = '';
@@ -90,15 +93,18 @@ export class Keyboard {
           else
             pos = start;
 
-          this.input.selectionStart = this.input.selectionEnd = pos;
+          this.keyboard.caretPosition = this.input.selectionStart = this.input.selectionEnd = pos;
 
           return;
         }
 
         if ((button.length === 1 || button === '{bksp}' || button === '{space}') && end > start) {
-          this.input.value = this.input.value.substr(0, start) + this.input.value.substr(end);
+          const val = this.input.value;
+
+          this.input.value = val.substr(0, start) + (button === '{bksp}' ? val.substr(start - 1, 1) : '') +
+            val.substr(end);
           this.keyboard.setInput(this.input.value);
-          setTimeout(() => this.input.selectionStart = this.input.selectionEnd = start + (button === '{bksp}' ? 0 : 1));
+          end = start;
         }
 
         const wasShifted = this.shiftOn;
@@ -122,21 +128,34 @@ export class Keyboard {
         }
 
         if (button === '{tab}' && document.hasFocus() && document.activeElement) {
-          const focusList = $('input, button, a, area, object, select, textarea, [contenteditable]', this.topElem);
+          const focusList = $('input, button, select', this.topElem)
+            .filter(':not(:disabled)');
           const i = focusList.index(document.activeElement);
           const len = focusList.length;
 
-          if (i < 0)
-            focusList[0].focus();
-          else if (wasShifted)
-            focusList[(i - 1 + len) % len].focus();
-          else
-            focusList[(i + 1) % len].focus();
+          if (len > 0) {
+            if (i < 0)
+              this.elem = focusList[0];
+            else if (wasShifted)
+              this.elem = focusList[(i - 1 + len) % len];
+            else
+              this.elem = focusList[(i + 1) % len];
+
+            this.elem.focus();
+          }
         }
+
+        if (button.length === 1 || button === '{bksp}')
+          setTimeout(() => this.input.selectionStart = this.input.selectionEnd = Math.max(end + (button === '{bksp}' ? -1 : 1), 0));
       },
       preventMouseDownDefault: true,
       tabCharOnTab: false
-    });
+    };
+
+    if (selector)
+      this.keyboard = new SimpleKeyboard(selector as any, options);
+    else
+      this.keyboard = new SimpleKeyboard(options);
 
     this.keyboard.addButtonTheme('{clear}', 'clear-key');
     this.keyboard.addButtonTheme('{larr}', 'arrow-key');
@@ -188,10 +207,16 @@ export class Keyboard {
   }
 
   setInput(input: HTMLInputElement): void {
-    if (input && this.input !== input)
+    if (input && this.input !== input) {
       this.keyboard.setInput(input.value ?? '', input.name);
+      input.addEventListener('focus', this.focusHandler);
 
-    this.input = input;
+      if (this.input)
+        this.input.removeEventListener('focus', this.focusHandler);
+    }
+
+    this.elem = this.input = input;
+    this.focusHandler();
   }
 
   setTopElement(elem: HTMLElement): void {
@@ -199,12 +224,30 @@ export class Keyboard {
   }
 
   show(isShown = true): void {
-    if (this.keyboardElem)
-      this.keyboardElem.style.display = isShown ? 'block' : 'none';
+    if (!this.keyboardElem)
+      return;
+
+    this.keyboardElem.style.display = isShown ? 'block' : 'none';
+
+    if (isShown && !this.shown) {
+      const x = (document.body.offsetWidth - this.keyboardElem.offsetWidth) / 2;
+      const y = (document.body.offsetHeight - this.keyboardElem.offsetHeight) / 3;
+
+      this.keepKeyboardOnScreen(x, y);
+      this.shown = true;
+    }
   }
 
   hide(): void {
     this.show(false);
+  }
+
+  private gotFocus() {
+    const offset = $(this.input).offset();
+    const bottom = offset.top + this.input.offsetHeight + 8;
+
+    if (this.keyboardElem.offsetTop < bottom)
+      this.keepKeyboardOnScreen(this.keyboardElem.offsetLeft, bottom);
   }
 
   private keepKeyboardOnScreen(x: number, y: number): void {
