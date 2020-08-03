@@ -767,8 +767,12 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   background-color: #C0C0C0 !important;
 }
 
-.space-key {
-  margin: 0 9% !important;
+.arrow-key {
+  max-width: 7%;
+}
+
+.clear-key {
+  max-width: 10%;
 }
 
 .caps-lock span {

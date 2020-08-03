@@ -22,8 +22,11 @@ export class Keyboard {
     this.keyboard = new SimpleKeyboard({
       display: {
         '{bksp}': 'delete',
+        '{clear}': 'clear',
         '{enter}': '\xA0\xA0\xA0↵\xA0\xA0\xA0',
+        '{larr}': '←',
         '{lock}': 'caps\xA0lock',
+        '{rarr}': '→',
         '{shift}': 'shift',
         '{space}': ' ',
         '{tab}': '\xA0\xA0⇥\xA0\xA0'
@@ -34,28 +37,28 @@ export class Keyboard {
           '{tab} q w e r t y u i o p [ ] \\',
           '{lock} a s d f g h j k l ; \' {enter}',
           '{shift} z x c v b n m , . / {shift}',
-          '{space}'
+          '{space} {clear} {larr} {rarr}'
         ],
         shift: [
           '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
           '{tab} Q W E R T Y U I O P { } |',
           '{lock} A S D F G H J K L : " {enter}',
           '{shift} Z X C V B N M < > ? {shift}',
-          '{space}'
+          '{space} {clear} {larr} {rarr}'
         ],
         caps: [
           '` 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
           '{tab} Q W E R T Y U I O P [ ] \\',
           '{lock} A S D F G H J K L ; \' {enter}',
           '{shift} Z X C V B N M , . / {shift}',
-          '{space}'
+          '{space} {clear} {larr} {rarr}'
         ],
         shiftCaps: [
           '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
           '{tab} q w e r t y u i o p { } |',
           '{lock} a s d f g h j k l : " {enter}',
           '{shift} z x c v b n m < > ? {shift}',
-          '{space}'
+          '{space} {clear} {larr} {rarr}'
         ]
       },
       onChange: input => {
@@ -63,15 +66,39 @@ export class Keyboard {
           this.input.value = input;
       },
       onKeyPress: button => {
-        if (this.input && (button.length === 1 || button === '{space}')) {
-          const start = this.input.selectionStart;
-          const end = this.input.selectionEnd;
+        if (!this.input)
+          return;
 
-          if (end > start) {
-            this.input.value = this.input.value.substr(0, start) + this.input.value.substr(end);
-            this.keyboard.setInput(this.input.value);
-            setTimeout(() => this.input.selectionStart = this.input.selectionEnd = start + 1);
-          }
+        const start = this.input.selectionStart;
+        const end = this.input.selectionEnd;
+
+        if (button === '{clear}') {
+          this.input.value = '';
+          this.keyboard.clearInput(this.input.name);
+
+          return;
+        }
+
+        if (button === '{larr}' || button === '{rarr}') {
+          const delta = button === '{larr}' ? -1 : 1;
+          let pos: number;
+
+          if (start === end)
+            pos = Math.min(Math.max(start + delta, 0), this.input.value?.length ?? 0);
+          else if (delta > 0)
+            pos = end;
+          else
+            pos = start;
+
+          this.input.selectionStart = this.input.selectionEnd = pos;
+
+          return;
+        }
+
+        if ((button.length === 1 || button === '{bksp}' || button === '{space}') && end > start) {
+          this.input.value = this.input.value.substr(0, start) + this.input.value.substr(end);
+          this.keyboard.setInput(this.input.value);
+          setTimeout(() => this.input.selectionStart = this.input.selectionEnd = start + (button === '{bksp}' ? 0 : 1));
         }
 
         const wasShifted = this.shiftOn;
@@ -111,8 +138,10 @@ export class Keyboard {
       tabCharOnTab: false
     });
 
+    this.keyboard.addButtonTheme('{clear}', 'clear-key');
+    this.keyboard.addButtonTheme('{larr}', 'arrow-key');
     this.keyboard.addButtonTheme('{lock}', 'caps-lock');
-    this.keyboard.addButtonTheme('{space}', 'space-key');
+    this.keyboard.addButtonTheme('{rarr}', 'arrow-key');
     this.keyboardElem = $('.keyboard')[0];
 
     const dragArea = $('.keyboard-title');
