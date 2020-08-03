@@ -362,49 +362,12 @@ export class SettingsDialog {
       }
     });
 
-    const doOK = () => {
-      const newSettings = new Settings();
-
-      newSettings.city = (this.currentCity.val() as string).trim();
-      newSettings.latitude = Number(this.latitude.val());
-      newSettings.longitude = Number(this.longitude.val());
-      newSettings.indoorOption = this.indoor.val() as string;
-      newSettings.outdoorOption = this.outdoor.val() as string;
-      newSettings.userId = this.userId.val() as string;
-      newSettings.dimming = +this.dimming.val();
-      newSettings.dimmingStart = this.dimmingStart.val() as string;
-      newSettings.dimmingEnd = this.dimmingEnd.val() as string;
-      newSettings.celsius = (this.temperature.val() as string) === 'C';
-      newSettings.amPm = (this.hours.val() as string) === 'AMPM';
-      newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
-      newSettings.hidePlanets = (this.planets.val() as string) === 'H';
-      newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
-
-      if (!newSettings.city) {
-        domAlert('Current city must be specified.');
-        this.currentCity.trigger('focus');
-      }
-      else if (isNaN(newSettings.latitude) || newSettings.latitude < -90 || newSettings.latitude > 90) {
-        domAlert('A valid latitude must be provided from -90 to 90 degrees.');
-        this.latitude.trigger('focus');
-      }
-      else if (isNaN(newSettings.longitude) || newSettings.longitude < -180 || newSettings.longitude > 180) {
-        domAlert('A valid longitude must be provided from -180 to 180 degrees.');
-        this.longitude.trigger('focus');
-      }
-      else {
-        popKeydownListener();
-        this.okButton.off('click', doOK);
-        this.dialog.css('display', 'none');
-        this.appService.updateSettings(newSettings);
-      }
-    };
-
-    this.okButton.on('click', doOK);
+    this.okButton.on('click', this.doOK);
+    this.keyboard.addEnterListener(this.doReturnAction);
 
     this.cancelButton.one('click', () => {
       popKeydownListener();
-      this.okButton.off('click', doOK);
+      this.okButton.off('click', this.doOK);
       this.dialog.css('display', 'none');
     });
 
@@ -412,6 +375,51 @@ export class SettingsDialog {
       window.location.reload();
     });
   }
+
+  private doOK = () => {
+    const newSettings = new Settings();
+
+    newSettings.city = (this.currentCity.val() as string).trim();
+    newSettings.latitude = Number(this.latitude.val());
+    newSettings.longitude = Number(this.longitude.val());
+    newSettings.indoorOption = this.indoor.val() as string;
+    newSettings.outdoorOption = this.outdoor.val() as string;
+    newSettings.userId = this.userId.val() as string;
+    newSettings.dimming = +this.dimming.val();
+    newSettings.dimmingStart = this.dimmingStart.val() as string;
+    newSettings.dimmingEnd = this.dimmingEnd.val() as string;
+    newSettings.celsius = (this.temperature.val() as string) === 'C';
+    newSettings.amPm = (this.hours.val() as string) === 'AMPM';
+    newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
+    newSettings.hidePlanets = (this.planets.val() as string) === 'H';
+    newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
+
+    if (!newSettings.city) {
+      domAlert('Current city must be specified.');
+      this.currentCity.trigger('focus');
+    }
+    else if (isNaN(newSettings.latitude) || newSettings.latitude < -90 || newSettings.latitude > 90) {
+      domAlert('A valid latitude must be provided from -90 to 90 degrees.');
+      this.latitude.trigger('focus');
+    }
+    else if (isNaN(newSettings.longitude) || newSettings.longitude < -180 || newSettings.longitude > 180) {
+      domAlert('A valid longitude must be provided from -180 to 180 degrees.');
+      this.longitude.trigger('focus');
+    }
+    else {
+      popKeydownListener();
+      this.okButton.off('click', this.doOK);
+      this.dialog.css('display', 'none');
+      this.appService.updateSettings(newSettings);
+    }
+  };
+
+  private doReturnAction = () => {
+    if (document.hasFocus() && document.activeElement === this.searchCity[0])
+      this.doSearch();
+    else
+      this.doOK();
+  };
 
   private callSearchApi(query: string): Promise<SearchResults> {
     // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations is subject

@@ -12,6 +12,7 @@ const KEEP_ONSCREEN_WIDTH = 100;
 export class Keyboard {
   private allInputs: JQuery;
   private capsOn = false;
+  private enterListeners = new Set<() => void>();
   private focusHandler = () => this.gotFocus();
   private input: HTMLInputElement;
   private readonly keyboard: SimpleKeyboard;
@@ -23,6 +24,20 @@ export class Keyboard {
   private topElem: HTMLElement = document.body;
 
   constructor(selector?: string | HTMLDivElement) {
+    const defaultKeys = [
+      '` 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
+      '{tab} q w e r t y u i o p [ ] \\',
+      '{lock} a s d f g h j k l ; \' {enter}',
+      '{shift} z x c v b n m , . / {shift}',
+      '{space} {clear} {larr} {rarr}'
+    ];
+    const shiftKeys = [
+      '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
+      '{tab} Q W E R T Y U I O P { } |',
+      '{lock} A S D F G H J K L : " {enter}',
+      '{shift} Z X C V B N M < > ? {shift}',
+      '{space} {clear} {larr} {rarr}'
+    ];
     const options = {
       display: {
         '{bksp}': 'delete',
@@ -36,40 +51,21 @@ export class Keyboard {
         '{tab}': '\xA0\xA0⇥\xA0\xA0'
       },
       layout: {
-        default: [
-          '` 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
-          '{tab} q w e r t y u i o p [ ] \\',
-          '{lock} a s d f g h j k l ; \' {enter}',
-          '{shift} z x c v b n m , . / {shift}',
-          '{space} {clear} {larr} {rarr}'
-        ],
-        shift: [
-          '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
-          '{tab} Q W E R T Y U I O P { } |',
-          '{lock} A S D F G H J K L : " {enter}',
-          '{shift} Z X C V B N M < > ? {shift}',
-          '{space} {clear} {larr} {rarr}'
-        ],
-        caps: [
-          '` 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
-          '{tab} Q W E R T Y U I O P [ ] \\',
-          '{lock} A S D F G H J K L ; \' {enter}',
-          '{shift} Z X C V B N M , . / {shift}',
-          '{space} {clear} {larr} {rarr}'
-        ],
-        shiftCaps: [
-          '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
-          '{tab} q w e r t y u i o p { } |',
-          '{lock} a s d f g h j k l : " {enter}',
-          '{shift} z x c v b n m < > ? {shift}',
-          '{space} {clear} {larr} {rarr}'
-        ]
+        default: defaultKeys,
+        shift: shiftKeys,
+        caps: defaultKeys.map(row => row.replace(/\b[a-z]\b/g, m => m[0].toUpperCase())),
+        shiftCaps: shiftKeys.map(row => row.replace(/\b[A-Z]\b/g, m => m[0].toLowerCase()))
       },
       onChange: input => {
         if (this.input)
           this.input.value = input;
       },
       onKeyPress: button => {
+        if (button === '{enter}') {
+          Array.from(this.enterListeners).forEach(l => l());
+          return;
+        }
+
         if (!this.input)
           return;
 
@@ -215,6 +211,14 @@ export class Keyboard {
         }, 500);
       }
     });
+  }
+
+  addEnterListener(listener: () => void) {
+    this.enterListeners.add(listener);
+  }
+
+  removeEnterListener(listener: () => void) {
+    this.enterListeners.delete(listener);
   }
 
   setInput(input: HTMLInputElement): void {
