@@ -167,6 +167,13 @@ export class Keyboard {
     this.keyboard.addButtonTheme('{rarr}', 'arrow-key');
     this.keyboardElem = $('.keyboard')[0];
 
+    $('#keyboard-close').on('click', () => {
+      this.hide();
+
+      if (this.input)
+        this.input.blur();
+    });
+
     const dragArea = $('.keyboard-title');
     let keyboardStart: Point;
     let dragStart: Point;
