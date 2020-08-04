@@ -130,8 +130,7 @@ export class Keyboard {
         }
 
         if (button === '{tab}' && document.hasFocus() && document.activeElement) {
-          const focusList = $('input, button, select', this.topElem)
-            .filter(':not(:disabled)');
+          const focusList = $('input, button, select', this.topElem).filter(':not(:disabled)');
           const i = focusList.index(document.activeElement);
           const len = focusList.length;
 
@@ -255,7 +254,6 @@ export class Keyboard {
     }
 
     this.allInputs = $('input, button, select', elem);
-
     this.allInputs.on('focus', event => {
       this.lastFocus = event.currentTarget;
 
