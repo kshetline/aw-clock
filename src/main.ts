@@ -82,6 +82,7 @@ class AwClockApp implements AppService {
 
   constructor() {
     this.settings.load();
+    AwClockApp.removeDefShadowRoots();
 
     this.clock = new Clock(this);
     this.clock.amPm = this.settings.amPm;
@@ -187,7 +188,6 @@ class AwClockApp implements AppService {
   }
 
   start() {
-    this.removeSignalMeterShadowRoots();
     this.clock.start();
 
     setTimeout(() => {
@@ -403,12 +403,26 @@ class AwClockApp implements AppService {
     this.dimmer.css('opacity', '0');
   }
 
-  // noinspection JSMethodCanBeStatic
-  private removeSignalMeterShadowRoots(): void {
+  private static removeDefShadowRoots(): void {
     const signalMeter = $('#signal-meter');
-    const markup = signalMeter.html();
-    const uses = $('use[href="#signal-meter"]');
+    const days = $('#forecast-day');
+    let markup = signalMeter.html();
+    let uses = $('use[href="#signal-meter"]');
 
     uses.parent().html(markup);
+
+    uses = $('use[href="#forecast-day"]');
+    uses.each(function () {
+      const id = this.parentElement.id;
+
+      markup = days.html().replace(/dayN/g, id);
+
+      if (id === 'day0')
+        markup = markup.replace('---', 'Today');
+      else if (id === 'day1')
+        markup = markup.replace('>---', ' transform="scale(0.88, 1) translate(0.75, 0)">Tomorrow');
+
+      this.parentElement.innerHTML = markup;
+    });
   }
 }
