@@ -28,6 +28,11 @@ import { ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
 
+interface SVGAnimationElementPlus extends SVGAnimationElement {
+  beginElement: () => void;
+  endElement: () => void;
+}
+
 const DEFAULT_BACKGROUND = 'midnightblue';
 const DEFAULT_FOREGROUND = 'white';
 const ERROR_BACKGROUND = '#CCC';
@@ -64,6 +69,8 @@ const EMPTY_ICON = 'assets/empty.svg';
 const UNKNOWN_ICON = 'assets/unknown.svg';
 const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
 
+const REVERT_TO_START_OF_WEEK_DELAY = 60_000; // 1 minute
+
 export enum HourlyForecast { NONE = 'N', CIRCULAR = 'C', VERTICAL = 'V' }
 
 export class Forecast {
@@ -91,6 +98,7 @@ export class Forecast {
   private cachedHourly: HourlyConditions[] = [];
   private lastForecastTime = 0;
   private timezone = KsTimeZone.OS_ZONE;
+  private showingStartOfWeek = true;
 
   private marqueeText = ' ';
   private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
@@ -104,7 +112,7 @@ export class Forecast {
   constructor(private appService: AppService) {
     this.currentIcon = $('#current-icon');
 
-    for (let i = 0; i < 4; ++i) {
+    for (let i = 0; i < 7; ++i) {
       this.dayIcons[i] = $('#day' + i + '-icon');
       this.dayLowHighs[i] = $('#day' + i + '-low-high');
       this.dayChancePrecips[i] = $('#day' + i + '-chance-precip');
@@ -127,8 +135,99 @@ export class Forecast {
       this.weatherServer = '';
 
     this.decorateClockFace();
+    this.detectGestures();
 
     window.addEventListener('resize', () => this.updateMarqueeAnimation(null));
+  }
+
+  private detectGestures(): void {
+    const forecastWrapper = $('#forecast-wrapper');
+    const width = forecastWrapper[0].getBoundingClientRect().width;
+    const dragStartThreshold = 3;
+    const swipeThreshold = width / 14;
+    const goStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
+    const goEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
+    const dragWeek = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
+    let dragging = false;
+    let downX: number;
+    let minMove = 0;
+    let revertToStart: any;
+
+    forecastWrapper.on('mousedown', event => {
+      dragging = true;
+      downX = event.screenX;
+      minMove = 0;
+    });
+
+    const doSwipe = (dx: number) => {
+      if (revertToStart)
+        clearTimeout(revertToStart);
+
+      dragWeek.endElement();
+
+      if (dx < 0) {
+        this.showingStartOfWeek = false;
+        setTimeout(() => goEnd.beginElement());
+
+        revertToStart = setTimeout(() => {
+          revertToStart = undefined;
+          doSwipe(1);
+        }, REVERT_TO_START_OF_WEEK_DELAY);
+      }
+      else {
+        this.showingStartOfWeek = true;
+        setTimeout(() => goStart.beginElement());
+      }
+    };
+
+    const canMoveDirection = (dx: number) => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
+
+    forecastWrapper.on('mousemove', event => {
+      if (!dragging)
+        return;
+
+      const dx = event.screenX - downX;
+
+      minMove = Math.max(Math.abs(dx), Math.abs(minMove));
+
+      if (canMoveDirection(dx)) {
+        if (minMove >= swipeThreshold) {
+          dragging = false;
+          doSwipe(dx);
+        }
+        else if (minMove >= dragStartThreshold) {
+          const currentShift = this.showingStartOfWeek ? 0 : -39;
+          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, -39), 0);
+
+          $(dragWeek).attr('to', `${dragTo} 0`);
+          dragWeek.endElement();
+          setTimeout(() => dragWeek.beginElement());
+        }
+      }
+    });
+
+    const endDrag = (event: JQuery.MouseUpEvent) => {
+      if (dragging && minMove >= 0) {
+        const dx = event.screenX - downX;
+
+        if (canMoveDirection(dx)) {
+          if (Math.abs(dx) >= swipeThreshold)
+            doSwipe(dx);
+          else if (minMove >= dragStartThreshold) {
+            if (this.showingStartOfWeek && dx < 0)
+              goStart.beginElement();
+            else if (!this.showingStartOfWeek && dx > 0)
+              goEnd.beginElement();
+          }
+        }
+      }
+
+      dragging = false;
+    };
+
+    forecastWrapper.on('mouseup', endDrag);
+    // 'mouseexit' is accept as valid, but doesn't work. 'mouseleave' produces the correct result, but has to be cast to 'any' to compile?
+    forecastWrapper.on('mouseleave' as any, endDrag);
   }
 
   private decorateClockFace(): void {

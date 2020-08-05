@@ -60,7 +60,7 @@ export class Ephemeris {
     this.planetSymbols = $('#planets');
     this.risenTracks = $('#risen-tracks');
 
-    for (let i = 0; i < 4; ++i) {
+    for (let i = 0; i < 7; ++i) {
       this.sunrises[i] = $('#day' + i + '-sunrise');
       this.sunsets[i] = $('#day' + i + '-sunset');
       this.moons[i] = $('#day' + i + '-moon');
@@ -153,7 +153,7 @@ export class Ephemeris {
         risenTrack.css('visibility', 'hidden');
     });
 
-    eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {
+    eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 7, observer, timezone).then(daysOfEvents => {
       let todayRise: string = null;
       let todaySet: string = null;
 
@@ -183,7 +183,7 @@ export class Ephemeris {
       this.appService.updateSunriseAndSunset(todayRise, todaySet);
     });
 
-    for (let dayIndex = 0; dayIndex < 4; ++dayIndex) {
+    for (let dayIndex = 0; dayIndex < 7; ++dayIndex) {
       const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
       const noon = new KsDateTime({ y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0 }, timezone);
       const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);

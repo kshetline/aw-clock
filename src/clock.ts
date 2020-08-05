@@ -53,6 +53,7 @@ export class Clock {
   private readonly hourHand: HTMLElement;
   private readonly forecastDivider: HTMLElement;
   private readonly hands: HTMLElement;
+  private readonly gpsMeter: HTMLElement;
 
   private sweep: SVGAnimationElement;
   private zoneCaption: HTMLElement;
@@ -63,13 +64,11 @@ export class Clock {
   private yearCaption: HTMLElement;
   private timeCaption: HTMLElement;
   private gpsIcon: HTMLElement;
-  private gpsMeter: HTMLElement;
   private dut1Label: HTMLElement;
   private dut1Caption: HTMLElement;
   private dtaiLabel: HTMLElement;
   private dtaiCaption: HTMLElement;
-  private day2Caption: HTMLElement;
-  private day3Caption: HTMLElement;
+  private dayHeaders: HTMLElement[];
   private clock: HTMLElement;
 
   private readonly hasBeginElement: boolean;
@@ -112,8 +111,9 @@ export class Clock {
     this.dut1Caption = document.getElementById('dut1');
     this.dtaiLabel = document.getElementById('dtai-label');
     this.dtaiCaption = document.getElementById('dtai');
-    this.day2Caption = document.getElementById('day2-caption');
-    this.day3Caption = document.getElementById('day3-caption');
+    this.dayHeaders = (Array.from(document.getElementsByClassName('forecast-day-header')) as HTMLElement[])
+      .filter(h => !h.id.includes('dayN'))
+      .sort((a, b) => parseFloat(a.id.substr(3)) - parseFloat(b.id.substr(3)));
 
     this.hasBeginElement = !!this.sweep.beginElement;
 
@@ -404,8 +404,10 @@ export class Clock {
       this.dateCaption.textContent = padLeft(wallTime.d, 2, '0');
       this.monthCaption.textContent = months[wallTime.m - 1].toUpperCase();
       this.yearCaption.textContent = wallTime.y.toString();
-      this.day2Caption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
-      this.day3Caption.textContent = daysOfWeek[(dayOfTheWeek + 3) % 7];
+
+      for (let i = 2; i < 7; ++i)
+        this.dayHeaders[i].textContent = daysOfWeek[(dayOfTheWeek + i) % 7];
+
       this.zoneCaption.textContent = this.timezone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
 
       let displayHour = hour;
