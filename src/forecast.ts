@@ -257,7 +257,7 @@ export class Forecast {
     };
 
     forecastWrapper.on('mouseup', event => mouseUp(event.screenX));
-    // 'mouseexit' is accept as valid, but doesn't work. 'mouseleave' produces the correct result, but has to be cast to 'any' to compile?
+    // 'mouseexit' is accepted as valid, but doesn't work. 'mouseleave' produces the correct result, but has to be cast to 'any' to compile?
     forecastWrapper.on('mouseleave' as any, event => mouseUp(event.screenX));
     forecastWrapper.on('touchend', event => mouseUp(event.touches[0].screenX));
   }

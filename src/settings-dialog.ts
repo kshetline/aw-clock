@@ -93,6 +93,7 @@ export class SettingsDialog {
   private okButton: JQuery;
   private cancelButton: JQuery;
   private reloadButton: JQuery;
+  private readonly quitButton: JQuery;
   private readonly rebootButton: JQuery;
   private readonly shutdownButton: JQuery;
   private keyboard: Keyboard;
@@ -135,6 +136,7 @@ export class SettingsDialog {
     this.okButton = $('#settings-ok');
     this.cancelButton = $('#settings-cancel');
     this.reloadButton = $('#settings-reload');
+    this.quitButton = $('#settings-quit');
     this.rebootButton = $('#settings-reboot');
     this.shutdownButton = $('#settings-shutdown');
 
@@ -179,6 +181,7 @@ export class SettingsDialog {
 
     adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
     adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
+    adminAction(this.quitButton, 'Are you sure you want to quit the Chromium web browser?', 'quit');
 
     if (!localServer) {
       // Hide indoor/outdoor options by default if this isn't a local server, but check if proxied data
@@ -475,6 +478,7 @@ export class SettingsDialog {
       success: (data: any) => {
         this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
+        this.quitButton.css('display', data.allowAdmin ? 'inline' : 'none');
 
         if (data?.latitude != null) {
           this.defaultLocation = data;

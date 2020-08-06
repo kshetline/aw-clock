@@ -7,7 +7,7 @@ export const router = Router();
 router.post('/*', async (req: Request, res: Response) => {
   noCache(res);
 
-  const cmd = req.url.replace(/^\//, '');
+  let cmd = req.url.replace(/^\//, '');
   let args: string[] = [];
 
   switch (cmd) {
@@ -16,6 +16,11 @@ router.post('/*', async (req: Request, res: Response) => {
 
     case 'shutdown':
       args = ['0'];
+      break;
+
+    case 'quit':
+      cmd = 'pkill';
+      args = ['-o', 'chromium'];
       break;
 
     default:
