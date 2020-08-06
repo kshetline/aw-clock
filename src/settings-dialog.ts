@@ -488,7 +488,6 @@ export class SettingsDialog {
       url: url,
       dataType: 'json',
       success: (data: any) => {
-        console.log(data);
         this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.quitButton.css('display',
