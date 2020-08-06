@@ -144,16 +144,20 @@ export class Forecast {
     const width = forecastWrapper[0].getBoundingClientRect().width;
     const dragStartThreshold = 3;
     const swipeThreshold = width / 14;
-    const goStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
-    const goEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
-    const dragWeek = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
+    const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
+    const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
+    const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
+    const skipToStart = document.getElementById('week-backward');
+    const disabledSkipColor = skipToStart.getAttribute('fill');
+    const skipToEnd = document.getElementById('week-forward');
+    const enabledSkipColor = skipToEnd.getAttribute('fill');
     let dragging = false;
     let dragAnimating = false;
     let downX: number;
     let minMove = 0;
     let revertToStart: any;
 
-    dragWeek.addEventListener('endEvent', () => {
+    animateWeekDrag.addEventListener('endEvent', () => {
       dragAnimating = false;
     });
 
@@ -176,7 +180,9 @@ export class Forecast {
 
       if (dx < 0) {
         this.showingStartOfWeek = false;
-        setTimeout(() => goEnd.beginElement());
+        skipToEnd.setAttribute('fill', disabledSkipColor);
+        skipToStart.setAttribute('fill', enabledSkipColor);
+        setTimeout(() => animateToEnd.beginElement());
 
         revertToStart = setTimeout(() => {
           revertToStart = undefined;
@@ -185,9 +191,21 @@ export class Forecast {
       }
       else {
         this.showingStartOfWeek = true;
-        setTimeout(() => goStart.beginElement());
+        skipToStart.setAttribute('fill', disabledSkipColor);
+        skipToEnd.setAttribute('fill', enabledSkipColor);
+        setTimeout(() => animateToStart.beginElement());
       }
     };
+
+    skipToEnd.addEventListener('click', () => {
+      if (this.showingStartOfWeek)
+        doSwipe(-1);
+    });
+
+    skipToStart.addEventListener('click', () => {
+      if (!this.showingStartOfWeek)
+        doSwipe(1);
+    });
 
     const canMoveDirection = (dx: number) => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
 
@@ -208,9 +226,9 @@ export class Forecast {
           const currentShift = this.showingStartOfWeek ? 0 : -39;
           const dragTo = Math.min(Math.max(currentShift + dx / width * 91, -39), 0);
 
-          $(dragWeek).attr('to', `${dragTo} 0`);
+          $(animateWeekDrag).attr('to', `${dragTo} 0`);
           dragAnimating = true;
-          dragWeek.beginElement();
+          animateWeekDrag.beginElement();
         }
       }
     });
@@ -224,9 +242,9 @@ export class Forecast {
             doSwipe(dx);
           else if (minMove >= dragStartThreshold) {
             if (this.showingStartOfWeek && dx < 0)
-              goStart.beginElement();
+              animateToStart.beginElement();
             else if (!this.showingStartOfWeek && dx > 0)
-              goEnd.beginElement();
+              animateToEnd.beginElement();
           }
         }
       }
