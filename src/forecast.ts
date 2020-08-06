@@ -156,6 +156,7 @@ export class Forecast {
     let downX: number;
     let minMove = 0;
     let revertToStart: any;
+    let touchMonitor: any;
 
     animateWeekDrag.addEventListener('endEvent', () => {
       dragAnimating = false;
@@ -247,7 +248,19 @@ export class Forecast {
       }
     };
     forecastWrapper.on('mousemove', event => mouseMove(event.screenX));
-    forecastWrapper.on('touchmove', event => mouseMove(event.touches[0].screenX));
+    forecastWrapper.on('touchmove', event => {
+      // No reliable touchend after touchmove on Raspberry Pi touchscreen?
+      if (touchMonitor) {
+        clearTimeout(touchMonitor);
+        touchMonitor = undefined;
+      }
+
+      mouseMove(event.touches[0].screenX);
+      touchMonitor = setTimeout(() => {
+        touchMonitor = undefined;
+        mouseUp(null);
+      }, 1000);
+    });
 
     const mouseUp = (x: number) => {
       if (dragging && minMove >= 0) {
