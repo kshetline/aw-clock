@@ -239,15 +239,15 @@ export class Forecast {
 
     const mouseUp = (x: number) => {
       if (dragging && minMove >= 0) {
-        const dx = x - downX;
+        const dx = (x ?? downX) - downX;
 
-        if (canMoveDirection(dx)) {
+        if (x == null || canMoveDirection(dx)) {
           if (Math.abs(dx) >= swipeThreshold)
             doSwipe(dx);
           else if (minMove >= dragStartThreshold) {
-            if (this.showingStartOfWeek && dx < 0)
+            if (this.showingStartOfWeek && dx <= 0)
               animateToStart.beginElement();
-            else if (!this.showingStartOfWeek && dx > 0)
+            else if (!this.showingStartOfWeek && dx >= 0)
               animateToEnd.beginElement();
           }
         }
@@ -260,6 +260,7 @@ export class Forecast {
     // 'mouseexit' is accepted as valid, but doesn't work. 'mouseleave' produces the correct result, but has to be cast to 'any' to compile?
     forecastWrapper.on('mouseleave' as any, event => mouseUp(event.screenX));
     forecastWrapper.on('touchend', event => mouseUp(event.touches[0].screenX));
+    forecastWrapper.on('touchcancel', () => mouseUp(null));
   }
 
   private decorateClockFace(): void {
