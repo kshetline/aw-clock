@@ -154,9 +154,9 @@ export class Forecast {
     let dragging = false;
     let dragAnimating = false;
     let downX: number;
+    let lastX: number;
     let minMove = 0;
     let revertToStart: any;
-    let touchMonitor: any;
 
     animateWeekDrag.addEventListener('endEvent', () => {
       dragAnimating = false;
@@ -164,7 +164,7 @@ export class Forecast {
 
     const mouseDown = (x: number) => {
       dragging = true;
-      downX = x;
+      lastX = downX = x;
       minMove = 0;
     };
     forecastWrapper.on('mousedown', event => mouseDown(event.screenX));
@@ -231,6 +231,7 @@ export class Forecast {
       const dx = x - downX;
 
       minMove = Math.max(Math.abs(dx), Math.abs(minMove));
+      lastX = x;
 
       if (canMoveDirection(dx)) {
         if (minMove >= swipeThreshold) {
@@ -248,19 +249,7 @@ export class Forecast {
       }
     };
     forecastWrapper.on('mousemove', event => mouseMove(event.screenX));
-    forecastWrapper.on('touchmove', event => {
-      // No reliable touchend after touchmove on Raspberry Pi touchscreen?
-      if (touchMonitor) {
-        clearTimeout(touchMonitor);
-        touchMonitor = undefined;
-      }
-
-      mouseMove(event.touches[0].screenX);
-      touchMonitor = setTimeout(() => {
-        touchMonitor = undefined;
-        mouseUp(null);
-      }, 1000);
-    });
+    forecastWrapper.on('touchmove', event => mouseMove(event.touches[0]?.screenX ?? lastX));
 
     const mouseUp = (x: number) => {
       if (dragging && minMove >= 0) {
@@ -280,7 +269,7 @@ export class Forecast {
     forecastWrapper.on('mouseup', event => mouseUp(event.screenX));
     // 'mouseexit' is accepted as valid, but doesn't work. 'mouseleave' produces the correct result, but has to be cast to 'any' to compile?
     forecastWrapper.on('mouseleave' as any, event => mouseUp(event.screenX));
-    forecastWrapper.on('touchend', event => mouseUp(event.touches[0].screenX));
+    forecastWrapper.on('touchend', event => mouseUp(event.touches[0]?.screenX ?? lastX));
     forecastWrapper.on('touchcancel', () => mouseUp(null));
   }
 

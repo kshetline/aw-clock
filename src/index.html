@@ -187,7 +187,7 @@
               to="0 0" dur="1s" fill="freeze" begin="indefinite" calcMode="spline"
               keyTimes="0; 0.25; 0.5; 0.75; 1" keySplines="0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1"/>
             <animateTransform id="end-of-week" attributeName="transform" attributeType="XML" type="translate"
-              to="-39 0" dur="1s" fill="freeze" begin="indefinite" calcMode="spline"
+              to="-39 0" dur="500ms" fill="freeze" begin="indefinite" calcMode="spline"
               keyTimes="0; 0.25; 0.5; 0.75; 1" keySplines="0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1"/>
             <animateTransform id="drag-week" attributeName="transform" attributeType="XML" type="translate"
               to="0 0" dur="1ms" fill="freeze" begin="indefinite"/>
@@ -210,7 +210,7 @@
       <div>
         <div class="user-options">
           <label for="current-city">Current city:</label><input id="current-city" type="text" size="38">
-            <span>
+            <span style="white-space: nowrap;">
               <input type="checkbox" id="onscreen-kb" name="onscreen-kb">
               <label for="onscreen-kb">Onscreen keyboard</label>
             </span>
@@ -297,7 +297,7 @@
           </div>
         </div>
         <div class="dialog-buttons">
-          <span class="version-number">2.4.0</span>
+          <span class="version-number"></span>
           <button id="settings-shutdown" style="display: none">Shut down</button>
           <button id="settings-reboot" style="display: none">Reboot</button>
           <button id="settings-quit" style="display: none">Quit</button>
@@ -326,4 +326,5 @@
       </div>
     </div>
   </body>
+
 </html>

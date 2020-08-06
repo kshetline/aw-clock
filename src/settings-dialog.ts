@@ -146,6 +146,8 @@ export class SettingsDialog {
     this.submitSearch.on('blur', () => this.searchButtonFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
 
+    $('.version-number').text(Settings.version);
+
     this.dimming.on('change', () => {
       this.enableDimmingRange(this.dimming.val() !== '0');
     });
@@ -220,6 +222,7 @@ export class SettingsDialog {
       this.searchMessage.css('background-color', 'white');
       this.cityTableWrapper.hide();
       this.cityTable.html('');
+      this.keyboard.hide();
 
       this.callSearchApi(query).then(response => {
         let rows = '<tr id="header"><th>&#x2605;</th><th>City</th><th>Latitude</th><th>Longitude</th><tr>\n';
@@ -327,6 +330,15 @@ export class SettingsDialog {
 
   public openSettings(previousSettings: Settings) {
     this.previousSettings = previousSettings;
+
+    const checkUiSizing = () => {
+      if (this.currentCity[0].offsetHeight === 0)
+        setTimeout(checkUiSizing, 10);
+      else if (this.currentCity[0].offsetHeight >= 22.5)
+        this.dialog.addClass('compact-ui');
+    };
+
+    checkUiSizing();
 
     this.currentCity.val(previousSettings.city);
     this.latitude.val(previousSettings.latitude);
@@ -476,9 +488,12 @@ export class SettingsDialog {
       url: url,
       dataType: 'json',
       success: (data: any) => {
+        console.log(data);
         this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
-        this.quitButton.css('display', data.allowAdmin ? 'inline' : 'none');
+        this.quitButton.css('display',
+          data.allowAdmin && /\bRaspbian\b.*\bChromium\b/.test(navigator.appVersion)
+            ? 'inline' : 'none');
 
         if (data?.latitude != null) {
           this.defaultLocation = data;

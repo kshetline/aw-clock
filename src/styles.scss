@@ -36,6 +36,10 @@ label, span, text, #settings-btn {
   user-select: none;
 }
 
+label {
+  white-space: nowrap;
+}
+
 #marquee-outer-wrapper {
   position: fixed;
   left: 0;
@@ -287,6 +291,29 @@ label, span, text, #settings-btn {
   padding: 1em;
   background-color: white;
   color: black;
+}
+
+.compact-ui {
+  input[type='text'], select, input[type='button'], input[type='submit'], button {
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 2px;
+    border: 1px solid #AAA;
+  }
+
+  input[type='button'], input[type='submit'], button, select {
+    padding: 2px 0.6em;
+    border-radius: 3px;
+    background: linear-gradient(to bottom, #EEE, #CCC);
+  }
+
+  select {
+    padding-left: 0.4em;
+    padding-right: 1.25em;
+    background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyBhcmlhLWhpZGRlbj0idHJ1ZSIgZm9jdXNhYmxlPSJmYWxzZSIgZGF0YS1wcmVmaXg9ImZhcyIgZGF0YS1pY29uPSJhbmdsZS1kb3duIiBjbGFzcz0ic3ZnLWlubGluZS0tZmEgZmEtYW5nbGUtZG93biBmYS13LTEwIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAzMjAgNTEyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGZpbGw9IiM0NDQiIGQ9Ik0gMTQzLjMzIDM1Mi4zIEwgOS44NDYgMjEzLjk0NCBDIDAuNjc5IDIwNC41NDQgLTMuMjI3IDE5OC40MTQgNS45MzkgMTg5LjExNCBMIDI1LjM4IDE2OS4zODQgQyAzNC41NDggMTU5Ljk4NCAzNi41IDE2My44NTQgNDUuNTY5IDE3My4yNTQgTCAxNTkuNTE2IDI4Ny43MSBMIDI3Mi42NzQgMTY5LjQ0OSBDIDI4MS44NCAxNjAuMDQ5IDI4NC4yOSAxNTcuOTM0IDI5My4zNjEgMTY3LjMzNCBMIDMxNC4yMzUgMTkwLjczOSBDIDMyMy40MDEgMjAwLjEzOSAzMjAuNTA3IDIwMi42MDUgMzExLjM0IDIxMS45MDUgTCAxNzYuMjkxIDM1Mi4zIEMgMTY3LjMxOSAzNjEuNyAxNTIuNDk2IDM2MS43IDE0My4zMyAzNTIuMyBaIi8+Cjwvc3ZnPg=='), linear-gradient(to bottom, #EEE, #CCC);
+    background-repeat: no-repeat, repeat;
+    background-position: right .2em top 50%, 0 0;
+  }
 }
 
 .user-options {
