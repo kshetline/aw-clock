@@ -161,11 +161,13 @@ export class Forecast {
       dragAnimating = false;
     });
 
-    forecastWrapper.on('mousedown', event => {
+    const mouseDown = (x: number) => {
       dragging = true;
-      downX = event.screenX;
+      downX = x;
       minMove = 0;
-    });
+    };
+    forecastWrapper.on('mousedown', event => mouseDown(event.screenX));
+    forecastWrapper.on('touchstart', event => mouseDown(event.touches[0].screenX));
 
     const doSwipe = (dx: number) => {
       if (revertToStart) {
@@ -209,11 +211,11 @@ export class Forecast {
 
     const canMoveDirection = (dx: number) => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
 
-    forecastWrapper.on('mousemove', event => {
+    const mouseMove = (x: number) => {
       if (!dragging)
         return;
 
-      const dx = event.screenX - downX;
+      const dx = x - downX;
 
       minMove = Math.max(Math.abs(dx), Math.abs(minMove));
 
@@ -231,11 +233,13 @@ export class Forecast {
           animateWeekDrag.beginElement();
         }
       }
-    });
+    };
+    forecastWrapper.on('mousemove', event => mouseMove(event.screenX));
+    forecastWrapper.on('touchmove', event => mouseMove(event.touches[0].screenX));
 
-    const endDrag = (event: JQuery.MouseUpEvent) => {
+    const mouseUp = (x: number) => {
       if (dragging && minMove >= 0) {
-        const dx = event.screenX - downX;
+        const dx = x - downX;
 
         if (canMoveDirection(dx)) {
           if (Math.abs(dx) >= swipeThreshold)
@@ -252,9 +256,10 @@ export class Forecast {
       dragging = false;
     };
 
-    forecastWrapper.on('mouseup', endDrag);
+    forecastWrapper.on('mouseup', event => mouseUp(event.screenX));
     // 'mouseexit' is accept as valid, but doesn't work. 'mouseleave' produces the correct result, but has to be cast to 'any' to compile?
-    forecastWrapper.on('mouseleave' as any, endDrag);
+    forecastWrapper.on('mouseleave' as any, event => mouseUp(event.screenX));
+    forecastWrapper.on('touchend', event => mouseUp(event.touches[0].screenX));
   }
 
   private decorateClockFace(): void {
