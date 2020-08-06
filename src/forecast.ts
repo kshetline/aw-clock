@@ -199,6 +199,18 @@ export class Forecast {
       }
     };
 
+    const restorePosition = () => {
+      if (dragAnimating) {
+        setTimeout(() => restorePosition(), 1);
+        return;
+      }
+
+      if (this.showingStartOfWeek)
+        animateToStart.beginElement();
+      else
+        animateToEnd.beginElement();
+    };
+
     skipToEnd.addEventListener('click', () => {
       if (this.showingStartOfWeek)
         doSwipe(-1);
@@ -244,12 +256,8 @@ export class Forecast {
         if (x == null || canMoveDirection(dx)) {
           if (Math.abs(dx) >= swipeThreshold)
             doSwipe(dx);
-          else if (minMove >= dragStartThreshold) {
-            if (this.showingStartOfWeek && dx <= 0)
-              animateToStart.beginElement();
-            else if (!this.showingStartOfWeek && dx >= 0)
-              animateToEnd.beginElement();
-          }
+          else if (minMove >= dragStartThreshold)
+            restorePosition();
         }
       }
 
