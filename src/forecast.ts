@@ -30,7 +30,6 @@ import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
-  endElement: () => void;
 }
 
 const DEFAULT_BACKGROUND = 'midnightblue';
@@ -149,9 +148,14 @@ export class Forecast {
     const goEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
     const dragWeek = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
     let dragging = false;
+    let dragAnimating = false;
     let downX: number;
     let minMove = 0;
     let revertToStart: any;
+
+    dragWeek.addEventListener('endEvent', () => {
+      dragAnimating = false;
+    });
 
     forecastWrapper.on('mousedown', event => {
       dragging = true;
@@ -160,10 +164,15 @@ export class Forecast {
     });
 
     const doSwipe = (dx: number) => {
-      if (revertToStart)
+      if (revertToStart) {
         clearTimeout(revertToStart);
+        revertToStart = undefined;
+      }
 
-      dragWeek.endElement();
+      if (dragAnimating) {
+        setTimeout(() => doSwipe(dx), 1);
+        return;
+      }
 
       if (dx < 0) {
         this.showingStartOfWeek = false;
@@ -195,13 +204,13 @@ export class Forecast {
           dragging = false;
           doSwipe(dx);
         }
-        else if (minMove >= dragStartThreshold) {
+        else if (minMove >= dragStartThreshold && !dragAnimating) {
           const currentShift = this.showingStartOfWeek ? 0 : -39;
           const dragTo = Math.min(Math.max(currentShift + dx / width * 91, -39), 0);
 
           $(dragWeek).attr('to', `${dragTo} 0`);
-          dragWeek.endElement();
-          setTimeout(() => dragWeek.beginElement());
+          dragAnimating = true;
+          dragWeek.beginElement();
         }
       }
     });
