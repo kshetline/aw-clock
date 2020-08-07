@@ -72,6 +72,14 @@ const REVERT_TO_START_OF_WEEK_DELAY = 60_000; // 1 minute
 
 export enum HourlyForecast { NONE = 'N', CIRCULAR = 'C', VERTICAL = 'V' }
 
+function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
+  const rect = elem.getBoundingClientRect();
+  const x = event.pageX;
+  const y = event.pageY;
+
+  return rect.x <= x && x <= rect.right && rect.y <= y && y <= rect.bottom;
+}
+
 export class Forecast {
   private readonly currentIcon: JQuery;
   private readonly darkskyLogo: JQuery;
@@ -140,8 +148,9 @@ export class Forecast {
   }
 
   private detectGestures(): void {
-    const forecastWrapper = $('#forecast-wrapper');
-    const width = forecastWrapper[0].getBoundingClientRect().width;
+    const forecastRect = $('#forecast-rect')[0];
+    const width = forecastRect.getBoundingClientRect().width;
+
     const dragStartThreshold = 3;
     const swipeThreshold = width / 14;
     const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
@@ -167,8 +176,10 @@ export class Forecast {
       lastX = downX = x;
       minMove = 0;
     };
-    forecastWrapper.on('mousedown', event => mouseDown(event.screenX));
-    forecastWrapper.on('touchstart', event => mouseDown(event.touches[0].screenX));
+    window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? mouseDown(event.pageX) : null);
+    window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
+      mouseDown(event.touches[0].pageX) : null
+    );
 
     const doSwipe = (dx: number) => {
       if (revertToStart) {
@@ -225,7 +236,7 @@ export class Forecast {
     const canMoveDirection = (dx: number) => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
 
     const mouseMove = (x: number) => {
-      if (!dragging)
+      if (!dragging || x === lastX)
         return;
 
       const dx = x - downX;
@@ -236,6 +247,7 @@ export class Forecast {
       if (canMoveDirection(dx)) {
         if (minMove >= swipeThreshold) {
           dragging = false;
+          lastX = undefined;
           doSwipe(dx);
         }
         else if (minMove >= dragStartThreshold && !dragAnimating) {
@@ -248,8 +260,8 @@ export class Forecast {
         }
       }
     };
-    forecastWrapper.on('mousemove', event => mouseMove(event.screenX));
-    forecastWrapper.on('touchmove', event => mouseMove(event.touches[0]?.screenX ?? lastX));
+    window.addEventListener('mousemove', event => mouseMove(event.pageX));
+    window.addEventListener('touchmove', event => mouseMove(event.touches[0]?.pageX ?? lastX));
 
     const mouseUp = (x: number) => {
       if (dragging && minMove >= 0) {
@@ -264,13 +276,12 @@ export class Forecast {
       }
 
       dragging = false;
+      lastX = undefined;
     };
 
-    forecastWrapper.on('mouseup', event => mouseUp(event.screenX));
-    // 'mouseexit' is accepted as valid, but doesn't work. 'mouseleave' produces the correct result, but has to be cast to 'any' to compile?
-    forecastWrapper.on('mouseleave' as any, event => mouseUp(event.screenX));
-    forecastWrapper.on('touchend', event => mouseUp(event.touches[0]?.screenX ?? lastX));
-    forecastWrapper.on('touchcancel', () => mouseUp(null));
+    window.addEventListener('mouseup', event => mouseUp(event.pageX));
+    window.addEventListener('touchend', event => mouseUp(event.touches[0]?.pageX ?? lastX));
+    window.addEventListener('touchcancel', () => mouseUp(null));
   }
 
   private decorateClockFace(): void {

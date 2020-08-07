@@ -151,10 +151,9 @@
           <path id="week-forward" d="M 0 0 L 3 3 L 0 6 L 0 0 Z" fill="#9AB"></path>
         </svg>
 
+        <rect id="forecast-rect" x="110.5" y="57" width="52" height="51" style="fill: rgba(0, 0, 0, 0)"/>
         <svg x="110.5" y="57" clip-path="url(#forecast-clip)">
-          <g id="forecast-wrapper">
-            <rect x="0" y="0" width="91" height="51" style="fill: rgba(0, 0, 0, 0)"/>
-
+          <g>
             <svg id="day0" x="0" y="0" width="12" height="51">
               <use href="#forecast-day"/>
             </svg>
@@ -184,11 +183,9 @@
             </svg>
 
             <animateTransform id="start-of-week" attributeName="transform" attributeType="XML" type="translate"
-              to="0 0" dur="1s" fill="freeze" begin="indefinite" calcMode="spline"
-              keyTimes="0; 0.25; 0.5; 0.75; 1" keySplines="0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1"/>
+              to="0 0" dur="500ms" fill="freeze" begin="indefinite"/>
             <animateTransform id="end-of-week" attributeName="transform" attributeType="XML" type="translate"
-              to="-39 0" dur="500ms" fill="freeze" begin="indefinite" calcMode="spline"
-              keyTimes="0; 0.25; 0.5; 0.75; 1" keySplines="0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1"/>
+              to="-39 0" dur="500ms" fill="freeze" begin="indefinite"/>
             <animateTransform id="drag-week" attributeName="transform" attributeType="XML" type="translate"
               to="0 0" dur="1ms" fill="freeze" begin="indefinite"/>
           </g>

@@ -367,7 +367,7 @@ export class SettingsDialog {
     this.cityTableWrapper.hide();
     this.searching.css('visibility', 'hidden');
     this.dialog.css('display', 'block');
-    setTimeout(() => this.searchCity.trigger('focus'));
+    setTimeout(() => (previousSettings.onscreenKB ? this.okButton : this.searchCity).trigger('focus'));
 
     SettingsDialog.fillInTimeChoices(this.dimmingStart, previousSettings.amPm);
     SettingsDialog.fillInTimeChoices(this.dimmingEnd, previousSettings.amPm);
