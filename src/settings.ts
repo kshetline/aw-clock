@@ -24,6 +24,8 @@ import { toBoolean } from 'ks-util';
 export const runningDev = (document.location.port === '4200');
 export const localServer = (document.location.port &&
   document.location.port !== '80' && document.location.port !== '443');
+export const updateTest = toBoolean(new URLSearchParams(window.location.search).get('ut'), false, true);
+
 const apiParam = new URLSearchParams(window.location.search).get('api');
 const apiPort = apiParam || (runningDev ? '4201' : document.location.port || '8080');
 const apiHost = ((document.location.hostname || '').startsWith('192.') ? document.location.hostname : 'localhost');

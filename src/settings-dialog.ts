@@ -22,7 +22,7 @@ import { HourlyForecast } from './forecast';
 import * as $ from 'jquery';
 import { Keyboard } from './keyboard';
 import { isChromium, isIE, isRaspbian, isSafari } from 'ks-util';
-import { apiServer, localServer, Settings } from './settings';
+import { apiServer, localServer, Settings, updateTest } from './settings';
 import { AWC_VERSION } from '../server/src/shared-types';
 import { adjustCityName, domAlert, domConfirm, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
@@ -184,7 +184,8 @@ export class SettingsDialog {
       });
     };
 
-    adminAction(this.updateButton, 'Are you sure you want to update A/W Clock version %v now?\n\nYour system will be rebooted.', 'update');
+    adminAction(this.updateButton, 'Are you sure you want to update A/W Clock version %v now?\n\n' +
+      'Your system will be rebooted.', 'update' + (updateTest ? '?ut=true' : ''));
     adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
     adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
     adminAction(this.quitButton, 'Are you sure you want to quit the Chromium web browser?', 'quit');
@@ -461,8 +462,9 @@ export class SettingsDialog {
   };
 
   private callSearchApi(query: string): Promise<SearchResults> {
-    // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations is subject
-    // to future change and access restrictions. Users of this code should strongly consider substituting a different API.
+    // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations
+    // is subject to future change and access restrictions. Users of this code should strongly consider substituting
+    // a different API.
     const url = 'https://skyviewcafe.com/atlas';
 
     return new Promise((resolve, reject) => {
@@ -493,9 +495,9 @@ export class SettingsDialog {
       url: url,
       dataType: 'json',
       success: (data: any) => {
-        this.updateButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
-        this.updateButton.prop('disable', !data.updateAvailable);
-        this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
+        this.updateButton.css('display', (data.allowAdmin && raspbianChromium) || updateTest ? 'inline' : 'none');
+        this.updateButton.prop('disable', !data.updateAvailable && !updateTest);
+        this.shutdownButton.css('display', data.allowAdmin? 'inline' : 'none');
         this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
 

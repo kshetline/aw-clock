@@ -88,6 +88,13 @@ export function htmlEncode(s: string): string {
 export function domAlert(message: string): void {
   const alertElem = $('#alert-dialog');
   const alertOk = $('#alert-ok');
+  let match: RegExpExecArray;
+
+  if (((match = /<pre>(.*?)<\/pre>/.exec(message)) ?? [])[1])
+    message = match[1];
+
+  if (!message.trim())
+    message = 'Unknown error';
 
   pushKeydownListener((event: KeyboardEvent) => {
     if (event.code === 'Enter' || event.code === 'Escape') {
@@ -126,7 +133,7 @@ export function domConfirm(message: string, callback: (isOk: boolean) => void): 
     callback(isOk);
   };
 
-  message.replace(/%v/g, AWC_VERSION);
+  message = message.replace(/%v/g, AWC_VERSION);
 
   if (/[\r\n]/.test(message))
     $('#confirm-message').html(asLines(message).map(l => htmlEscape(l)).join('<br>\n').trim());

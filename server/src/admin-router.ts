@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { Request, Response, Router } from 'express';
 import fs from 'fs';
-import { asLines } from 'ks-util';
+import { asLines, toNumber, toBoolean } from 'ks-util';
 import { noCache } from './util';
 import { monitorProcess, spawn } from './process-util';
 
@@ -10,7 +10,7 @@ export const router = Router();
 router.post('/*', async (req: Request, res: Response) => {
   noCache(res);
 
-  const command = req.url.replace(/^\//, '');
+  const command = req.url.replace(/^\//, '').replace(/\?.*$/, '');
   let cmd = command;
   let args: string[] = [];
   let options: any;
@@ -55,22 +55,61 @@ router.post('/*', async (req: Request, res: Response) => {
   }
 
   if (command === 'update') {
-    await performUpdate(response, res);
+    await performUpdate(req, res, response);
     return;
   }
 
-  res.status(200);
+  res.send('OK');
 });
 
-async function performUpdate(gitStatus: string, res: Response): Promise<void> {
+async function performUpdate(req: Request, res: Response, gitStatus: string): Promise<void> {
+  const test = toBoolean(req.query.ut, false, true);
   const lines = asLines(gitStatus);
+  const path = process.env.AWC_GIT_REPO_PATH;
 
-  if (lines?.length !== 1 || lines[0] !== '## master...origin/master') {
-    res.status(400).send('This automated update will only run if your Git repository is a clean checkout of the master branch.');
+  if (!test && (lines?.length !== 1 || lines[0] !== '## master...origin/master')) {
+    res.status(400).send(
+      'This automated update will only run if your Git repository is a clean checkout of the master branch.');
+    return;
   }
 
-  exec('DISPLAY=:0 lxterminal --command="git pull && ./build.sh --ddev --reboot"', { cwd: process.env.AWC_GIT_REPO_PATH });
-  spawn('pkill', ['-o', 'chromium']);
+  let userId = -1;
+  const env = Object.assign({}, process.env);
 
-  res.status(200);
+  env.DISPLAY = ':0';
+
+  // Get the current display user. Probably "pi", but lets make sure.
+  try {
+    const users = (await monitorProcess(spawn('users'))).split(/\s+/);
+
+    for (const user of users) {
+      const id = toNumber((/uid=(\d+)/.exec(await monitorProcess(spawn('id', [user]))) ?? [])[1], -1);
+
+      if (id >= 0) {
+        try {
+          const lines = asLines(await monitorProcess(spawn('xhost', [], { env, uid: id })));
+
+          for (const line of lines) {
+            if (new RegExp(`\\blocaluser:${user}\\b`).test(line)) {
+              userId = id;
+              break;
+            }
+          }
+        }
+        catch {}
+      }
+    }
+  }
+  catch (e) {}
+
+  if (userId < 0) {
+    res.status(500).send('Unable to perform update: display user could not be determined');
+    return;
+  }
+
+  spawn('pkill', ['-o', 'chromium'], { uid: userId });
+  exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh --ddev --reboot; bash"`,
+    { cwd: path, env, uid: userId });
+
+  res.send('OK');
 }

@@ -252,6 +252,12 @@ label {
 
   & button {
     min-width: 80px; // Ignored by macOS Chrome
+
+    &.admin {
+      min-width: 64px;
+      padding-left: 0.25em;
+      padding-right: 0.25em;
+    }
   }
 
   & button:not(:first-child), span:not(:first-child) {

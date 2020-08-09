@@ -25,21 +25,26 @@ import { sleep } from './process-util';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
+const RASPBERRY_PI_CONFIG = '/etc/default/weatherService';
 
 try {
-  if (fs.existsSync(ENV_FILE)) {
-    const lines = asLines(fs.readFileSync(ENV_FILE).toString());
+  const files = [RASPBERRY_PI_CONFIG, ENV_FILE];
 
-    for (const line of lines) {
-      const $ = /\s*(\w+)\s*=\s*([^#]+)/.exec(line);
+  for (const file of files) {
+    if (fs.existsSync(file)) {
+      const lines = asLines(fs.readFileSync(file).toString());
 
-      if ($)
-        process.env[$[1]] = $[2].trim();
+      for (const line of lines) {
+        const $ = /\s*(\w+)\s*=\s*([^#]+)/.exec(line);
+
+        if ($)
+          process.env[$[1]] = $[2].trim();
+      }
     }
   }
 }
 catch (err) {
-  console.log('Failed check for .env file.');
+  console.log('Failed check for environment file.');
 }
 
 // Convert deprecated environment variables
@@ -79,7 +84,6 @@ async function checkForUpdate() {
   catch (e) {
     console.error('Update info request failed: ' + (e.message ?? e.toString()));
   }
-  console.log('Latest version: %s', latestVersion);
 
   updatePollTimer = setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL);
 }
