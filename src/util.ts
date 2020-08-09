@@ -20,7 +20,8 @@
 import * as $ from 'jquery';
 import { KsDateTime } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
-import { isEdge, isSafari, last, padLeft } from 'ks-util';
+import { asLines, htmlEscape, isEdge, isSafari, last, padLeft } from 'ks-util';
+import { AWC_VERSION } from '../server/src/shared-types';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -125,7 +126,13 @@ export function domConfirm(message: string, callback: (isOk: boolean) => void): 
     callback(isOk);
   };
 
-  $('#confirm-message').text(message);
+  message.replace(/%v/g, AWC_VERSION);
+
+  if (/[\r\n]/.test(message))
+    $('#confirm-message').html(asLines(message).map(l => htmlEscape(l)).join('<br>\n').trim());
+  else
+    $('#confirm-message').text(message);
+
   confirmElem.show();
 
   confirmOk.one('click', () => doCallback(true));

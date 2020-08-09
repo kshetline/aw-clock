@@ -1,7 +1,9 @@
 // #!/usr/bin/env node
 import { router as adminRouter } from './admin-router';
+import { requestJson } from 'by-request';
 import { execSync } from 'child_process';
 import { jsonOrJsonp } from './common';
+import compareVersions from 'compare-versions';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
 import express, { Router } from 'express';
@@ -18,7 +20,7 @@ import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, noCache, normalizePort } from './util';
 import { Gps } from './gps';
-import { GpsData } from './shared-types';
+import { AWC_VERSION, GpsData } from './shared-types';
 import { sleep } from './process-util';
 
 const debug = require('debug')('express:server');
@@ -52,6 +54,37 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
   indoorModule = require('./indoor-router');
   indoorRouter = indoorModule.router;
 }
+
+// Poll for software updates
+const UPDATE_POLL_INTERVAL = 21600000; // 6 hours
+let updatePollTimer: any;
+let latestVersion = AWC_VERSION;
+
+async function checkForUpdate() {
+  updatePollTimer = undefined;
+
+  try {
+    const repoInfo = await requestJson('https://api.github.com/repos/kshetline/aw-clock/releases/latest', {
+      headers: {
+        'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION
+      }
+    });
+    const currentVersion = repoInfo?.tag_name?.replace(/^\D+/, '');
+
+    if (currentVersion)
+      latestVersion = currentVersion;
+    else // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Could not parse tag_name');
+  }
+  catch (e) {
+    console.error('Update info request failed: ' + (e.message ?? e.toString()));
+  }
+  console.log('Latest version: %s', latestVersion);
+
+  updatePollTimer = setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL);
+}
+// noinspection JSIgnoredPromiseFromCall
+checkForUpdate();
 
 // Create HTTP server
 const devMode = process.argv.includes('-d');
@@ -165,6 +198,9 @@ function shutdown(signal?: string) {
   if (devMode && signal === 'SIGTERM')
     return;
 
+  if (updatePollTimer)
+    clearTimeout(updatePollTimer);
+
   console.log(`\n*** ${signal ? signal + ': ' : ''}closing server at ${new Date().toISOString()} ***`);
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
   setTimeout(() => process.exit(0), 5000);
@@ -228,7 +264,9 @@ function getApp() {
       indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
       ip,
-      allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip)
+      allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
+      latestVersion,
+      updateAvailable: (allowAdmin && compareVersions.compare(latestVersion, AWC_VERSION, '>')) || true
     };
 
     if (gps) {
@@ -240,7 +278,7 @@ function getApp() {
         gpsInfo = gps.getGpsData();
       }
 
-      if (gpsInfo.latitude != null) {
+      if (gpsInfo.latitude != null && gpsInfo.longitude != null) {
         defaults.latitude = Number(gpsInfo.latitude.toFixed(4));
         defaults.longitude = Number(gpsInfo.longitude.toFixed(4));
         defaults.city = gpsInfo.city || '';

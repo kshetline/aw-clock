@@ -21,8 +21,9 @@ import { AppService } from './app.service';
 import { HourlyForecast } from './forecast';
 import * as $ from 'jquery';
 import { Keyboard } from './keyboard';
-import { isIE, isSafari } from 'ks-util';
+import { isChromium, isIE, isRaspbian, isSafari } from 'ks-util';
 import { apiServer, localServer, Settings } from './settings';
+import { AWC_VERSION } from '../server/src/shared-types';
 import { adjustCityName, domAlert, domConfirm, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -96,6 +97,7 @@ export class SettingsDialog {
   private readonly quitButton: JQuery;
   private readonly rebootButton: JQuery;
   private readonly shutdownButton: JQuery;
+  private readonly updateButton: JQuery;
   private keyboard: Keyboard;
 
   private previousSettings: Settings;
@@ -139,6 +141,7 @@ export class SettingsDialog {
     this.quitButton = $('#settings-quit');
     this.rebootButton = $('#settings-reboot');
     this.shutdownButton = $('#settings-shutdown');
+    this.updateButton = $('#settings-update');
 
     this.searchCity.on('focus', () => this.searchFieldFocused = true);
     this.searchCity.on('blur', () => this.searchFieldFocused = false);
@@ -146,7 +149,7 @@ export class SettingsDialog {
     this.submitSearch.on('blur', () => this.searchButtonFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
 
-    $('.version-number').text(Settings.version);
+    $('.version-number').text(AWC_VERSION);
 
     this.dimming.on('change', () => {
       this.enableDimmingRange(this.dimming.val() !== '0');
@@ -181,6 +184,7 @@ export class SettingsDialog {
       });
     };
 
+    adminAction(this.updateButton, 'Are you sure you want to update A/W Clock version %v now?\n\nYour system will be rebooted.', 'update');
     adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
     adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
     adminAction(this.quitButton, 'Are you sure you want to quit the Chromium web browser?', 'quit');
@@ -483,16 +487,17 @@ export class SettingsDialog {
 
   private getDefaults(): void {
     const url = `${apiServer}/defaults`;
+    const raspbianChromium = isRaspbian() && isChromium();
 
     $.ajax({
       url: url,
       dataType: 'json',
       success: (data: any) => {
+        this.updateButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
+        this.updateButton.prop('disable', !data.updateAvailable);
         this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
-        this.quitButton.css('display',
-          data.allowAdmin && /\bRaspbian\b.*\bChromium\b/.test(navigator.appVersion)
-            ? 'inline' : 'none');
+        this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
 
         if (data?.latitude != null) {
           this.defaultLocation = data;

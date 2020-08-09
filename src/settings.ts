@@ -31,8 +31,6 @@ export const apiServer = new URL(window.location.href).searchParams.get('weather
   (runningDev ? `http://${apiHost}:${apiPort}` : '');
 
 export class Settings {
-  static version = '2.4.0';
-
   latitude = 40.75;
   longitude = -73.99;
   city = 'New York, NY';

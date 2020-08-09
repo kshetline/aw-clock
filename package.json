@@ -23,7 +23,7 @@
     "ks-astronomy": "^1.1.0",
     "ks-date-time-zone": "^1.6.8",
     "ks-math": "^1.2.1",
-    "ks-util": "^1.11.3",
+    "ks-util": "^2.0.0",
     "rxjs": "^6.6.0",
     "simple-keyboard": "^2.29.86"
   },

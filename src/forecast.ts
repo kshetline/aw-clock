@@ -152,7 +152,7 @@ export class Forecast {
     const width = forecastRect.getBoundingClientRect().width;
 
     const dragStartThreshold = 3;
-    const swipeThreshold = width / 14;
+    const swipeThreshold = width * 0.114; // 80% of the distance across one day
     const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
     const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
     const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
