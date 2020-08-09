@@ -832,6 +832,12 @@ async function doServiceDeployment(): Promise<void> {
       await disableScreenSaver(uid);
     }
 
+    settings.AWC_GIT_REPO_PATH = (await monitorProcess(spawn('pwd'), spin, ErrorMode.NO_ERRORS)).trim() ||
+      settings.AWC_GIT_REPO_PATH;
+
+    if (!settings.AWC_GIT_REPO_PATH)
+      delete settings.AWC_GIT_REPO_PATH;
+
     console.log(chalk.cyan('- Building application -'));
     await doClientBuild();
     await doServerBuild();

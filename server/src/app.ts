@@ -63,7 +63,7 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
 // Poll for software updates
 const UPDATE_POLL_INTERVAL = 21600000; // 6 hours
 let updatePollTimer: any;
-let latestVersion = AWC_VERSION;
+let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
 
 async function checkForUpdate() {
   updatePollTimer = undefined;
@@ -87,8 +87,10 @@ async function checkForUpdate() {
 
   updatePollTimer = setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL);
 }
-// noinspection JSIgnoredPromiseFromCall
-checkForUpdate();
+
+if (!process.env.AWC_FAKE_UPDATE_VERSION)
+  // noinspection JSIgnoredPromiseFromCall
+  checkForUpdate();
 
 // Create HTTP server
 const devMode = process.argv.includes('-d');
@@ -106,9 +108,6 @@ process.on('SIGTERM', shutdown);
 process.on('SIGUSR2', shutdown);
 
 createAndStartServer();
-
-// The DHT-22 temperature/humidity sensor appears to be prone to spurious bad readings, so we'll attempt to
-// screen out the noise.
 
 const ntpServer = process.env.AWC_NTP_SERVER || DEFAULT_NTP_SERVER;
 const ntpPoller = new NtpPoller(ntpServer);
@@ -270,7 +269,7 @@ function getApp() {
       ip,
       allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
       latestVersion,
-      updateAvailable: (allowAdmin && compareVersions.compare(latestVersion, AWC_VERSION, '>')) || true
+      updateAvailable: (allowAdmin && compareVersions.compare(latestVersion, AWC_VERSION, '>'))
     };
 
     if (gps) {

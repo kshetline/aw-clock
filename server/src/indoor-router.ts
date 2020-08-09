@@ -43,6 +43,8 @@ export function hasWiredIndoorSensor(): boolean {
   return !!indoorSensor;
 }
 
+// The DHT-22 temperature/humidity sensor appears to be prone to spurious bad readings, so we'll attempt to
+// screen out the noise.
 function readSensor() {
   try {
     indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {
@@ -112,6 +114,7 @@ router.get('/', (req: Request, res: Response) => {
 
   if (indoorSensor) {
     if (consecutiveSensorErrors >= MAX_ERRORS || lastTemp === undefined || lastHumidity === undefined) {
+      console.log('point G');
       console.error('Failed to read indoor temp/humidity sensor.');
       result = { temperature: 0, humidity: -1, error: 'Sensor error' };
     }

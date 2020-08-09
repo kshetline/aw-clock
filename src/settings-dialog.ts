@@ -101,6 +101,7 @@ export class SettingsDialog {
   private keyboard: Keyboard;
 
   private previousSettings: Settings;
+  private latestVersion = AWC_VERSION;
   private defaultLocation: any;
   private searchFieldFocused = false;
   private searchButtonFocused = false;
@@ -169,7 +170,9 @@ export class SettingsDialog {
 
     const adminAction = (btn: JQuery, msg: string, cmd: string) => {
       btn.on('click', () => {
-        domConfirm(msg, yep => {
+        const message = msg.replace(/%v/g, this.latestVersion);
+
+        domConfirm(message, yep => {
           if (yep) {
             $.ajax({
               type: 'POST',
@@ -497,9 +500,10 @@ export class SettingsDialog {
       success: (data: any) => {
         this.updateButton.css('display', (data.allowAdmin && raspbianChromium) || updateTest ? 'inline' : 'none');
         this.updateButton.prop('disable', !data.updateAvailable && !updateTest);
-        this.shutdownButton.css('display', data.allowAdmin? 'inline' : 'none');
+        this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
+        this.latestVersion = data.latestVersion;
 
         if (data?.latitude != null) {
           this.defaultLocation = data;

@@ -566,7 +566,7 @@ export class Forecast {
       let temp = '';
       const hourInfo = forecastData.hourly[i + firstHourIndex];
       const hour = new KsDateTime(hourInfo.time * 1000, this.timezone).wallTime;
-      let index;
+      let index: number;
 
       if (vertical)
         index = i;
