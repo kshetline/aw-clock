@@ -69,7 +69,7 @@ async function performUpdate(gitStatus: string, res: Response): Promise<void> {
     res.status(400).send('This automated update will only run if your Git repository is a clean checkout of the master branch.');
   }
 
-  exec('DISPLAY=:0 lxterminal --command="git pull && ./build.sh --dev --reboot"', { cwd: process.env.AWC_GIT_REPO_PATH });
+  exec('DISPLAY=:0 lxterminal --command="git pull && ./build.sh --ddev --reboot"', { cwd: process.env.AWC_GIT_REPO_PATH });
   spawn('pkill', ['-o', 'chromium']);
 
   res.status(200);
