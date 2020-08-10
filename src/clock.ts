@@ -20,7 +20,7 @@
 // Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed *quite* a bit from there.
 
 import { AppService } from './app.service';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
 import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';

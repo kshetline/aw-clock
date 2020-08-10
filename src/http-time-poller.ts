@@ -1,4 +1,4 @@
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { NtpData } from '../server/src/ntp-data';
 import { localServer } from './settings';
 import { TimeInfo } from '../server/src/shared-types';

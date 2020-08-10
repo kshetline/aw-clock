@@ -23,7 +23,7 @@ import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-m
 import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';

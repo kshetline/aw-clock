@@ -20,7 +20,7 @@
 import { AppService } from './app.service';
 import { CLOCK_CENTER } from './clock';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, sin_deg } from 'ks-math';
 import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';

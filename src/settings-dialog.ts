@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -19,7 +19,7 @@
 
 import { AppService } from './app.service';
 import { HourlyForecast } from './forecast';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import { isChromium, isIE, isRaspbian, isSafari } from 'ks-util';
 import { apiServer, localServer, Settings, updateTest } from './settings';

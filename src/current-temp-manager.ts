@@ -1,5 +1,5 @@
 import { AppService } from './app.service';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { reflow } from './svg-flow';
 import { localServer } from './settings';
 import { convertTemp } from './util';

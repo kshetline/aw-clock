@@ -17,7 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { KsDateTime } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
 import { asLines, htmlEscape, isEdge, isSafari, last, padLeft } from 'ks-util';

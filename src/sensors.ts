@@ -19,7 +19,7 @@
 
 import { AppService } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { apiServer, localServer } from './settings';
 import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/shared-types';
 import { updateSvgFlowItems } from './svg-flow';

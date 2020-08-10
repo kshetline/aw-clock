@@ -1,4 +1,4 @@
-import * as $ from 'jquery';
+import $ from 'jquery';
 import SimpleKeyboard from 'simple-keyboard';
 import { isTypeInInput } from './util';
 
