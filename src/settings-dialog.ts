@@ -63,6 +63,10 @@ function formatDegrees(angle, compassPointsPosNeg, degreeDigits) {
     (degreeDigits > 1 && angle < 10 ? '\u2007' : '') + degrees + '\u00B0' + compass;
 }
 
+const UPDATE_OPTIONS = `<br>
+<input type="checkbox" id="interactive-update" name="interactive-update">
+<label for="interactive-update">Interactive update</label>`;
+
 export class SettingsDialog {
   private readonly dimmingStart: JQuery;
   private readonly dimmingEnd: JQuery;
@@ -168,16 +172,25 @@ export class SettingsDialog {
       this.doSearch();
     });
 
-    const adminAction = (btn: JQuery, msg: string, cmd: string) => {
+    const adminAction = (btn: JQuery, msg: string, cmd: string, optionalHtml?: string) => {
       btn.on('click', () => {
         const message = msg.replace(/%v/g, this.latestVersion);
 
-        domConfirm(message, yep => {
+        domConfirm(message, optionalHtml, yep => {
           if (yep) {
+            let command = cmd;
+
+            if (/^update\b/.test(cmd)) {
+              const checkbox = $('#interactive-update');
+
+              if (checkbox.prop('checked'))
+                command += (cmd.includes('?') ? '&' : '?') + 'ia=true';
+            }
+
             $.ajax({
               type: 'POST',
               dataType: 'text',
-              url: this.appService.getApiServer() + `/admin/${cmd}`,
+              url: this.appService.getApiServer() + `/admin/${command}`,
               error: (jqXHR: JQueryXHR) => {
                 domAlert(jqXHR.responseText);
               }
@@ -188,7 +201,7 @@ export class SettingsDialog {
     };
 
     adminAction(this.updateButton, 'Are you sure you want to update A/W Clock version %v now?\n\n' +
-      'Your system will be rebooted.', 'update' + (updateTest ? '?ut=true' : ''));
+      'Your system will be rebooted.', 'update' + (updateTest ? '?ut=true' : ''), UPDATE_OPTIONS);
     adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
     adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
     adminAction(this.quitButton, 'Are you sure you want to quit the Chromium web browser?', 'quit');

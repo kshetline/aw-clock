@@ -110,10 +110,31 @@ export function domAlert(message: string): void {
   });
 }
 
-export function domConfirm(message: string, callback: (isOk: boolean) => void): void {
+type OkCallback = (isOk: boolean) => void;
+
+export function domConfirm(message: string, callback: OkCallback): void;
+export function domConfirm(message: string, optionsHtml: string, callback: OkCallback): void;
+export function domConfirm(message: string, callbackOrOptions: OkCallback | string, callback?: OkCallback): void {
+  let optionalHtml: string;
+
+  if (typeof callbackOrOptions === 'string')
+    optionalHtml = callbackOrOptions;
+  else
+    callback = callbackOrOptions;
+
   const confirmElem = $('#confirm-dialog');
   const confirmOk = $('#confirm-ok');
   const confirmCancel = $('#confirm-cancel');
+  const confirmOptions = $('#confirm-options');
+
+  if (optionalHtml) {
+    confirmOptions.css('display', 'block');
+    confirmOptions.html(optionalHtml);
+  }
+  else {
+    confirmOptions.css('display', 'none');
+    confirmOptions.html('');
+  }
 
   pushKeydownListener((event: KeyboardEvent) => {
     if (event.code === 'Enter') {
@@ -126,7 +147,7 @@ export function domConfirm(message: string, callback: (isOk: boolean) => void): 
     }
   });
 
-  const doCallback = isOk => {
+  const doCallback = (isOk: boolean) => {
     popKeydownListener();
     confirmElem.hide();
     callback(isOk);

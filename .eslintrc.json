@@ -48,7 +48,11 @@
       2,
       {
         "ArrayExpression": "first",
-        "ignoredNodes": ["IfStatement > :expression *", "WhileStatement > :expression *"],
+        "ignoredNodes": [
+          "IfStatement > :expression *",
+          "WhileStatement > :expression *"
+        ],
+        "ignoreComments": true,
         "ObjectExpression": "first",
         "SwitchCase": 1
       }
@@ -82,7 +86,8 @@
     ],
     "quotes": [
       "error",
-      "single", {
+      "single",
+      {
         "avoidEscape": true
       }
     ],

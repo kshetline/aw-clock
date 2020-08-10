@@ -64,6 +64,8 @@ router.post('/*', async (req: Request, res: Response) => {
 
 async function performUpdate(req: Request, res: Response, gitStatus: string): Promise<void> {
   const test = toBoolean(req.query.ut, false, true);
+  const interactive = toBoolean(req.query.ia, false, true);
+  const args = interactive ? '-i --reboot' : '--ddev --reboot';
   const lines = asLines(gitStatus);
   const path = process.env.AWC_GIT_REPO_PATH;
 
@@ -108,7 +110,7 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
   }
 
   spawn('pkill', ['-o', 'chromium'], { uid: userId });
-  exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh --ddev --reboot; bash"`,
+  exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh ${args}; bash"`,
     { cwd: path, env, uid: userId });
 
   res.send('OK');

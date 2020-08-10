@@ -32,7 +32,6 @@ let doDedicated = false;
 let doLaunch = false;
 let doReboot = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-let doWwvb = false;
 let viaBash = false;
 let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
@@ -149,6 +148,7 @@ if (process.argv.length === 0 && treatAsRaspberryPi && !viaBash) {
 
 const onlyOnRaspberryPi: string[] = [];
 const onlyDedicated: string[] = [];
+let helpMsg: string;
 
 process.argv.forEach(arg => {
   switch (arg) {
@@ -214,25 +214,24 @@ process.argv.forEach(arg => {
       doUpdateUpgrade = false;
       onlyOnRaspberryPi.push(arg);
       break;
-    case '--wwvb':
-      doWwvb = doI2c = true;
-      break;
     case '--tarp':
       break; // ignore - already handled
     default:
-      if (arg !== '--help' && arg !== '-h')
+      if (arg !== '--help' && arg !== '-h') {
+        helpMsg =
+          'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
+          '                       [--launch] [--pt] [--reboot] [--sd] [--skip-upgrade]\n' +
+          '                       [--tarp]\n\n' +
+          'The option --acu, --admin, and --dht can be followed by an extra dash (e.g.\n' +
+          '--acu-) to clear a previously enabled option.';
+
+        if (!viaBash)
+          helpMsg = helpMsg.replace('sudo ./build.sh', 'npm run build').replace(/\n {2}/g, '\n');
+
         console.error('Unrecognized option "' + chalk.redBright(arg) + '"');
-
-      if (viaBash)
-        console.log(
-          'Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i] [--launch]\n' +
-          '                       [--pt] [--reboot] [--sd] [--skip-upgrade] [--tarp]');
-      else
-        console.log(
-          'Usage: npm run build [-- [--acu] [--ddev] [--dht] [--help] [-i] [--launch]\n' +
-          '                         [--pt] [--reboot] [--sd] [--skip-upgrade] [--tarp]]');
-
-      process.exit(0);
+        console.log(helpMsg);
+        process.exit(0);
+      }
   }
 });
 
@@ -876,7 +875,7 @@ async function doServiceDeployment(): Promise<void> {
       await monitorProcess(spawn('pkill', uid, ['-o', chromium]), spin, ErrorMode.NO_ERRORS);
       await monitorProcess(spawn('pkill', uid, ['-o', chromium.substr(0, 15)]), spin, ErrorMode.NO_ERRORS);
       await sleep(500, spin);
-      const display = process.env.DISPLAY ?? ':0.0';
+      const display = process.env.DISPLAY ?? ':0';
       exec(`DISPLAY=${display} ${launchChromium} --user-data-dir='${userHome}'`, { uid });
       await sleep(1000);
     }

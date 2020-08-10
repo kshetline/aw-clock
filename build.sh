@@ -1,7 +1,11 @@
 #!/bin/bash
 if [[ "$1" =~ ^--help|-h$ ]]; then
-  echo "Usage: sudo ./build.sh [--acu] [--ddev] [--dht] [--help] [-i] [--launch]"
-  echo "                       [--pt] [--reboot] [--sd] [--skip-upgrade] [--tarp]"
+  echo "Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]"
+  echo "                       [--launch] [--pt] [--reboot] [--sd] [--skip-upgrade]"
+  echo "                       [--tarp]"
+  echo ""
+  echo "The option --acu, --admin, and --dht can be followed by an extra dash (e.g."
+  echo "--acu-) to clear a previously enabled option."
   exit
 fi
 
