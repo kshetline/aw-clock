@@ -254,7 +254,7 @@ if (treatAsRaspberryPi) {
       const oldSettings: Record<string, string> = {};
 
       lines.forEach(line => {
-        const $ = /^\s*(\w+?)\s*=\s*(\S+)/.exec(line);
+        const $ = /^\s*(\w+)\s*=\s*(\S+)/.exec(line);
 
         if ($)
           oldSettings[$[1]] = settings[$[1]] = $[2];

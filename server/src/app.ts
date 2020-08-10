@@ -35,7 +35,7 @@ try {
       const lines = asLines(fs.readFileSync(file).toString());
 
       for (const line of lines) {
-        const $ = /\s*(\w+)\s*=\s*([^#]+)/.exec(line);
+        const $ = /^\s*(\w+)\s*=\s*([^#]+)/.exec(line);
 
         if ($)
           process.env[$[1]] = $[2].trim();
