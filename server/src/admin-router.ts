@@ -68,10 +68,22 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
   const args = interactive ? '-i --reboot' : '--ddev --reboot';
   const lines = asLines(gitStatus);
   const path = process.env.AWC_GIT_REPO_PATH;
+  const branch = process.env.AWC_TEST_BRANCH || 'master';
+  let packageLockChanges = false;
 
-  if (!test && (lines?.length !== 1 || lines[0] !== '## master...origin/master')) {
+  // If changes are ONLY to package-lock.json files, they can be discarded.
+  for (let i = lines.length - 1; i >= 0; --i) {
+    const line = lines[i];
+
+    if (/\bpackage-lock.json$/.test(line)) {
+      packageLockChanges = true;
+      lines.splice(i, 1);
+    }
+  }
+
+  if (!test && (lines?.length !== 1 || lines[0] !== `## ${branch}...origin/${branch}`)) {
     res.status(400).send(
-      'This automated update will only run if your Git repository is a clean checkout of the master branch.');
+      `The automated update will only run if your Git repository is a clean checkout of the ${branch} branch.`);
     return;
   }
 
@@ -102,11 +114,21 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
       }
     }
   }
-  catch (e) {}
+  catch {}
 
   if (userId < 0) {
     res.status(500).send('Unable to perform update: display user could not be determined');
     return;
+  }
+
+  if (packageLockChanges) {
+    try {
+      await monitorProcess(spawn('git', ['reset', '--hard']));
+    }
+    catch {
+      res.status(500).send('Unable to perform update: could not clean up git repository');
+      return;
+    }
   }
 
   spawn('pkill', ['-o', 'chromium'], { uid: userId });
