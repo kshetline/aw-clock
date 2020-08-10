@@ -119,7 +119,7 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
 
   if (typeof callbackOrOptions === 'string')
     optionalHtml = callbackOrOptions;
-  else
+  else if (!(typeof callback === 'function'))
     callback = callbackOrOptions;
 
   const confirmElem = $('#confirm-dialog');

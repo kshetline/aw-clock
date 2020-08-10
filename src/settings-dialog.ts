@@ -512,7 +512,7 @@ export class SettingsDialog {
       dataType: 'json',
       success: (data: any) => {
         this.updateButton.css('display', (data.allowAdmin && raspbianChromium) || updateTest ? 'inline' : 'none');
-        this.updateButton.prop('disable', !data.updateAvailable && !updateTest);
+        this.updateButton.prop('disabled', !data.updateAvailable && !updateTest);
         this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
         this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
