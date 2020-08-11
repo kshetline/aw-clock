@@ -21,8 +21,8 @@ import { AppService } from './app.service';
 import { HourlyForecast } from './forecast';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
-import { isChromium, isIE, isRaspbian, isSafari } from 'ks-util';
-import { apiServer, localServer, Settings, updateTest } from './settings';
+import { isIE, isSafari } from 'ks-util';
+import { apiServer, localServer, raspbianChromium, Settings, updateTest } from './settings';
 import { AWC_VERSION } from '../server/src/shared-types';
 import { adjustCityName, domAlert, domConfirm, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
@@ -65,7 +65,9 @@ function formatDegrees(angle, compassPointsPosNeg, degreeDigits) {
 
 const UPDATE_OPTIONS = `<br>
 <input type="checkbox" id="interactive-update" name="interactive-update">
-<label for="interactive-update">Interactive update</label>`;
+<label for="interactive-update">Interactive update</label><br>
+<p>Use the interactive mode if you want to change settings, or configure
+new settings. A keyboard will be required.`;
 
 export class SettingsDialog {
   private readonly dimmingStart: JQuery;
@@ -102,6 +104,7 @@ export class SettingsDialog {
   private readonly rebootButton: JQuery;
   private readonly shutdownButton: JQuery;
   private readonly updateButton: JQuery;
+  private readonly updateBtnBackdrop: JQuery;
   private keyboard: Keyboard;
 
   private previousSettings: Settings;
@@ -147,6 +150,7 @@ export class SettingsDialog {
     this.rebootButton = $('#settings-reboot');
     this.shutdownButton = $('#settings-shutdown');
     this.updateButton = $('#settings-update');
+    this.updateBtnBackdrop = $('#update-btn-backdrop');
 
     this.searchCity.on('focus', () => this.searchFieldFocused = true);
     this.searchCity.on('blur', () => this.searchFieldFocused = false);
@@ -349,7 +353,7 @@ export class SettingsDialog {
     }
   }
 
-  public openSettings(previousSettings: Settings) {
+  public openSettings(previousSettings: Settings, emphasizeUpdate = false) {
     this.previousSettings = previousSettings;
 
     const checkUiSizing = () => {
@@ -388,7 +392,10 @@ export class SettingsDialog {
     this.cityTableWrapper.hide();
     this.searching.css('visibility', 'hidden');
     this.dialog.css('display', 'block');
-    setTimeout(() => (previousSettings.onscreenKB ? this.okButton : this.searchCity).trigger('focus'));
+    this.updateBtnBackdrop.css('display', emphasizeUpdate ? 'inline-block' : 'none');
+    setTimeout(() =>
+      (emphasizeUpdate ? this.updateButton : (previousSettings.onscreenKB ? this.okButton : this.searchCity)).trigger('focus'),
+    500);
 
     SettingsDialog.fillInTimeChoices(this.dimmingStart, previousSettings.amPm);
     SettingsDialog.fillInTimeChoices(this.dimmingEnd, previousSettings.amPm);
@@ -505,7 +512,6 @@ export class SettingsDialog {
 
   private getDefaults(): void {
     const url = `${apiServer}/defaults`;
-    const raspbianChromium = isRaspbian() && isChromium();
 
     $.ajax({
       url: url,

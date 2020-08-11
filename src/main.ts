@@ -29,7 +29,7 @@ import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { setFullScreen } from 'ks-util';
 import { Sensors } from './sensors';
-import { apiServer, Settings } from './settings';
+import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
 import { updateSvgFlowItems, reflow } from './svg-flow';
@@ -78,6 +78,7 @@ class AwClockApp implements AppService {
   private lastHour = -1;
   private frequent = false;
   private proxyStatus: boolean | Promise<boolean> = undefined;
+  private adminAllowed = false;
 
   private settings = new Settings();
   private settingsChecked = false;
@@ -106,8 +107,13 @@ class AwClockApp implements AppService {
     this.body = $('body');
     this.cityLabel = $('#city');
     this.dimmer = $('#dimmer');
+
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
+    this.updateAvailable.on('click', () => {
+      if (raspbianChromium && this.adminAllowed)
+        this.settingsDialog.openSettings(this.settings, true);
+    });
 
     this.cityLabel.text(this.settings.city);
 
@@ -234,11 +240,14 @@ class AwClockApp implements AppService {
 
         Promise.all(promises)
           .then(data => {
+            const localInstallation = raspbianChromium && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
 
-            this.updateAvailable.css('display', data[0]?.updateAvailable ? 'block' : 'none');
-            this.updateCaption.css('display', data[0]?.updateAvailable ? 'block' : 'none');
+            this.adminAllowed = data[0]?.allowAdmin;
+            this.updateAvailable.css('display', localInstallation && this.adminAllowed &&
+              data[0]?.updateAvailable ? 'block' : 'none');
+            this.updateCaption.css('display', localInstallation && data[0]?.updateAvailable ? 'block' : 'none');
 
             if (data[0]?.indoorOption && data[0].outdoorOption) {
               this.settings.indoorOption = data[0].indoorOption;
@@ -271,12 +280,6 @@ class AwClockApp implements AppService {
         return;
       }
     }
-    else {
-      getJson(`${apiServer}/defaults`).then(data => {
-        this.updateAvailable.css('display', data?.updateAvailable ? 'block' : 'none');
-        this.updateCaption.css('display', data?.updateAvailable ? 'block' : 'none');
-      });
-    }
 
     if (this.sensors.available)
       this.sensors.update(this.settings.celsius);
@@ -292,6 +295,13 @@ class AwClockApp implements AppService {
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {
       const doUpdate = () => {
+        getJson(`${apiServer}/defaults`).then(data => {
+          this.adminAllowed = data?.allowAdmin;
+          this.updateAvailable.css('display', this.adminAllowed &&
+            data?.updateAvailable ? 'block' : 'none');
+          this.updateCaption.css('display', data?.updateAvailable ? 'block' : 'none');
+        });
+
         this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.userId);
       };
 

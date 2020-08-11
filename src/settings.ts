@@ -19,7 +19,7 @@
 
 import { HourlyForecast } from './forecast';
 import * as Cookies from 'js-cookie';
-import { toBoolean } from 'ks-util';
+import { isChromium, isRaspbian, toBoolean } from 'ks-util';
 
 export const runningDev = (document.location.port === '4200');
 export const localServer = (document.location.port &&
@@ -29,8 +29,10 @@ export const updateTest = toBoolean(new URLSearchParams(window.location.search).
 const apiParam = new URLSearchParams(window.location.search).get('api');
 const apiPort = apiParam || (runningDev ? '4201' : document.location.port || '8080');
 const apiHost = ((document.location.hostname || '').startsWith('192.') ? document.location.hostname : 'localhost');
+
 export const apiServer = new URL(window.location.href).searchParams.get('weather_server') ||
   (runningDev ? `http://${apiHost}:${apiPort}` : '');
+export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;
 
 export class Settings {
   latitude = 40.75;

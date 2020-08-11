@@ -269,7 +269,8 @@ function getApp() {
       ip,
       allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
       latestVersion,
-      updateAvailable: (allowAdmin && compareVersions.compare(latestVersion, AWC_VERSION, '>'))
+      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) &&
+        compareVersions.compare(latestVersion, AWC_VERSION, '>')
     };
 
     if (gps) {

@@ -145,8 +145,23 @@
           <use href="#signal-meter"/>
         </svg>
 
+        <text id="low-battery-text" x="165.5" y="2.75" text-anchor="end"></text>
+        <!-- Icon made by fjstudio from www.flaticon.com -->
+        <!-- <image id="low-battery" href="assets/low-battery.svg" x="169.5" y="0.5" width="2.5" height="2.5"/> -->
+        <svg id="low-battery" viewBox="-107 0 512 512" x="166" y="0.5" width="2.5" height="2.5">
+          <g fill="red">
+            <path d="m0 85.332031v384c0 23.566407 19.101562 42.667969 42.667969 42.667969h213.332031c23.566406
+              0 42.667969-19.101562 42.667969-42.667969v-384zm256 384h-213.332031v-341.332031h213.332031zm0 0"/>
+            <path d="m234.667969 21.332031c0-11.78125-9.554688-21.332031-21.335938-21.332031h-128c-11.78125
+              0-21.332031 9.550781-21.332031 21.332031v42.667969h170.667969zm0 0"/>
+            <path d="m85.332031 448h128c11.78125 0 21.335938-9.550781 21.335938-21.332031v-64.59375l-170.578125
+              66.335937c.890625 10.964844 10.046875 19.589844 21.242187 19.589844zm0 0"/>
+          </g>
+        </svg>
+
         <!-- From FontAwesome 5.0 sync-alt-solid -->
-        <svg id="update-available" viewBox="0 0 512 512" x="161.5" y="0.5" width="2.5" height="2.5">
+        <svg id="update-available" viewBox="0 0 512 512" x="169.5" y="0.5" width="2.5" height="2.5">
+          <rect x="0" y="0" width="512" height="512" fill="rgba(0, 0, 0, 0)"/><!-- just a click catcher -->
           <path fill="#0F0" d="M370.72 133.28C339.458 104.008 298.888 87.962 255.848 88c-77.458.068-144.328
             53.178-162.791 126.85-1.344 5.363-6.122 9.15-11.651 9.15H24.103c-7.498 0-13.194-6.807-11.807-14.176C33.933
             94.924 134.813 8 256 8c66.448 0 126.791 26.136 171.315 68.685L463.03 40.97C478.149 25.851 504 36.559 504
@@ -162,21 +177,7 @@
                 to="360 256 256"/>
           </path>
         </svg>
-        <text id="update-caption" x="161.5" y="4.75">Update available</text>
-
-        <text id="low-battery-text" x="169" y="2.75" text-anchor="end"></text>
-        <!-- Icon made by fjstudio from www.flaticon.com -->
-        <!-- <image id="low-battery" href="assets/low-battery.svg" x="169.5" y="0.5" width="2.5" height="2.5"/> -->
-        <svg id="low-battery" viewBox="-107 0 512 512" x="169.5" y="0.5" width="2.5" height="2.5">
-          <g fill="red">
-            <path d="m0 85.332031v384c0 23.566407 19.101562 42.667969 42.667969 42.667969h213.332031c23.566406
-              0 42.667969-19.101562 42.667969-42.667969v-384zm256 384h-213.332031v-341.332031h213.332031zm0 0"/>
-            <path d="m234.667969 21.332031c0-11.78125-9.554688-21.332031-21.335938-21.332031h-128c-11.78125
-              0-21.332031 9.550781-21.332031 21.332031v42.667969h170.667969zm0 0"/>
-            <path d="m85.332031 448h128c11.78125 0 21.335938-9.550781 21.335938-21.332031v-64.59375l-170.578125
-              66.335937c.890625 10.964844 10.046875 19.589844 21.242187 19.589844zm0 0"/>
-          </g>
-        </svg>
+        <text id="update-caption" x="172" y="5" text-anchor="end">Update available</text>
 
         <g transform="translate(111.5, 24.25)">
           <text x="0" y="0" class="small-caption" text-anchor="start">
@@ -194,7 +195,7 @@
         <image id="current-icon" href="assets/unknown.svg" x="123.5" y="30" width="25" height="25"/>
 
         <svg x="105.5" y="63.5">
-          <path id="week-backward" d="M 3 0 L 3 6 L 0 3 L 3 0 Z" fill="rgba(153, 170, 187, 0.2)"></path>
+          <path id="week-backward" d="M 3 0 L 3 6 L 0 3 L 3 0 Z" fill="rgba(153, 170, 187, 0.25)"></path>
         </svg>
 
         <svg x="163.5" y="63.5">
@@ -349,7 +350,10 @@
         </div>
         <div class="dialog-buttons">
           <span class="version-number"></span>
-          <button id="settings-update" class="admin" style="display: none">Update</button>
+          <div class="update-btn-wrapper">
+            <div id="update-btn-backdrop">&nbsp;</div>
+            <button id="settings-update" class="admin" style="display: none">Update</button>
+          </div>
           <button id="settings-shutdown" class="admin" style="display: none">Shut down</button>
           <button id="settings-reboot" class="admin" style="display: none">Reboot</button>
           <button id="settings-quit" class="admin" style="display: none">Quit</button>

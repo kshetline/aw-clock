@@ -862,3 +862,24 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   font-style: italic;
   fill: #AAA;
 }
+
+.update-btn-wrapper {
+  display: inline-block;
+  margin-left: 0.5em;
+  position: relative;
+}
+
+#update-btn-backdrop {
+  background-color: #0C0;
+  border-radius: 6px;
+  bottom: -4px;
+  left: -4px;
+  position: absolute;
+  right: -4px;
+  top: -4px;
+}
+
+#settings-update {
+  margin-left: 0;
+  position: relative;
+}
