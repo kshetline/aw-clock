@@ -7,6 +7,7 @@ $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 $clock-border: #69C;
 $risen-track: rgba(102, 204, 153, 0.5);
+$background: midnightblue;
 
 html {
   width: 100%;
@@ -21,7 +22,7 @@ body {
   margin: 0;
   overflow: hidden;
   color: white;
-  background: midnightblue;
+  background: $background;
   font-family: $std-font;
   cursor: none;
 }
@@ -49,7 +50,7 @@ label {
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
-  background-color: midnightblue;
+  background-color: $background;
   font-size: 14px;
   padding: 2px 1em;
   overflow: hidden;
@@ -119,7 +120,7 @@ label {
   padding: 1em;
   vertical-align: middle;
   overflow: visible;
-  background: midnightblue;
+  background: $background;
 }
 
 .clock-container-ie-fix {

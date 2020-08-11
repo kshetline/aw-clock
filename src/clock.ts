@@ -74,7 +74,7 @@ export class Clock {
   private readonly hasBeginElement: boolean;
 
   private gpsActive = false;
-  private gpsAvailable = true;
+  private gpsAvailable = false;
   private lastSecRotation = 0;
   private lastMinute = -1;
   private lastTick = -1;
