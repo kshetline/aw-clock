@@ -883,3 +883,19 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   margin-left: 0;
   position: relative;
 }
+
+#marquee-dialog > div {
+  position: absolute;
+  margin: auto;
+  top: 0; left: 0; bottom: 0; right: 0;
+  width: 80vw;
+  height: 80vh;
+  padding: 1em;
+  background-color: white;
+  color: black;
+}
+
+#marquee-big-text {
+  font-size: 3.33vh;
+  overflow: auto;
+}

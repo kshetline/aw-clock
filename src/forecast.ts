@@ -23,10 +23,10 @@ import { CurrentTemperatureHumidity } from './current-temp-manager';
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, sin_deg } from 'ks-math';
-import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';
+import { blendColors, doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';
 import { ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
-import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
+import { convertTemp, formatHour, htmlEncode, popKeydownListener, pushKeydownListener, setSvgHref } from './util';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -54,6 +54,9 @@ const HOURLY_LEFT_COLUMN = 0.5;
 const HOURLY_RIGHT_COLUMN = 99.5;
 const HOURLY_TEMP_VERT_OFFSET = 3.5;
 const HOURLY_VERT_SPACING = 6.7;
+const BULLET_SPACER = ' \u2022 ';
+const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
+const MARQUEE_JOINER = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
 const CLOSE_ERROR_TAG = '&nbsp;</span>';
 
@@ -86,6 +89,8 @@ export class Forecast {
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
+  private readonly marqueeDialog: JQuery;
+  private readonly marqueeBigText: JQuery;
   private readonly settingsBtn: JQuery;
   private readonly weatherLogo: JQuery;
   private readonly wundergroundLogo: JQuery;
@@ -108,7 +113,8 @@ export class Forecast {
   private showingStartOfWeek = true;
 
   private marqueeText = ' ';
-  private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
+  private marqueeDialogText = '';
+  private marqueeBackground = DEFAULT_BACKGROUND;
   private animationStart: number;
   private animationWidth: number;
   private animationDuration: number;
@@ -134,7 +140,11 @@ export class Forecast {
     this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
+    this.marqueeDialog = $('#marquee-dialog');
+    this.marqueeBigText = $('#marquee-big-text');
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
+
+    this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
     if (!isIE() && !isEdge())
       this.weatherServer = appService.getApiServer();
@@ -689,7 +699,7 @@ export class Forecast {
       });
     }
 
-    const alertText = alerts.join(' \u2022 '); // Bullet
+    const alertText = alerts.join(BULLET_SPACER);
 
     if (alertText) {
       let background;
@@ -718,11 +728,13 @@ export class Forecast {
       }
 
       newText = alertText;
+      this.marqueeBackground = background;
       this.marqueeOuterWrapper.css('background-color', background);
       this.marqueeOuterWrapper.css('color', color);
     }
     else {
       newText = '\u00A0';
+      this.marqueeBackground = DEFAULT_BACKGROUND;
       this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
       this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
     }
@@ -760,9 +772,10 @@ export class Forecast {
       return;
     }
 
-    this.marquee.html(newText + this.marqueeJoiner + newText);
+    this.marquee.html(newText + MARQUEE_JOINER + newText);
+    this.marqueeDialogText = newText.replace(BULLET_REGEX, '<br>\n<br>\n');
     this.animationStart = performance.now();
-    this.animationWidth = textWidth + getTextWidth(this.marqueeJoiner, this.marquee[0]);
+    this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
     this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
     this.appService.updateMarqueeState(true);
@@ -778,5 +791,19 @@ export class Forecast {
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
+  }
+
+  private showMarqueeDialog(): void {
+    this.marqueeBigText.css('background-color', blendColors(blendColors(this.marqueeBackground, 'white'), 'white'));
+    this.marqueeBigText.html(this.marqueeDialogText);
+    this.marqueeDialog.show();
+
+    pushKeydownListener((event: KeyboardEvent) => {
+      if (event.code === 'Enter' || event.code === 'Escape') {
+        event.preventDefault();
+        popKeydownListener();
+        this.marqueeDialog.hide();
+      }
+    });
   }
 }

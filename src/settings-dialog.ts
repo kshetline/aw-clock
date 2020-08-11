@@ -112,6 +112,7 @@ export class SettingsDialog {
   private defaultLocation: any;
   private searchFieldFocused = false;
   private searchButtonFocused = false;
+  private updateFocused = false;
 
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
@@ -156,6 +157,8 @@ export class SettingsDialog {
     this.searchCity.on('blur', () => this.searchFieldFocused = false);
     this.submitSearch.on('focus', () => this.searchButtonFocused = true);
     this.submitSearch.on('blur', () => this.searchButtonFocused = false);
+    this.updateButton.on('focus', () => this.updateFocused = true);
+    this.updateButton.on('blur', () => this.updateFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
 
     $('.version-number').text(AWC_VERSION);
@@ -409,7 +412,7 @@ export class SettingsDialog {
         event.preventDefault();
         this.cancelButton.trigger('click');
       }
-      else if (event.code === 'Enter' && !this.searchFieldFocused && !this.searchButtonFocused) {
+      else if (event.code === 'Enter' && !this.searchFieldFocused && !this.searchButtonFocused && !this.updateFocused) {
         event.preventDefault();
         this.okButton.trigger('click');
       }
@@ -478,7 +481,9 @@ export class SettingsDialog {
   };
 
   private doReturnAction = () => {
-    if (this.searchFieldFocused)
+    if (this.updateFocused)
+      this.updateButton.trigger('click');
+    else if (this.searchFieldFocused)
       this.doSearch();
     else
       this.doOK();

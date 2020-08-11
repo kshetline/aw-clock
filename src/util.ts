@@ -122,7 +122,7 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   else if (!(typeof callback === 'function'))
     callback = callbackOrOptions;
 
-  const confirmElem = $('#confirm-dialog');
+  const confirmDialog = $('#confirm-dialog');
   const confirmOk = $('#confirm-ok');
   const confirmCancel = $('#confirm-cancel');
   const confirmOptions = $('#confirm-options');
@@ -149,7 +149,7 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
 
   const doCallback = (isOk: boolean) => {
     popKeydownListener();
-    confirmElem.hide();
+    confirmDialog.hide();
     callback(isOk);
   };
 
@@ -158,7 +158,7 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   else
     $('#confirm-message').text(message);
 
-  confirmElem.show();
+  confirmDialog.show();
 
   confirmOk.one('click', () => doCallback(true));
   confirmCancel.one('click', () => doCallback(false));
