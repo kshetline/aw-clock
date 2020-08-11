@@ -64,6 +64,8 @@ class AwClockApp implements AppService {
   private body: JQuery;
   private cityLabel: JQuery;
   private dimmer: JQuery;
+  private updateAvailable: JQuery;
+  private updateCaption: JQuery;
 
   // Make sure most clients stagger their polling so that the weather server isn't likely
   // to get lots of simultaneous requests.
@@ -104,6 +106,8 @@ class AwClockApp implements AppService {
     this.body = $('body');
     this.cityLabel = $('#city');
     this.dimmer = $('#dimmer');
+    this.updateAvailable = $('#update-available');
+    this.updateCaption = $('#update-caption');
 
     this.cityLabel.text(this.settings.city);
 
@@ -233,6 +237,9 @@ class AwClockApp implements AppService {
             let citySet = false;
             let countryCode = '';
 
+            this.updateAvailable.css('display', data[0]?.updateAvailable ? 'block' : 'none');
+            this.updateCaption.css('display', data[0]?.updateAvailable ? 'block' : 'none');
+
             if (data[0]?.indoorOption && data[0].outdoorOption) {
               this.settings.indoorOption = data[0].indoorOption;
               this.settings.outdoorOption = data[0].outdoorOption;
@@ -263,6 +270,12 @@ class AwClockApp implements AppService {
 
         return;
       }
+    }
+    else {
+      getJson(`${apiServer}/defaults`).then(data => {
+        this.updateAvailable.css('display', data?.updateAvailable ? 'block' : 'none');
+        this.updateCaption.css('display', data?.updateAvailable ? 'block' : 'none');
+      });
     }
 
     if (this.sensors.available)

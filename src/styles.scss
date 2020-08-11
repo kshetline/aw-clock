@@ -842,3 +842,23 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   font-size: 0.75em !important;
   transform: scaleY(1.333) !important;
 }
+
+#update-available {
+  display: none;
+  animation: pulse ease 4s infinite;
+}
+
+@keyframes pulse {
+  0% {opacity: 0.4;}
+  25% {opacity: 0.8;}
+  50% {opacity: 1;}
+  75% {opacity: 0.8;}
+  100% {opacity: 0.4;}
+}
+
+#update-caption {
+  display: none;
+  font-size: 1.5px;
+  font-style: italic;
+  fill: #AAA;
+}
