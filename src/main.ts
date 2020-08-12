@@ -180,11 +180,12 @@ class AwClockApp implements AppService {
   sensorDeadAir(isDead?: boolean): boolean {
     const wasDead = sensorDeadAirState;
 
-    if (isDead != null)
+    if (isDead != null) {
       sensorDeadAirState = isDead;
 
-    if (wasDead !== isDead)
-      setTimeout(() => this.forecast.refreshAlerts());
+      if (wasDead !== isDead)
+        setTimeout(() => this.forecast.refreshAlerts());
+    }
 
     return sensorDeadAirState;
   }

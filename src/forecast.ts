@@ -91,6 +91,7 @@ export class Forecast {
   private readonly marquee: JQuery;
   private readonly marqueeDialog: JQuery;
   private readonly marqueeBigText: JQuery;
+  private readonly marqueeDialogClose: JQuery;
   private readonly settingsBtn: JQuery;
   private readonly weatherLogo: JQuery;
   private readonly wundergroundLogo: JQuery;
@@ -142,9 +143,11 @@ export class Forecast {
     this.marquee = $('#marquee');
     this.marqueeDialog = $('#marquee-dialog');
     this.marqueeBigText = $('#marquee-big-text');
+    this.marqueeDialogClose = $('#marquee-dialog-close');
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
+    this.marqueeDialogClose.on('click', () => this.hideMarqueeDialog());
 
     if (!isIE() && !isEdge())
       this.weatherServer = appService.getApiServer();
@@ -288,7 +291,6 @@ export class Forecast {
       dragging = false;
       lastX = undefined;
     };
-
     window.addEventListener('mouseup', event => mouseUp(event.pageX));
     window.addEventListener('touchend', event => mouseUp(event.touches[0]?.pageX ?? lastX));
     window.addEventListener('touchcancel', () => mouseUp(null));
@@ -699,7 +701,12 @@ export class Forecast {
       });
     }
 
-    const alertText = alerts.join(BULLET_SPACER);
+    const alertText = alerts.map(a => a.replace(/\r\n|\r/g, '\n').trim()
+      // Remove seemingly random trailing characters from alerts.
+      .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '')
+      // Fix &s; used for left single quote
+      .replace(/&s;/g, '\u2019'))
+      .join(BULLET_SPACER);
 
     if (alertText) {
       let background;
@@ -759,6 +766,10 @@ export class Forecast {
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
+    // Try to undo hard word-wrap. Too bad lookbehinds aren't reliably supported yet in web browsers.
+    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n\n').replace(/([-a-z,])\n(?=[a-z])/gi, '$1 ')
+      .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n');
+
     if (textWidth <= marqueeWidth) {
       this.marquee.html(newText);
       this.animationStart = 0;
@@ -773,7 +784,6 @@ export class Forecast {
     }
 
     this.marquee.html(newText + MARQUEE_JOINER + newText);
-    this.marqueeDialogText = newText.replace(BULLET_REGEX, '<br>\n<br>\n');
     this.animationStart = performance.now();
     this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
     this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
@@ -793,17 +803,77 @@ export class Forecast {
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
   }
 
+  private marqueeDialogInit = false;
+
   private showMarqueeDialog(): void {
-    this.marqueeBigText.css('background-color', blendColors(blendColors(this.marqueeBackground, 'white'), 'white'));
+    this.marqueeBigText.parent().css('background-color', blendColors(blendColors(this.marqueeBackground, 'white'), 'white'));
     this.marqueeBigText.html(this.marqueeDialogText);
     this.marqueeDialog.show();
+    this.marqueeBigText.scrollTop(0);
 
     pushKeydownListener((event: KeyboardEvent) => {
       if (event.code === 'Enter' || event.code === 'Escape') {
         event.preventDefault();
-        popKeydownListener();
-        this.marqueeDialog.hide();
+        this.hideMarqueeDialog();
       }
     });
+
+    if (!this.marqueeDialogInit) {
+      let dragging = false;
+      let downY: number;
+      let lastY: number;
+      let scrollY: number;
+      let gotTouch = false;
+
+      const mouseDown = (y: number) => {
+        dragging = true;
+        lastY = downY = y;
+        scrollY = this.marqueeBigText.scrollTop();
+      };
+      this.marqueeBigText.on('mousedown', event => mouseDown(event.pageY));
+      this.marqueeBigText.on('touchstart', event => event.touches[0] &&
+        mouseDown(event.touches[0].pageY));
+
+      const mouseMove = (y: number) => {
+        if (!dragging || y === lastY)
+          return;
+
+        const dy = y - downY;
+
+        lastY = y;
+        this.marqueeBigText.scrollTop(scrollY - dy);
+      };
+      this.marqueeBigText.on('mousemove', event => mouseMove(event.pageY));
+      this.marqueeBigText.on('touchmove', event => {
+        if (!gotTouch) {
+          console.log('touch');
+          this.marqueeBigText.css('user-select', 'none');
+          gotTouch = true;
+        }
+
+        mouseMove(event.touches[0]?.pageY ?? lastY);
+      });
+
+      const mouseUp = (y: number) => {
+        if (dragging) {
+          const dy = (y ?? downY) - downY;
+
+          this.marqueeBigText.scrollTop(scrollY - dy);
+        }
+
+        dragging = false;
+        lastY = downY = undefined;
+      };
+      this.marqueeBigText.on('mouseup', event => mouseUp(event.pageY));
+      this.marqueeBigText.on('touchend', event => mouseUp(event.touches[0]?.pageY ?? lastY));
+      this.marqueeBigText.on('touchcancel', () => mouseUp(null));
+
+      this.marqueeDialogInit = true;
+    }
+  }
+
+  private hideMarqueeDialog(): void {
+    popKeydownListener();
+    this.marqueeDialog.hide();
   }
 }
