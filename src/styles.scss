@@ -884,7 +884,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   position: relative;
 }
 
-#marquee-dialog > div {
+#big-text-dialog > div {
   font-size: 3vh;
   line-height: 3.6vh;
   position: absolute;
@@ -895,26 +895,26 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   padding: 1em 1.5em 1em 1em;
   background-color: white;
   color: black;
-}
 
-#marquee-big-text {
-  max-height: 77.4vh; // About 21.5 lines
-  overflow: auto;
-}
+  .dialog-text {
+    max-height: 77.4vh; // About 21.5 lines
+    overflow: auto;
+  }
 
-#marquee-close {
-  background-color: white;
-  border: 2px solid black;
-  cursor: default;
-  height: 1em;
-  position: absolute;
-  right: 0.1em;
-  text-align: center;
-  top: 0.1em;
-  width: 1em;
+  .dialog-close {
+    background-color: white;
+    border: 2px solid black;
+    cursor: default;
+    height: 1em;
+    position: absolute;
+    right: 0.1em;
+    text-align: center;
+    top: 0.1em;
+    width: 1em;
 
-  > div {
-    position: relative;
-    top: -0.06em;
+    > div {
+      position: relative;
+      top: -0.06em;
+    }
   }
 }

@@ -26,7 +26,7 @@ import { cos_deg, floor, sin_deg } from 'ks-math';
 import { blendColors, doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';
 import { ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
-import { convertTemp, formatHour, htmlEncode, popKeydownListener, pushKeydownListener, setSvgHref } from './util';
+import { convertTemp, displayHtml, formatHour, htmlEncode, setSvgHref } from './util';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -89,9 +89,6 @@ export class Forecast {
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
-  private readonly marqueeDialog: JQuery;
-  private readonly marqueeBigText: JQuery;
-  private readonly marqueeDialogClose: JQuery;
   private readonly settingsBtn: JQuery;
   private readonly weatherLogo: JQuery;
   private readonly wundergroundLogo: JQuery;
@@ -141,13 +138,9 @@ export class Forecast {
     this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
-    this.marqueeDialog = $('#marquee-dialog');
-    this.marqueeBigText = $('#marquee-big-text');
-    this.marqueeDialogClose = $('#marquee-close');
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
-    this.marqueeDialogClose.on('click', () => this.hideMarqueeDialog());
 
     if (!isIE() && !isEdge())
       this.weatherServer = appService.getApiServer();
@@ -803,77 +796,7 @@ export class Forecast {
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
   }
 
-  private marqueeDialogInit = false;
-
   private showMarqueeDialog(): void {
-    this.marqueeBigText.parent().css('background-color', blendColors(blendColors(this.marqueeBackground, 'white'), 'white'));
-    this.marqueeBigText.html(this.marqueeDialogText);
-    this.marqueeDialog.show();
-    this.marqueeBigText.scrollTop(0);
-
-    pushKeydownListener((event: KeyboardEvent) => {
-      if (event.code === 'Enter' || event.code === 'Escape') {
-        event.preventDefault();
-        this.hideMarqueeDialog();
-      }
-    });
-
-    if (!this.marqueeDialogInit) {
-      let dragging = false;
-      let downY: number;
-      let lastY: number;
-      let scrollY: number;
-      let gotTouch = false;
-
-      const mouseDown = (y: number) => {
-        dragging = true;
-        lastY = downY = y;
-        scrollY = this.marqueeBigText.scrollTop();
-      };
-      this.marqueeBigText.on('mousedown', event => mouseDown(event.pageY));
-      this.marqueeBigText.on('touchstart', event => event.touches[0] &&
-        mouseDown(event.touches[0].pageY));
-
-      const mouseMove = (y: number) => {
-        if (!dragging || y === lastY)
-          return;
-
-        const dy = y - downY;
-
-        lastY = y;
-        this.marqueeBigText.scrollTop(scrollY - dy);
-      };
-      this.marqueeBigText.on('mousemove', event => mouseMove(event.pageY));
-      this.marqueeBigText.on('touchmove', event => {
-        if (!gotTouch) {
-          console.log('touch');
-          this.marqueeBigText.css('user-select', 'none');
-          gotTouch = true;
-        }
-
-        mouseMove(event.touches[0]?.pageY ?? lastY);
-      });
-
-      const mouseUp = (y: number) => {
-        if (dragging) {
-          const dy = (y ?? downY) - downY;
-
-          this.marqueeBigText.scrollTop(scrollY - dy);
-        }
-
-        dragging = false;
-        lastY = downY = undefined;
-      };
-      this.marqueeBigText.on('mouseup', event => mouseUp(event.pageY));
-      this.marqueeBigText.on('touchend', event => mouseUp(event.touches[0]?.pageY ?? lastY));
-      this.marqueeBigText.on('touchcancel', () => mouseUp(null));
-
-      this.marqueeDialogInit = true;
-    }
-  }
-
-  private hideMarqueeDialog(): void {
-    popKeydownListener();
-    this.marqueeDialog.hide();
+    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(blendColors(this.marqueeBackground, 'white'), 'white'));
   }
 }

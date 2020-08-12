@@ -243,3 +243,83 @@ export function isTypeInInput(elem: HTMLElement): boolean {
 
   return /^(date|datetime-local|email|file|month|number|password|search|tel|text|time|url|week)$/.test(type);
 }
+
+const initDone = new Set<string>();
+
+export function displayHtml(dialogId: string, html: string, background = 'white'): void {
+  const id = '#' + dialogId;
+  const dialog = $(id);
+  const closer = $(`${id} > div > .dialog-close`);
+  const textArea = $(`${id} > div > .dialog-text`);
+
+  textArea.parent().css('background-color', background);
+  textArea.html(html);
+  dialog.show();
+  textArea.scrollTop(0);
+
+  const hide = () => {
+    popKeydownListener();
+    dialog.hide();
+  };
+
+  closer.on('click', () => hide());
+
+  pushKeydownListener((event: KeyboardEvent) => {
+    if (event.code === 'Enter' || event.code === 'Escape') {
+      event.preventDefault();
+      hide();
+    }
+  });
+
+  if (!initDone.has(dialogId)) {
+    let dragging = false;
+    let downY: number;
+    let lastY: number;
+    let scrollY: number;
+    let gotTouch = false;
+
+    const mouseDown = (y: number) => {
+      dragging = true;
+      lastY = downY = y;
+      scrollY = textArea.scrollTop();
+    };
+    textArea.on('mousedown', event => mouseDown(event.pageY));
+    textArea.on('touchstart', event => event.touches[0] &&
+      mouseDown(event.touches[0].pageY));
+
+    const mouseMove = (y: number) => {
+      if (!dragging || y === lastY)
+        return;
+
+      const dy = y - downY;
+
+      lastY = y;
+      textArea.scrollTop(scrollY - dy);
+    };
+    textArea.on('mousemove', event => mouseMove(event.pageY));
+    textArea.on('touchmove', event => {
+      if (!gotTouch) {
+        textArea.css('user-select', 'none');
+        gotTouch = true;
+      }
+
+      mouseMove(event.touches[0]?.pageY ?? lastY);
+    });
+
+    const mouseUp = (y: number) => {
+      if (dragging) {
+        const dy = (y ?? downY) - downY;
+
+        textArea.scrollTop(scrollY - dy);
+      }
+
+      dragging = false;
+      lastY = downY = undefined;
+    };
+    textArea.on('mouseup', event => mouseUp(event.pageY));
+    textArea.on('touchend', event => mouseUp(event.touches[0]?.pageY ?? lastY));
+    textArea.on('touchcancel', () => mouseUp(null));
+
+    initDone.add(dialogId);
+  }
+}
