@@ -143,7 +143,7 @@ export class Forecast {
     this.marquee = $('#marquee');
     this.marqueeDialog = $('#marquee-dialog');
     this.marqueeBigText = $('#marquee-big-text');
-    this.marqueeDialogClose = $('#marquee-dialog-close');
+    this.marqueeDialogClose = $('#marquee-close');
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());

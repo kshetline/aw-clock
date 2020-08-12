@@ -272,7 +272,7 @@ label {
   font-size: smaller;
 }
 
-.alert-buttons, .confirm-buttons, .marquee-dialog-buttons {
+.alert-buttons, .confirm-buttons {
   position: absolute;
   bottom: 1em;
   left: auto;
@@ -892,12 +892,29 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   top: 0; left: 0; bottom: 0; right: 0;
   width: 80vw;
   height: 80vh;
-  padding: 1em;
+  padding: 1em 1.5em 1em 1em;
   background-color: white;
   color: black;
 }
 
 #marquee-big-text {
-  max-height: 73.8vh; // About 20.5 lines
+  max-height: 77.4vh; // About 21.5 lines
   overflow: auto;
+}
+
+#marquee-close {
+  background-color: white;
+  border: 2px solid black;
+  cursor: default;
+  height: 1em;
+  position: absolute;
+  right: 0.1em;
+  text-align: center;
+  top: 0.1em;
+  width: 1em;
+
+  > div {
+    position: relative;
+    top: -0.06em;
+  }
 }
