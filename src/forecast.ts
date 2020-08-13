@@ -54,6 +54,7 @@ const HOURLY_LEFT_COLUMN = 0.5;
 const HOURLY_RIGHT_COLUMN = 99.5;
 const HOURLY_TEMP_VERT_OFFSET = 3.5;
 const HOURLY_VERT_SPACING = 6.7;
+const FORECAST_UNIT_WIDTH = 39;
 const BULLET_SPACER = ' \u2022 ';
 const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
 const MARQUEE_JOINER = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
@@ -175,6 +176,7 @@ export class Forecast {
     let minMove = 0;
     let revertToStart: any;
     let swipeAnimating = false;
+    let lastAnimX = 0;
 
     animateWeekDrag.addEventListener('endEvent', () => {
       dragAnimating = false;
@@ -182,14 +184,16 @@ export class Forecast {
 
     animateToStart.addEventListener('endEvent', () => {
       swipeAnimating = false;
+      lastAnimX = 0;
     });
 
     animateToEnd.addEventListener('endEvent', () => {
       swipeAnimating = false;
+      lastAnimX = -FORECAST_UNIT_WIDTH;
     });
 
     $('#forecast-week').on('click', event => {
-      if (processMillis() < dragEndTime + 500)
+      if (processMillis() < dragEndTime + 500 || dragAnimating || swipeAnimating)
         return;
 
       const dayIndex = Math.floor((event.pageX - leftEdge) * 4 / width) + (this.showingStartOfWeek ? 0 : 3);
@@ -225,6 +229,7 @@ export class Forecast {
         skipToEnd.setAttribute('fill', disabledSkipColor);
         skipToStart.setAttribute('fill', enabledSkipColor);
         swipeAnimating = true;
+        $(animateToEnd).attr('from', `${lastAnimX} 0`);
         setTimeout(() => animateToEnd.beginElement());
 
         revertToStart = setTimeout(() => {
@@ -237,6 +242,7 @@ export class Forecast {
         skipToStart.setAttribute('fill', disabledSkipColor);
         skipToEnd.setAttribute('fill', enabledSkipColor);
         swipeAnimating = true;
+        $(animateToStart).attr('from', `${lastAnimX} 0`);
         setTimeout(() => animateToStart.beginElement());
       }
     };
@@ -247,10 +253,14 @@ export class Forecast {
         return;
       }
 
-      if (this.showingStartOfWeek)
+      if (this.showingStartOfWeek) {
+        $(animateToStart).attr('from', `${lastAnimX} 0`);
         animateToStart.beginElement();
-      else
+      }
+      else {
+        $(animateToEnd).attr('from', `${lastAnimX} 0`);
         animateToEnd.beginElement();
+      }
     };
 
     skipToEnd.addEventListener('click', () => {
@@ -281,12 +291,14 @@ export class Forecast {
           lastX = undefined;
           doSwipe(dx);
         }
-        else if (minMove >= dragStartThreshold && !dragAnimating) {
-          const currentShift = this.showingStartOfWeek ? 0 : -39;
-          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, -39), 0);
+        else if (minMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
+          const currentShift = this.showingStartOfWeek ? 0 : -FORECAST_UNIT_WIDTH;
+          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, -FORECAST_UNIT_WIDTH), 0);
 
+          $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
           $(animateWeekDrag).attr('to', `${dragTo} 0`);
           dragAnimating = true;
+          lastAnimX = dragTo;
           animateWeekDrag.beginElement();
         }
       }
@@ -830,7 +842,6 @@ export class Forecast {
     const day = this.lastForecastData?.daily?.data[dayIndex];
     const narrativeDay = day?.narrativeDay;
     const narrativeEvening = day?.narrativeEvening;
-    console.log(day);
 
     if (!narrativeDay && !narrativeEvening) {
       alert('No forecast details available');
