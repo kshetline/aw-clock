@@ -73,6 +73,7 @@ function decodeWeirdJson(s: string): string {
       case '&q;': return '"';
       case '&g;': return '>';
       case '&l;': return '<';
+      case '&s;': return '’'; // right single quote
       default: return s;
     }
   }).join('');
@@ -180,6 +181,8 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
 
     daily.push({
       icon: getIcon(wddp?.iconCode[i * 2] ?? wddp?.iconCode[i * 2 + 1] ?? -1),
+      narrativeDay: wddp?.narrative[i],
+      narrativeEvening: wddp?.narrative[i + 1],
       precipAccumulation,
       precipIntensityMax: 0,
       precipProbability: Math.max(wddp?.precipChance[i * 2] ?? 0, wddp?.precipChance[i * 2 + 1] ?? 0) / 100,

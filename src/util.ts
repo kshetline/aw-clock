@@ -18,7 +18,7 @@
 */
 
 import $ from 'jquery';
-import { KsDateTime } from 'ks-date-time-zone';
+import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
 import { asLines, htmlEscape, isEdge, isSafari, last, padLeft } from 'ks-util';
 
@@ -322,4 +322,11 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
 
     initDone.add(dialogId);
   }
+}
+
+export function localDateString(time: number, zone: KsTimeZone): string {
+  const wallTime = new KsDateTime(time, zone).wallTime;
+
+  return new Date(wallTime.y, wallTime.m - 1, wallTime.d, 12).toLocaleDateString(undefined,
+    { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }

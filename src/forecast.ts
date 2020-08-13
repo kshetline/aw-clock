@@ -23,10 +23,10 @@ import { CurrentTemperatureHumidity } from './current-temp-manager';
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, sin_deg } from 'ks-math';
-import { blendColors, doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';
+import { blendColors, doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last, processMillis } from 'ks-util';
 import { ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
-import { convertTemp, displayHtml, formatHour, htmlEncode, setSvgHref } from './util';
+import { convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -155,6 +155,7 @@ export class Forecast {
 
   private detectGestures(): void {
     const forecastRect = $('#forecast-rect')[0];
+    const leftEdge = forecastRect.getBoundingClientRect().x;
     const width = forecastRect.getBoundingClientRect().width;
 
     const dragStartThreshold = 3;
@@ -168,13 +169,32 @@ export class Forecast {
     const enabledSkipColor = skipToEnd.getAttribute('fill');
     let dragging = false;
     let dragAnimating = false;
+    let dragEndTime = 0;
     let downX: number;
     let lastX: number;
     let minMove = 0;
     let revertToStart: any;
+    let swipeAnimating = false;
 
     animateWeekDrag.addEventListener('endEvent', () => {
       dragAnimating = false;
+    });
+
+    animateToStart.addEventListener('endEvent', () => {
+      swipeAnimating = false;
+    });
+
+    animateToEnd.addEventListener('endEvent', () => {
+      swipeAnimating = false;
+    });
+
+    $('#forecast-week').on('click', event => {
+      if (processMillis() < dragEndTime + 500)
+        return;
+
+      const dayIndex = Math.floor((event.pageX - leftEdge) * 4 / width) + (this.showingStartOfWeek ? 0 : 3);
+
+      this.showDayForecast(dayIndex);
     });
 
     const mouseDown = (x: number) => {
@@ -193,7 +213,9 @@ export class Forecast {
         revertToStart = undefined;
       }
 
-      if (dragAnimating) {
+      if (swipeAnimating)
+        return;
+      else if (dragAnimating) {
         setTimeout(() => doSwipe(dx), 1);
         return;
       }
@@ -202,6 +224,7 @@ export class Forecast {
         this.showingStartOfWeek = false;
         skipToEnd.setAttribute('fill', disabledSkipColor);
         skipToStart.setAttribute('fill', enabledSkipColor);
+        swipeAnimating = true;
         setTimeout(() => animateToEnd.beginElement());
 
         revertToStart = setTimeout(() => {
@@ -213,6 +236,7 @@ export class Forecast {
         this.showingStartOfWeek = true;
         skipToStart.setAttribute('fill', disabledSkipColor);
         skipToEnd.setAttribute('fill', enabledSkipColor);
+        swipeAnimating = true;
         setTimeout(() => animateToStart.beginElement());
       }
     };
@@ -253,6 +277,7 @@ export class Forecast {
       if (canMoveDirection(dx)) {
         if (minMove >= swipeThreshold) {
           dragging = false;
+          dragEndTime = processMillis();
           lastX = undefined;
           doSwipe(dx);
         }
@@ -279,6 +304,9 @@ export class Forecast {
           else if (minMove >= dragStartThreshold)
             restorePosition();
         }
+
+        if (minMove >= dragStartThreshold)
+          dragEndTime = processMillis();
       }
 
       dragging = false;
@@ -695,11 +723,9 @@ export class Forecast {
     }
 
     const alertText = alerts.map(a => a.replace(/\r\n|\r/g, '\n').trim()
-      // Remove seemingly random trailing characters from alerts.
-      .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '')
-      // Fix &s; used for left single quote
-      .replace(/&s;/g, '\u2019'))
-      .join(BULLET_SPACER);
+      .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '') // Remove seemingly random trailing characters from alerts.
+      .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
+    ).join(BULLET_SPACER);
 
     if (alertText) {
       let background;
@@ -760,7 +786,7 @@ export class Forecast {
     this.marquee.css('text-indent', '0');
 
     // Try to undo hard word-wrap. Too bad lookbehinds aren't reliably supported yet in web browsers.
-    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n\n').replace(/([-a-z,])\n(?=[a-z])/gi, '$1 ')
+    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-a-z,])\n(?=[a-z])/gi, '$1 ')
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n');
 
     if (textWidth <= marqueeWidth) {
@@ -798,5 +824,33 @@ export class Forecast {
 
   private showMarqueeDialog(): void {
     displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(blendColors(this.marqueeBackground, 'white'), 'white'));
+  }
+
+  private showDayForecast(dayIndex: number) {
+    const day = this.lastForecastData?.daily?.data[dayIndex];
+    const narrativeDay = day?.narrativeDay;
+    const narrativeEvening = day?.narrativeEvening;
+    console.log(day);
+
+    if (!narrativeDay && !narrativeEvening) {
+      alert('No forecast details available');
+      return;
+    }
+
+    const tempUnit = this.lastForecastData.isMetric ? 'C' : 'F';
+    let text = '¬b¬' + localDateString(day.time * 1000, this.timezone) +
+      `¬b; • ${day.temperatureHigh}°${tempUnit} / ${day.temperatureLow}°${tempUnit}\n\n`;
+
+    if (narrativeDay && narrativeEvening)
+      text += `${narrativeDay}\n\nEvening: ${narrativeEvening}`;
+    else if (narrativeDay)
+      text += narrativeDay;
+    else
+      text += narrativeEvening;
+
+    text = htmlEncode(text).replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
+      .replace(/¬(.+?)¬/g, '<$1>').replace(/¬(.+?);/g, '</$1>');
+
+    displayHtml('big-text-dialog', text, '#DDF');
   }
 }

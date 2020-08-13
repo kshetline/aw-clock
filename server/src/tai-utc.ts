@@ -51,7 +51,7 @@ export class TaiUtc {
   private lastPollMonth = -1;
   private leapSeconds: LeapSecond[] = [];
   private pendingPromise: Promise<void>;
-  private urls: string[] = [];
+  private readonly urls: string[] = [];
 
   constructor(
     sourceUrls = DEFAULT_LEAP_SECOND_URLS,
