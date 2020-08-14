@@ -244,21 +244,56 @@ export function isTypeInInput(elem: HTMLElement): boolean {
   return /^(date|datetime-local|email|file|month|number|password|search|tel|text|time|url|week)$/.test(type);
 }
 
+interface DialogInfo {
+  textArea: JQuery;
+  lastLineHeight?: number;
+}
+
+const dialogStack: DialogInfo[] = [];
 const initDone = new Set<string>();
+
+function checkFont() {
+  const dialogInfo = last(dialogStack);
+  const textArea = dialogInfo?.textArea;
+  const pageLines = textArea?.parent().css('--page-lines');
+
+  if (!pageLines)
+    return;
+
+  const style = document.defaultView.getComputedStyle(dialogInfo.textArea.parent()[0], null);
+  const exactHeight = parseFloat(style.getPropertyValue('line-height'));
+  const roundedHeight = Math.floor(exactHeight);
+
+  if (dialogInfo.lastLineHeight !== roundedHeight) {
+    dialogInfo.textArea.css('line-height', roundedHeight + 'px');
+    dialogInfo.textArea.css('max-height', Math.round(roundedHeight * parseFloat(pageLines)) + 'px');
+    dialogInfo.lastLineHeight = roundedHeight;
+  }
+}
+
+window.addEventListener('resize', checkFont);
 
 export function displayHtml(dialogId: string, html: string, background = 'white'): void {
   const id = '#' + dialogId;
   const dialog = $(id);
   const closer = $(`${id} > div > .dialog-close`);
   const textArea = $(`${id} > div > .dialog-text`);
+  const fader = (/(<div class="dialog-fader"[^<]+?<\/div>)\s*$/.exec(textArea.html()) ?? [])[1] ?? '';
+
+  if (fader)
+    textArea.css('--fade-to', background);
 
   textArea.parent().css('background-color', background);
-  textArea.html(html);
+  textArea.html(html + fader);
   dialog.show();
   textArea.scrollTop(0);
 
+  dialogStack.push({ textArea });
+  checkFont();
+
   const hide = () => {
     popKeydownListener();
+    dialogStack.pop();
     dialog.hide();
   };
 

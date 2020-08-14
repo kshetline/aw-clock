@@ -899,6 +899,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 #big-text-dialog > div {
   font-size: 3vh;
   line-height: 3.6vh;
+  --page-lines: 22;
   position: absolute;
   margin: auto;
   top: 0; left: 0; bottom: 0; right: 0;
@@ -909,8 +910,19 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   color: black;
 
   .dialog-text {
-    max-height: 77.4vh; // About 21.5 lines
+    max-height: calc(var(--page-lines, 1) * 3.6vh);
     overflow: auto;
+    position: relative;
+    --fade-to: black;
+
+    .dialog-fader {
+      background-image: linear-gradient(to bottom, rgba(255,0,0,0), var(--fade-to, black));
+      bottom: 0;
+      height: 1.2em;
+      left: 0;
+      position: sticky;
+      right: 0;
+    }
   }
 
   .dialog-close {
@@ -922,6 +934,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
     right: 0.1em;
     text-align: center;
     top: 0.1em;
+    user-select: none;
     width: 1em;
 
     > div {
