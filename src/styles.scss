@@ -469,8 +469,8 @@ label {
 .squeeze-user-options-more {
   grid-row-gap: 0;
 
-  input {
-    margin: 0 2px;
+  input, select {
+    margin: 1px 2px;
   }
 }
 

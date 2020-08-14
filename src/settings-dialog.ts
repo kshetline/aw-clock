@@ -233,7 +233,7 @@ export class SettingsDialog {
       });
     }
     else if (isSafari()) {
-      $('.user-options').addClass(isIOS() || navigator.maxTouchPoints > 1 ? 'squeeze-user-options-more' : 'squeeze-user-options');
+      $('.user-options').addClass(isIOS() ? 'squeeze-user-options-more' : 'squeeze-user-options');
     }
   }
 
