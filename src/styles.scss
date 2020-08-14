@@ -462,6 +462,18 @@ label {
   }
 }
 
+.squeeze-user-options {
+  grid-row-gap: 0;
+}
+
+.squeeze-user-options-more {
+  grid-row-gap: 0;
+
+  input {
+    margin: 0 2px;
+  }
+}
+
 @supports (-moz-appearance: none) {
   .user-options  {
     grid-row-gap: 2px;

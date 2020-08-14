@@ -178,15 +178,15 @@ export class Forecast {
     let swipeAnimating = false;
     let lastAnimX = 0;
 
-    animateWeekDrag.addEventListener('endEvent', () => {
-      dragAnimating = false;
-    });
+    animateWeekDrag.addEventListener('beginEvent', () => dragAnimating = true);
+    animateToStart.addEventListener('beginEvent', () => swipeAnimating = true);
+    animateToEnd.addEventListener('beginEvent', () => swipeAnimating = true);
 
+    animateWeekDrag.addEventListener('endEvent', () => dragAnimating = false);
     animateToStart.addEventListener('endEvent', () => {
       swipeAnimating = false;
       lastAnimX = 0;
     });
-
     animateToEnd.addEventListener('endEvent', () => {
       swipeAnimating = false;
       lastAnimX = -FORECAST_UNIT_WIDTH;
@@ -228,7 +228,6 @@ export class Forecast {
         this.showingStartOfWeek = false;
         skipToEnd.setAttribute('fill', disabledSkipColor);
         skipToStart.setAttribute('fill', enabledSkipColor);
-        swipeAnimating = true;
         $(animateToEnd).attr('from', `${lastAnimX} 0`);
         setTimeout(() => animateToEnd.beginElement());
 
@@ -241,7 +240,6 @@ export class Forecast {
         this.showingStartOfWeek = true;
         skipToStart.setAttribute('fill', disabledSkipColor);
         skipToEnd.setAttribute('fill', enabledSkipColor);
-        swipeAnimating = true;
         $(animateToStart).attr('from', `${lastAnimX} 0`);
         setTimeout(() => animateToStart.beginElement());
       }
@@ -297,7 +295,6 @@ export class Forecast {
 
           $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
           $(animateWeekDrag).attr('to', `${dragTo} 0`);
-          dragAnimating = true;
           lastAnimX = dragTo;
           animateWeekDrag.beginElement();
         }

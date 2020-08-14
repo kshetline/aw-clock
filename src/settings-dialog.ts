@@ -21,7 +21,7 @@ import { AppService } from './app.service';
 import { HourlyForecast } from './forecast';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
-import { isIE, isSafari } from 'ks-util';
+import { isIE, isIOS, isSafari } from 'ks-util';
 import { apiServer, localServer, raspbianChromium, Settings, updateTest } from './settings';
 import { AWC_VERSION } from '../server/src/shared-types';
 import { adjustCityName, domAlert, domConfirm, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
@@ -233,7 +233,7 @@ export class SettingsDialog {
       });
     }
     else if (isSafari()) {
-      $('.user-options').css('grid-row-gap', '0');
+      $('.user-options').addClass(isIOS() || navigator.maxTouchPoints > 1 ? 'squeeze-user-options-more' : 'squeeze-user-options');
     }
   }
 
