@@ -376,30 +376,28 @@ module.exports = {
   },
   plugins: [
     new NoEmitOnErrorsPlugin(),
-    new CopyWebpackPlugin([
-      {
-        context: 'src',
-        to: '',
-        from: {
-          glob: 'assets/**/*',
-          dot: true
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          context: 'src',
+          to: '',
+          from: 'assets/**/*',
+          globOptions: {
+            dot: true,
+            ignore: [
+              '.gitkeep',
+              '**/.DS_Store',
+              '**/Thumbs.db'
+            ],
+            debug: 'warning'
+          }
+        },
+        {
+          context: 'src',
+          to: '',
+          from: 'favicon.ico'
         }
-      },
-      {
-        context: 'src',
-        to: '',
-        from: {
-          glob: 'favicon.ico',
-          dot: true
-        }
-      }
-    ], {
-      ignore: [
-        '.gitkeep',
-        '**/.DS_Store',
-        '**/Thumbs.db'
-      ],
-      debug: 'warning'
+      ]
     }),
     new ProgressPlugin({}),
     new CircularDependencyPlugin({
