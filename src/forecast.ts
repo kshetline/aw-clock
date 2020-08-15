@@ -32,7 +32,7 @@ interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
 }
 
-const DEFAULT_BACKGROUND = 'var(--background-color)';
+const DEFAULT_BACKGROUND = 'inherit';
 const DEFAULT_FOREGROUND = 'white';
 const ERROR_BACKGROUND = '#CCC';
 const ERROR_FOREGROUND = 'black';
@@ -741,13 +741,13 @@ export class Forecast {
       .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
     ).join(BULLET_SPACER);
 
-    if (alertText) {
-      let background;
-      let color;
+    let background;
+    let color;
 
+    if (alertText) {
       switch (maxSeverity) {
         case 0:
-          background = $('body').css('--background-color');
+          background = document.defaultView.getComputedStyle(document.body, null).getPropertyValue('background-color');
           color = DEFAULT_FOREGROUND;
           break;
 
@@ -768,17 +768,20 @@ export class Forecast {
       }
 
       newText = alertText;
-      this.marqueeBackground = background;
-      this.marqueeOuterWrapper.css('background-color', background);
-      this.marqueeOuterWrapper.css('color', color);
     }
     else {
       newText = '\u00A0';
-      this.marqueeBackground = $('body').css('--background-color');
-      this.marqueeOuterWrapper.css('background-color', this.marqueeBackground);
-      this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
+      background = DEFAULT_BACKGROUND;
+      color = DEFAULT_FOREGROUND;
     }
 
+    this.marqueeBackground = background;
+    // It shouldn't be necessary to update colors for both marqueeOuterWrapper and marqueeWrapper, but Chrome doesn't seem.
+    // to pass through the inheritance of the background color all of the time. Also doing foreground for good measure.
+    this.marqueeOuterWrapper.css('background-color', background);
+    this.marqueeWrapper.css('background-color', background);
+    this.marqueeOuterWrapper.css('color', color);
+    this.marqueeWrapper.css('color', color);
     this.updateMarqueeAnimation(newText);
   }
 
@@ -837,7 +840,9 @@ export class Forecast {
   }
 
   private showMarqueeDialog(): void {
-    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(this.marqueeBackground, 'white', 0.25));
+    const color = (this.marqueeBackground === 'inherit' ? $('body').css('--background-color') : this.marqueeBackground);
+
+    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25));
   }
 
   private showDayForecast(dayIndex: number) {

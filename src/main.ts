@@ -359,6 +359,9 @@ class AwClockApp implements AppService {
         doRefresh = true;
       }
 
+      if (this.settings.background !== oldSettings.background)
+        this.forecast.refreshAlerts();
+
       if (doRefresh)
         this.clock.triggerRefresh();
       else {
