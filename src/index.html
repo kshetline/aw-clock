@@ -275,7 +275,13 @@
             <option value="A">Wireless channel A</option>
             <option value="B">Wireless channel B</option>
             <option value="C">Wireless channel C</option>
-          </select><span class="indoor-outdoor-options">&nbsp;</span>
+          </select>
+          <span class="rowspan">
+            <input id="app-background" name="app-background" type=color>
+            <input id="clock-background" name="clock-background" type=color>
+            <label for="app-background">Background</label>
+            <label for="clock-background">Clock face</label>
+          </span>
           <label for="outdoor-option" class="indoor-outdoor-options">Outdoor temp.:</label>
           <select id="outdoor-option" class="indoor-outdoor-options">
             <option value="F">From forecast</option>
@@ -285,7 +291,7 @@
             <option value="AB">Wireless channels A &amp; B</option>
             <option value="AC">Wireless channels A &amp; C</option>
             <option value="BC">Wireless channels B &amp; C</option>
-          </select><span class="indoor-outdoor-options">&nbsp;</span>
+          </select>
           <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
           <label for="dimming">Dimming:</label>
           <span class="colspan">

@@ -18,6 +18,7 @@
 */
 
 import { HourlyForecast } from './forecast';
+import $ from 'jquery';
 import * as Cookies from 'js-cookie';
 import { isChromium, isRaspbian, toBoolean } from 'ks-util';
 
@@ -50,6 +51,8 @@ export class Settings {
   hidePlanets = false;
   hourlyForecast = HourlyForecast.VERTICAL;
   onscreenKB = false;
+  background = '#191970';
+  clockFace = '#000000';
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
@@ -72,6 +75,13 @@ export class Settings {
     this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) ||
       defaultSettings.hourlyForecast;
     this.onscreenKB = toBoolean(Cookies.get('oskb'), false);
+    this.background = Cookies.get('background') || defaultSettings.background;
+    this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
+
+    const body = $('body');
+
+    body.css('--background-color', this.background);
+    body.css('--clock-face-color', this.clockFace);
   }
 
   public save(): void {
@@ -92,6 +102,13 @@ export class Settings {
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);
     Cookies.set('hourly_forecast', this.hourlyForecast, expiration);
     Cookies.set('oskb', this.onscreenKB.toString(), expiration);
+    Cookies.set('background', this.background, expiration);
+    Cookies.set('clock_face', this.clockFace, expiration);
+
+    const body = $('body');
+
+    body.css('--background-color', this.background);
+    body.css('--clock-face-color', this.clockFace);
   }
 
   public requiresWeatherReload(oldSettings: Settings) {

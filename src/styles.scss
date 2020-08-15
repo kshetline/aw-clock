@@ -346,6 +346,22 @@ label {
     grid-column: 1 / span 3;
   }
 
+  &>.rowspan {
+    display: -ms-grid;
+    display: grid;
+    grid-row: 4 / span 2;
+    grid-template-columns: auto auto;
+    grid-row-gap: 2px;
+    transform: scale(0.8);
+    margin: -5px -20px;
+
+    &>* {
+      align-self: center;
+      display: block; // Needed to make IE grid layout work
+      justify-self: center;
+    }
+  }
+
   // I'd like get rid of the -ms-prefixed properties, but Firefox styling doesn't come out right if I do.
   &>*:nth-child(1) {
     grid-row: 1;
@@ -426,12 +442,7 @@ label {
     -ms-grid-column: 2;
   }
 
-  &>*:nth-child(12) {
-    grid-row: 4;
-    -ms-grid-row: 4;
-    grid-column: 3;
-    -ms-grid-column: 3;
-  }
+  // 12, top half
 
   &>*:nth-child(13) {
     grid-row: 5;
@@ -448,14 +459,9 @@ label {
     -ms-grid-column-span: 2;
   }
 
-  &>*:nth-child(15) {
-    grid-row: 5;
-    -ms-grid-row: 5;
-    grid-column: 3;
-    -ms-grid-column: 3;
-  }
+  // 12, bottom half
 
-  &>*:nth-child(16) {
+  &>*:nth-child(15) {
     grid-row: 6;
     -ms-grid-row: 6;
     grid-column: 1;

@@ -32,7 +32,7 @@ interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
 }
 
-const DEFAULT_BACKGROUND = 'midnightblue';
+const DEFAULT_BACKGROUND = 'var(--background-color)';
 const DEFAULT_FOREGROUND = 'white';
 const ERROR_BACKGROUND = '#CCC';
 const ERROR_FOREGROUND = 'black';
@@ -143,6 +143,7 @@ export class Forecast {
     this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
+    this.marqueeBackground = $('body').css('--background-color');
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
@@ -747,7 +748,7 @@ export class Forecast {
 
       switch (maxSeverity) {
         case 0:
-          background = DEFAULT_BACKGROUND;
+          background = $('body').css('--background-color');
           color = DEFAULT_FOREGROUND;
           break;
 
@@ -774,7 +775,7 @@ export class Forecast {
     }
     else {
       newText = '\u00A0';
-      this.marqueeBackground = DEFAULT_BACKGROUND;
+      this.marqueeBackground = $('body').css('--background-color');
       this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
       this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
     }

@@ -81,6 +81,8 @@ export class SettingsDialog {
   private indoor: JQuery;
   private outdoor: JQuery;
   private indoorOutdoorOptions: JQuery;
+  private background: JQuery;
+  private clockFace: JQuery;
   private userId: JQuery;
   private dimming: JQuery;
   private dimmingTo: JQuery;
@@ -126,6 +128,8 @@ export class SettingsDialog {
     this.indoor = $('#indoor-option');
     this.outdoor = $('#outdoor-option');
     this.indoorOutdoorOptions = $('.indoor-outdoor-options');
+    this.background = $('#app-background');
+    this.clockFace = $('#clock-background');
     this.userId = $('#user-id');
     this.dimming = $('#dimming');
     this.dimmingStart = $('#dimming-start');
@@ -372,6 +376,8 @@ export class SettingsDialog {
     this.latitude.val(previousSettings.latitude);
     this.longitude.val(previousSettings.longitude);
     this.indoor.val(previousSettings.indoorOption);
+    this.background.val(previousSettings.background);
+    this.clockFace.val(previousSettings.clockFace);
     this.outdoor.val(previousSettings.outdoorOption);
     this.userId.val(previousSettings.userId);
     this.temperature.val(previousSettings.celsius ? 'C' : 'F');
@@ -459,6 +465,8 @@ export class SettingsDialog {
     newSettings.hidePlanets = (this.planets.val() as string) === 'H';
     newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
     newSettings.onscreenKB = this.onscreenKB.is(':checked');
+    newSettings.background = this.background.val() as string;
+    newSettings.clockFace = this.clockFace.val() as string;
 
     if (!newSettings.city) {
       domAlert('Current city must be specified.');

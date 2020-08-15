@@ -50,6 +50,7 @@ export class Ephemeris {
   private planetElems: JQuery[] = [];
 
   private _hidePlanets = false;
+  private lastRiseSetBody = SUN;
 
   constructor(private appService: AppService) {
     planetIds.forEach((planet, index) => {
@@ -88,7 +89,8 @@ export class Ephemeris {
     }
   }
 
-  public update(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean): void {
+  public update(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean,
+    riseSetBody = this.lastRiseSetBody): void {
     function rotate(elem: JQuery, deg: number) {
       elem.attr('transform', 'rotate(' + deg + ' 50 50)');
     }
@@ -153,7 +155,9 @@ export class Ephemeris {
         risenTrack.css('visibility', 'hidden');
     });
 
-    eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 7, observer, timezone).then(daysOfEvents => {
+    this.lastRiseSetBody = riseSetBody;
+
+    eventFinder.getRiseAndSetEvents(riseSetBody, wallTime.y, wallTime.m, wallTime.d, 7, observer, timezone).then(daysOfEvents => {
       let todayRise: string = null;
       let todaySet: string = null;
 
