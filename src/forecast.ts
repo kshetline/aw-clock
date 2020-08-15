@@ -200,7 +200,7 @@ export class Forecast {
       lastAnimX = -FORECAST_UNIT_WIDTH;
     });
 
-    $('#forecast-week').on('click', event => {
+    const mouseClick = event => {
       if (processMillis() < dragEndTime + 500 || dragAnimating || swipeAnimating)
         return;
 
@@ -211,7 +211,9 @@ export class Forecast {
 
         this.showDayForecast(dayIndex);
       }
-    });
+    };
+    $('#forecast-week').on('click', event => mouseClick(event));
+    forecastRect.addEventListener('click', event => mouseClick(event));
 
     const mouseDown = (x: number) => {
       dragging = true;
