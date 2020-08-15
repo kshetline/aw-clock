@@ -23,7 +23,7 @@ import { CurrentTemperatureHumidity } from './current-temp-manager';
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, sin_deg } from 'ks-math';
-import { blendColors, doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last, processMillis } from 'ks-util';
+import { blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis } from 'ks-util';
 import { ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import { convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
@@ -48,7 +48,11 @@ const CLOCK_ICON_RADIUS = 38;
 const CLOCK_ICON_INNER_RADIUS = 31;
 const CLOCK_TEMPS_RADIUS = 34.5;
 const CLOCK_TEMPS_INNER_RADIUS = 27;
-const HOURLY_ICON_SIZE = 3.5;
+// There's a Chrome glitch where some SVG icons are getting clipped at the edges. For some strange
+// reason using a transform to scale these icons down, then larger unit sizes to scale them back up
+// again, fixes the problem.
+const SCALING_FIX = (isChrome() || isChromium() ? 0.875 : 1);
+const HOURLY_ICON_SIZE = 3.5 / SCALING_FIX;
 const HOURLY_VERT_OFFSET = 2.5;
 const HOURLY_LEFT_COLUMN = 0.5;
 const HOURLY_RIGHT_COLUMN = 99.5;
@@ -349,10 +353,11 @@ export class Forecast {
         y = CLOCK_CENTER + r * sin_deg(deg - 90);
       }
 
-      hourIcon.setAttribute('x', (x - halfIcon).toString());
-      hourIcon.setAttribute('y', (y - halfIcon).toString());
+      hourIcon.setAttribute('x', ((x - halfIcon) / SCALING_FIX).toString());
+      hourIcon.setAttribute('y', ((y - halfIcon) / SCALING_FIX).toString());
       hourIcon.setAttribute('height', HOURLY_ICON_SIZE.toString());
       hourIcon.setAttribute('width', HOURLY_ICON_SIZE.toString());
+      if (SCALING_FIX !== 1) hourIcon.setAttribute('transform', `scale(${SCALING_FIX})`);
       hourIcon.style.opacity = opacity;
 
       if (isNew)
