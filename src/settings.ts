@@ -112,7 +112,8 @@ export class Settings {
   }
 
   public requiresWeatherReload(oldSettings: Settings) {
-    return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude;
+    return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude ||
+      this.background !== oldSettings.background;
   }
 }
 

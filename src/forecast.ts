@@ -655,9 +655,8 @@ export class Forecast {
       return wallTime.y === today.y && wallTime.m === today.m && wallTime.d === today.d;
     });
 
-    if (todayIndex < 0) {
+    if (todayIndex < 0)
       this.showUnknown('Missing data');
-    }
     else {
       this.appService.updateCurrentTemp({
         forecastFeelsLike: forecastData.currently.feelsLikeTemperature,
@@ -776,7 +775,7 @@ export class Forecast {
     else {
       newText = '\u00A0';
       this.marqueeBackground = $('body').css('--background-color');
-      this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
+      this.marqueeOuterWrapper.css('background-color', this.marqueeBackground);
       this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
     }
 
