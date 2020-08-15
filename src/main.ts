@@ -430,6 +430,10 @@ class AwClockApp implements AppService {
     this.dimmer.css('opacity', '0');
   }
 
+  toggleSunMoon(): void {
+    this.ephemeris.toggleSunMoon();
+  }
+
   private static removeDefShadowRoots(): void {
     const signalMeter = $('#signal-meter');
     const days = $('#forecast-day');

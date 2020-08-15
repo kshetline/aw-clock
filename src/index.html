@@ -37,8 +37,10 @@
               <text id="dayN-low-high" x="6" y="17.5" class="small-caption" text-anchor="middle">--°/--°</text>
               <text id="dayN-chance-precip" x="6" y="20.5" class="small-caption" text-anchor="middle">--%</text>
               <text id="dayN-precip-accum" x="6" y="23.5" class="small-caption" text-anchor="middle">--</text>
-              <text id="dayN-sunrise" x="6" y="28" class="small-caption" text-anchor="middle">--:--</text>
-              <text id="dayN-sunset" x="6" y="31" class="small-caption" text-anchor="middle">--:--</text>
+              <text id="dayN-sunrise" x="6" y="28" class="small-caption sun-info" text-anchor="middle">--:--</text>
+              <text id="dayN-moonrise" x="6" y="28" class="small-caption moon-info" text-anchor="middle">--:--</text>
+              <text id="dayN-sunset" x="6" y="31" class="small-caption sun-info" text-anchor="middle">--:--</text>
+              <text id="dayN-moonset" x="6" y="31" class="small-caption moon-info" text-anchor="middle">--:--</text>
               <image id="dayN-moon" href="assets/empty.svg" x="1" y="32" width="10" height="10"/>
               <text id="dayN-phase-time" x="6" y="44.75" class="small-caption" text-anchor="middle"></text>
               <text id="dayN-equisolstice" x="6" y="47.25" class="small-caption equisolstice"
@@ -242,7 +244,9 @@
           </g>
         </svg>
 
-        <image id="current-icon" xlink:href="assets/sunrise.svg" href="assets/sunrise.svg"
+        <image xlink:href="assets/sunrise.svg" href="assets/sunrise.svg" class="sun-info"
+          x="104.5" y="83.5" width="6" height="6"/>
+        <image xlink:href="assets/moonrise.svg" href="assets/moonrise.svg" class="moon-info"
           x="104.5" y="83.5" width="6" height="6"/>
       </svg>
     </div>

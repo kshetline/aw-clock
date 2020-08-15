@@ -958,3 +958,17 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
     }
   }
 }
+
+.moon-info {
+  opacity: 0;
+}
+
+.sun-moon-show {
+  transition: opacity 1s;
+  opacity: 1;
+}
+
+.sun-moon-hide {
+  transition: opacity 1s;
+  opacity: 0;
+}
