@@ -498,7 +498,7 @@ export class SettingsDialog {
     return new Promise((resolve, reject) => {
       // noinspection JSIgnoredPromiseFromCall
       $.ajax({
-        url: url,
+        url,
         dataType: 'jsonp',
         data: {
           q: query,
@@ -519,7 +519,7 @@ export class SettingsDialog {
     const url = `${apiServer}/defaults`;
 
     $.ajax({
-      url: url,
+      url,
       dataType: 'json',
       success: (data: any) => {
         this.updateButton.css('display', (data.allowAdmin && raspbianChromium) || updateTest ? 'inline' : 'none');

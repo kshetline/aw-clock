@@ -832,7 +832,7 @@ export class Forecast {
   }
 
   private showMarqueeDialog(): void {
-    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(blendColors(this.marqueeBackground, 'white'), 'white'));
+    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(this.marqueeBackground, 'white', 0.25));
   }
 
   private showDayForecast(dayIndex: number) {

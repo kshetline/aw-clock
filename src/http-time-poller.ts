@@ -17,7 +17,7 @@ export class HttpTimePoller extends TimePoller {
     return new Promise<NtpData>((resolve, reject) => {
       // noinspection JSIgnoredPromiseFromCall
       $.ajax({
-        url: url,
+        url,
         dataType: 'json',
         success: (data: TimeInfo) => {
           this.fromGps = data.fromGps && localServer;

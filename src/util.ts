@@ -265,8 +265,13 @@ function checkFont() {
   const roundedHeight = Math.floor(exactHeight);
 
   if (dialogInfo.lastLineHeight !== roundedHeight) {
+    const top = Math.floor(roundedHeight / 2) - 1;
+    const bottom = roundedHeight - top - 2;
+
     dialogInfo.textArea.css('line-height', roundedHeight + 'px');
     dialogInfo.textArea.css('max-height', Math.round(roundedHeight * parseFloat(pageLines)) + 'px');
+    dialogInfo.textArea.css('--top-hr-margin', top + 'px');
+    dialogInfo.textArea.css('--bottom-hr-margin', bottom + 'px');
     dialogInfo.lastLineHeight = roundedHeight;
   }
 }

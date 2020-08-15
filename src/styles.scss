@@ -7,7 +7,6 @@ $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 $clock-border: #69C;
 $risen-track: rgba(102, 204, 153, 0.5);
-$background: midnightblue;
 
 html {
   width: 100%;
@@ -17,12 +16,14 @@ html {
 }
 
 body {
+  --background-color: midnightblue;
+  --clock-face-color: black;
   width: 100%;
   height: 100%;
   margin: 0;
   overflow: hidden;
   color: white;
-  background: $background;
+  background: var(--background-color);
   font-family: $std-font;
   cursor: none;
 }
@@ -50,7 +51,7 @@ label {
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
-  background-color: $background;
+  background-color: var(--background-color);
   font-size: 14px;
   padding: 2px 1em;
   overflow: hidden;
@@ -120,7 +121,7 @@ label {
   padding: 1em;
   vertical-align: middle;
   overflow: visible;
-  background: $background;
+  background: var(--background-color);
 }
 
 .clock-container-ie-fix {
@@ -161,7 +162,7 @@ label {
 
 #face {
   stroke-width: 1px;
-  fill: black;
+  fill: var(--clock-face-color);
   stroke: $clock-border;
 }
 
@@ -914,6 +915,8 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
     overflow: auto;
     position: relative;
     --fade-to: black;
+    --top-hr-margin: calc(0.6em - 1px);
+    --bottom-hr-margin: calc(0.6em - 1px);
 
     .dialog-fader {
       background-image: linear-gradient(to bottom, rgba(255,0,0,0), var(--fade-to, black));
@@ -922,6 +925,12 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
       left: 0;
       position: sticky;
       right: 0;
+    }
+
+    hr {
+      border-width: 1px;
+      margin: var(--top-hr-margin) 0.5em var(--bottom-hr-margin) 0.5em;
+      padding: 0;
     }
   }
 
@@ -941,11 +950,5 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
       position: relative;
       top: -0.06em;
     }
-  }
-
-  hr {
-    border-width: 1px;
-    margin: calc(0.6em - 1px);
-    padding: 0;
   }
 }

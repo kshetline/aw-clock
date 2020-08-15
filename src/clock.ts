@@ -242,7 +242,7 @@ export class Clock {
       rect.setAttribute('y', (CLOCK_CENTER + dy - 2).toString());
       rect.setAttribute('width', '1.8');
       rect.setAttribute('height', '2.7');
-      rect.setAttribute('fill', 'black');
+      rect.setAttribute('style', 'fill: var(--clock-face-color)');
       planetTracks.appendChild(rect);
 
       text.setAttribute('x', x.toString());
