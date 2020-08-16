@@ -32,7 +32,8 @@ export interface HourlyConditions {
   time: number;
 }
 
-export const DailyConditionsKeys = [...CommonConditionsKeys, 'temperatureHigh', 'temperatureLow', 'precipAccumulation'];
+export const DailyConditionsKeys = [...CommonConditionsKeys,
+                                    'narrativeDay', 'narrativeEvening', 'temperatureHigh', 'temperatureLow', 'precipAccumulation'];
 
 export interface DailyConditions extends CommonConditions {
   narrativeDay?: string;

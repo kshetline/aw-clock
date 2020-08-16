@@ -158,8 +158,10 @@ function convertDaily(dsDaily: DailySummaryConditions, isMetric: boolean): Daily
   const daily: DailySummaryConditions = {} as DailySummaryConditions;
 
   Object.keys(dsDaily).forEach(key => {
-    if (key === 'data')
+    if (key === 'data') {
       daily.data = dsDaily.data.map(conditions => convertConditions(conditions, DailyConditionsKeys, isMetric)) as DailyConditions[];
+      daily.data.forEach((day, index) => day.narrativeDay = dsDaily.data[index].summary);
+    }
     else if (DailySummaryConditionsKeys.includes(key))
       (daily as any)[key] = (dsDaily as any)[key];
   });
