@@ -814,9 +814,12 @@ export class Forecast {
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
-    // Try to undo hard word-wrap. Too bad lookbehinds aren't reliably supported yet in web browsers.
+    // Try to undo hard word-wrap (too bad lookbehinds aren't reliably supported yet in web browsers).
     this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-a-z,])\n(?=[a-z])/gi, '$1 ')
-      .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n');
+      // No more than one blank line, and no trailing blank lines.
+      .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
+      // Improve alert formatting.
+      .replace(/(^((• (WHAT|WHERE|WHEN|IMPACTS))|PRECAUTIONARY.*?ACTIONS))\.\.\.(?!\.)/gm, '$1: ');
 
     if (textWidth <= marqueeWidth) {
       this.marquee.html(newText);

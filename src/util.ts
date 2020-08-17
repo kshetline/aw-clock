@@ -20,7 +20,7 @@
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
-import { asLines, htmlEscape, isEdge, isSafari, last, padLeft } from 'ks-util';
+import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, processMillis } from 'ks-util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -255,6 +255,8 @@ interface DialogInfo {
 
 const dialogStack: DialogInfo[] = [];
 const initDone = new Set<string>();
+const OUTER_CLICK_DELAY = 500;
+let openTime = 0;
 
 function checkFont() {
   const dialogInfo = last(dialogStack);
@@ -283,6 +285,8 @@ function checkFont() {
 window.addEventListener('resize', checkFont);
 
 export function displayHtml(dialogId: string, html: string, background = 'white'): void {
+  openTime = processMillis();
+
   const id = '#' + dialogId;
   const dialog = $(id);
   const closer = $(`${id} > div > .dialog-close`);
@@ -364,7 +368,10 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
 
     closer.on('click', hide);
     textArea.parent().on('click', event => event.stopPropagation());
-    dialog.on('click', hide);
+    dialog.on('click', () => {
+      if (processMillis() >= openTime + OUTER_CLICK_DELAY)
+        hide();
+    });
 
     initDone.add(dialogId);
   }

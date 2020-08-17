@@ -176,6 +176,10 @@ function convertAlerts(dsAlerts: Alert[]): Alert[] {
     Object.keys(dsAlert).forEach(key => {
       if (AlertKeys.includes(key))
         (alert as any)[key] = (dsAlert as any)[key];
+
+      if (key === 'description')
+        alert.description = alert.description.replace(/ (\* (WHAT|WHERE|WHEN|IMPACTS)|PRECAUTIONARY.*?ACTIONS)\.\.\./g,
+          '\n\n$1...');
     });
 
     return alert;

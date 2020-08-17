@@ -9,7 +9,7 @@ const autoprefixer = require('autoprefixer');
 const postcssUrl = require('postcss-url');
 const postcssImports = require('postcss-import');
 
-const { NoEmitOnErrorsPlugin, SourceMapDevToolPlugin, NamedModulesPlugin } = require('webpack');
+const { NoEmitOnErrorsPlugin, NamedModulesPlugin } = require('webpack');
 
 const entryPoints = ['inline', 'polyfills', 'sw-register', 'styles', 'vendor', 'main'];
 const baseHref = '';
@@ -374,6 +374,7 @@ module.exports = {
     minimize: true,
     minimizer: [new TerserPlugin()],
   },
+  devtool: 'source-map',
   plugins: [
     new NoEmitOnErrorsPlugin(),
     new CopyWebpackPlugin({
@@ -433,12 +434,6 @@ module.exports = {
           return 0;
         }
       }
-    }),
-    new SourceMapDevToolPlugin({
-      filename: '[file].map[query]',
-      moduleFilenameTemplate: '[resource-path]',
-      fallbackModuleFilenameTemplate: '[resource-path]?[hash]',
-      sourceRoot: 'webpack:///'
     }),
     new NamedModulesPlugin({}),
     function () {
