@@ -9,8 +9,6 @@ const autoprefixer = require('autoprefixer');
 const postcssUrl = require('postcss-url');
 const postcssImports = require('postcss-import');
 
-const { NoEmitOnErrorsPlugin, NamedModulesPlugin } = require('webpack');
-
 const entryPoints = ['inline', 'polyfills', 'sw-register', 'styles', 'vendor', 'main'];
 const baseHref = '';
 const deployUrl = '';
@@ -366,7 +364,7 @@ module.exports = {
       {
         test: /\.ts|\.tsx$/,
         use: 'ts-loader',
-        exclude: /node_modules/
+        exclude: [/node_modules/, '/server/**/*']
       }
     ]
   },
@@ -376,7 +374,6 @@ module.exports = {
   },
   devtool: 'source-map',
   plugins: [
-    new NoEmitOnErrorsPlugin(),
     new CopyWebpackPlugin({
       patterns: [
         {
@@ -422,20 +419,14 @@ module.exports = {
       title: 'Webpack App',
       xhtml: true,
       chunksSortMode: function sort(left, right) {
+        // noinspection JSUnresolvedVariable
         const leftIndex = entryPoints.indexOf((left.names && left.names[0]) || left.toString());
+        // noinspection JSUnresolvedVariable
         const rightIndex = entryPoints.indexOf((right.names && right.names[0]) || right.toString());
-        if (leftIndex > rightIndex) {
-          return 1;
-        }
-        else if (leftIndex < rightIndex) {
-          return -1;
-        }
-        else {
-          return 0;
-        }
+
+        return Math.sign(leftIndex - rightIndex);
       }
     }),
-    new NamedModulesPlugin({}),
     function () {
       this.plugin('done', stats => {
         if (stats.compilation.errors && stats.compilation.errors.length > 0) {
