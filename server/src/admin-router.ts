@@ -50,7 +50,7 @@ router.post('/*', async (req: Request, res: Response) => {
     response = (await monitorProcess(spawn(cmd, args, options))).trim();
   }
   catch (e) {
-    res.status(500).send(`Command "${cmd}" failed: ${e.message}`);
+    res.status(500).send(`Command "${cmd}" failed: ${e.message ?? e.toString()}`);
     return;
   }
 

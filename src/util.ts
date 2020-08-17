@@ -92,7 +92,7 @@ export function domAlert(message: string): void {
   if (((match = /<pre>(.*?)<\/pre>/.exec(message)) ?? [])[1])
     message = match[1];
 
-  if (!message.trim())
+  if (!message?.trim())
     message = 'Unknown error';
 
   pushKeydownListener((event: KeyboardEvent) => {
@@ -111,6 +111,7 @@ export function domAlert(message: string): void {
 }
 
 type OkCallback = (isOk: boolean) => void;
+let confirmInit = false;
 
 export function domConfirm(message: string, callback: OkCallback): void;
 export function domConfirm(message: string, optionsHtml: string, callback: OkCallback): void;
@@ -158,10 +159,13 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   else
     $('#confirm-message').text(message);
 
-  confirmDialog.show();
+  if (!confirmInit) {
+    confirmOk.on('click', () => doCallback(true));
+    confirmCancel.on('click', () => doCallback(false));
+    confirmInit = true;
+  }
 
-  confirmOk.one('click', () => doCallback(true));
-  confirmCancel.one('click', () => doCallback(false));
+  confirmDialog.show();
 }
 
 export function setSvgHref(elem: JQuery, href: string) {
@@ -302,8 +306,6 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     dialog.hide();
   };
 
-  closer.on('click', () => hide());
-
   pushKeydownListener((event: KeyboardEvent) => {
     if (event.code === 'Enter' || event.code === 'Escape') {
       event.preventDefault();
@@ -359,6 +361,10 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     textArea.on('mouseup', event => mouseUp(event.pageY));
     textArea.on('touchend', event => mouseUp(event.touches[0]?.pageY ?? lastY));
     textArea.on('touchcancel', () => mouseUp(null));
+
+    closer.on('click', hide);
+    textArea.parent().on('click', event => event.stopPropagation());
+    dialog.on('click', hide);
 
     initDone.add(dialogId);
   }

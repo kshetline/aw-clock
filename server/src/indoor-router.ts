@@ -114,7 +114,6 @@ router.get('/', (req: Request, res: Response) => {
 
   if (indoorSensor) {
     if (consecutiveSensorErrors >= MAX_ERRORS || lastTemp === undefined || lastHumidity === undefined) {
-      console.log('point G');
       console.error('Failed to read indoor temp/humidity sensor.');
       result = { temperature: 0, humidity: -1, error: 'Sensor error' };
     }

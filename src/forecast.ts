@@ -215,6 +215,9 @@ export class Forecast {
     $('#forecast-week').on('click', event => mouseClick(event));
     forecastRect.addEventListener('click', event => mouseClick(event));
 
+    $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
+    $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
+
     const mouseDown = (x: number) => {
       dragging = true;
       lastX = downX = x;

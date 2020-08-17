@@ -348,8 +348,8 @@ function showStep(): void {
 }
 
 function chalkUp(s: string, currentStyle = (s: string) => s): string {
-  const closed = /(.*?)(\[([a-z]+)\])(.*?)(\[\/\3\])(.*)/.exec(s);
-  const open = /(.*?)(\[([a-z]+)\])(.*)/.exec(s);
+  const closed = /(.*?)(\[([a-z]+)])(.*?)(\[\/\3])(.*)/.exec(s);
+  const open = /(.*?)(\[([a-z]+)])(.*)/.exec(s);
 
   if (!closed && !open)
     return s;

@@ -909,9 +909,9 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   --page-lines: 22;
   position: absolute;
   margin: auto;
-  top: 0; left: 0; bottom: 0; right: 0;
+  top: 7vh; left: 0; bottom: auto; right: 0;
   width: 80vw;
-  height: 80vh;
+  max-height: 80vh;
   padding: 1em 1.5em 1em 1em;
   background-color: white;
   color: black;

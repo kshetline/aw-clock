@@ -123,10 +123,10 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
 
       if (errorMode !== ErrorMode.NO_ERRORS && errors && (
         errorMode === ErrorMode.ANY_ERROR ||
-        /\b(error|exception)\b/i.test(errors) ||
+        /\b(error|exception|operation not permitted)\b/i.test(errors) ||
         /[_0-9a-z](Error|Exception)\b/.test(errors)
       ))
-        reject(errors.replace(/\bE:\s+/g, ''));
+        reject(errors.replace(/\bE:\s+/g, '').trim());
       else
         resolve(output);
     });
