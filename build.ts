@@ -24,41 +24,14 @@ let clearAcu = false;
 let doAdmin: boolean;
 let doDht = false;
 let clearDht = false;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let doGps = false;
-let doI2c = false;
 let doStdDeploy = false;
 let doDedicated = false;
 let doLaunch = false;
 let doReboot = false;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let viaBash = false;
 let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
-
-// eslint-disable-next-line
-let cmdline_txt: string;
-// eslint-disable-next-line
-let config_txt: string;
-// eslint-disable-next-line
-let gpsTimeIsWorking = false;
-// eslint-disable-next-line
-let gpsd: string;
-// eslint-disable-next-line
-let gpsWorks = false;
-// eslint-disable-next-line
-let hasGpsTools = false;
-// eslint-disable-next-line
-let hasNtpTools = false;
-// eslint-disable-next-line
-let hadNtpConfig = false;
-// eslint-disable-next-line
-let hasPpsTools = false;
-// eslint-disable-next-line
-let ntp_conf: string;
-// eslint-disable-next-line
-let removeChrony = false;
 
 let spin = () => {
   const now = processMillis();
@@ -89,7 +62,6 @@ let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
   AWC_ALLOW_CORS: 'true',
-  AWC_GPS_PPS_GPIO: '4',
   AWC_NTP_SERVER: 'pool.ntp.org',
   AWC_PORT: '8080',
   AWC_PREFERRED_WS: 'wunderground',
@@ -180,9 +152,6 @@ process.argv.forEach(arg => {
     case '--dht-':
       doDht = false;
       clearDht = true;
-      break;
-    case '--gps':
-      doGps = doI2c = true;
       break;
     case '-i':
       interactive = doStdDeploy = doDedicated = true;
@@ -378,44 +347,97 @@ function showStep(): void {
   write(`Step ${++currentStep} of ${totalSteps}: `);
 }
 
-function getFile(path: string): string {
-  try {
-    if (fs.existsSync(path))
-      return fs.readFileSync(path).toString();
-  }
-  catch (err) {
-    console.warn(chalk.yellow('Failed to read ' + path));
+function chalkUp(s: string, currentStyle = (s: string) => s): string {
+  const closed = /(.*?)(\[([a-z]+)\])(.*?)(\[\/\3\])(.*)/.exec(s);
+  const open = /(.*?)(\[([a-z]+)\])(.*)/.exec(s);
+
+  if (!closed && !open)
+    return s;
+
+  let $: RegExpMatchArray;
+
+  if (closed && open)
+    $ = open[1].length < closed[1].length ? open : closed;
+  else
+    $ = closed ?? open;
+
+  let chalked = $[4];
+  let end = $[6] ?? '';
+
+  if (!$[5]) {
+    chalked += end;
+    end = '';
   }
 
-  return undefined;
+  let style: (s: string) => string;
+
+  switch ($[3]) {
+    case 'pb': style = chalk.paleBlue; break;
+    case 'w': style = chalk.whiteBright; break;
+  }
+
+  return $[1] + chalkUp(style(chalked), style) + currentStyle(chalkUp(end));
 }
 
 async function checkForGps(): Promise<void> {
-  console.log('start GPS test');
-  hasGpsTools = (await isInstalled('gpsd')) && (await isInstalled('gpspipe'));
-  hasNtpTools = (await isInstalled('ntpd')) && (await isInstalled('ntpq'));
-  hasPpsTools = await isInstalled('ppstest');
+  console.log(chalk.cyan('- GPS test -'));
+  const hasGpsTools = (await isInstalled('gpsd')) && (await isInstalled('gpspipe'));
+  const hasNtpTools = (await isInstalled('ntpd')) && (await isInstalled('ntpq'));
+  const hasPpsTools = await isInstalled('ppstest');
+  let gpsLocationIsWorking = false;
+  let gpsTimeIsWorking = false;
+
+  if (hasGpsTools) {
+    const gpsInfo = await monitorProcessLines(spawn('gpspipe', ['-w', '-n', '12']), null, ErrorMode.NO_ERRORS);
+
+    for (const line of gpsInfo) {
+      try {
+        const obj = JSON.parse(line);
+
+        if (typeof obj === 'object' && typeof obj.lat === 'number' && typeof obj.lon === 'number') {
+          gpsLocationIsWorking = true;
+          break;
+        }
+      }
+      catch {}
+    }
+  }
 
   if (hasNtpTools) {
     const ntpInfo = await monitorProcessLines(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS);
 
     for (const line of ntpInfo) {
       if (/^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s-?[.\d]+\s+[.\d]+\s*$/.test(line)) {
-        gpsTimeIsWorking = false;
+        gpsTimeIsWorking = true;
         break;
       }
     }
   }
 
-  if (!gpsTimeIsWorking) {
-    removeChrony = await isInstalled('chrony');
-    cmdline_txt = getFile('/boot/cmdline.txt');
-    config_txt = getFile('/boot/config.txt');
-    ntp_conf = getFile('/etc/ntp.conf');
-    gpsd = getFile('/etc/default/gpsd');
-  }
+  if (!gpsLocationIsWorking || !gpsTimeIsWorking) {
+    const hasChrony = await isInstalled('chrony');
 
-  console.log(hasGpsTools, hasNtpTools, gpsTimeIsWorking, cmdline_txt, config_txt, ntp_conf, gpsd);
+    console.log(chalk.yellow('GPS time and/or location services not found'));
+    console.log(chalk.yellow('The following updates/changes are suggested if GPS support is desired:'));
+
+    if (hasChrony)
+      console.log(chalkUp('  [pb]• Remove [w]chrony[/w] package to avoid conflict with ntpd.'));
+
+    if (hasGpsTools)
+      console.log(chalkUp('  [pb]• Check [w]gpsd[/w] configuration'));
+    else
+      console.log(chalkUp('  [pb]• Install [w]gpsd[/w] and [w]gpspipe[/w]'));
+
+    if (hasNtpTools)
+      console.log(chalkUp('  [pb]• Check [w]ntpd[/w] configuration'));
+    else
+      console.log(chalkUp('  [pb]• Install [w]ntpd[/w] and [w]ntpq[/w]'));
+
+    if (!hasPpsTools)
+      console.log(chalkUp('  [pb]• Install [w]ppstest[/w]'));
+  }
+  else
+    console.log('GPS time and location services found ' + chalk.green(CHECK_MARK));
 }
 
 function portValidate(s: string): boolean {
@@ -689,14 +711,6 @@ async function doServerBuild(): Promise<void> {
     write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
     await npmInit();
     await monitorProcess(spawn('npm', uid, ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
-    stepDone();
-  }
-
-  if (doI2c) {
-    showStep();
-    write('Adding I²C serial bus support' + trailingSpace);
-    await npmInit();
-    await monitorProcess(spawn('npm', uid, ['i', 'i2c-bus'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
 }
