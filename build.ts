@@ -343,6 +343,27 @@ async function npmInit(): Promise<void> {
   }
 }
 
+enum RepoStatus { CLEAN, PACKAGE_LOCK_CHANGES_ONLY, DIRTY }
+
+async function getRepoStatus(): Promise<RepoStatus> {
+  const lines = asLines(await monitorProcess(spawn('git', ['status', '--porcelain', '-b'])));
+  let status = RepoStatus.CLEAN;
+
+  if (lines.length > 0)
+    lines.splice(0, 1);
+
+  for (const line of lines) {
+    if (/\bpackage-lock.json$/.test(line))
+      status = RepoStatus.PACKAGE_LOCK_CHANGES_ONLY;
+    else {
+      status = RepoStatus.DIRTY;
+      break;
+    }
+  }
+
+  return status;
+}
+
 function showStep(): void {
   write(`Step ${++currentStep} of ${totalSteps}: `);
 }
@@ -858,8 +879,16 @@ async function doServiceDeployment(): Promise<void> {
       delete settings.AWC_GIT_REPO_PATH;
 
     console.log(chalk.cyan('- Building application -'));
+    const repoStatus1 = await getRepoStatus();
+
     await doClientBuild();
     await doServerBuild();
+
+    const repoStatus2 = await getRepoStatus();
+
+    // If the build process alone is responsible for dirtying the repo, clean it up again.
+    if (repoStatus1 === RepoStatus.CLEAN && repoStatus2 === RepoStatus.PACKAGE_LOCK_CHANGES_ONLY)
+      await monitorProcess(spawn('git', ['reset', '--hard']));
 
     showStep();
     write('Copying server to top-level dist directory' + trailingSpace);
