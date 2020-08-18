@@ -346,7 +346,7 @@ async function npmInit(): Promise<void> {
 enum RepoStatus { CLEAN, PACKAGE_LOCK_CHANGES_ONLY, DIRTY }
 
 async function getRepoStatus(): Promise<RepoStatus> {
-  const lines = asLines(await monitorProcess(spawn('git', ['status', '--porcelain', '-b'])));
+  const lines = asLines((await monitorProcess(spawn('git', ['status', '--porcelain', '-b']))).trim());
   let status = RepoStatus.CLEAN;
 
   if (lines.length > 0)
