@@ -880,21 +880,18 @@ async function doServiceDeployment(): Promise<void> {
 
     console.log(chalk.cyan('- Building application -'));
     const repoStatus1 = await getRepoStatus();
-
     await doClientBuild();
     await doServerBuild();
-
     const repoStatus2 = await getRepoStatus();
 
     // If the build process alone is responsible for dirtying the repo, clean it up again.
-    if (repoStatus1 === RepoStatus.CLEAN && repoStatus2 === RepoStatus.PACKAGE_LOCK_CHANGES_ONLY)
+    if (viaBash && repoStatus1 === RepoStatus.CLEAN && repoStatus2 === RepoStatus.PACKAGE_LOCK_CHANGES_ONLY)
       await monitorProcess(spawn('git', ['reset', '--hard']));
 
     showStep();
     write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
-    await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'],
-      { shell: true, uid: viaBash ? 0 : uid }), spin, ErrorMode.ANY_ERROR);
+    await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'], { shell: true, uid: viaBash ? 0 : uid }), spin, ErrorMode.ANY_ERROR);
     stepDone();
 
     if (doStdDeploy) {

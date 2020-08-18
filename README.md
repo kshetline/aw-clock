@@ -6,7 +6,7 @@ This project is designed to create a desktop clock which provides weather and as
 
 The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
-*&#42;A touchscreen or mouse is required to display the last three days of the seven day forecast, or to switch the display from sunrise/sunset to moonrise/moonset.*
+*&#42;A touchscreen or mouse is required to display the last three days of the seven-day forecast, or to switch the display from sunrise/sunset to moonrise/moonset.*
 
 ![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_screenshot.png)
 <br/><br/>
@@ -14,11 +14,11 @@ The clock displays the time and date in both analog and digital form, in 12- or 
 
 The following instructions are primarily aimed at turning a Raspberry Pi into a _dedicated_ Astronomy/Weather Clock, meaning that serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
 
-The first step, if you want GPS support, is to install a GPS device according to the manufacturers instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it's the only one I've tested.
+The first step, if you want GPS support, is to install a GPS device according to the manufacturers instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested.
 
 I needed to use an active GPS antenna to get a good signal, but you might not need one, depending on where you locate your device.
 
-The next step (or the first, if you're skipping GPS) is to clone the repository and perform the initial set-up:
+The next step (or the first, if you’re skipping GPS) is to clone the repository and perform the initial set-up:
 
 ```shell script
 $ git clone https://github.com/kshetline/aw-clock.git
@@ -28,15 +28,15 @@ $ sudo ./build.sh -i
 
 There will possibly be a long delay the first time you run this script while Node.js (if necessary) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
 
-You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the command above, and add `--ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled.
+You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the `build.sh` command above, and add `--ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled.
 
-Respond `Y` to the prompt "Allow user to reboot, shutdown, update, etc.?" if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you're using a touchscreen, and don’t want to have to use SSH or VNC to perform these operations.
+Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and don’t want to have to use SSH or VNC to perform these operations.
 
 As of v2.1.0 of this software no API key is required to get weather data. The default weather data, however, is now being acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
 
 Having a Dark Sky API key for back-up weather data is still, therefore, useful. Unfortunately, not long after release 2.3.3 of this software, Dark Sky announced that, as a result of joining Apple, they will no long accept new sign-ups for API keys. If you already have a Dark Sky API key, however, it will still function until the end of 2021, and you can select Dark Sky as your primary weather source until then, using Weather Underground as a back-up. (In the near future I plan to implement one more weather service option, to replace Dark Sky as the only Weather Underground alternative.)
 
-By default, this application uses GPS-synced system time, if available, or `pool.ntp.org` as an NTP time server (keeping its own time, rather than using the system clock). You can configure the use of a different time server, however, you should not choose a Google or Facebook time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
+By default, this application uses GPS-synced system time, if available, or `pool.ntp.org` as an NTP time server (keeping its own time via NTP, rather than using the system clock). You can configure the use of a different time server, however, you should not choose a Google or Facebook time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
 
 ![Hypothetical leap second](https://shetline.com/readme/aw-clock/2.4.0/moment_of_leap_second.jpg)
 
@@ -46,7 +46,7 @@ _This image is hypothetical — the pictured moment in time is not guaranteed to
 
 As soon as you’ve got the Astronomy/Weather Clock up and running the first time, you might want to click on the gear icon in the lower right corner of the web browser display to adjust the various user options which aren’t queried as part of the initial set-up.
 
-Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you're using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
+Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you’re using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
 
 ![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_dlog.png)
 
@@ -54,14 +54,13 @@ To close the web browser while it’s running in full-screen kiosk mode, press `
 
 ### Hardware set-up for temperature/humidity sensors
 
-If you are running the server on a Raspberry Pi you have the option to display indoor temperature and humidity using a direct-wired DHT22/AM2302 sensor, as seen here: https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/. The wiring I describe below is specifically for the AM2302 version of the DHT22, with a built-in pull-up
-resistor.
+If you are running the server on a Raspberry Pi you have the option to display indoor temperature and humidity using a direct-wired DHT22/AM2302 sensor, as seen here: https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/. The wiring I describe below is specifically for the AM2302 version of the DHT22, with a built-in pull-up resistor.
 
-With your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 17 (physical pin 11 on the 40-pin J8 header). The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin J8 header) and the `-` lead needs to be connected to ground (I chose pin 6).
+With your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 17* (physical pin 11 on the 40-pin J8 header). The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin J8 header) and the `-` lead needs to be connected to ground (I chose pin 9). In the image below, the signal lead is orange, the ground is brown, and +5 is the upper red wire.
 
-![Picture of DHT wiring](https://shetline.com/readme/aw-clock/2.4.0/rpi-dht22-wiring.jpg)
+*&#42;This default was GPIO 4 (physical pin 7) before version 2.4.0, but the Adafruit GPS HAT is pre-wired to use that pin, hence the new default.*
 
-![Picture of GPS wiring](https://shetline.com/readme/aw-clock/2.4.0/rpi_with_gps_hat.jpg)
+![Picture of wiring to GPS HAT](https://shetline.com/readme/aw-clock/2.4.0/rpi_with_gps_hat.jpg)
 
 Also for the Raspberry Pi you have the option to provide wireless indoor conditions and outdoor weather data using [433 MHz Acu Rite 06002M wireless temperature and humidity sensors](https://www.amazon.com/gp/product/B00T0K8NXC/) paired with a [433 MHz receiver module](https://www.amazon.com/gp/product/B00HEDRHG6/).
 
@@ -73,10 +72,17 @@ With either one or two outdoor sensors the temperature displayed (in the largest
 
 In small, gray print you can see the individual temperature values for each wireless sensor and from the forecast, regardless of what is displayed in large format. If any of your wireless sensors are running low on battery power, a red indicator will appear in the upper right corner of the display.
 
-When connecting the 433 MHz receiver module follow the same precautions as specified for connecting the DHT22/AM2302. For my own set-up, I’ve connected the receiver’s +5V lead to physical pin 4 of the 40-pin J8 connector, ground to pin 14, and data to pin 13 (GPIO 27, the set-up default value).
+When connecting the 433 MHz receiver module follow the same precautions as specified for connecting the DHT22/AM2302. For my own set-up, I’ve connected the receiver’s +5V lead to physical pin 4 of the 40-pin J8 connector, ground to pin 14, and data to pin 13 (GPIO 27, the set-up default value). These correspond to the lower red wire in the picture above, the black wire (hard to see, to the right of the blue wire), and the blue wire.
 
-![Picture of 433MHz wiring](https://shetline.com/readme/aw-clock/2.4.0/rpi-433MHz-wiring.jpg)
-<br/><br/>
+### Touchscreen/mouse features
+
+* Swipe left or right on the daily forecast to see all of the seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four days.*
+* Tap on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
+* Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for them to scroll by.
+* Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
+
+<br>
+
 ### Info for code development, testing, and non-Raspberry Pi use
 
 To build and run this project you can use the following commands:
@@ -95,6 +101,8 @@ To build the server along with the web client, use `npm run build`, possibly fol
 | ------------------------------ | -------------------------------------------------------------- |
 | `‑‑acu` |     Install support for wireless temperature/humidity sensors using a 433 MHz receiver module. |
 | `‑‑acu‑` |     Clears saved `‑‑acu` setting when not using interactive mode. |
+| `‑‑admin` |     Enables the user actions “Update”, “Shut down”, “Reboot”, and “Quit” in the Settings dialog. |
+| `‑‑admin-` |     Clears the `--admin` setting. |
 | `‑‑ddev` |     This stands for “dedicated device”. This is for setting up a Raspberry Pi to primarily serve as an Astronomy/Weather Clock, automatically booting as a clock in full-screen mode. This implies the `‑‑sd` option. |
 | `‑‑dht` |     Install support for a wired DHT22/AM2302 temperature/humidity sensor. |
 | `‑‑dht‑` |     Clears saved `‑‑dht` setting when not using interactive mode. |
@@ -119,7 +127,7 @@ The following environment variables affect how the server part of this software 
 * `AWC_WIRED_TH_GPIO`: The GPIO number for a wired indoor temperature/humidity sensor, if any. Delete (or do not define) this entry if you don’t have the wired sensor hardware connected.
 * `AWC_WIRELESS_TH_GPIO`:  The GPIO number for the 433 MHz RF module that receives wireless temperature/humidity data, if any. Delete (or do not define) this entry if you don’t have the RF module connected, or the necessary wireless sensors.
 
-Don't forget to run `sudo update-rc.d weatherService defaults` after editing the `weatherService` file.
+Don’t forget to run `sudo update-rc.d weatherService defaults` after editing the `weatherService` file.
 
 ### Installation details
 
@@ -134,6 +142,7 @@ For reference, here’s a break down of the steps performed by a full installati
 1. `xscreensaver` is then disabled. Why install a screen saver just to turn around and disable it? To make sure no other screen saver blanks the screen - the display of the clock is intended to stay on 24/7.
 1. The application client is built.
 1. The application server is built.
+1. If you're running `build.sh`, your Git branch was clean before running the installer, and the only thing that changes as far as Git is concerned are your `package-lock.json` files, a `git --reset hard` will be performed to revert those changes and keep your branch clean.
 1. If specified, server options for wired and/or wireless sensors are installed.
 1. A combined client/server distribution directory is created.
 1. If any of the options `‑‑ddev`, `‑i`, or `‑‑sd` are used, the distribution is copied to the `~/weather` directory (typically `/home/pi/weather`), deleting anything which might have previously been present in that directory.
