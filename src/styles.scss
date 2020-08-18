@@ -907,6 +907,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   font-size: 3vh;
   line-height: 3.6vh;
   --page-lines: 22;
+  --page-height: 80;
   position: absolute;
   margin: auto;
   top: 7vh; left: 0; bottom: auto; right: 0;

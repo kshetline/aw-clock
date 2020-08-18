@@ -20,7 +20,7 @@
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
-import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, processMillis } from 'ks-util';
+import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, processMillis, toNumber } from 'ks-util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -261,7 +261,7 @@ let openTime = 0;
 function checkFont() {
   const dialogInfo = last(dialogStack);
   const textArea = dialogInfo?.textArea;
-  const pageLines = textArea?.parent().css('--page-lines');
+  const pageLines = toNumber(textArea?.parent().css('--page-lines'));
 
   if (!pageLines)
     return;
@@ -273,11 +273,16 @@ function checkFont() {
   if (dialogInfo.lastLineHeight !== roundedHeight) {
     const top = Math.floor(roundedHeight / 2) - 1;
     const bottom = roundedHeight - top - 2;
+    const maxHeight = Math.round(roundedHeight * pageLines);
+    const pageHeight = Math.floor(toNumber(textArea?.parent().css('--page-height')) / 100 * window.innerHeight);
+    const scrollExcess = Math.max(textArea[0].scrollHeight - maxHeight, 0);
+    const bottomMargin = Math.min(pageHeight ? pageHeight - maxHeight : 0, scrollExcess);
 
     dialogInfo.textArea.css('line-height', roundedHeight + 'px');
-    dialogInfo.textArea.css('max-height', Math.round(roundedHeight * parseFloat(pageLines)) + 'px');
+    dialogInfo.textArea.css('max-height', maxHeight + 'px');
     dialogInfo.textArea.css('--top-hr-margin', top + 'px');
     dialogInfo.textArea.css('--bottom-hr-margin', bottom + 'px');
+    dialogInfo.textArea.css('margin-bottom', bottomMargin + 'px');
     dialogInfo.lastLineHeight = roundedHeight;
   }
 }
