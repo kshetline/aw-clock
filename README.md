@@ -76,8 +76,9 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 ### Touchscreen/mouse features
 
-* Swipe left or right on the daily forecast to see all of the seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four days.*
-* Tap on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
+* Swipe left or right on the daily forecast to the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four days.*
+* Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
+* Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
 * Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for them to scroll by.
 * Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
 
