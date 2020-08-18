@@ -545,6 +545,12 @@ const questions = [
   { name: 'AWC_PORT', prompt: 'HTTP server port', ask: true, validate: portValidate },
   { prompt: 'Allow user to reboot, shutdown, update, etc.?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
+  {
+    name: 'AWC_GOOGLE_API_KEY',
+    prompt: 'Google Geocoding API key (optional, for city names from GPS coordinates)' +
+      (settings.AWC_GOOGLE_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
+    ask: true
+  },
   { name: 'AWC_PREFERRED_WS', prompt: 'preferred weather service, (w)underground or (d)arksky)', ask: true, validate: wsValidate, after: wsAfter },
   {
     name: 'AWC_DARK_SKY_API_KEY',

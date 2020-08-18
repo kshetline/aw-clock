@@ -1,16 +1,24 @@
 ## Astronomy/Weather Clock
 
-![raspberry pi logo](https://shetline.com/misc/rpi_logo.svg)
+![raspberry pi logo](https://shetline.com/readme/aw-clock/2.4.0/rpi_logo.svg)
 
-This project is designed to create a desktop clock which provides weather and astronomical information. While primarily designed to run on a Raspberry Pi, the code will create a Node.js server and client web app that can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors.
+This project is designed to create a desktop clock which provides weather and astronomical information. While primarily designed to run on a Raspberry Pi, the code provides a Node.js server and client web app which can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors. GPS support is also primarily aimed at the Raspberry Pi, but might work on other Linux variants if similarly configured.
 
-The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, hourly conditions for 24 hours, a four-day forecast, sunrise and sunset times, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
+The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
-![app screenshot](https://shetline.com/misc/awc_2_3_0_screenshot.jpg)
+*&#42;A touchscreen or mouse is required to display the last three days of the seven day forecast, or to switch the display from sunrise/sunset to moonrise/moonset.*
+
+![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_screenshot.png)
 <br/><br/>
 ### Getting started
 
-To clone the repository and perform initial set-up for turning your Raspberry Pi into a _dedicated_ Astronomy/Weather Clock:
+The following instructions are primarily aimed at turning a Raspberry Pi into a _dedicated_ Astronomy/Weather Clock, meaning that serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
+
+The first step, if you want GPS support, is to install a GPS device according to the manufacturers instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it's the only one I've tested.
+
+I needed to use an active GPS antenna to get a good signal, but you might not need one, depending on where you locate your device.
+
+The next step (or the first, if you're skipping GPS) is to clone the repository and perform the initial set-up:
 
 ```shell script
 $ git clone https://github.com/kshetline/aw-clock.git
@@ -20,15 +28,17 @@ $ sudo ./build.sh -i
 
 There will possibly be a long delay the first time you run this script while Node.js (if necessary) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
 
-You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the command above, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled.
+You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the command above, and add `--ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled.
+
+Respond `Y` to the prompt "Allow user to reboot, shutdown, update, etc.?" if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you're using a touchscreen, and don’t want to have to use SSH or VNC to perform these operations.
 
 As of v2.1.0 of this software no API key is required to get weather data. The default weather data, however, is now being acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
 
-Obtaining a Dark Sky API key for back-up weather data is still, therefore, a good idea. (See https://darksky.net/ for further details.) You can also select Dark Sky as your primary weather source, using Weather Underground as a backup.
+Having a Dark Sky API key for back-up weather data is still, therefore, useful. Unfortunately, not long after release 2.3.3 of this software, Dark Sky announced that, as a result of joining Apple, they will no long accept new sign-ups for API keys. If you already have a Dark Sky API key, however, it will still function until the end of 2021, and you can select Dark Sky as your primary weather source until then, using Weather Underground as a back-up. (In the near future I plan to implement one more weather service option, to replace Dark Sky as the only Weather Underground alternative.)
 
-By default this application uses `pool.ntp.org` as an NTP time server (keeping its own time, rather than using the system clock), but you can use a different time server. Do not use a Google or Facebook time server, however, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to display leap seconds as shown below:
+By default, this application uses GPS-synced system time, if available, or `pool.ntp.org` as an NTP time server (keeping its own time, rather than using the system clock). You can configure the use of a different time server, however, you should not choose a Google or Facebook time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
 
-![Hypothetical leap second](https://shetline.com/misc/moment_of_leap_second.jpg)
+![Hypothetical leap second](https://shetline.com/readme/aw-clock/2.4.0/moment_of_leap_second.jpg)
 
 _This image is hypothetical — the pictured moment in time is not guaranteed to be an actual leap second. Video here: https://shetline.com/video/leap_second_display.mp4_
 
@@ -38,9 +48,9 @@ As soon as you’ve got the Astronomy/Weather Clock up and running the first tim
 
 Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you're using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
 
-![app screenshot](https://shetline.com/misc/awc_2_3_0_dlog.jpg)
+![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_dlog.png)
 
-To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
+To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
 
 ### Hardware set-up for temperature/humidity sensors
 
@@ -49,7 +59,9 @@ resistor.
 
 With your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 17 (physical pin 11 on the 40-pin J8 header). The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin J8 header) and the `-` lead needs to be connected to ground (I chose pin 6).
 
-![Picture of DHT wiring](https://shetline.com/misc/rpi-dht22-wiring.jpg)
+![Picture of DHT wiring](https://shetline.com/readme/aw-clock/2.4.0/rpi-dht22-wiring.jpg)
+
+![Picture of GPS wiring](https://shetline.com/readme/aw-clock/2.4.0/rpi_with_gps_hat.jpg)
 
 Also for the Raspberry Pi you have the option to provide wireless indoor conditions and outdoor weather data using [433 MHz Acu Rite 06002M wireless temperature and humidity sensors](https://www.amazon.com/gp/product/B00T0K8NXC/) paired with a [433 MHz receiver module](https://www.amazon.com/gp/product/B00HEDRHG6/).
 
@@ -63,7 +75,7 @@ In small, gray print you can see the individual temperature values for each wire
 
 When connecting the 433 MHz receiver module follow the same precautions as specified for connecting the DHT22/AM2302. For my own set-up, I’ve connected the receiver’s +5V lead to physical pin 4 of the 40-pin J8 connector, ground to pin 14, and data to pin 13 (GPIO 27, the set-up default value).
 
-![Picture of 433MHz wiring](https://shetline.com/misc/rpi-433MHz-wiring.jpg)
+![Picture of 433MHz wiring](https://shetline.com/readme/aw-clock/2.4.0/rpi-433MHz-wiring.jpg)
 <br/><br/>
 ### Info for code development, testing, and non-Raspberry Pi use
 
@@ -131,5 +143,5 @@ For reference, here’s a break down of the steps performed by a full installati
 1. Server set-up options are saved to `/etc/defaults/weatherService`, which is also owned by root. Rather than re-running the installer to change the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
 1. The commands `sudo update-rc.d weatherService defaults` and `sudo systemctl enable weatherService` are performed to establish and enable the service.
 1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `-pi` on the end for Debian), or the existing `autostart` file is modified, to launch the Chromium web browser in kiosk mode, displaying the Astronomy/Weather Clock.
-1. The included file `autostart_extra.sh` is also copied to the above directory. This adds code to make sure Chromium doesn’t launch complaining that it was shut down improperly, which could interfere with an otherwise smooth automatic start-up.
+1. The included file `autostart_extra.sh` is also copied to the above directory. This adds code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up.
 1. The options `‑‑launch` or `‑‑reboot` are performed if specified.
