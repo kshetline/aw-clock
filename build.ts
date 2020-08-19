@@ -191,7 +191,7 @@ process.argv.forEach(arg => {
           'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
           '                       [--launch] [--pt] [--reboot] [--sd] [--skip-upgrade]\n' +
           '                       [--tarp]\n\n' +
-          'The option --acu, --admin, and --dht can be followed by an extra dash (e.g.\n' +
+          'The options --acu, --admin, and --dht can be followed by an extra dash (e.g.\n' +
           '--acu-) to clear a previously enabled option.';
 
         if (!viaBash)
