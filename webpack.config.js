@@ -9,8 +9,6 @@ const autoprefixer = require('autoprefixer');
 const postcssUrl = require('postcss-url');
 const postcssImports = require('postcss-import');
 
-const { NoEmitOnErrorsPlugin, SourceMapDevToolPlugin, NamedModulesPlugin } = require('webpack');
-
 const entryPoints = ['inline', 'polyfills', 'sw-register', 'styles', 'vendor', 'main'];
 const baseHref = '';
 const deployUrl = '';
@@ -366,7 +364,7 @@ module.exports = {
       {
         test: /\.ts|\.tsx$/,
         use: 'ts-loader',
-        exclude: /node_modules/
+        exclude: [/node_modules/, '/server/**/*']
       }
     ]
   },
@@ -374,32 +372,30 @@ module.exports = {
     minimize: true,
     minimizer: [new TerserPlugin()],
   },
+  devtool: 'source-map',
   plugins: [
-    new NoEmitOnErrorsPlugin(),
-    new CopyWebpackPlugin([
-      {
-        context: 'src',
-        to: '',
-        from: {
-          glob: 'assets/**/*',
-          dot: true
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          context: 'src',
+          to: '',
+          from: 'assets/**/*',
+          globOptions: {
+            dot: true,
+            ignore: [
+              '.gitkeep',
+              '**/.DS_Store',
+              '**/Thumbs.db'
+            ],
+            debug: 'warning'
+          }
+        },
+        {
+          context: 'src',
+          to: '',
+          from: 'favicon.ico'
         }
-      },
-      {
-        context: 'src',
-        to: '',
-        from: {
-          glob: 'favicon.ico',
-          dot: true
-        }
-      }
-    ], {
-      ignore: [
-        '.gitkeep',
-        '**/.DS_Store',
-        '**/Thumbs.db'
-      ],
-      debug: 'warning'
+      ]
     }),
     new ProgressPlugin({}),
     new CircularDependencyPlugin({
@@ -423,26 +419,14 @@ module.exports = {
       title: 'Webpack App',
       xhtml: true,
       chunksSortMode: function sort(left, right) {
-        const leftIndex = entryPoints.indexOf(left.names[0]);
-        const rightIndex = entryPoints.indexOf(right.names[0]);
-        if (leftIndex > rightIndex) {
-          return 1;
-        }
-        else if (leftIndex < rightIndex) {
-          return -1;
-        }
-        else {
-          return 0;
-        }
+        // noinspection JSUnresolvedVariable
+        const leftIndex = entryPoints.indexOf((left.names && left.names[0]) || left.toString());
+        // noinspection JSUnresolvedVariable
+        const rightIndex = entryPoints.indexOf((right.names && right.names[0]) || right.toString());
+
+        return Math.sign(leftIndex - rightIndex);
       }
     }),
-    new SourceMapDevToolPlugin({
-      filename: '[file].map[query]',
-      moduleFilenameTemplate: '[resource-path]',
-      fallbackModuleFilenameTemplate: '[resource-path]?[hash]',
-      sourceRoot: 'webpack:///'
-    }),
-    new NamedModulesPlugin({}),
     function () {
       this.plugin('done', stats => {
         if (stats.compilation.errors && stats.compilation.errors.length > 0) {

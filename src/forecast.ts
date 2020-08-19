@@ -18,17 +18,21 @@
 */
 
 import { AppService } from './app.service';
-import { CurrentTemperatureHumidity } from './current-temp-manager';
-import * as $ from 'jquery';
-import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { doesCharacterGlyphExist, getTextWidth, isEdge, isIE, last } from 'ks-util';
-import { reflow } from './svg-flow';
-import { convertTemp, formatHour, htmlEncode, setSvgHref } from './util';
-import { ForecastData, HourlyConditions } from '../server/src/weather-types';
-import { cos_deg, floor, sin_deg } from 'ks-math';
 import { CLOCK_CENTER } from './clock';
+import { CurrentTemperatureHumidity } from './current-temp-manager';
+import $ from 'jquery';
+import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+import { cos_deg, floor, sin_deg } from 'ks-math';
+import { blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis } from 'ks-util';
+import { ForecastData, HourlyConditions } from '../server/src/shared-types';
+import { reflow } from './svg-flow';
+import { convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
 
-const DEFAULT_BACKGROUND = 'midnightblue';
+interface SVGAnimationElementPlus extends SVGAnimationElement {
+  beginElement: () => void;
+}
+
+const DEFAULT_BACKGROUND = 'inherit';
 const DEFAULT_FOREGROUND = 'white';
 const ERROR_BACKGROUND = '#CCC';
 const ERROR_FOREGROUND = 'black';
@@ -44,12 +48,21 @@ const CLOCK_ICON_RADIUS = 38;
 const CLOCK_ICON_INNER_RADIUS = 31;
 const CLOCK_TEMPS_RADIUS = 34.5;
 const CLOCK_TEMPS_INNER_RADIUS = 27;
-const HOURLY_ICON_SIZE = 3.5;
+// There's a Chrome glitch where some SVG icons are getting clipped at the edges. For some strange
+// reason using a transform to scale these icons down, then larger unit sizes to scale them back up
+// again, fixes the problem.
+const SCALING_FIX = (isChrome() || isChromium() ? 0.875 : 1);
+const HOURLY_ICON_SIZE = 3.5 / SCALING_FIX;
 const HOURLY_VERT_OFFSET = 2.5;
 const HOURLY_LEFT_COLUMN = 0.5;
 const HOURLY_RIGHT_COLUMN = 99.5;
 const HOURLY_TEMP_VERT_OFFSET = 3.5;
 const HOURLY_VERT_SPACING = 6.7;
+const FORECAST_UNIT_WIDTH = 39;
+const RISE_SET_TOP = 25.4 / 51;
+const BULLET_SPACER = ' \u2022 ';
+const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
+const MARQUEE_JOINER = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
 const CLOSE_ERROR_TAG = '&nbsp;</span>';
 
@@ -64,7 +77,17 @@ const EMPTY_ICON = 'assets/empty.svg';
 const UNKNOWN_ICON = 'assets/unknown.svg';
 const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
 
+const REVERT_TO_START_OF_WEEK_DELAY = 60_000; // 1 minute
+
 export enum HourlyForecast { NONE = 'N', CIRCULAR = 'C', VERTICAL = 'V' }
+
+function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
+  const rect = elem.getBoundingClientRect();
+  const x = event.pageX;
+  const y = event.pageY;
+
+  return rect.x <= x && x <= rect.right && rect.y <= y && y <= rect.bottom;
+}
 
 export class Forecast {
   private readonly currentIcon: JQuery;
@@ -91,9 +114,11 @@ export class Forecast {
   private cachedHourly: HourlyConditions[] = [];
   private lastForecastTime = 0;
   private timezone = KsTimeZone.OS_ZONE;
+  private showingStartOfWeek = true;
 
   private marqueeText = ' ';
-  private marqueeJoiner = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
+  private marqueeDialogText = '';
+  private marqueeBackground = DEFAULT_BACKGROUND;
   private animationStart: number;
   private animationWidth: number;
   private animationDuration: number;
@@ -104,7 +129,7 @@ export class Forecast {
   constructor(private appService: AppService) {
     this.currentIcon = $('#current-icon');
 
-    for (let i = 0; i < 4; ++i) {
+    for (let i = 0; i < 7; ++i) {
       this.dayIcons[i] = $('#day' + i + '-icon');
       this.dayLowHighs[i] = $('#day' + i + '-low-high');
       this.dayChancePrecips[i] = $('#day' + i + '-chance-precip');
@@ -119,16 +144,203 @@ export class Forecast {
     this.marqueeOuterWrapper = $('#marquee-outer-wrapper');
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
+    this.marqueeBackground = $('body').css('--background-color');
     this.forecastDivider = document.getElementById('hourly-forecast-divider');
 
+    this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
+
     if (!isIE() && !isEdge())
-      this.weatherServer = appService.getWeatherServer();
+      this.weatherServer = appService.getApiServer();
     else
       this.weatherServer = '';
 
     this.decorateClockFace();
+    this.detectGestures();
 
     window.addEventListener('resize', () => this.updateMarqueeAnimation(null));
+  }
+
+  private detectGestures(): void {
+    const forecastRect = $('#forecast-rect')[0];
+    const leftEdge = forecastRect.getBoundingClientRect().x;
+    const topEdge = forecastRect.getBoundingClientRect().y;
+    const width = forecastRect.getBoundingClientRect().width;
+    const height = forecastRect.getBoundingClientRect().height;
+
+    const dragStartThreshold = 3;
+    const swipeThreshold = width * 0.114; // 80% of the distance across one day
+    const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
+    const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
+    const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
+    const skipToStart = document.getElementById('week-backward');
+    const disabledSkipColor = skipToStart.getAttribute('fill');
+    const skipToEnd = document.getElementById('week-forward');
+    const enabledSkipColor = skipToEnd.getAttribute('fill');
+    let dragging = false;
+    let dragAnimating = false;
+    let dragEndTime = 0;
+    let downX: number;
+    let lastX: number;
+    let minMove = 0;
+    let revertToStart: any;
+    let swipeAnimating = false;
+    let lastAnimX = 0;
+
+    animateWeekDrag.addEventListener('beginEvent', () => dragAnimating = true);
+    animateToStart.addEventListener('beginEvent', () => swipeAnimating = true);
+    animateToEnd.addEventListener('beginEvent', () => swipeAnimating = true);
+
+    animateWeekDrag.addEventListener('endEvent', () => dragAnimating = false);
+    animateToStart.addEventListener('endEvent', () => {
+      swipeAnimating = false;
+      lastAnimX = 0;
+    });
+    animateToEnd.addEventListener('endEvent', () => {
+      swipeAnimating = false;
+      lastAnimX = -FORECAST_UNIT_WIDTH;
+    });
+
+    const mouseClick = event => {
+      if (processMillis() < dragEndTime + 500 || dragAnimating || swipeAnimating)
+        return;
+
+      if ((event.pageY - topEdge) / height >= RISE_SET_TOP)
+        this.appService.toggleSunMoon();
+      else {
+        const dayIndex = Math.floor((event.pageX - leftEdge) * 4 / width) + (this.showingStartOfWeek ? 0 : 3);
+
+        this.showDayForecast(dayIndex);
+      }
+    };
+    $('#forecast-week').on('click', event => mouseClick(event));
+    forecastRect.addEventListener('click', event => mouseClick(event));
+
+    $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
+    $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
+
+    const mouseDown = (x: number) => {
+      dragging = true;
+      lastX = downX = x;
+      minMove = 0;
+    };
+    window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? mouseDown(event.pageX) : null);
+    window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
+      mouseDown(event.touches[0].pageX) : null
+    );
+
+    const doSwipe = (dx: number) => {
+      if (revertToStart) {
+        clearTimeout(revertToStart);
+        revertToStart = undefined;
+      }
+
+      if (swipeAnimating)
+        return;
+      else if (dragAnimating) {
+        setTimeout(() => doSwipe(dx), 1);
+        return;
+      }
+
+      if (dx < 0) {
+        this.showingStartOfWeek = false;
+        skipToEnd.setAttribute('fill', disabledSkipColor);
+        skipToStart.setAttribute('fill', enabledSkipColor);
+        $(animateToEnd).attr('from', `${lastAnimX} 0`);
+        setTimeout(() => animateToEnd.beginElement());
+
+        revertToStart = setTimeout(() => {
+          revertToStart = undefined;
+          doSwipe(1);
+        }, REVERT_TO_START_OF_WEEK_DELAY);
+      }
+      else {
+        this.showingStartOfWeek = true;
+        skipToStart.setAttribute('fill', disabledSkipColor);
+        skipToEnd.setAttribute('fill', enabledSkipColor);
+        $(animateToStart).attr('from', `${lastAnimX} 0`);
+        setTimeout(() => animateToStart.beginElement());
+      }
+    };
+
+    const restorePosition = () => {
+      if (dragAnimating) {
+        setTimeout(() => restorePosition(), 1);
+        return;
+      }
+
+      if (this.showingStartOfWeek) {
+        $(animateToStart).attr('from', `${lastAnimX} 0`);
+        animateToStart.beginElement();
+      }
+      else {
+        $(animateToEnd).attr('from', `${lastAnimX} 0`);
+        animateToEnd.beginElement();
+      }
+    };
+
+    skipToEnd.addEventListener('click', () => {
+      if (this.showingStartOfWeek)
+        doSwipe(-1);
+    });
+
+    skipToStart.addEventListener('click', () => {
+      if (!this.showingStartOfWeek)
+        doSwipe(1);
+    });
+
+    const canMoveDirection = (dx: number) => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
+
+    const mouseMove = (x: number) => {
+      if (!dragging || x === lastX)
+        return;
+
+      const dx = x - downX;
+
+      minMove = Math.max(Math.abs(dx), Math.abs(minMove));
+      lastX = x;
+
+      if (canMoveDirection(dx)) {
+        if (minMove >= swipeThreshold) {
+          dragging = false;
+          dragEndTime = processMillis();
+          lastX = undefined;
+          doSwipe(dx);
+        }
+        else if (minMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
+          const currentShift = this.showingStartOfWeek ? 0 : -FORECAST_UNIT_WIDTH;
+          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, -FORECAST_UNIT_WIDTH), 0);
+
+          $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
+          $(animateWeekDrag).attr('to', `${dragTo} 0`);
+          lastAnimX = dragTo;
+          animateWeekDrag.beginElement();
+        }
+      }
+    };
+    window.addEventListener('mousemove', event => mouseMove(event.pageX));
+    window.addEventListener('touchmove', event => mouseMove(event.touches[0]?.pageX ?? lastX));
+
+    const mouseUp = (x: number) => {
+      if (dragging && minMove >= 0) {
+        const dx = (x ?? downX) - downX;
+
+        if (x == null || canMoveDirection(dx)) {
+          if (Math.abs(dx) >= swipeThreshold)
+            doSwipe(dx);
+          else if (minMove >= dragStartThreshold)
+            restorePosition();
+        }
+
+        if (minMove >= dragStartThreshold)
+          dragEndTime = processMillis();
+      }
+
+      dragging = false;
+      lastX = undefined;
+    };
+    window.addEventListener('mouseup', event => mouseUp(event.pageX));
+    window.addEventListener('touchend', event => mouseUp(event.touches[0]?.pageX ?? lastX));
+    window.addEventListener('touchcancel', () => mouseUp(null));
   }
 
   private decorateClockFace(): void {
@@ -154,10 +366,11 @@ export class Forecast {
         y = CLOCK_CENTER + r * sin_deg(deg - 90);
       }
 
-      hourIcon.setAttribute('x', (x - halfIcon).toString());
-      hourIcon.setAttribute('y', (y - halfIcon).toString());
+      hourIcon.setAttribute('x', ((x - halfIcon) / SCALING_FIX).toString());
+      hourIcon.setAttribute('y', ((y - halfIcon) / SCALING_FIX).toString());
       hourIcon.setAttribute('height', HOURLY_ICON_SIZE.toString());
       hourIcon.setAttribute('width', HOURLY_ICON_SIZE.toString());
+      if (SCALING_FIX !== 1) hourIcon.setAttribute('transform', `scale(${SCALING_FIX})`);
       hourIcon.style.opacity = opacity;
 
       if (isNew)
@@ -413,7 +626,7 @@ export class Forecast {
       let temp = '';
       const hourInfo = forecastData.hourly[i + firstHourIndex];
       const hour = new KsDateTime(hourInfo.time * 1000, this.timezone).wallTime;
-      let index;
+      let index: number;
 
       if (vertical)
         index = i;
@@ -438,10 +651,14 @@ export class Forecast {
         }
       }
 
-      this.hourIcons[index].setAttribute('href', icon);
-      this.hourTemps[index].innerHTML = temp;
-      this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
-      this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
+      if (this.hourIcons[index])
+        this.hourIcons[index].setAttribute('href', icon);
+
+      if (this.hourTemps[index]) {
+        this.hourTemps[index].innerHTML = temp;
+        this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
+        this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
+      }
     }
 
     const todayIndex = forecastData.daily.data.findIndex(cond => {
@@ -450,9 +667,8 @@ export class Forecast {
       return wallTime.y === today.y && wallTime.m === today.m && wallTime.d === today.d;
     });
 
-    if (todayIndex < 0) {
+    if (todayIndex < 0)
       this.showUnknown('Missing data');
-    }
     else {
       this.appService.updateCurrentTemp({
         forecastFeelsLike: forecastData.currently.feelsLikeTemperature,
@@ -532,15 +748,18 @@ export class Forecast {
       });
     }
 
-    const alertText = alerts.join(' \u2022 '); // Bullet
+    const alertText = alerts.map(a => a.replace(/\r\n|\r/g, '\n').trim()
+      .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '') // Remove seemingly random trailing characters from alerts.
+      .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
+    ).join(BULLET_SPACER);
+
+    let background;
+    let color;
 
     if (alertText) {
-      let background;
-      let color;
-
       switch (maxSeverity) {
         case 0:
-          background = DEFAULT_BACKGROUND;
+          background = document.defaultView.getComputedStyle(document.body, null).getPropertyValue('background-color');
           color = DEFAULT_FOREGROUND;
           break;
 
@@ -561,15 +780,20 @@ export class Forecast {
       }
 
       newText = alertText;
-      this.marqueeOuterWrapper.css('background-color', background);
-      this.marqueeOuterWrapper.css('color', color);
     }
     else {
       newText = '\u00A0';
-      this.marqueeOuterWrapper.css('background-color', DEFAULT_BACKGROUND);
-      this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
+      background = DEFAULT_BACKGROUND;
+      color = DEFAULT_FOREGROUND;
     }
 
+    this.marqueeBackground = background;
+    // It shouldn't be necessary to update colors for both marqueeOuterWrapper and marqueeWrapper, but Chrome doesn't seem.
+    // to pass through the inheritance of the background color all of the time. Also doing foreground for good measure.
+    this.marqueeOuterWrapper.css('background-color', background);
+    this.marqueeWrapper.css('background-color', background);
+    this.marqueeOuterWrapper.css('color', color);
+    this.marqueeWrapper.css('color', color);
     this.updateMarqueeAnimation(newText);
   }
 
@@ -590,6 +814,13 @@ export class Forecast {
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
+    // Try to undo hard word-wrap (too bad lookbehinds aren't reliably supported yet in web browsers).
+    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-a-z,])\n(?=[a-z])/gi, '$1 ')
+      // No more than one blank line, and no trailing blank lines.
+      .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
+      // Improve alert formatting.
+      .replace(/(^((• (WHAT|WHERE|WHEN|IMPACTS))|PRECAUTIONARY.*?ACTIONS))\.\.\.(?!\.)/gm, '$1: ');
+
     if (textWidth <= marqueeWidth) {
       this.marquee.html(newText);
       this.animationStart = 0;
@@ -603,9 +834,9 @@ export class Forecast {
       return;
     }
 
-    this.marquee.html(newText + this.marqueeJoiner + newText);
+    this.marquee.html(newText + MARQUEE_JOINER + newText);
     this.animationStart = performance.now();
-    this.animationWidth = textWidth + getTextWidth(this.marqueeJoiner, this.marquee[0]);
+    this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
     this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
     this.appService.updateMarqueeState(true);
@@ -621,5 +852,38 @@ export class Forecast {
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
+  }
+
+  private showMarqueeDialog(): void {
+    const color = (this.marqueeBackground === 'inherit' ? $('body').css('--background-color') : this.marqueeBackground);
+
+    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25));
+  }
+
+  private showDayForecast(dayIndex: number) {
+    const day = this.lastForecastData?.daily?.data[dayIndex];
+    const narrativeDay = day?.narrativeDay;
+    const narrativeEvening = day?.narrativeEvening;
+
+    if (!narrativeDay && !narrativeEvening) {
+      alert('No forecast details available');
+      return;
+    }
+
+    const tempUnit = this.lastForecastData.isMetric ? 'C' : 'F';
+    let text = '¬b¬' + localDateString(day.time * 1000, this.timezone) +
+      `¬b; • ${day.temperatureHigh}°${tempUnit} / ${day.temperatureLow}°${tempUnit}\n\n`;
+
+    if (narrativeDay && narrativeEvening)
+      text += `${narrativeDay}\n\nEvening: ${narrativeEvening}`;
+    else if (narrativeDay)
+      text += narrativeDay;
+    else
+      text += narrativeEvening;
+
+    text = htmlEncode(text).replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
+      .replace(/¬(.+?)¬/g, '<$1>').replace(/¬(.+?);/g, '</$1>');
+
+    displayHtml('big-text-dialog', text, '#DDF');
   }
 }

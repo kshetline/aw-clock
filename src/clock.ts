@@ -20,11 +20,12 @@
 // Started by using https://codepen.io/dudleystorey/pen/HLBki, but this has grown and changed *quite* a bit from there.
 
 import { AppService } from './app.service';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
 import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
-import { CurrentDelta } from '../server/src/time-types';
+import { CurrentDelta, GpsData } from '../server/src/shared-types';
+import { setSignalLevel } from './util';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -52,6 +53,7 @@ export class Clock {
   private readonly hourHand: HTMLElement;
   private readonly forecastDivider: HTMLElement;
   private readonly hands: HTMLElement;
+  private readonly gpsMeter: HTMLElement;
 
   private sweep: SVGAnimationElement;
   private zoneCaption: HTMLElement;
@@ -61,16 +63,18 @@ export class Clock {
   private monthCaption: HTMLElement;
   private yearCaption: HTMLElement;
   private timeCaption: HTMLElement;
+  private gpsIcon: HTMLElement;
   private dut1Label: HTMLElement;
   private dut1Caption: HTMLElement;
   private dtaiLabel: HTMLElement;
   private dtaiCaption: HTMLElement;
-  private day2Caption: HTMLElement;
-  private day3Caption: HTMLElement;
+  private dayHeaders: HTMLElement[];
   private clock: HTMLElement;
 
   private readonly hasBeginElement: boolean;
 
+  private gpsActive = false;
+  private gpsAvailable = false;
   private lastSecRotation = 0;
   private lastMinute = -1;
   private lastTick = -1;
@@ -101,12 +105,15 @@ export class Clock {
     this.monthCaption = document.getElementById('month');
     this.yearCaption = document.getElementById('year');
     this.timeCaption = document.getElementById('time');
+    this.gpsIcon = document.getElementById('gps-icon');
+    this.gpsMeter = document.getElementById('gps-meter');
     this.dut1Label = document.getElementById('dut1-label');
     this.dut1Caption = document.getElementById('dut1');
     this.dtaiLabel = document.getElementById('dtai-label');
     this.dtaiCaption = document.getElementById('dtai');
-    this.day2Caption = document.getElementById('day2-caption');
-    this.day3Caption = document.getElementById('day3-caption');
+    this.dayHeaders = (Array.from(document.getElementsByClassName('forecast-day-header')) as HTMLElement[])
+      .filter(h => !h.id.includes('dayN'))
+      .sort((a, b) => parseFloat(a.id.substr(3)) - parseFloat(b.id.substr(3)));
 
     this.hasBeginElement = !!this.sweep.beginElement;
 
@@ -235,7 +242,7 @@ export class Clock {
       rect.setAttribute('y', (CLOCK_CENTER + dy - 2).toString());
       rect.setAttribute('width', '1.8');
       rect.setAttribute('height', '2.7');
-      rect.setAttribute('fill', 'black');
+      rect.setAttribute('style', 'fill: var(--clock-face-color)');
       planetTracks.appendChild(rect);
 
       text.setAttribute('x', x.toString());
@@ -258,20 +265,25 @@ export class Clock {
     this.dut1PositionAdjustmentNeeded = true;
   }
 
-  private adjustDut1Position(): void {
+  private adjustTimeDecorations(): void {
     const viewWidth = (this.clock as any).viewBox?.baseVal?.width ?? 172;
     const r0 = this.clock.getBoundingClientRect();
     const scale = viewWidth / r0.width;
     const r1 = this.timeCaption.getBoundingClientRect();
     const r2 = this.dut1Label.getBoundingClientRect();
     const r3 = this.dtaiLabel.getBoundingClientRect();
+    const r4 = this.gpsIcon.getBoundingClientRect();
     const labelX = (r1.x + r1.width - r0.x) * scale;
     const captionX = labelX + max(r2.width, r3.width) * scale;
+    const iconX = (r1.x - r0.x) * scale - ((r4.width * scale) || 2.5) - 0.5;
+    const meterX = iconX + 0.25;
 
     this.dut1Label.setAttribute('x', labelX.toString());
     this.dtaiLabel.setAttribute('x', labelX.toString());
     this.dut1Caption.setAttribute('x', captionX.toString());
     this.dtaiCaption.setAttribute('x', captionX.toString());
+    this.gpsIcon.setAttribute('x', iconX.toString());
+    this.gpsMeter.setAttribute('x', meterX.toString());
   }
 
   private tick(): void {
@@ -380,6 +392,9 @@ export class Clock {
     rotate(this.minHand, 6 * mins + 0.1 * min(secs, 59));
     rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120);
     rotate(this.forecastDivider, 30 * (hour % 12) - 9.5);
+    this.gpsActive = !!timeInfo.fromGps;
+    this.gpsIcon.style.display = (this.gpsAvailable ? 'block' : 'none');
+    this.gpsMeter.style.display = (this.gpsAvailable ? 'block' : 'none');
     setTimeout(() => this.tick(), 1000 - millis);
 
     setTimeout(() => {
@@ -389,8 +404,10 @@ export class Clock {
       this.dateCaption.textContent = padLeft(wallTime.d, 2, '0');
       this.monthCaption.textContent = months[wallTime.m - 1].toUpperCase();
       this.yearCaption.textContent = wallTime.y.toString();
-      this.day2Caption.textContent = daysOfWeek[(dayOfTheWeek + 2) % 7];
-      this.day3Caption.textContent = daysOfWeek[(dayOfTheWeek + 3) % 7];
+
+      for (let i = 2; i < 7; ++i)
+        this.dayHeaders[i].textContent = daysOfWeek[(dayOfTheWeek + i) % 7];
+
       this.zoneCaption.textContent = this.timezone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
 
       let displayHour = hour;
@@ -416,10 +433,11 @@ export class Clock {
 
       if (this.dut1PositionAdjustmentNeeded) {
         this.dut1PositionAdjustmentNeeded = false;
-        setTimeout(() => this.adjustDut1Position());
+        setTimeout(() => this.adjustTimeDecorations());
       }
 
       if (mins !== this.lastMinute || this.lastTick + 60_000 <= now) {
+        this.checkGps();
         this.appService.updateTime(hour, mins, this.lastMinute < 0);
         this.lastMinute = mins;
         this.lastTick = now;
@@ -445,7 +463,7 @@ export class Clock {
 
       // noinspection JSIgnoredPromiseFromCall
       $.ajax({
-        url: this.appService.getWeatherServer() + '/tai-utc',
+        url: this.appService.getApiServer() + '/tai-utc',
         dataType: 'json',
         success: (data: CurrentDelta) => this.upcomingLeapSecond = data,
         error: () => setTimeout(() => {
@@ -455,5 +473,30 @@ export class Clock {
       });
       // Randomly delay polling so that multiple clock instances don't all poll at the same time every day.
     }, this.firstLeapSecondPoll ? 0 : irandom(MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
+  }
+
+  private checkGps(): void {
+    if (!this.gpsAvailable)
+      return;
+
+    // noinspection JSIgnoredPromiseFromCall
+    $.ajax({
+      url: this.appService.getApiServer() + '/gps',
+      dataType: 'json',
+      success: (data: GpsData) => {
+        if (data.error === 'n/a')
+          this.gpsAvailable = false;
+        else {
+          if (this.gpsActive !== !!data.pps) {
+            this.lastMinute = -1; // trigger quick update
+            this.gpsActive = !!data.pps;
+            this.appService.resetGpsState();
+          }
+
+          setSignalLevel($(this.gpsMeter), data.signalQuality > 0 ? data.signalQuality : -1);
+          this.gpsIcon.style.opacity = (data.pps && data.signalQuality > 0 ? '1' : '0.33');
+        }
+      }
+    });
   }
 }

@@ -17,29 +17,18 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { AppService, DEV_URL } from './app.service';
+import { AppService } from './app.service';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import * as $ from 'jquery';
-import { localServer, runningDev } from './settings';
+import $ from 'jquery';
+import { apiServer, localServer } from './settings';
+import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/shared-types';
 import { updateSvgFlowItems } from './svg-flow';
-import { getJson } from './util';
-import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/weather-types';
+import { getJson, setSignalLevel } from './util';
 
 function errorText(err: any): string {
   err = err instanceof Error ? err.message : err.error;
 
   return err.replace(/error:\s*/i, '');
-}
-
-function setSignalLevel(elem: JQuery, quality: number): void {
-  const newLevel = 'signal-' + (quality < 0 ? 'lost' : 'level-' + Math.max(Math.floor((quality + 19) / 20), 1));
-  let classes = ((elem[0].className as any).baseVal || '').replace(/signal-[-\w]+/, newLevel);
-
-  if (!classes.includes(newLevel))
-    classes = (classes + ' ' + newLevel).trim();
-
-  (elem[0].className as any).baseVal = classes;
-  elem.attr('data-signal-quality', (quality < 0 ? 0 : quality) + '%');
 }
 
 export class Sensors {
@@ -77,9 +66,8 @@ export class Sensors {
 
   public update(celsius: boolean) {
     const adjustTemp = (temp: number) => (celsius || temp == null ? temp : temp * 1.8 + 32);
-    const site = (runningDev ? DEV_URL : '');
-    const wiredUrl = `${site}/indoor`;
-    const wirelessUrl = `${site}/wireless-th`;
+    const wiredUrl = `${apiServer}/indoor`;
+    const wirelessUrl = `${apiServer}/wireless-th`;
     const indoorOption = this.appService.getIndoorOption();
     const outdoorOption = this.appService.getOutdoorOption();
 

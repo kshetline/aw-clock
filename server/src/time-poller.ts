@@ -1,6 +1,6 @@
 import { processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
-import { TimeInfo } from './time-types';
+import { TimeInfo } from './shared-types';
 
 const MILLIS_PER_DAY = 86_400_000;
 const MAX_ERRORS = 5;
@@ -57,7 +57,7 @@ export abstract class TimePoller {
     this.pollTimer = setTimeout(() => this.pollCurrentTime());
   }
 
-  protected abstract getNtpData(requestTime: number): Promise<NtpData>;
+  protected abstract getNtpData(requestTime: number): Promise<NtpData> | NtpData;
 
   protected canPoll(): boolean {
     return true;
@@ -82,7 +82,8 @@ export abstract class TimePoller {
     let ntpData: NtpData;
 
     try {
-      ntpData = await this.getNtpData(timeRequested);
+      const nd = this.getNtpData(timeRequested);
+      ntpData = (nd instanceof Promise ? await nd : nd);
     }
     catch (err) {
       if (++this.errorCount > MAX_ERRORS) {

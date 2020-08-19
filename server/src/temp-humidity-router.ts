@@ -3,7 +3,7 @@ import { jsonOrJsonp } from './common';
 import { processMillis } from 'ks-util';
 import request from 'request';
 import { noCache } from './util';
-import { TempHumidityItem, TempHumidityData } from './weather-types';
+import { TempHumidityItem, TempHumidityData } from './shared-types';
 
 export const router = Router();
 

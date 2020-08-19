@@ -8,7 +8,7 @@ import {
   DailyConditions, DailyConditionsKeys, DailySummaryConditions, DailySummaryConditionsKeys,
   ForecastData,
   ForecastDataKeys, HourlyConditions
-} from './weather-types';
+} from './shared-types';
 
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;
@@ -158,8 +158,10 @@ function convertDaily(dsDaily: DailySummaryConditions, isMetric: boolean): Daily
   const daily: DailySummaryConditions = {} as DailySummaryConditions;
 
   Object.keys(dsDaily).forEach(key => {
-    if (key === 'data')
+    if (key === 'data') {
       daily.data = dsDaily.data.map(conditions => convertConditions(conditions, DailyConditionsKeys, isMetric)) as DailyConditions[];
+      daily.data.forEach((day, index) => day.narrativeDay = dsDaily.data[index].summary);
+    }
     else if (DailySummaryConditionsKeys.includes(key))
       (daily as any)[key] = (dsDaily as any)[key];
   });
@@ -174,6 +176,10 @@ function convertAlerts(dsAlerts: Alert[]): Alert[] {
     Object.keys(dsAlert).forEach(key => {
       if (AlertKeys.includes(key))
         (alert as any)[key] = (dsAlert as any)[key];
+
+      if (key === 'description')
+        alert.description = alert.description.replace(/ (\* (WHAT|WHERE|WHEN|IMPACTS)|PRECAUTIONARY.*?ACTIONS)\.\.\./g,
+          '\n\n$1...');
     });
 
     return alert;

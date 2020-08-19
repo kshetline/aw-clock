@@ -18,12 +18,22 @@
 */
 
 import { HourlyForecast } from './forecast';
+import $ from 'jquery';
 import * as Cookies from 'js-cookie';
-import { toBoolean } from 'ks-util';
+import { isChromium, isRaspbian, toBoolean } from 'ks-util';
 
 export const runningDev = (document.location.port === '4200');
 export const localServer = (document.location.port &&
   document.location.port !== '80' && document.location.port !== '443');
+export const updateTest = toBoolean(new URLSearchParams(window.location.search).get('ut'), false, true);
+
+const apiParam = new URLSearchParams(window.location.search).get('api');
+const apiPort = apiParam || (runningDev ? '4201' : document.location.port || '8080');
+const apiHost = ((document.location.hostname || '').startsWith('192.') ? document.location.hostname : 'localhost');
+
+export const apiServer = new URL(window.location.href).searchParams.get('weather_server') ||
+  (runningDev ? `http://${apiHost}:${apiPort}` : '');
+export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;
 
 export class Settings {
   latitude = 40.75;
@@ -40,6 +50,9 @@ export class Settings {
   hideSeconds = false;
   hidePlanets = false;
   hourlyForecast = HourlyForecast.VERTICAL;
+  onscreenKB = false;
+  background = '#191970';
+  clockFace = '#000000';
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
@@ -61,6 +74,14 @@ export class Settings {
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
     this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) ||
       defaultSettings.hourlyForecast;
+    this.onscreenKB = toBoolean(Cookies.get('oskb'), false);
+    this.background = Cookies.get('background') || defaultSettings.background;
+    this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
+
+    const body = $('body');
+
+    body.css('--background-color', this.background);
+    body.css('--clock-face-color', this.clockFace);
   }
 
   public save(): void {
@@ -80,6 +101,14 @@ export class Settings {
     Cookies.set('hides', this.hideSeconds.toString(), expiration);
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);
     Cookies.set('hourly_forecast', this.hourlyForecast, expiration);
+    Cookies.set('oskb', this.onscreenKB.toString(), expiration);
+    Cookies.set('background', this.background, expiration);
+    Cookies.set('clock_face', this.clockFace, expiration);
+
+    const body = $('body');
+
+    body.css('--background-color', this.background);
+    body.css('--clock-face-color', this.clockFace);
   }
 
   public requiresWeatherReload(oldSettings: Settings) {

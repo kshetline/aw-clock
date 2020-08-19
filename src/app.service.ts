@@ -1,8 +1,6 @@
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import { Settings } from './settings';
-import { TimeInfo } from '../server/src/time-types';
-
-export const DEV_URL = 'http://localhost:4201';
+import { TimeInfo } from '../server/src/shared-types';
 
 export interface AppService {
   forecastHasBeenUpdated(): void;
@@ -11,13 +9,15 @@ export interface AppService {
   getIndoorOption(): string;
   getOutdoorOption(): string;
   getTimeInfo(bias?: number): TimeInfo;
-  getWeatherServer(): string;
+  getApiServer(): string;
   isTimeAccelerated(): boolean;
   proxySensorUpdate(): Promise<boolean>;
+  resetGpsState(): void;
   sensorDeadAir(isDead?: boolean): boolean;
+  toggleSunMoon(): void;
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
-  updateSettings(newSettings: Settings);
-  updateSunriseAndSunset(rise: string, set: string);
-  updateMarqueeState(isScrolling: boolean);
+  updateSettings(newSettings: Settings): void;
+  updateSunriseAndSunset(rise: string, set: string): void;
+  updateMarqueeState(isScrolling: boolean): void;
 }

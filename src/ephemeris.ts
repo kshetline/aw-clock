@@ -1,5 +1,5 @@
 /*
-  Copyright © 2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -23,7 +23,7 @@ import {
   SET_EVENT, SkyObserver, SolarSystem, SUN, UT_to_TDB, VENUS
 } from 'ks-astronomy';
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { describeArc, formatTime, setSvgHref } from './util';
 import { AppService } from './app.service';
 import { padLeft } from 'ks-util';
@@ -34,6 +34,8 @@ const eventFinder = new EventFinder();
 const planets = [SUN, MOON, MERCURY, VENUS, MARS, JUPITER, SATURN];
 const planetIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
 
+const REVERT_TO_SUN_INFO_DELAY = 60_000; // 1 minute
+
 function getMoonPhaseIcon(phase: number) {
   return `assets/moon/phase-${padLeft(Math.round(phase / 360 * 28) % 28, 2, '0')}.svg`;
 }
@@ -42,14 +44,18 @@ export class Ephemeris {
   private planetTracks: JQuery;
   private planetSymbols: JQuery;
   private risenTracks: JQuery;
-  private sunrises: JQuery[] = [];
-  private sunsets: JQuery[] = [];
+  private rises: JQuery[][] = [];
+  private sets: JQuery[][] = [];
   private moons: JQuery[] = [];
   private phaseTimes: JQuery[] = [];
   private esTimes: JQuery[] = [];
   private planetElems: JQuery[] = [];
+  private sunElems: JQuery;
+  private moonElems: JQuery;
 
   private _hidePlanets = false;
+  private nowShowing = SUN;
+  private moonInfoTimer: any;
 
   constructor(private appService: AppService) {
     planetIds.forEach((planet, index) => {
@@ -59,10 +65,19 @@ export class Ephemeris {
     this.planetTracks = $('#planet-tracks');
     this.planetSymbols = $('#planets');
     this.risenTracks = $('#risen-tracks');
+    this.sunElems = $('.sun-info');
+    this.moonElems = $('.moon-info');
 
-    for (let i = 0; i < 4; ++i) {
-      this.sunrises[i] = $('#day' + i + '-sunrise');
-      this.sunsets[i] = $('#day' + i + '-sunset');
+    this.rises[SUN] = [];
+    this.rises[MOON] = [];
+    this.sets[SUN] = [];
+    this.sets[MOON] = [];
+
+    for (let i = 0; i < 7; ++i) {
+      this.rises[SUN][i] = $('#day' + i + '-sunrise');
+      this.rises[MOON][i] = $('#day' + i + '-moonrise');
+      this.sets[SUN][i] = $('#day' + i + '-sunset');
+      this.sets[MOON][i] = $('#day' + i + '-moonset');
       this.moons[i] = $('#day' + i + '-moon');
       this.phaseTimes[i] = $('#day' + i + '-phase-time');
       this.esTimes[i] = $('#day' + i + '-equisolstice');
@@ -153,37 +168,40 @@ export class Ephemeris {
         risenTrack.css('visibility', 'hidden');
     });
 
-    eventFinder.getRiseAndSetEvents(SUN, wallTime.y, wallTime.m, wallTime.d, 4, observer, timezone).then(daysOfEvents => {
-      let todayRise: string = null;
-      let todaySet: string = null;
+    [SUN, MOON].forEach(body => {
+      eventFinder.getRiseAndSetEvents(body, wallTime.y, wallTime.m, wallTime.d, 7, observer, timezone).then(daysOfEvents => {
+        let todayRise: string = null;
+        let todaySet: string = null;
 
-      daysOfEvents.forEach((events, dayOffset) => {
-        let rise = '--:--';
-        let set = '--:--';
+        daysOfEvents.forEach((events, dayOffset) => {
+          let rise = '--:--';
+          let set = '--:--';
 
-        events.forEach(event => {
-          if (event.eventType === RISE_EVENT) {
-            rise = formatTime(event.eventTime, amPm);
+          events.forEach(event => {
+            if (event.eventType === RISE_EVENT) {
+              rise = formatTime(event.eventTime, amPm);
 
-            if (dayOffset === 0)
-              todayRise = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
-          }
-          else if (event.eventType === SET_EVENT) {
-            set = formatTime(event.eventTime, amPm);
+              if (dayOffset === 0)
+                todayRise = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
+            }
+            else if (event.eventType === SET_EVENT) {
+              set = formatTime(event.eventTime, amPm);
 
-            if (dayOffset === 0)
-              todaySet = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
-          }
+              if (dayOffset === 0)
+                todaySet = event.eventTime.wallTime.hrs + ':' + event.eventTime.wallTime.min;
+            }
+          });
+
+          this.rises[body][dayOffset].text(rise);
+          this.sets[body][dayOffset].text(set);
         });
 
-        this.sunrises[dayOffset].text(rise);
-        this.sunsets[dayOffset].text(set);
+        if (body === SUN)
+          this.appService.updateSunriseAndSunset(todayRise, todaySet);
       });
-
-      this.appService.updateSunriseAndSunset(todayRise, todaySet);
     });
 
-    for (let dayIndex = 0; dayIndex < 4; ++dayIndex) {
+    for (let dayIndex = 0; dayIndex < 7; ++dayIndex) {
       const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
       const noon = new KsDateTime({ y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0 }, timezone);
       const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
@@ -196,6 +214,35 @@ export class Ephemeris {
       this.phaseTimes[dayIndex].text(lpEvent ? formatTime(lpEvent.eventTime, amPm) : '');
       this.esTimes[dayIndex].text(esEvent ? (date.m === 3 || date.m === 9 ? 'E•' : 'S•') +
           formatTime(esEvent.eventTime, amPm) : '');
+    }
+  }
+
+  toggleSunMoon(): void {
+    if (this.moonInfoTimer) {
+      clearTimeout(this.moonInfoTimer);
+      this.moonInfoTimer = undefined;
+    }
+
+    if (this.nowShowing === SUN) {
+      this.nowShowing = MOON;
+      this.sunElems.removeClass('sun-moon-show');
+      this.sunElems.addClass('sun-moon-hide');
+      this.moonElems.removeClass('sun-moon-hide');
+      this.moonElems.addClass('sun-moon-show');
+
+      this.moonInfoTimer = setTimeout(() => {
+        this.moonInfoTimer = undefined;
+
+        if (this.nowShowing === MOON)
+          this.toggleSunMoon();
+      }, REVERT_TO_SUN_INFO_DELAY);
+    }
+    else {
+      this.nowShowing = SUN;
+      this.moonElems.removeClass('sun-moon-show');
+      this.moonElems.addClass('sun-moon-hide');
+      this.sunElems.removeClass('sun-moon-hide');
+      this.sunElems.addClass('sun-moon-show');
     }
   }
 }

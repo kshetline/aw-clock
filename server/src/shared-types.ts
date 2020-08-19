@@ -4,6 +4,8 @@
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType'];
 
+export const AWC_VERSION = '2.4.0';
+
 export interface CommonConditions {
   time: number;
   summary: string;
@@ -30,9 +32,12 @@ export interface HourlyConditions {
   time: number;
 }
 
-export const DailyConditionsKeys = [...CommonConditionsKeys, 'temperatureHigh', 'temperatureLow', 'precipAccumulation'];
+export const DailyConditionsKeys = [...CommonConditionsKeys,
+                                    'narrativeDay', 'narrativeEvening', 'temperatureHigh', 'temperatureLow', 'precipAccumulation'];
 
 export interface DailyConditions extends CommonConditions {
+  narrativeDay?: string;
+  narrativeEvening?: string;
   temperatureHigh: number;
   temperatureLow: number;
   precipAccumulation: number;
@@ -95,4 +100,35 @@ export interface TempHumidityData {
   C?: TempHumidityItem;
   deadAir?: boolean;
   error?: string;
+}
+
+export interface GpsData {
+  altitude?: number; // in meters
+  averageSNR?: number, // in dBHz
+  city?: string;
+  error?: string,
+  estimatedPositionError?: number, // max of epx and epy, in meters.
+  fix: number; // 0 = invalid, 1 = GPS, 2 = DGPS
+  latitude?: number;
+  longitude?: number;
+  ntpFallback?: boolean;
+  pps?: boolean;
+  satellites?: number;
+  signalQuality: number;
+  timezone?: string;
+}
+
+export interface CurrentDelta {
+  delta: number;
+  dut1: number[] | null;
+  pendingLeap: number;
+  pendingLeapDate: string;
+}
+
+export interface TimeInfo {
+  time: number;
+  leapSecond: number;
+  leapExcess: number;
+  text: string;
+  fromGps?: boolean;
 }

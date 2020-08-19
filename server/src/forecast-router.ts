@@ -2,7 +2,7 @@ import { jsonOrJsonp } from './common';
 import { getForecast as getDsForecast } from './darksky-forecast';
 import { Request, Response, Router } from 'express';
 import { noCache } from './util';
-import { ForecastData } from './weather-types';
+import { ForecastData } from './shared-types';
 import { getForecast as getWuForecast } from './wunderground-forecast';
 
 export const router = Router();
