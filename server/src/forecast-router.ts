@@ -1,8 +1,9 @@
 import { jsonOrJsonp } from './common';
-import { getForecast as getDsForecast } from './darksky-forecast';
+import { getForecast as getDsForecast, THE_END_OF_DAYS } from './darksky-forecast';
 import { Request, Response, Router } from 'express';
 import { noCache } from './util';
 import { ForecastData } from './shared-types';
+import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
 
 export const router = Router();
@@ -11,9 +12,11 @@ router.get('/', async (req: Request, res: Response) => {
   const frequent = (process.env.AWC_FREQUENT_ID && req.query.id === process.env.AWC_FREQUENT_ID);
   const promises: Promise<ForecastData | Error>[] = [];
 
+  getWbForecast(req).then(fc => console.log(fc));
+
   promises.push(getWuForecast(req));
 
-  if (process.env.AWC_DARK_SKY_API_KEY)
+  if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS)
     promises.push(getDsForecast(req));
 
   const forecasts = await Promise.all(promises);

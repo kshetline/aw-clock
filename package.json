@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "first-install": "npm i && cd server && npm i && cd ..",
-    "preinstall": "npx npm-force-resolutions",
+    "preinstall": "npm install --package-lock-only --ignore-scripts --no-audit && npx npm-force-resolutions",
     "start": "webpack-dev-server --port=4200 --host 0.0.0.0",
     "start-server": "cd server && npm start",
     "start-server-win": "cd server && npm run start-win",

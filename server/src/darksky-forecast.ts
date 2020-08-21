@@ -10,6 +10,10 @@ import {
   ForecastDataKeys, HourlyConditions
 } from './shared-types';
 
+// The time (with a month of padding) when the Dark Sky API will be shut down, presuming "end of 2021"
+// actually means all the way until 2021-12-31.
+export const THE_END_OF_DAYS = Date.UTC(2021, 10 /* November */, 30);
+
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;
 }
@@ -29,6 +33,9 @@ interface DarkSkyForecast extends Omit<Omit<ForecastData, 'currently'>, 'hourly'
 }
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
+  if (Date.now() > THE_END_OF_DAYS)
+    return new Error('Dark Sky API no longer available');
+
   const isMetric = (req.query.du === 'c');
   const url = `https://api.darksky.net/forecast/${process.env.AWC_DARK_SKY_API_KEY}/` +
     `${req.query.lat},${req.query.lon}?exclude=minutely${isMetric ? '&units=ca' : ''}`;
