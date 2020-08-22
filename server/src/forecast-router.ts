@@ -11,17 +11,29 @@ export const router = Router();
 router.get('/', async (req: Request, res: Response) => {
   const frequent = (process.env.AWC_FREQUENT_ID && req.query.id === process.env.AWC_FREQUENT_ID);
   const promises: Promise<ForecastData | Error>[] = [];
-
-  getWbForecast(req).then(fc => console.log(fc));
+  let darkSkyIndex = 1;
+  let weatherBitIndex = 1;
 
   promises.push(getWuForecast(req));
 
+  if (process.env.AWC_WEATHERBIT_API_KEY) {
+    promises.push(getWbForecast(req));
+    ++darkSkyIndex;
+  }
+  else
+    weatherBitIndex = 0;
+
   if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS)
     promises.push(getDsForecast(req));
+  else
+    darkSkyIndex = 0;
 
   const forecasts = await Promise.all(promises);
-  const forecast = forecasts[Math.min(forecasts.length - 1,
-    process.env.AWC_PREFERRED_WS === 'darksky' || forecasts[0] instanceof Error ? 1 : 0)];
+  let forecast = forecasts[
+    ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
+
+  for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecast instanceof Error); ++replaceIndex)
+    forecast = forecasts[replaceIndex];
 
   if (forecast instanceof Error)
     res.status(500).send(forecast.message);

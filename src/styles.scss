@@ -99,6 +99,10 @@ label {
   position: fixed;
   right: 0;
   bottom: -6px;
+
+  > span {
+    display: none;
+  }
 }
 
 @media only screen and (max-height: 600px), only screen and (max-device-height: 600px) {

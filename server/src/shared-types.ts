@@ -14,7 +14,7 @@ export interface CommonConditions {
   cloudCover: number;
   precipIntensity?: number
   precipIntensityMax?: number;
-  precipProbability: number;
+  precipProbability?: number;
   precipType?: string;
 }
 
@@ -26,6 +26,7 @@ export interface CurrentConditions extends CommonConditions {
 }
 
 export interface HourlyConditions {
+  cloudCover?: number;
   icon: string;
   temperature: number;
   precipType: string;
