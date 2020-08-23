@@ -8,7 +8,7 @@ interface WeatherBitCurrent {
     state_code: string;
     city_name: string;
     country_code: string;
-    time_zone: string;
+    timezone: string;
     lat: number;
     lon: number;
     temp: number;
@@ -173,8 +173,8 @@ function getPrecipType(code: string): string {
 
 function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, daily: WeatherBitDaily,
     alerts: WeatherBitAlerts, isMetric: boolean): ForecastData {
-  const forecast: ForecastData = { source: 'weatherbit', isMetric };
   const currentData = current.data[0];
+  const forecast: ForecastData = { source: 'weatherbit', isMetric, timezone: currentData.timezone };
 
   forecast.currently = {
     cloudCover: currentData.clouds / 100,
