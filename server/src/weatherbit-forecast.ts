@@ -181,7 +181,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
   forecast.currently = {
     cloudCover: currentData.clouds / 100,
     feelsLikeTemperature: currentData.app_temp,
-    humidity: currentData.rh,
+    humidity: currentData.rh / 100,
     icon: convertIcon(currentData.weather?.icon, currentData.clouds),
     precipIntensity: currentData.precip,
     precipType: getPrecipType(currentData.weather.code),
@@ -202,7 +202,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
   forecast.daily = { data: [] };
   daily.data.forEach(day => forecast.daily.data.push({
     cloudCover: day.clouds / 100,
-    humidity: day.rh,
+    humidity: day.rh / 100,
     icon: convertIcon(day.weather?.icon, day.clouds),
     precipAccumulation: day.precip / (isMetric ? 10 : 1),
     precipProbability: day.pop / 100,

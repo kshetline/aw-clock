@@ -420,13 +420,13 @@ export class Forecast {
       const wb = (forecastData.source === 'weatherbit');
       const wu = (forecastData.source === 'wunderground');
       const buttonWidth = this.settingsBtn.width();
-      const logoWidth = (ds ? 118 : (wb || wu ? 183 : 8)) + 10;
+      const logoWidth = (ds ? 118 : (wb || wu ? 183 : 8)) + 14;
 
       this.darkskyLogo.css('display', ds ? 'inline-block' : 'none');
       this.weatherbitLogo.css('display', wb ? 'inline-block' : 'none');
       this.wundergroundLogo.css('display', wu ? 'inline-block' : 'none');
       this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
-      this.settingsBtn.css('margin-right', ds || wu ? 0 : 8);
+      this.settingsBtn.css('margin-right', ds || wu || wb ? 0 : 8);
 
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
