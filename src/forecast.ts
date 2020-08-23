@@ -821,7 +821,7 @@ export class Forecast {
       // No more than one blank line, and no trailing blank lines.
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
       // Improve alert formatting.
-      .replace(/(^((• (WHAT|WHERE|WHEN|IMPACTS))|PRECAUTIONARY.*?ACTIONS))\.\.\.(?!\.)/gm, '$1: ');
+      .replace(/^((• )?\p{Lu}{4,}[ \p{Lu}]*)\.\.\.(?!\.)/gmu, '$1: ');
 
     if (textWidth <= marqueeWidth) {
       this.marquee.html(newText);

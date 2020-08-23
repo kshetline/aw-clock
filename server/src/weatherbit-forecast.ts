@@ -1,7 +1,7 @@
 import { requestJson } from 'by-request';
 import { Request } from 'express';
 import { toNumber } from 'ks-util';
-import { ForecastData } from './shared-types';
+import { Alert, ForecastData } from './shared-types';
 
 interface WeatherBitCurrent {
   data: {
@@ -81,18 +81,20 @@ interface WeatherBitDaily {
   time_zone: string;
 }
 
+interface WeatherBitAlert {
+  title: string;
+  description: string;
+  severity: string; // "Advisory", "Watch", or "Warning".
+  effective_utc: string;
+  effective_local: string;
+  expires_utc: string;
+  expires_local: string;
+  uri: string
+  regions: string[];
+}
+
 interface WeatherBitAlerts {
-  alerts: {
-    title: string;
-    description: string;
-    severity: string; // "Advisory", "Watch", or "Warning".
-    effective_utc: string;
-    effective_local: string;
-    expires_utc: string;
-    expires_local: string;
-    uri: string
-    regions: string[];
-  }[];
+  alerts: WeatherBitAlert[];
   state_code: string;
   city_name: string;
   country_code: string;
@@ -212,6 +214,28 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
   }));
 
   forecast.alerts = [];
+
+  const now = Date.now();
+  const alertsByTitle = new Map<string, WeatherBitAlert>();
+
+  // Filter out expired and duplicate alerts
+  alerts.alerts.forEach(alert => {
+    const title = alert.title;
+    const alertEffective = Date.parse(alert.effective_utc);
+    const alertExpired = Date.parse(alert.expires_utc);
+
+    if (alertExpired > now && (!alertsByTitle.has(title) || Date.parse(alertsByTitle.get(title).effective_utc) > alertEffective))
+      alertsByTitle.set(title, alert);
+  });
+
+  alertsByTitle.forEach(alert => forecast.alerts.push({
+    description: alert.description,
+    expires: Date.parse(alert.expires_utc) / 1000,
+    severity: alert.severity.toLowerCase() as Alert['severity'],
+    time: Date.parse(alert.effective_utc) / 1000,
+    title: alert.title,
+    url: alert.uri
+  }));
 
   return forecast;
 }
