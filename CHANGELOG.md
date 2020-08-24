@@ -1,3 +1,8 @@
+## 2.5.0
+
+* Added support for Weatherbit.io forecasts.
+* Added automatic phase-out of Dark Sky API in December 2021.
+
 ## 2.4.0
 
 * Touchscreen support. This includes:
