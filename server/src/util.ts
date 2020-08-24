@@ -22,6 +22,22 @@ export function stdDev(values: number[]): number {
   return Math.sqrt(average(squaredDiffs));
 }
 
+export function fToC(f: number): number {
+  return (f - 32) / 1.8;
+}
+
+export function cToF(c: number): number {
+  return c * 1.8 + 32;
+}
+
+export function inchesToCm(i: number): number {
+  return i * 2.54;
+}
+
+export function cmToInches(cm: number): number {
+  return cm / 2.54;
+}
+
 /**
  * Normalize a port into a number, string, or false.
  */

@@ -2,6 +2,7 @@ import { requestJson } from './request-cache';
 import { Request } from 'express';
 import { toNumber } from 'ks-util';
 import { Alert, ForecastData } from './shared-types';
+import { fToC, inchesToCm } from './util';
 
 interface WeatherBitCurrent {
   data: {
@@ -130,8 +131,11 @@ const icons: Record<string, string> = {
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
-  const baseUrl = 'https://weatherbit-v1-mashape.p.rapidapi.com/*' +
-    `?lat=${req.query.lat}&lon=${req.query.lon}&units=${isMetric ? 'M' : 'I'}`;
+  // Because of the way Weatherbit.io data is cached, some weirdly inconsistent results come back for the same
+  // forecast time and place, simply because different units (imperial or metric) are requested. So we'll always
+  // request imperial (where temperatures are at slightly higher resolution, since the degrees are smaller) and
+  // convert to metric as needed.
+  const baseUrl = `https://weatherbit-v1-mashape.p.rapidapi.com/*?lat=${req.query.lat}&lon=${req.query.lon}&units=I`;
   const headers = {
     'x-rapidapi-host': 'weatherbit-v1-mashape.p.rapidapi.com',
     'x-rapidapi-key': process.env.AWC_WEATHERBIT_API_KEY
@@ -142,6 +146,8 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
     const currentWeather = (await requestJson(240, baseUrl.replace('*', 'current'), options)) as WeatherBitCurrent;
     const hourlyForecast = (await requestJson(3600, baseUrl.replace('*', 'forecast/hourly') + '&hours=30', options)) as WeatherBitHourly;
     const dailyForecast = (await requestJson(21600, baseUrl.replace('*', 'forecast/daily') + '&days=9', options)) as WeatherBitDaily;
+    // Alert text isn't sensitive to the `units` parameter. Text comes back in whatever format
+    // and units the alerts were issued in by the local weather authorities.
     const alerts = (await requestJson(2600, baseUrl.replace('*', 'alerts'), options)) as WeatherBitAlerts;
 
     return convertForecast(currentWeather, hourlyForecast, dailyForecast, alerts, isMetric);
@@ -173,6 +179,14 @@ function getPrecipType(code: string): string {
   return 'rain';
 }
 
+function conditionalCelsius(f: number, isMetric: boolean): number {
+  return isMetric ? fToC(f) : f;
+}
+
+function conditionalCm(i: number, isMetric: boolean): number {
+  return isMetric ? inchesToCm(i) : i;
+}
+
 function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, daily: WeatherBitDaily,
     alerts: WeatherBitAlerts, isMetric: boolean): ForecastData {
   const currentData = current.data[0];
@@ -180,13 +194,13 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
 
   forecast.currently = {
     cloudCover: currentData.clouds / 100,
-    feelsLikeTemperature: currentData.app_temp,
+    feelsLikeTemperature: conditionalCelsius(currentData.app_temp, isMetric),
     humidity: currentData.rh / 100,
     icon: convertIcon(currentData.weather?.icon, currentData.clouds),
-    precipIntensity: currentData.precip,
+    precipIntensity: conditionalCm(currentData.precip, isMetric),
     precipType: getPrecipType(currentData.weather.code),
     summary: currentData.weather?.description,
-    temperature: currentData.temp,
+    temperature: conditionalCelsius(currentData.temp, isMetric),
     time: currentData.ts
   };
 
@@ -195,7 +209,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
     cloudCover: hour.clouds / 100,
     icon: convertIcon(hour.weather?.icon, hour.clouds),
     precipType: getPrecipType(hour.weather?.code),
-    temperature: hour.temp,
+    temperature: conditionalCelsius(hour.temp, isMetric),
     time: hour.ts
   }));
 
@@ -204,12 +218,12 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
     cloudCover: day.clouds / 100,
     humidity: day.rh / 100,
     icon: convertIcon(day.weather?.icon, day.clouds),
-    precipAccumulation: day.precip / (isMetric ? 10 : 1),
+    precipAccumulation: conditionalCm(day.precip, isMetric),
     precipProbability: day.pop / 100,
     precipType: getPrecipType(day.weather?.code),
     summary: currentData.weather?.description,
-    temperatureHigh: day.high_temp,
-    temperatureLow: day.low_temp,
+    temperatureHigh: conditionalCelsius(day.high_temp, isMetric),
+    temperatureLow: conditionalCelsius(day.low_temp, isMetric),
     time: day.ts
   }));
 
