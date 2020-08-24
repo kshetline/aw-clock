@@ -1,4 +1,4 @@
-import { requestJson } from 'by-request';
+import { requestJson } from './request-cache';
 import { Request } from 'express';
 import {
   Alert, AlertKeys,
@@ -41,7 +41,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
     `${req.query.lat},${req.query.lon}?exclude=minutely${isMetric ? '&units=ca' : ''}`;
 
   try {
-    const origForecast = (await requestJson(url)) as DarkSkyForecast;
+    const origForecast = (await requestJson(240, url)) as DarkSkyForecast;
 
     return convertForecast(origForecast, isMetric);
   }

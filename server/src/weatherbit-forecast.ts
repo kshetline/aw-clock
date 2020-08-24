@@ -1,4 +1,4 @@
-import { requestJson } from 'by-request';
+import { requestJson } from './request-cache';
 import { Request } from 'express';
 import { toNumber } from 'ks-util';
 import { Alert, ForecastData } from './shared-types';
@@ -139,10 +139,10 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const options = { headers };
 
   try {
-    const currentWeather = (await requestJson(baseUrl.replace('*', 'current'), options)) as WeatherBitCurrent;
-    const hourlyForecast = (await requestJson(baseUrl.replace('*', 'forecast/hourly') + '&hours=30', options)) as WeatherBitHourly;
-    const dailyForecast = (await requestJson(baseUrl.replace('*', 'forecast/daily') + '&days=9', options)) as WeatherBitDaily;
-    const alerts = (await requestJson(baseUrl.replace('*', 'alerts'), options)) as WeatherBitAlerts;
+    const currentWeather = (await requestJson(240, baseUrl.replace('*', 'current'), options)) as WeatherBitCurrent;
+    const hourlyForecast = (await requestJson(3600, baseUrl.replace('*', 'forecast/hourly') + '&hours=30', options)) as WeatherBitHourly;
+    const dailyForecast = (await requestJson(21600, baseUrl.replace('*', 'forecast/daily') + '&days=9', options)) as WeatherBitDaily;
+    const alerts = (await requestJson(2600, baseUrl.replace('*', 'alerts'), options)) as WeatherBitAlerts;
 
     return convertForecast(currentWeather, hourlyForecast, dailyForecast, alerts, isMetric);
   }
