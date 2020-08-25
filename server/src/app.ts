@@ -2,7 +2,6 @@
 import { router as adminRouter } from './admin-router';
 import { requestJson } from 'by-request';
 import { execSync } from 'child_process';
-import { jsonOrJsonp } from './common';
 import compareVersions from 'compare-versions';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
@@ -18,7 +17,7 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, noCache, normalizePort } from './util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort } from './util';
 import { Gps } from './gps';
 import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
 import { sleep } from './process-util';
@@ -257,7 +256,12 @@ function getApp() {
 
   if (wbProxyForecast) {
     theApp.get('/wbproxy', async (req, res) => {
-      jsonOrJsonp(req, res, await wbProxyForecast(req));
+      const response = await wbProxyForecast(req);
+
+      if (response instanceof Error)
+        res.status(response.message.startsWith('Maximum API calls') ? 400 : 500).send(response.message);
+      else
+        jsonOrJsonp(req, res, response);
     });
   }
 
