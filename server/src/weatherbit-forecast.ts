@@ -218,10 +218,11 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
     cloudCover: day.clouds / 100,
     humidity: day.rh / 100,
     icon: convertIcon(day.weather?.icon, day.clouds),
+    narrativeDay: day.weather?.description,
     precipAccumulation: conditionalCm(day.precip, isMetric),
     precipProbability: day.pop / 100,
     precipType: getPrecipType(day.weather?.code),
-    summary: currentData.weather?.description,
+    summary: day.weather?.description,
     temperatureHigh: conditionalCelsius(day.high_temp, isMetric),
     temperatureLow: conditionalCelsius(day.low_temp, isMetric),
     time: day.ts
