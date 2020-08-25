@@ -131,10 +131,10 @@ const icons: Record<string, string> = {
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
-  // Because of the way Weatherbit.io data is cached, some weirdly inconsistent results come back for the same
+  // Because of the way Weatherbit.io data is cached some weirdly inconsistent results come back for the same
   // forecast time and place, simply because different units (imperial or metric) are requested. So we'll always
-  // request imperial (where temperatures are at slightly higher resolution, since the degrees are smaller) and
-  // convert to metric as needed.
+  // request imperial (where temperatures have greater granularity, since °F are smaller than °C) and convert
+  // to metric as needed.
   const baseUrl = `https://weatherbit-v1-mashape.p.rapidapi.com/*?lat=${req.query.lat}&lon=${req.query.lon}&units=I`;
   const headers = {
     'x-rapidapi-host': 'weatherbit-v1-mashape.p.rapidapi.com',

@@ -61,7 +61,7 @@ export function splitIpAndPort(ipWithPossiblePort: string, defaultPort?: number)
   if (!ipWithPossiblePort)
     return [undefined, defaultPort];
 
-  let $ = /^\[(.+)\]:(\d+)$/.exec(ipWithPossiblePort); // IPv6 with port
+  let $ = /^\[(.+)]:(\d+)$/.exec(ipWithPossiblePort); // IPv6 with port
 
   if ($)
     return [$[1], Number($[2])];

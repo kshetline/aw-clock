@@ -1,0 +1,3 @@
+[submodule "server/src/aw-clock-private"]
+	path = server/src/aw-clock-private
+	url = https://github.com/kshetline/aw-clock-private.git

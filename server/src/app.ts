@@ -6,7 +6,7 @@ import { jsonOrJsonp } from './common';
 import compareVersions from 'compare-versions';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
-import express, { Router } from 'express';
+import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
@@ -20,7 +20,7 @@ import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, noCache, normalizePort } from './util';
 import { Gps } from './gps';
-import { AWC_VERSION, GpsData } from './shared-types';
+import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
 import { sleep } from './process-util';
 
 const debug = require('debug')('express:server');
@@ -46,6 +46,13 @@ try {
 catch (err) {
   console.log('Failed check for environment file.');
 }
+
+let wbProxyForecast: (req: Request) => Promise<ForecastData | Error>;
+
+try {
+  wbProxyForecast = require('./aw-clock-private/weatherbit-proxy').getForecast;
+}
+catch {}
 
 // Convert deprecated environment variables
 if (!process.env.AWC_WIRED_TH_GPIO &&
@@ -247,6 +254,12 @@ function getApp() {
 
   if (allowAdmin)
     theApp.use('/admin', adminRouter);
+
+  if (wbProxyForecast) {
+    theApp.get('/wbproxy', async (req, res) => {
+      jsonOrJsonp(req, res, await wbProxyForecast(req));
+    });
+  }
 
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
