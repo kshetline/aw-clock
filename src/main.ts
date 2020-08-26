@@ -27,7 +27,7 @@ import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
-import { setFullScreen } from 'ks-util';
+import { isEffectivelyFullScreen, setFullScreen } from 'ks-util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
@@ -133,6 +133,16 @@ class AwClockApp implements AppService {
     });
 
     $('#settings-btn').on('click', () => this.settingsDialog.openSettings(this.settings));
+
+    $('.weather-logo a').on('click', function (evt) {
+      let href: string;
+
+      if (isEffectivelyFullScreen() && (href = $(this).attr('href'))) {
+        evt.preventDefault();
+        window.open(href, '_blank',
+          `width=${window.screen.width * 0.9},height=${window.screen.height * 0.85},menubar=yes,titlebar=yes`);
+      }
+    });
   }
 
   getAmPm(): boolean {
