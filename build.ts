@@ -281,7 +281,7 @@ function stepDone(): void {
 }
 
 async function isInstalled(command: string): Promise<boolean> {
-  return !!(await monitorProcess(spawn('command', ['-v', command]), null, ErrorMode.ANY_ERROR))?.trim();
+  return !!(await monitorProcess(spawn('command', ['-v', command], { shell: true }), null, ErrorMode.ANY_ERROR))?.trim();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
