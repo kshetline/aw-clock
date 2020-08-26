@@ -13,8 +13,8 @@ export class NtpPoller extends TimePoller {
   private ntp: Ntp;
 
   constructor(
-    private server = DEFAULT_NTP_SERVER,
-    private port = 123
+    private readonly server = DEFAULT_NTP_SERVER,
+    private readonly port = 123
   ) {
     super();
 

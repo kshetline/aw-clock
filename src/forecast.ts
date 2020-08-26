@@ -111,6 +111,7 @@ export class Forecast {
 
   private _hourlyForecast = HourlyForecast.CIRCULAR;
   private lastForecastData: ForecastData;
+  private todayIndex = 0;
   private cachedHourly: HourlyConditions[] = [];
   private lastForecastTime = 0;
   private timezone = KsTimeZone.OS_ZONE;
@@ -663,13 +664,13 @@ export class Forecast {
       }
     }
 
-    const todayIndex = forecastData.daily.data.findIndex(cond => {
+    this.todayIndex = forecastData.daily.data.findIndex(cond => {
       const wallTime = new KsDateTime(cond.time * 1000, this.timezone).wallTime;
 
       return wallTime.y === today.y && wallTime.m === today.m && wallTime.d === today.d;
     });
 
-    if (todayIndex < 0)
+    if (this.todayIndex < 0)
       this.showUnknown('Missing data');
     else {
       this.appService.updateCurrentTemp({
@@ -681,8 +682,8 @@ export class Forecast {
       setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
       this.dayIcons.forEach((dayIcon, index) => {
-        if (forecastData.daily.data.length > todayIndex + index) {
-          const daily = forecastData.daily.data[todayIndex + index];
+        if (forecastData.daily.data.length > this.todayIndex + index) {
+          const daily = forecastData.daily.data[this.todayIndex + index];
           const textElem = this.dayPrecipAccums[index];
 
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
@@ -863,7 +864,7 @@ export class Forecast {
   }
 
   private showDayForecast(dayIndex: number) {
-    const day = this.lastForecastData?.daily?.data[dayIndex];
+    const day = this.todayIndex >= 0 && this.lastForecastData?.daily?.data[this.todayIndex + dayIndex];
     const narrativeDay = day?.narrativeDay;
     const narrativeEvening = day?.narrativeEvening;
 
