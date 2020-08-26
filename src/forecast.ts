@@ -581,23 +581,23 @@ export class Forecast {
         url,
         dataType: 'json',
         success: (data: ForecastData, textStatus: string, jqXHR: JQueryXHR) => {
-          data.isMetric = isMetric;
-
           const cacheControl = jqXHR.getResponseHeader('cache-control');
 
-          if (cacheControl) {
+          if (cacheControl && typeof data === 'object') {
             const match = /max-age=(\d+)/.exec(cacheControl);
 
             if (match && Number(match[1]) <= FREQUENT_THRESHOLD)
               data.frequent = true;
           }
 
-          if (data.unavailable)
+          if (!data || typeof data !== 'object' || data.unavailable)
             reject(new Error('Forecast unavailable'));
           else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
             reject(new Error('Incomplete data'));
-          else
+          else {
+            data.isMetric = isMetric;
             resolve(data);
+          }
         },
         error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
           reject(errorThrown);

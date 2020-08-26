@@ -40,7 +40,12 @@ router.get('/', async (req: Request, res: Response) => {
     const url = `http://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du}` +
       (req.query.id ? `id=${req.query.id}` : '');
 
-    forecast = (await requestJson(url)) as ForecastData | Error;
+    try {
+      forecast = (await requestJson(url)) as ForecastData;
+    }
+    catch (e) {
+      forecast = e;
+    }
   }
 
   if (forecast instanceof Error) {
