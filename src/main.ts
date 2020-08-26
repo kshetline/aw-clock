@@ -138,9 +138,13 @@ class AwClockApp implements AppService {
       let href: string;
 
       if (isEffectivelyFullScreen() && (href = $(this).attr('href'))) {
+        const width = window.screen.width * 0.9;
+        const height = window.screen.height * 0.85;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height) / 2;
+
         evt.preventDefault();
-        window.open(href, '_blank',
-          `width=${window.screen.width * 0.9},height=${window.screen.height * 0.85},menubar=yes,titlebar=yes`);
+        window.open(href, '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=yes,titlebar=yes`);
       }
     });
   }
