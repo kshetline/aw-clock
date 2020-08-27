@@ -476,9 +476,6 @@ export class Clock {
   }
 
   private checkGps(): void {
-    if (!this.gpsAvailable)
-      return;
-
     // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url: this.appService.getApiServer() + '/gps',
