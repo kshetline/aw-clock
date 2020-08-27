@@ -65,6 +65,15 @@ const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
 const MARQUEE_JOINER = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
 const CLOSE_ERROR_TAG = '&nbsp;</span>';
+let SUBJECT_INTRO_PATTERN: RegExp;
+
+try {
+  // Firefox fails on this pattern.
+  SUBJECT_INTRO_PATTERN = /^((• )?\p{Lu}{4,}[ \p{Lu}]*)\.\.\.(?!\.)/gmu;
+}
+catch {
+  SUBJECT_INTRO_PATTERN = /^((• )?[A-Z]{4,}[ A-Z]*)\.\.\.(?!\.)/gmu;
+}
 
 const MARQUEE_SPEED = 100; // pixels per second
 
@@ -822,7 +831,7 @@ export class Forecast {
       // No more than one blank line, and no trailing blank lines.
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
       // Improve alert formatting.
-      .replace(/^((• )?\p{Lu}{4,}[ \p{Lu}]*)\.\.\.(?!\.)/gmu, '$1: ');
+      .replace(SUBJECT_INTRO_PATTERN, '$1: ');
 
     if (textWidth <= marqueeWidth) {
       this.marquee.html(newText);
