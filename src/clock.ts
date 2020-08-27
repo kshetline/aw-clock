@@ -484,8 +484,9 @@ export class Clock {
         if (data.error === 'n/a')
           this.gpsAvailable = false;
         else {
+          this.gpsAvailable = true;
+
           if (this.gpsActive !== !!data.pps) {
-            this.gpsAvailable = true;
             this.lastMinute = -1; // trigger quick update
             this.gpsActive = !!data.pps;
             this.appService.resetGpsState();
