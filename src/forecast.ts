@@ -69,7 +69,7 @@ let SUBJECT_INTRO_PATTERN: RegExp;
 
 try {
   // Firefox fails on this pattern.
-  SUBJECT_INTRO_PATTERN = /^((• )?\p{Lu}{4,}[ \p{Lu}]*)\.\.\.(?!\.)/gmu;
+  SUBJECT_INTRO_PATTERN = new RegExp('^((• )?\\p{Lu}{4,}[ \\p{Lu}]*)\\.\\.\\.(?!\\.)', 'gmu');
 }
 catch {
   SUBJECT_INTRO_PATTERN = /^((• )?[A-Z]{4,}[ A-Z]*)\.\.\.(?!\.)/gmu;
