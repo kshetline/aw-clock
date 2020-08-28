@@ -632,12 +632,14 @@ export class Forecast {
     const firstHourIndex = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= startOfHour);
     const vertical = (this.hourlyForecast === HourlyForecast.VERTICAL);
     const amPm = this.appService.getAmPm();
+    let previousStartOfHour = startOfHour - 3_600_000;
 
     for (let i = 0; i < 24; ++i) {
       let icon = EMPTY_ICON;
       let temp = '';
       const hourInfo = forecastData.hourly[i + firstHourIndex];
-      const hour = new KsDateTime(hourInfo.time * 1000, this.timezone).wallTime;
+      const startOfHour = hourInfo ? hourInfo.time * 1000 : previousStartOfHour + 3_600_000;
+      const hour = new KsDateTime(startOfHour, this.timezone).wallTime;
       let index: number;
 
       if (vertical)
@@ -671,6 +673,8 @@ export class Forecast {
         this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
         this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
       }
+
+      previousStartOfHour = startOfHour;
     }
 
     this.todayIndex = forecastData.daily.data.findIndex(cond => {
