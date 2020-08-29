@@ -237,11 +237,17 @@ export class Gps extends TimePoller {
         altitude: coords.altitude
       };
 
-      if (this.googleKey && !this.googleAccessDenied)
-        await this.googleLocationCheck(coords, now);
+      try {
+        if (this.googleKey && !this.googleAccessDenied)
+          await this.googleLocationCheck(coords, now);
+      }
+      catch {}
 
-      if (!this.googleKey || this.googleAccessDenied || !coords.city)
-        await this.weatherbitLocationCheck(coords);
+      try {
+        if (!this.googleKey || this.googleAccessDenied || !coords.city)
+          await this.weatherbitLocationCheck(coords);
+      }
+      catch {}
     }
 
     this.checkingLocation = false;
