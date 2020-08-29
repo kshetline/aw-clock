@@ -191,7 +191,7 @@ export class Ephemeris {
             // Very rarely, sometimes when an hour gets added to a day when daylight saving time ends, or
             // occasional odd timing at extreme latitudes, there can be two rise events or two set events
             // in the same day. A third display position is available for such extra events.
-            if (rise && set)
+            if (rise && set && (event.eventType === RISE_EVENT || event.eventType === SET_EVENT))
               extra = formatTime(event.eventTime, amPm) + (event.eventType === RISE_EVENT ? '⬆︎' : '⬇︎');
             else if (event.eventType === RISE_EVENT) {
               rise = formatTime(event.eventTime, amPm);

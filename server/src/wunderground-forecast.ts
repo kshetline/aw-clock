@@ -114,7 +114,9 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
 
   const wc = wuForecast.currently;
   const wh = wuForecast.hourly;
+  const location = wuForecast.location;
 
+  forecast.city = location && `${location.city}, ${location.adminDistrict}, ${location.countryCode}`;
   convertCurrent(forecast, wc, wh);
   convertHourly(forecast, wh);
   convertDaily(forecast, wc, wuForecast.daily);
@@ -181,8 +183,8 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
 
     daily.push({
       icon: getIcon(wddp?.iconCode[i * 2] ?? wddp?.iconCode[i * 2 + 1] ?? -1),
-      narrativeDay: wddp?.narrative[i],
-      narrativeEvening: wddp?.narrative[i + 1],
+      narrativeDay: wddp?.narrative[i * 2],
+      narrativeEvening: wddp?.narrative[i * 2 + 1],
       precipAccumulation,
       precipIntensityMax: 0,
       precipProbability: Math.max(wddp?.precipChance[i * 2] ?? 0, wddp?.precipChance[i * 2 + 1] ?? 0) / 100,

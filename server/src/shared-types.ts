@@ -69,6 +69,7 @@ export interface ForecastData {
   latitude?: number;
   longitude?: number;
   timezone?: string;
+  city?: string;
   currently?: CurrentConditions;
   hourly?: HourlyConditions[];
   daily?: DailySummaryConditions;

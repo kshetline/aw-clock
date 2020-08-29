@@ -1,6 +1,6 @@
 import { requestJson } from './request-cache';
 import { Request } from 'express';
-import { toNumber } from 'ks-util';
+import { toBoolean, toNumber } from 'ks-util';
 import { Alert, ForecastData } from './shared-types';
 import { fToC, inchesToCm } from './util';
 
@@ -131,6 +131,7 @@ const icons: Record<string, string> = {
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
+  const currentOnly = toBoolean(req.query.co, false, true);
   // Because of the way Weatherbit.io data is cached some weirdly inconsistent results come back for the same
   // forecast time and place, simply because different units (imperial or metric) are requested. So we'll always
   // request imperial (where temperatures have greater granularity, since °F are smaller than °C) and convert
@@ -141,19 +142,30 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
     'x-rapidapi-key': process.env.AWC_WEATHERBIT_API_KEY
   };
   const options = { headers };
+  let url = '';
 
   try {
-    const currentWeather = (await requestJson(240, baseUrl.replace('*', 'current'), options)) as WeatherBitCurrent;
-    const hourlyForecast = (await requestJson(3600, baseUrl.replace('*', 'forecast/hourly') + '&hours=30', options)) as WeatherBitHourly;
-    const dailyForecast = (await requestJson(21600, baseUrl.replace('*', 'forecast/daily') + '&days=9', options)) as WeatherBitDaily;
-    // Alert text isn't sensitive to the `units` parameter. Text comes back in whatever format
-    // and units the alerts were issued in by the local weather authorities.
-    const alerts = (await requestJson(2600, baseUrl.replace('*', 'alerts'), options)) as WeatherBitAlerts;
+    // noinspection JSUnusedAssignment
+    const currentWeather = (await requestJson(240, url = baseUrl.replace('*', 'current'), options)) as WeatherBitCurrent;
+    let hourlyForecast: WeatherBitHourly;
+    let dailyForecast: WeatherBitDaily;
+    let alerts: WeatherBitAlerts;
+
+    if (!currentOnly) {
+      // noinspection JSUnusedAssignment (actually, this is used... IF there's an error)
+      hourlyForecast = (await requestJson(3600, url = baseUrl.replace('*', 'forecast/hourly') + '&hours=30', options)) as WeatherBitHourly;
+      // noinspection JSUnusedAssignment
+      dailyForecast = (await requestJson(21600, url = baseUrl.replace('*', 'forecast/daily') + '&days=9', options)) as WeatherBitDaily;
+      // Alert text isn't sensitive to the `units` parameter. Text comes back using whatever format
+      // and units the alerts were issued using by the local weather authorities.
+      // noinspection JSUnusedAssignment
+      alerts = (await requestJson(2600, url = baseUrl.replace('*', 'alerts'), options)) as WeatherBitAlerts;
+    }
 
     return convertForecast(currentWeather, hourlyForecast, dailyForecast, alerts, isMetric);
   }
   catch (err) {
-    return new Error('Error connecting to Dark Sky: ' + err);
+    return new Error(`Error connecting to Weatherbit.io: ${url}, ${err}`);
   }
 }
 
@@ -192,6 +204,8 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
   const currentData = current.data[0];
   const forecast: ForecastData = { source: 'weatherbit', isMetric, timezone: currentData.timezone };
 
+  forecast.city = `${current.data[0].city_name}, ${current.data[0].state_code}, ${current.data[0].country_code}`;
+
   forecast.currently = {
     cloudCover: currentData.clouds / 100,
     feelsLikeTemperature: conditionalCelsius(currentData.app_temp, isMetric),
@@ -205,52 +219,60 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
   };
 
   forecast.hourly = [];
-  hourly.data.forEach(hour => forecast.hourly.push({
-    cloudCover: hour.clouds / 100,
-    icon: convertIcon(hour.weather?.icon, hour.clouds),
-    precipType: getPrecipType(hour.weather?.code),
-    temperature: conditionalCelsius(hour.temp, isMetric),
-    time: hour.ts
-  }));
+
+  if (hourly) {
+    hourly.data.forEach(hour => forecast.hourly.push({
+      cloudCover: hour.clouds / 100,
+      icon: convertIcon(hour.weather?.icon, hour.clouds),
+      precipType: getPrecipType(hour.weather?.code),
+      temperature: conditionalCelsius(hour.temp, isMetric),
+      time: hour.ts
+    }));
+  }
 
   forecast.daily = { data: [] };
-  daily.data.forEach(day => forecast.daily.data.push({
-    cloudCover: day.clouds / 100,
-    humidity: day.rh / 100,
-    icon: convertIcon(day.weather?.icon, day.clouds),
-    narrativeDay: day.weather?.description,
-    precipAccumulation: conditionalCm(day.precip, isMetric),
-    precipProbability: day.pop / 100,
-    precipType: getPrecipType(day.weather?.code),
-    summary: day.weather?.description,
-    temperatureHigh: conditionalCelsius(day.high_temp, isMetric),
-    temperatureLow: conditionalCelsius(day.low_temp, isMetric),
-    time: day.ts
-  }));
+
+  if (daily) {
+    daily.data.forEach(day => forecast.daily.data.push({
+      cloudCover: day.clouds / 100,
+      humidity: day.rh / 100,
+      icon: convertIcon(day.weather?.icon, day.clouds),
+      narrativeDay: day.weather?.description,
+      precipAccumulation: conditionalCm(day.precip, isMetric),
+      precipProbability: day.pop / 100,
+      precipType: getPrecipType(day.weather?.code),
+      summary: day.weather?.description,
+      temperatureHigh: conditionalCelsius(day.high_temp, isMetric),
+      temperatureLow: conditionalCelsius(day.low_temp, isMetric),
+      time: day.ts
+    }));
+  }
 
   forecast.alerts = [];
 
-  const now = Date.now();
-  const alertsByTitle = new Map<string, WeatherBitAlert>();
+  if (alerts) {
+    const now = Date.now();
+    const alertsByTitle = new Map<string, WeatherBitAlert>();
 
-  // Filter out expired and duplicate alerts
-  alerts.alerts.forEach(alert => {
-    const title = alert.title;
-    const alertEffective = Date.parse(alert.effective_utc);
-    const alertExpired = Date.parse(alert.expires_utc);
+    // Filter out expired and duplicate alerts
+    alerts.alerts.forEach(alert => {
+      const title = alert.title;
+      const alertEffective = Date.parse(alert.effective_utc);
+      const alertExpired = Date.parse(alert.expires_utc);
 
-    if (alertExpired > now && (!alertsByTitle.has(title) || Date.parse(alertsByTitle.get(title).effective_utc) > alertEffective))
-      alertsByTitle.set(title, alert);
-  });
+      if (alertExpired > now && (!alertsByTitle.has(title) || Date.parse(alertsByTitle.get(title).effective_utc) > alertEffective))
+        alertsByTitle.set(title, alert);
+    });
 
-  alertsByTitle.forEach(alert => forecast.alerts.push({
-    description: alert.description,
-    expires: Date.parse(alert.expires_utc) / 1000,
-    severity: alert.severity.toLowerCase() as Alert['severity'],
-    time: Date.parse(alert.effective_utc) / 1000,
-    title: alert.title,
-    url: alert.uri
-  }));
+    alertsByTitle.forEach(alert => forecast.alerts.push({
+      description: alert.description,
+      expires: Date.parse(alert.expires_utc) / 1000,
+      severity: alert.severity.toLowerCase() as Alert['severity'],
+      time: Date.parse(alert.effective_utc) / 1000,
+      title: alert.title,
+      url: alert.uri
+    }));
+  }
 
   return forecast;
 }
