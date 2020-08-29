@@ -45,4 +45,4 @@ if [ ! -f ".first-time-install" ]; then
 fi
 
 echo "Starting main installer..."
-npm run build -- --bash "$*"
+npm run build -- --bash $*
