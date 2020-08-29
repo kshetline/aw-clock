@@ -1,6 +1,9 @@
 ## 2.5.0
 
 * Added support for Weatherbit.io forecasts.
+* Weatherbit.io can now be used in place of, or in addition to, the Google geocoding API to translate GPS latitude/longitude into place names.
+* Fixed bug with pop-up weather details for Weather Underground forecast.
+* Prevented onscreen keyboard from covering alert dialogs.
 * Added automatic phase-out of Dark Sky API in December 2021.
 
 ## 2.4.0
@@ -16,7 +19,7 @@
 * Notifications for software updates.
 * Optional onscreen administrative functions, provided through the Settings dialog. These include:
   * Reboot
-  * Shutdown 
+  * Shutdown
   * Quit browser
   * Initiate software update.
 * User customizable background and clock face colors.  
@@ -118,7 +121,7 @@
 
 * Updated README.md.
 
-##1.0.1
+## 1.0.1
 
 * Fix gear.svg image so it's compatible with IE. Add MIT license to individual files.
 

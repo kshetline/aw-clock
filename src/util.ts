@@ -84,7 +84,7 @@ export function htmlEncode(s: string): string {
   return s.replace(/[<>&]/g, match => basicEntities[match]);
 }
 
-export function domAlert(message: string): void {
+export function domAlert(message: string, callback?: () => void): void {
   const alertElem = $('#alert-dialog');
   const alertOk = $('#alert-ok');
   let match: RegExpExecArray;
@@ -107,6 +107,9 @@ export function domAlert(message: string): void {
   alertOk.one('click', () => {
     popKeydownListener();
     alertElem.hide();
+
+    if (callback)
+      callback();
   });
 }
 

@@ -213,7 +213,7 @@ export class Gps extends TimePoller {
     }, CLOCK_CHECK);
   }
 
-  private async checkLocation(): Promise<void> {
+  async checkLocation(): Promise<void> {
     if (this.checkingLocation)
       return;
 

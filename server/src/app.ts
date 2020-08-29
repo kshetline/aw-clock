@@ -20,7 +20,6 @@ import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, jsonOrJsonp, noCache, normalizePort } from './util';
 import { Gps } from './gps';
 import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
-import { sleep } from './process-util';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -294,9 +293,9 @@ function getApp() {
     if (gps) {
       let gpsInfo = gps.getGpsData();
 
-      // Wait a little longer if necessary to see if a name for the current location is found.
-      if (!gpsInfo.city && process.env.AWC_GOOGLE_API_KEY) {
-        await sleep(2000);
+      // Force a location update if city name not available yet.
+      if (!gpsInfo.city) {
+        await gps.checkLocation();
         gpsInfo = gps.getGpsData();
       }
 

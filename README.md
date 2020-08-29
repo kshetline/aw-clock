@@ -10,6 +10,7 @@ The clock displays the time and date in both analog and digital form, in 12- or 
 
 ![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_screenshot.png)
 <br/><br/>
+
 ### Getting started
 
 The following instructions are primarily aimed at turning a Raspberry Pi into a _dedicated_ Astronomy/Weather Clock, meaning that serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
@@ -21,9 +22,9 @@ I needed to use an active GPS antenna to get a good signal, but you might not ne
 The next step (or the first, if you’re skipping GPS) is to clone the repository and perform the initial set-up:
 
 ```shell script
-$ git clone https://github.com/kshetline/aw-clock.git
-$ cd aw-clock
-$ sudo ./build.sh -i
+＄ git clone https://github.com/kshetline/aw-clock.git
+＄ cd aw-clock
+＄ sudo ./build.sh -i
 ```
 
 There will possibly be a long delay the first time you run this script while Node.js (if necessary) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
@@ -40,7 +41,7 @@ By default, this application uses GPS-synced system time, if available, or `pool
 
 ![Hypothetical leap second](https://shetline.com/readme/aw-clock/2.4.0/moment_of_leap_second.jpg)
 
-_This image is hypothetical — the pictured moment in time is not guaranteed to be an actual leap second. Video here: https://shetline.com/video/leap_second_display.mp4_
+_This image is hypothetical — the pictured moment in time is not guaranteed to be an actual leap second. Video here: <https://shetline.com/video/leap_second_display.mp4>_
 
 ### Web browser client options
 
@@ -54,7 +55,7 @@ To close the web browser while it’s running in full-screen kiosk mode, press `
 
 ### Hardware set-up for temperature/humidity sensors
 
-If you are running the server on a Raspberry Pi you have the option to display indoor temperature and humidity using a direct-wired DHT22/AM2302 sensor, as seen here: https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/. The wiring I describe below is specifically for the AM2302 version of the DHT22, with a built-in pull-up resistor.
+If you are running the server on a Raspberry Pi you have the option to display indoor temperature and humidity using a direct-wired DHT22/AM2302 sensor, as seen here: <https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/>. The wiring I describe below is specifically for the AM2302 version of the DHT22, with a built-in pull-up resistor.
 
 With your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 17* (physical pin 11 on the 40-pin J8 header). The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin J8 header) and the `-` lead needs to be connected to ground (I chose pin 9). In the image below, the signal lead is orange, the ground is brown, and +5 is the upper red wire.
 
@@ -87,12 +88,13 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 ### Info for code development, testing, and non-Raspberry Pi use
 
 To build and run this project you can use the following commands:
-   - “`sudo ./build.sh` &#x5B; _various-options_ &#x5D;” to run the installer.
-   - “`npm run first-install`” to install all npm packages needed for both the client and the server (a separate, inner project) with one command.
-   - “`npm run build` &#x5B;‑‑ _various-options_ &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
-   - “`npm run start-server`” to start the data server for this project (except on Windows) on `localhost:4201`. (You may need to make this precede this command with `sudo`.) The server will be automatically restarted whenever you edit the code.
-   - “`npm run start-server-win`” to start the data server for this project (on Windows) on `localhost:4201`.
-   - “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code.. _(Note that for development and testing, two different ports are used, but that when the server is deployed, all content and data is served on one port, by default 8080.)_
+
+* “`sudo ./build.sh` &#x5B; _various-options_ &#x5D;” to run the installer.
+* “`npm run first-install`” to install all npm packages needed for both the client and the server (a separate, inner project) with one command.
+* “`npm run build` &#x5B;‑‑ _various-options_ &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
+* “`npm run start-server`” to start the data server for this project (except on Windows) on `localhost:4201`. (You may need to make this precede this command with `sudo`.) The server will be automatically restarted whenever you edit the code.
+* “`npm run start-server-win`” to start the data server for this project (on Windows) on `localhost:4201`.
+* “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code.. _(Note that for development and testing, two different ports are used, but that when the server is deployed, all content and data is served on one port, by default 8080.)_
 
 > Note: A dependency on `node-sass` sometimes causes build problems. It often helps to delete the top level `node_modules` directory, and then do `npm install` over again. I’ve also found that using `LIBSASS_EXT=”no” npm install` helps.
 
@@ -121,7 +123,7 @@ To build the server along with the web client, use `npm run build`, possibly fol
 The following environment variables affect how the server part of this software runs. They are defined in the file `etc/defaults/weatherService` for the purposes of the dedicated device set-up.
 
 * `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `etc/defaults/weatherService` file, or by setting it to `false`.
-* `AWC_DARK_SKY_API_KEY`: If you want to use Dark Sky either as a primary or back-up weather data service, this must be set to a valid Dark Sky API key. (See https://darksky.net/ for further details.)
+* `AWC_DARK_SKY_API_KEY`: If you want to use Dark Sky either as a primary or back-up weather data service, this must be set to a valid Dark Sky API key. (See <https://darksky.net/> for further details.)
 * `AWC_NTP_SERVER`: NTP server used by this software. (See previous comments about selecting alternate servers.)
 * `AWC_PORT`: By default the deployed server runs on localhost port 8080, but you can use a different port if you prefer.
 * `AWC_PREFERRED_WS`: Either `wunderground` or `darksky`.
