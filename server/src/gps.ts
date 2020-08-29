@@ -237,17 +237,11 @@ export class Gps extends TimePoller {
         altitude: coords.altitude
       };
 
-      try {
-        if (this.googleKey && !this.googleAccessDenied)
-          await this.googleLocationCheck(coords, now);
-      }
-      catch {}
+      if (this.googleKey && !this.googleAccessDenied)
+        await this.googleLocationCheck(coords, now);
 
-      try {
-        if (!this.googleKey || this.googleAccessDenied || !coords.city)
-          await this.weatherbitLocationCheck(coords);
-      }
-      catch {}
+      if (!this.googleKey || this.googleAccessDenied || !coords.city)
+        await this.weatherbitLocationCheck(coords);
     }
 
     this.checkingLocation = false;
@@ -306,12 +300,15 @@ export class Gps extends TimePoller {
     const lat = coords.latitude.toString();
     const lon = coords.longitude.toString();
 
-    if (this.weatherbitKey)
-      forecast = await getForecast({ req: { lat, lon, co: 'true' } } as any);
-    else
-      forecast = await requestJson(`https://weather.shetline.com/wbproxy?lat=${lat}&lon=${lon}&co=true`);
+    try {
+      if (this.weatherbitKey)
+        forecast = await getForecast({ query: { lat, lon, co: 'true' } } as any);
+      else
+        forecast = await requestJson(`https://weather.shetline.com/wbproxy?lat=${lat}&lon=${lon}&co=true`);
+    }
+    catch {}
 
-    if (!(forecast instanceof Error)) {
+    if (forecast && !(forecast instanceof Error)) {
       coords.city = forecast.city;
       coords.timezone = forecast.timezone;
     }

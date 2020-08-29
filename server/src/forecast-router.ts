@@ -37,7 +37,7 @@ router.get('/', async (req: Request, res: Response) => {
     forecast = forecasts[replaceIndex];
 
   if (forecast instanceof Error && !process.env.AWC_WEATHERBIT_API_KEY) {
-    const url = `http://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du}` +
+    const url = `http://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
       (req.query.id ? `id=${req.query.id}` : '');
 
     try {
