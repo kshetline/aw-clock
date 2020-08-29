@@ -5,7 +5,7 @@ import { abs, floor, max, round } from 'ks-math';
 import { asLines, processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
-import { GpsData, TimeInfo } from './shared-types';
+import { ForecastData, GpsData, TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
 import { roughDistanceBetweenLocationsInKm } from './util';
@@ -240,8 +240,8 @@ export class Gps extends TimePoller {
       if (this.googleKey && !this.googleAccessDenied)
         await this.googleLocationCheck(coords, now);
 
-      if (this.weatherbitKey && (!this.googleKey || this.googleAccessDenied))
-        await Gps.weatherbitLocationCheck(coords);
+      if (!this.googleKey || this.googleAccessDenied || !coords.city)
+        await this.weatherbitLocationCheck(coords);
     }
 
     this.checkingLocation = false;
@@ -295,8 +295,15 @@ export class Gps extends TimePoller {
     }
   }
 
-  private static async weatherbitLocationCheck(coords: GpsData): Promise<void> {
-    const forecast = await getForecast({ req: { lat: coords.latitude.toString(), lon: coords.longitude.toString(), co: 'true' } } as any);
+  private async weatherbitLocationCheck(coords: GpsData): Promise<void> {
+    let forecast: ForecastData | Error;
+    const lat = coords.latitude.toString();
+    const lon = coords.longitude.toString();
+
+    if (this.weatherbitKey)
+      forecast = await getForecast({ req: { lat, lon, co: 'true' } } as any);
+    else
+      forecast = await requestJson(`https://weather.shetline.com/wbproxy?lat=${lat}&lon=${lon}&co=true`);
 
     if (!(forecast instanceof Error)) {
       coords.city = forecast.city;
