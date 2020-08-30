@@ -61,6 +61,7 @@ const HOURLY_VERT_SPACING = 6.7;
 const FORECAST_UNIT_WIDTH = 39;
 const RISE_SET_TOP = 25.4 / 51;
 const BULLET_SPACER = ' \u2022 ';
+const PCT = '<tspan class="small-percent" dy="-0.2em 0.2em">%\u200B</tspan>';
 const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
 const MARQUEE_JOINER = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
@@ -578,7 +579,7 @@ export class Forecast {
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
       this.dayLowHighs[index].text('--°/--°');
-      this.dayChancePrecips[index].text('--%');
+      this.dayChancePrecips[index].html('--' + PCT);
       this.dayPrecipAccums[index].text('--');
     });
 
@@ -679,7 +680,7 @@ export class Forecast {
       if (hourInfo && firstHourIndex >= 0) {
         icon = this.getIconSource(hourInfo.icon);
         temp = hourInfo.temperature.toFixed(0) + '°';
-        pop = hourInfo.precipProbability != null ? Math.round(hourInfo.precipProbability * 100) + '%' : '--%';
+        pop = hourInfo.precipProbability != null ? Math.round(hourInfo.precipProbability * 100) + PCT : '--' + PCT;
 
         if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
           const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, amPm, true)}</tspan>`;
@@ -744,7 +745,7 @@ export class Forecast {
 
           this.dayLowHighs[index].text(`${high}°/${low}°`);
 
-          let chancePrecip = Math.round(daily.precipProbability * 100) + '%';
+          let chancePrecip = Math.round(daily.precipProbability * 100) + PCT;
 
           if (!this.rainGlyph) // Raindrop emoji, or umbrella with raindrops
             this.rainGlyph = doesCharacterGlyphExist(textElem[0], '\uD83D\uDCA7') ? '\uD83D\uDCA7' : '\u2614';
@@ -757,7 +758,7 @@ export class Forecast {
           else
             chancePrecip = this.rainGlyph + chancePrecip;
 
-          this.dayChancePrecips[index].text(daily.precipProbability > 0.01 ? chancePrecip : '--');
+          this.dayChancePrecips[index].html(daily.precipProbability > 0.01 ? chancePrecip : '--');
 
           const accum = daily.precipAccumulation || 0;
           const precision = (accum < 0.995 ? 2 : (accum < 9.95 ? 1 : 0));
@@ -767,7 +768,7 @@ export class Forecast {
         else {
           setSvgHref(dayIcon, UNKNOWN_ICON);
           this.dayLowHighs[index].text('--°/--°');
-          this.dayChancePrecips[index].text('--%');
+          this.dayChancePrecips[index].html('--' + PCT);
           this.dayPrecipAccums[index].text('--');
         }
       });
