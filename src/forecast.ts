@@ -117,7 +117,7 @@ export class Forecast {
   private hourIcons: SVGImageElement[] = [];
   private hourTemps: SVGTextElement[] = [];
   private hourPops: SVGTextElement[] = [];
-  private forecastDivider: HTMLElement;
+  private forecastMarkers: JQuery;
 
   private readonly weatherServer: string;
 
@@ -160,7 +160,7 @@ export class Forecast {
     this.marqueeWrapper = $('#marquee-wrapper');
     this.marquee = $('#marquee');
     this.marqueeBackground = $('body').css('--background-color');
-    this.forecastDivider = document.getElementById('hourly-forecast-divider');
+    this.forecastMarkers = $('#hourly-forecast-start, #hourly-forecast-end');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
@@ -528,7 +528,7 @@ export class Forecast {
       this.hourIcons.forEach(icon => icon.style.display = display);
       this.hourTemps.forEach(temp => temp.style.display = display);
       this.hourPops.forEach(pop => pop.style.display = display);
-      this.forecastDivider.style.display = (value === HourlyForecast.CIRCULAR ? 'block' : 'none');
+      this.forecastMarkers.css('display', value === HourlyForecast.CIRCULAR ? 'block' : 'none');
       this.decorateClockFace();
 
       // Force back to hourly temps

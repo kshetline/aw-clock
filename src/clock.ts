@@ -51,7 +51,8 @@ export class Clock {
   private readonly secHand: HTMLElement;
   private readonly minHand: HTMLElement;
   private readonly hourHand: HTMLElement;
-  private readonly forecastDivider: HTMLElement;
+  private readonly forecastStart: HTMLElement;
+  private readonly forecastEnd: HTMLElement;
   private readonly hands: HTMLElement;
   private readonly gpsMeter: HTMLElement;
 
@@ -96,7 +97,8 @@ export class Clock {
     this.sweep = document.getElementById('sweep') as SVGAnimationElement;
     this.minHand = document.getElementById('min-hand');
     this.hourHand = document.getElementById('hour-hand');
-    this.forecastDivider = document.getElementById('hourly-forecast-divider');
+    this.forecastStart = document.getElementById('hourly-forecast-start');
+    this.forecastEnd = document.getElementById('hourly-forecast-end');
     this.hands = document.getElementById('hands');
     this.zoneCaption = document.getElementById('timezone');
     this.hub = document.getElementById('hub');
@@ -391,7 +393,8 @@ export class Clock {
     this.lastSecRotation = secRotation;
     rotate(this.minHand, 6 * mins + 0.1 * min(secs, 59));
     rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120);
-    rotate(this.forecastDivider, 30 * (hour % 12) - 9.5);
+    rotate(this.forecastStart, 30 * (hour % 12) + 8.5);
+    rotate(this.forecastEnd, 30 * (hour % 12) - 6);
     this.gpsActive = !!timeInfo.fromGps;
     this.gpsIcon.style.display = (this.gpsAvailable ? 'block' : 'none');
     this.gpsMeter.style.display = (this.gpsAvailable ? 'block' : 'none');
