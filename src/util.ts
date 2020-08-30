@@ -239,7 +239,7 @@ export function setSignalLevel(elem: JQuery, quality: number): void {
 }
 
 export function adjustCityName(city: string): string {
-  return (city || '').replace(/(, [A-Z]{2}), USA?$/, '$1');
+  return (city || '').trim().replace(/(, [A-Z]{2}), USA?$/, '$1').replace(', ,', ',').replace(/(^,\s*)|(\s*,$)/g, '');
 }
 
 export function isTypeInInput(elem: HTMLElement): boolean {

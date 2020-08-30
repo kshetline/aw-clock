@@ -154,7 +154,8 @@ label {
   user-select: none;
 }
 
-.clock-temps {
+.hour-temps,
+.hour-pops {
   font-size: 1.6px;
   text-anchor: middle;
   fill: white;
@@ -163,6 +164,31 @@ label {
   & .temp-by-hour {
     fill: #AAA;
   }
+}
+
+.hour-icon {
+  &.vertical {
+    opacity: 1;
+  }
+
+  &.circular {
+    opacity: 0.7;
+  }
+}
+
+.hour-info-show {
+  opacity: 1;
+  transition: opacity 1s;
+
+  &.circular {
+    opacity: 0.7;
+    transition: opacity 1s;
+  }
+}
+
+.hour-info-hide, .hour-info-hide.circular {
+  opacity: 0;
+  transition: opacity 1s;
 }
 
 #face {

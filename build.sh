@@ -45,4 +45,5 @@ if [ ! -f ".first-time-install" ]; then
 fi
 
 echo "Starting main installer..."
+# shellcheck disable=SC2048,SC2086 # this should become separate items with spaces in between, not one quoted thing
 npm run build -- --bash $*

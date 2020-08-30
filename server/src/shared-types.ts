@@ -30,6 +30,7 @@ export interface HourlyConditions {
   icon: string;
   temperature: number;
   precipType: string;
+  precipProbability: number;
   time: number;
 }
 

@@ -116,7 +116,7 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
   const wh = wuForecast.hourly;
   const location = wuForecast.location;
 
-  forecast.city = location && `${location.city}, ${location.adminDistrict}, ${location.countryCode}`;
+  forecast.city = location && `${location.city}, ${location.adminDistrictCode}, ${location.countryCode}`;
   convertCurrent(forecast, wc, wh);
   convertHourly(forecast, wh);
   convertDaily(forecast, wc, wuForecast.daily);
@@ -154,6 +154,7 @@ function convertHourly(forecast: ForecastData, wh: any): void {
     forecast.hourly.push({
       icon: getIcon(wh.iconCode[i]),
       temperature: wh.temperature[i],
+      precipProbability: wh.precipChance[i] / 100,
       precipType,
       time: wh.validTimeUtc[i]
     });

@@ -65,6 +65,7 @@ const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
 const MARQUEE_JOINER = '\u00A0\u00A0\u00A0\u25C8\u00A0\u00A0\u00A0'; // '   ◈   ', non-breaking spaces with bordered diamond
 const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-color: ${ERROR_BACKGROUND};">&nbsp;`;
 const CLOSE_ERROR_TAG = '&nbsp;</span>';
+const REVERT_TO_SUN_INFO_DELAY = 60_000;
 let SUBJECT_INTRO_PATTERN: RegExp;
 
 try {
@@ -114,6 +115,7 @@ export class Forecast {
   private dayPrecipAccums: JQuery[] = [];
   private hourIcons: SVGImageElement[] = [];
   private hourTemps: SVGTextElement[] = [];
+  private hourPops: SVGTextElement[] = [];
   private forecastDivider: HTMLElement;
 
   private readonly weatherServer: string;
@@ -125,6 +127,8 @@ export class Forecast {
   private lastForecastTime = 0;
   private timezone = KsTimeZone.OS_ZONE;
   private showingStartOfWeek = true;
+  private showingHourTemps = true;
+  private hourInfoTimer: any;
 
   private marqueeText = ' ';
   private marqueeDialogText = '';
@@ -227,6 +231,7 @@ export class Forecast {
 
     $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
+    $('.hour-temps, .hour-pops, .hour-icon').on('click', () => this.toggleHourInfo());
 
     const mouseDown = (x: number) => {
       dragging = true;
@@ -363,7 +368,7 @@ export class Forecast {
       const deg = i * 30 + 15;
       const hourIcon = isNew ? document.createElementNS(SVG_NAMESPACE, 'image') : this.hourIcons[i];
       const hourTemp = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourTemps[i];
-      const opacity = vertical ? '1' : '0.7';
+      const hourPop = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourPops[i];
       let r, x, y;
 
       if (vertical) {
@@ -376,35 +381,48 @@ export class Forecast {
         y = CLOCK_CENTER + r * sin_deg(deg - 90);
       }
 
+      const setVerticalOrCircular = (elem: SVGElement) => {
+        elem.classList.add(vertical ? 'vertical' : 'circular');
+        elem.classList.remove(vertical ? 'circular' : 'vertical');
+      };
+
       hourIcon.setAttribute('x', ((x - halfIcon) / SCALING_FIX).toString());
       hourIcon.setAttribute('y', ((y - halfIcon) / SCALING_FIX).toString());
       hourIcon.setAttribute('height', HOURLY_ICON_SIZE.toString());
       hourIcon.setAttribute('width', HOURLY_ICON_SIZE.toString());
-      if (SCALING_FIX !== 1) hourIcon.setAttribute('transform', `scale(${SCALING_FIX})`);
-      hourIcon.style.opacity = opacity;
+      hourIcon.classList.add('hour-icon');
+      setVerticalOrCircular(hourIcon);
+
+      if (SCALING_FIX !== 1)
+        hourIcon.setAttribute('transform', `scale(${SCALING_FIX})`);
 
       if (isNew)
         hourIcon.setAttribute('href', EMPTY_ICON);
 
-      if (vertical) {
-        y += HOURLY_TEMP_VERT_OFFSET;
-        hourTemp.removeAttribute('dy');
-        hourTemp.setAttribute('dx', (i < 12 ? -halfIcon : halfIcon).toString());
-        hourTemp.style.textAnchor = (i < 12 ? 'start' : 'end');
-      }
-      else {
-        r = (i < 12 ? CLOCK_TEMPS_RADIUS : CLOCK_TEMPS_INNER_RADIUS);
-        x = CLOCK_CENTER + r * cos_deg(deg - 90);
-        y = CLOCK_CENTER + r * sin_deg(deg - 90);
-        hourTemp.removeAttribute('dx');
-        hourTemp.setAttribute('dy', '0.5em');
-        hourTemp.style.textAnchor = 'middle';
-      }
+      [hourTemp, hourPop].forEach((text, j) => {
+        let y2 = y;
 
-      hourTemp.setAttribute('x', x.toString());
-      hourTemp.setAttribute('y', y.toString());
-      hourTemp.classList.add('clock-temps');
-      hourTemp.style.opacity = opacity;
+        if (vertical) {
+          y2 += HOURLY_TEMP_VERT_OFFSET;
+          text.removeAttribute('dy');
+          text.setAttribute('dx', (i < 12 ? -halfIcon : halfIcon).toString());
+          text.style.textAnchor = (i < 12 ? 'start' : 'end');
+        }
+        else {
+          r = (i < 12 ? CLOCK_TEMPS_RADIUS : CLOCK_TEMPS_INNER_RADIUS);
+          x = CLOCK_CENTER + r * cos_deg(deg - 90);
+          y2 = CLOCK_CENTER + r * sin_deg(deg - 90);
+          text.removeAttribute('dx');
+          text.setAttribute('dy', '0.5em');
+          text.style.textAnchor = 'middle';
+        }
+
+        text.setAttribute('x', x.toString());
+        text.setAttribute('y', y2.toString());
+        text.classList.add(j === 0 ? 'hour-temps' : 'hour-pops');
+        text.classList.add(j === 0 ? 'hour-info-show' : 'hour-info-hide');
+        setVerticalOrCircular(text);
+      });
 
       if (isNew) {
         hourTemp.innerHTML = '';
@@ -412,6 +430,8 @@ export class Forecast {
         this.hourIcons[i] = hourIcon;
         clock.appendChild(hourTemp);
         this.hourTemps[i] = hourTemp;
+        clock.appendChild(hourPop);
+        this.hourPops[i] = hourPop;
       }
       else
         hourTemp.innerHTML = hourTemp.innerHTML.replace(/.*?(\b\d+°).*/, '$1');
@@ -506,6 +526,7 @@ export class Forecast {
       this._hourlyForecast = value;
       this.hourIcons.forEach(icon => icon.style.display = display);
       this.hourTemps.forEach(temp => temp.style.display = display);
+      this.hourPops.forEach(pop => pop.style.display = display);
       this.forecastDivider.style.display = (value === HourlyForecast.CIRCULAR ? 'block' : 'none');
       this.decorateClockFace();
     }
@@ -531,6 +552,7 @@ export class Forecast {
     if (now < earliestNew && forecastData?.currently)
       forecastData.hourly.splice(0, 0, {
         icon: forecastData.currently.icon,
+        precipProbability: forecastData.currently.precipProbability,
         precipType: forecastData.currently.precipType,
         temperature: forecastData.currently.temperature,
         time: Math.floor(now / 3600) * 3600
@@ -550,7 +572,8 @@ export class Forecast {
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
     this.appService.updateCurrentTemp(NO_DATA);
     this.hourIcons.forEach(icon => icon.setAttribute('href', EMPTY_ICON));
-    this.hourTemps.forEach(icon => icon.textContent = '');
+    this.hourTemps.forEach(temp => temp.textContent = '');
+    this.hourPops.forEach(pop => pop.textContent = '');
 
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
@@ -634,9 +657,11 @@ export class Forecast {
     const amPm = this.appService.getAmPm();
     let previousStartOfHour = startOfHour - 3_600_000;
 
+    // noinspection DuplicatedCode,DuplicatedCode
     for (let i = 0; i < 24; ++i) {
       let icon = EMPTY_ICON;
       let temp = '';
+      let pop = '';
       const hourInfo = forecastData.hourly[i + firstHourIndex];
       const startOfHour = hourInfo ? hourInfo.time * 1000 : previousStartOfHour + 3_600_000;
       const hour = new KsDateTime(startOfHour, this.timezone).wallTime;
@@ -654,24 +679,37 @@ export class Forecast {
       if (hourInfo && firstHourIndex >= 0) {
         icon = this.getIconSource(hourInfo.icon);
         temp = hourInfo.temperature.toFixed(0) + '°';
+        pop = hourInfo.precipProbability != null ? Math.round(hourInfo.precipProbability * 100) + '%' : '--%';
 
         if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
           const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, amPm, true)}</tspan>`;
 
-          if (i < 12)
-            temp = temp + ' ' + hourText;
-          else
+          if (i < 12) {
+            temp += ' ' + hourText;
+            pop += ' ' + hourText;
+          }
+          else {
             temp = hourText + ' ' + temp;
+            pop = hourText + ' ' + pop;
+          }
         }
       }
 
       if (this.hourIcons[index])
         this.hourIcons[index].setAttribute('href', icon);
 
+      // noinspection DuplicatedCode
       if (this.hourTemps[index]) {
         this.hourTemps[index].innerHTML = temp;
         this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
         this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
+      }
+
+      // noinspection DuplicatedCode
+      if (this.hourPops[index]) {
+        this.hourPops[index].innerHTML = pop;
+        this.hourPops[index].style.fontSize = (!vertical && pop.length > 3 ? '1.2px' : '1.6px');
+        this.hourPops[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
       }
 
       previousStartOfHour = startOfHour;
@@ -901,5 +939,37 @@ export class Forecast {
       .replace(/¬(.+?)¬/g, '<$1>').replace(/¬(.+?);/g, '</$1>');
 
     displayHtml('big-text-dialog', text, '#DDF');
+  }
+
+  private toggleHourInfo(): void {
+    if (this.hourInfoTimer) {
+      clearTimeout(this.hourInfoTimer);
+      this.hourInfoTimer = undefined;
+    }
+
+    const tempElems = $('.hour-temps');
+    const popElems = $('.hour-pops');
+
+    if (this.showingHourTemps) {
+      this.showingHourTemps = false;
+      tempElems.removeClass('hour-info-show');
+      tempElems.addClass('hour-info-hide');
+      popElems.removeClass('hour-info-hide');
+      popElems.addClass('hour-info-show');
+
+      this.hourInfoTimer = setTimeout(() => {
+        this.hourInfoTimer = undefined;
+
+        if (!this.showingHourTemps)
+          this.toggleHourInfo();
+      }, REVERT_TO_SUN_INFO_DELAY);
+    }
+    else {
+      this.showingHourTemps = true;
+      popElems.removeClass('hour-info-show');
+      popElems.addClass('hour-info-hide');
+      tempElems.removeClass('hour-info-hide');
+      tempElems.addClass('hour-info-show');
+    }
   }
 }

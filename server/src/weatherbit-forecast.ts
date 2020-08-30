@@ -224,6 +224,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
     hourly.data.forEach(hour => forecast.hourly.push({
       cloudCover: hour.clouds / 100,
       icon: convertIcon(hour.weather?.icon, hour.clouds),
+      precipProbability: hour.pop / 100,
       precipType: getPrecipType(hour.weather?.code),
       temperature: conditionalCelsius(hour.temp, isMetric),
       time: hour.ts

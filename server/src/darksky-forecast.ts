@@ -148,6 +148,7 @@ function convertHourly(dsHourly: DSHourlyConditions, isMetric: boolean): HourlyC
       hourly.push({
         icon: getIcon(hour, isMetric),
         temperature: hour.temperature,
+        precipProbability: hour.precipProbability,
         precipType: hour.icon === 'snow' || /\bsnow\b/i.test(hour.summary || '') ? 'snow' :
           hour.icon === 'rain' ? 'rain' : '',
         time: hour.time

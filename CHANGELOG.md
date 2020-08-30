@@ -1,9 +1,11 @@
 ## 2.5.0
 
-* Added support for Weatherbit.io forecasts.
+* Add support for Weatherbit.io forecasts.
+* Add hourly probability of precipitation, triggered by tap/click.
 * Weatherbit.io can now be used in place of, or in addition to, the Google geocoding API to translate GPS latitude/longitude into place names.
 * Fixed bug with pop-up weather details for Weather Underground forecast.
 * Prevented onscreen keyboard from covering alert dialogs.
+* Make sure when running in kiosk mode that clicking on a weather service logo doesn't lead to the main display being blocked.
 * Added automatic phase-out of Dark Sky API in December 2021.
 
 ## 2.4.0
