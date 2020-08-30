@@ -540,7 +540,7 @@ export class SettingsDialog {
         this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
         this.latestVersion = data.latestVersion;
 
-        if (data?.latitude != null) {
+        if (data?.latitude != null && data?.longitude != null) {
           this.defaultLocation = data;
           (this.getGps as any).enable(true);
         }

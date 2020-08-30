@@ -224,8 +224,8 @@ export class Gps extends TimePoller {
 
     // If there are old coordinates wait for at least a tenth of a kilometer change in
     // position before looking up name and timezone for new location.
-    if ((this.namedGpsData == null && now >= this.checkLocationRetry) || roughDistanceBetweenLocationsInKm(
-        this.namedGpsData.latitude, this.namedGpsData.longitude, coords.latitude, coords.longitude) >= 0.1) {
+    if (!this.namedGpsData || now >= this.checkLocationRetry || (this.namedGpsData && roughDistanceBetweenLocationsInKm(
+        this.namedGpsData.latitude, this.namedGpsData.longitude, coords.latitude, coords.longitude) >= 0.1)) {
       delete this.gpsData.city;
       delete this.gpsData.timezone;
 
@@ -241,7 +241,7 @@ export class Gps extends TimePoller {
         await this.googleLocationCheck(coords, now);
 
       if (!this.googleKey || this.googleAccessDenied || !coords.city)
-        await this.weatherbitLocationCheck(coords);
+        await this.weatherbitLocationCheck(coords, now);
     }
 
     this.checkingLocation = false;
@@ -295,7 +295,7 @@ export class Gps extends TimePoller {
     }
   }
 
-  private async weatherbitLocationCheck(coords: GpsData): Promise<void> {
+  private async weatherbitLocationCheck(coords: GpsData, now: number): Promise<void> {
     let forecast: ForecastData | Error;
     const lat = coords.latitude.toString();
     const lon = coords.longitude.toString();
@@ -306,7 +306,9 @@ export class Gps extends TimePoller {
       else
         forecast = await requestJson(`https://weather.shetline.com/wbproxy?lat=${lat}&lon=${lon}&co=true`);
     }
-    catch {}
+    catch {
+      this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+    }
 
     if (forecast && !(forecast instanceof Error)) {
       coords.city = forecast.city;
