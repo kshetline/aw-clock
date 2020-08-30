@@ -530,6 +530,10 @@ export class Forecast {
       this.hourPops.forEach(pop => pop.style.display = display);
       this.forecastDivider.style.display = (value === HourlyForecast.CIRCULAR ? 'block' : 'none');
       this.decorateClockFace();
+
+      // Force back to hourly temps
+      this.showingHourTemps = false;
+      this.toggleHourInfo();
     }
   }
 
@@ -702,14 +706,14 @@ export class Forecast {
       // noinspection DuplicatedCode
       if (this.hourTemps[index]) {
         this.hourTemps[index].innerHTML = temp;
-        this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.2px' : '1.6px');
+        this.hourTemps[index].style.fontSize = (!vertical && temp.length > 3 ? '1.25px' : '1.6px');
         this.hourTemps[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
       }
 
       // noinspection DuplicatedCode
       if (this.hourPops[index]) {
         this.hourPops[index].innerHTML = pop;
-        this.hourPops[index].style.fontSize = (!vertical && pop.length > 3 ? '1.2px' : '1.6px');
+        this.hourPops[index].style.fontSize = (!vertical && pop.length - PCT.length > 2 ? '1.25px' : '1.6px');
         this.hourPops[index].style.fontStyle = (hour.d !== today.d ? 'italic' : 'normal');
       }
 
