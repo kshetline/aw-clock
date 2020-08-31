@@ -583,26 +583,26 @@ const questions = [
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
   {
     name: 'AWC_GOOGLE_API_KEY',
-    prompt: 'Optional Google geocoding API key (for city names from GPS coordinates)' +
+    prompt: 'Optional Google geocoding API key (for city names from\n      GPS coordinates.)' +
       (settings.AWC_GOOGLE_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
   { // #5
     name: 'AWC_PREFERRED_WS',
-    prompt: 'preferred weather service, (w)underground, weather(b)it, or (d)arksky)',
+    prompt: 'preferred weather service, (w)underground, weather(b)it,\n      or (d)arksky).',
     ask: true,
     validate: wsValidate,
     after: wsAfter
   },
   {
     name: 'AWC_WEATHERBIT_API_KEY',
-    prompt: 'Optional Weatherbit.io (via RapidAPI) key, for weather and geocoding' +
+    prompt: 'Optional Weatherbit.io (via RapidAPI) key, for\n      weather and geocoding.' +
       (settings.AWC_WEATHERBIT_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
   { // #7
     name: 'AWC_DARK_SKY_API_KEY',
-    prompt: 'Optional Dark Sky weather API key' +
+    prompt: 'Optional Dark Sky weather API key.' +
       (settings.AWC_DARK_SKY_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
