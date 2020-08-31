@@ -578,12 +578,12 @@ const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 
 const questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
-  { name: 'AWC_PORT', prompt: 'HTTP server port', ask: true, validate: portValidate },
+  { name: 'AWC_PORT', prompt: 'HTTP server port.', ask: true, validate: portValidate },
   { prompt: 'Allow user to reboot, shutdown, update, etc.?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
   {
     name: 'AWC_GOOGLE_API_KEY',
-    prompt: 'Optional Google geocoding API key (for city names from\n      GPS coordinates.)' +
+    prompt: 'Optional Google geocoding API key (for city names from\n      GPS coordinates).' +
       (settings.AWC_GOOGLE_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
