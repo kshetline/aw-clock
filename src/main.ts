@@ -137,7 +137,7 @@ class AwClockApp implements AppService {
     $('.weather-logo a').on('click', function (evt) {
       let href: string;
 
-      if (isEffectivelyFullScreen() && (href = $(this).attr('href'))) {
+      if (isEffectivelyFullScreen() && window.innerWidth === window.screen.availWidth && (href = $(this).attr('href'))) {
         const TITLE_AND_ADDRESS_HEIGHT = 58;
         const width = window.screen.width * 0.9;
         const height = window.screen.height * 0.9 - TITLE_AND_ADDRESS_HEIGHT;

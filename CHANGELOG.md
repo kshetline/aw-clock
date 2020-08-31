@@ -1,7 +1,7 @@
 ## 2.5.0
 
 * Add support for Weatherbit.io forecasts.
-* Add hourly probability of precipitation, triggered by tap/click.
+* Add hourly probability of precipitation, triggered by tap/click on hourly icons or temperatures.
 * Weatherbit.io can now be used in place of, or in addition to, the Google geocoding API to translate GPS latitude/longitude into place names.
 * Fixed bug with pop-up weather details for Weather Underground forecast.
 * Prevented onscreen keyboard from covering alert dialogs.

@@ -154,10 +154,10 @@ export class Ephemeris {
 
         const rise = risen ? beforeEvent : afterEvent;
         const set = risen ? afterEvent : beforeEvent;
+        const radius = 10 + index * 2;
 
         if (rise && rise.ut > time_JDU - 1.1 && set && set.ut < time_JDU + 1.1) {
           const currentAngle = mod(-eclipticLongitude, 360);
-          const radius = 10 + index * 2;
           let riseAngle = currentAngle + (time_JDU - rise.ut) * 360;
           let setAngle = currentAngle + (time_JDU - set.ut) * 360;
 
@@ -172,7 +172,13 @@ export class Ephemeris {
           risenTrack[0].setAttribute('d', arc);
           risenTrack.css('visibility', 'visible');
         }
+        else if (risen) {
+          // In the sky all day
+          risenTrack[0].setAttribute('d', describeArc(50, 50, radius, 0, 359.99));
+          risenTrack.css('visibility', 'visible');
+        }
         else
+          // Below the horizon all day
           risenTrack.css('visibility', 'hidden');
       });
     });

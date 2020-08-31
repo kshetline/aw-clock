@@ -6,14 +6,14 @@ This project is designed to create a desktop clock which provides weather and as
 
 The clock displays the time and date in both analog and digital form, in 12- or 24-hour format (with a special display mode for the occasional leap second). The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
-*&#42;A touchscreen or mouse is required to display the last three days of the seven-day forecast, or to switch the display from sunrise/sunset to moonrise/moonset.*
+*&#42;A touchscreen or mouse is required to display the last three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, or to switch from hourly temperatures to hourly probability-of-precipitation.*
 
 ![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_screenshot.png)
 <br/><br/>
 
 ### Getting started
 
-The following instructions are primarily aimed at turning a Raspberry Pi into a _dedicated_ Astronomy/Weather Clock, meaning that serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
+The following instructions are primarily aimed at turning a Raspberry Pi into a _dedicated_ Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
 
 The first step, if you want GPS support, is to install a GPS device according to the manufacturers instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested.
 
@@ -33,9 +33,19 @@ You’ll then be prompted in the console for the initial configuration you desir
 
 Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and don’t want to have to use SSH or VNC to perform these operations.
 
+### Weather
+
 As of v2.1.0 of this software no API key is required to get weather data. The default weather data, however, is now being acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
 
-Having a Dark Sky API key for back-up weather data is still, therefore, useful. Unfortunately, not long after release 2.3.3 of this software, Dark Sky announced that, as a result of joining Apple, they will no long accept new sign-ups for API keys. If you already have a Dark Sky API key, however, it will still function until the end of 2021, and you can select Dark Sky as your primary weather source until then, using Weather Underground as a back-up. (In the near future I plan to implement one more weather service option, to replace Dark Sky as the only Weather Underground alternative.)
+Having a back-up weather data is still, therefore, useful. For that there are three options:
+
+1. Get an API key for [Weatherbit.io via RapidAPI](https://rapidapi.com/weatherbit/api/weather). You can get a free key, but with a hard maximum of 125 API calls allowed per day, that will only be good for occasional back-up service, not full-time weather information. The US$10/month Pro plan is more than sufficient, however. With a Weatherbit.io API key, you'll also be able to handle geolocation (turning GPS latitude/longitude into city/place names) without needing to set up a Google API key.
+
+2. *If you already have* a Dark Sky API key, you can use that. Unfortunately, Dark Sky has announced that they are joining Apple, and they will no long accept new sign-ups for API keys. Further, even if you currently have an API key, it will cease to work at the end of 2021. This software will itself switch off access to Dark Sky in December 2021.
+
+3. There's a limited capability in this software to fall back on using my personal RapidAPI/Weatherbit.io account, but depending on how much traffic I get, there's no guarantee that back-up will always be there.
+
+### Time keeping
 
 By default, this application uses GPS-synced system time, if available, or `pool.ntp.org` as an NTP time server (keeping its own time via NTP, rather than using the system clock). You can configure the use of a different time server, however, you should not choose a Google or Facebook time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
 
@@ -80,8 +90,15 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 * Swipe left or right on the daily forecast to the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four days.*
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
+* Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation. Tap/click again to toggle back to temperatures. *After one minute, the display reverts to hourly temperatures.*
 * Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for them to scroll by.
 * Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
+
+### How the planet display works
+
+The circular tracks in the center of the clock face display the ecliptic longitude of the Sun, the Moon, Mercury, Venus, Mars, Jupiter, and Saturn (in that order from the innermost track outward), starting with 0° (the First Point of Aries) at three o’clock, and increasing *counterclockwise* from there. Over time the planets will slowly move around the display, mostly moving counterclockwise, but occasionally clockwise when retrograde.
+
+When the symbol for a planet is drawn larger, and is on one of the green arcs along the tracks that indicates the planet is above the local horizon. The clockwise end of each green track represents when the planet rises, and the counter-clockwise end represents when the planet sets.
 
 <br>
 
@@ -94,9 +111,9 @@ To build and run this project you can use the following commands:
 * “`npm run build` &#x5B;‑‑ _various-options_ &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
 * “`npm run start-server`” to start the data server for this project (except on Windows) on `localhost:4201`. (You may need to make this precede this command with `sudo`.) The server will be automatically restarted whenever you edit the code.
 * “`npm run start-server-win`” to start the data server for this project (on Windows) on `localhost:4201`.
-* “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code.. _(Note that for development and testing, two different ports are used, but that when the server is deployed, all content and data is served on one port, by default 8080.)_
+* “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code. _(Note that for development and testing, two different ports are used, but that when the server is deployed, all content and data is served on one port, by default 8080.)_
 
-> Note: A dependency on `node-sass` sometimes causes build problems. It often helps to delete the top level `node_modules` directory, and then do `npm install` over again. I’ve also found that using `LIBSASS_EXT=”no” npm install` helps.
+> Note: A dependency on `node-sass` sometimes causes build problems. It often helps to delete the top-level `node_modules` directory, and then do `npm install` over again. I’ve also found that using `LIBSASS_EXT=”no” npm install` helps.
 
 To build the server along with the web client, use `npm run build`, possibly followed by `‑‑` and other options listed below:
 
@@ -122,11 +139,15 @@ To build the server along with the web client, use `npm run build`, possibly fol
 
 The following environment variables affect how the server part of this software runs. They are defined in the file `etc/defaults/weatherService` for the purposes of the dedicated device set-up.
 
+* `AWC_ALLOW_ADMIN`: If `true`, an app user on localhost will be able to perform update, shut down, reboot, and quit operations via the Settings dialog.
 * `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `etc/defaults/weatherService` file, or by setting it to `false`.
-* `AWC_DARK_SKY_API_KEY`: If you want to use Dark Sky either as a primary or back-up weather data service, this must be set to a valid Dark Sky API key. (See <https://darksky.net/> for further details.)
+* `AWC_DARK_SKY_API_KEY`: If you want to use Dark Sky either as a primary or back-up weather data service, this must be set to a valid Dark Sky API key. (See <https://darksky.net/> for further details.). *Please note that new Dark Sky API keys are no longer available, and the API service will end at the end of 2021.*
+* `AWC_GIT_REPO_PATH`: The path to your aw-clock Git repository.
+* `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or an addition, you can set up `AWC_WEATHERBIT_API_KEY`.
 * `AWC_NTP_SERVER`: NTP server used by this software. (See previous comments about selecting alternate servers.)
 * `AWC_PORT`: By default the deployed server runs on localhost port 8080, but you can use a different port if you prefer.
-* `AWC_PREFERRED_WS`: Either `wunderground` or `darksky`.
+* `AWC_PREFERRED_WS`: Your preferred weather service, `weatherbit`, `wunderground` or `darksky`. `wunderground` is the default.
+* `AWC_WEATHERBIT_API_KEY`: A RapidAPI API key for the Weatherbit.io weather service. This will also function for geocoding (see `AWC_GOOGLE_API_KEY`).
 * `AWC_WIRED_TH_GPIO`: The GPIO number for a wired indoor temperature/humidity sensor, if any. Delete (or do not define) this entry if you don’t have the wired sensor hardware connected.
 * `AWC_WIRELESS_TH_GPIO`:  The GPIO number for the 433 MHz RF module that receives wireless temperature/humidity data, if any. Delete (or do not define) this entry if you don’t have the RF module connected, or the necessary wireless sensors.
 
@@ -138,6 +159,7 @@ For reference, here’s a break down of the steps performed by a full installati
 
 1. Node.js is installed if not present, or updated if earlier than version 12.
 1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time because of one npm package in particular &mdash; node-sass &mdash; which can take ten minutes or more to install and build.
+1. A check for GPS configuration is performed.
 1. If running in interactive mode (`‑i`), the user is queried about various configuration and installation options.
 1. If the `weatherService` service is running, it’s stopped.
 1. `apt-get update` and `apt-get upgrade` are executed, unless defeated with the `‑‑skip‑upgrade` option.
