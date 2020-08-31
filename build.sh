@@ -16,10 +16,10 @@ fi
 
 echo "Checking installation pre-requisites..."
 
-if [ ! `which node` ]; then
+if [ ! "$(command -v node)" ]; then
   version=0
 else
-  version=`node --version`
+  version=$(node --version)
   pattern='v?([0-9]+)'
   [[ $version =~ $pattern ]]
   version="${BASH_REMATCH[1]}"
@@ -45,4 +45,5 @@ if [ ! -f ".first-time-install" ]; then
 fi
 
 echo "Starting main installer..."
+# shellcheck disable=SC2048,SC2086 # this should become separate items with spaces in between, not one quoted thing
 npm run build -- --bash $*

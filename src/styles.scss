@@ -91,6 +91,7 @@ label {
 }
 
 #settings-btn {
+  margin: 0 8px 0 4px;
   position: relative;
   top: -8px;
 }
@@ -99,6 +100,10 @@ label {
   position: fixed;
   right: 0;
   bottom: -6px;
+
+  > span {
+    display: none;
+  }
 }
 
 @media only screen and (max-height: 600px), only screen and (max-device-height: 600px) {
@@ -149,7 +154,8 @@ label {
   user-select: none;
 }
 
-.clock-temps {
+.hour-temps,
+.hour-pops {
   font-size: 1.6px;
   text-anchor: middle;
   fill: white;
@@ -158,6 +164,36 @@ label {
   & .temp-by-hour {
     fill: #AAA;
   }
+}
+
+.small-percent {
+  font-size: 0.667em;
+  padding-bottom: 0.2em;
+}
+
+.hour-icon {
+  &.vertical {
+    opacity: 1;
+  }
+
+  &.circular {
+    opacity: 0.7;
+  }
+}
+
+.hour-info-show {
+  opacity: 1;
+  transition: opacity 1s;
+
+  &.circular {
+    opacity: 0.7;
+    transition: opacity 1s;
+  }
+}
+
+.hour-info-hide, {
+  opacity: 0;
+  transition: opacity 1s;
 }
 
 #face {
@@ -172,7 +208,7 @@ label {
   stroke: #66F;
 }
 
-#hourly-forecast-divider {
+#hourly-forecast-start, #hourly-forecast-end {
   stroke-width: 0;
   fill: #69C;
   opacity: 0.6;
@@ -797,8 +833,8 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   user-select: none;
   width: 60vw;
 
-  background-image: linear-gradient(0deg, #bbbbbb 16.67%, rgba(0, 0, 0, 0) 16.67%, rgba(0, 0, 0, 0) 50%, #bbbbbb 50%,
-    #bbbbbb 66.67%, rgba(0, 0, 0, 0) 66.67%, rgba(0, 0, 0, 0) 100%);
+  background-image: linear-gradient(0deg, #BBB 16.67%, rgba(0, 0, 0, 0) 16.67%, rgba(0, 0, 0, 0) 50%, #BBB 50%,
+    #BBB 66.67%, rgba(0, 0, 0, 0) 66.67%, rgba(0, 0, 0, 0) 100%);
   background-size: 6.00px 6.00px;
 
   > span {
@@ -926,7 +962,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
     --bottom-hr-margin: calc(0.6em - 1px);
 
     .dialog-fader {
-      background-image: linear-gradient(to bottom, rgba(255,0,0,0), var(--fade-to, black));
+      background-image: linear-gradient(to bottom, rgba(255, 0, 0, 0), var(--fade-to, black));
       bottom: 0;
       height: 1.2em;
       left: 0;
@@ -936,7 +972,8 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 
     hr {
       border-width: 1px;
-      margin: var(--top-hr-margin) 0.5em var(--bottom-hr-margin) 0.5em;
+      // sass-lint apparently isn't smart enough to realize the two vars are different.
+      margin: var(--top-hr-margin) 0.5em var(--bottom-hr-margin); // sass-lint:disable-line shorthand-values
       padding: 0;
     }
   }
@@ -972,4 +1009,25 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 .sun-moon-hide {
   transition: opacity 1s;
   opacity: 0;
+}
+
+.extra {
+  fill: white;
+  paint-order: stroke;
+  stroke: black;
+  stroke-width: 0.75;
+}
+
+.flash {
+  animation: flash 0.3s;
+}
+
+@keyframes flash {
+  50% {
+    background: #6C6;
+  }
+
+  100% {
+    background: transparent;
+  }
 }

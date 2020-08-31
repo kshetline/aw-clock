@@ -281,7 +281,7 @@ function stepDone(): void {
 }
 
 async function isInstalled(command: string): Promise<boolean> {
-  return !!(await monitorProcess(spawn('which', [command]), null, ErrorMode.ANY_ERROR)).trim();
+  return !!(await monitorProcess(spawn('command', ['-v', command], { shell: true }), null, ErrorMode.ANY_ERROR))?.trim();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -480,19 +480,34 @@ function ntpValidate(s: string): boolean {
   return false;
 }
 
+const NO_MORE_DARK_SKY = (Date.now() > Date.parse('2021-11-30'));
+
+if (NO_MORE_DARK_SKY && process.env.AWC_PREFERRED_WS === 'darksky')
+  process.env.AWC_PREFERRED_WS = 'wunderground';
+
 function wsValidate(s: string): boolean | string {
-  if (/^w/i.test(s))
+  if (/^w[-b]*$/i.test(s))
     return 'wunderground';
-  else if (/^d/i.test(s))
+  else if (/b/i.test(s))
+    return 'weatherbit';
+  else if (!NO_MORE_DARK_SKY && /^d/i.test(s))
     return 'darksky';
 
-  console.log(chalk.redBright('Weather service must be either (w)underground or (d)arksky'));
+  if (NO_MORE_DARK_SKY)
+    console.log(chalk.redBright('Weather service must be either (w)underground, weather(b)it, or (d)arksky'));
+  else
+    console.log(chalk.redBright('Weather service must be either (w)underground, or weather(b)it'));
+
   return false;
 }
 
 function wsAfter(s: string): void {
-  if (/^w/i.test(s)) {
-    console.log(chalk.paleBlue('    Weather Underground chosen, but Dark Sky can be used'));
+  if (/^w[-b]*$/i.test(s)) {
+    console.log(chalk.paleBlue(`    Weather Underground chosen, but Weatherbit.io${NO_MORE_DARK_SKY ? '' : 'or Dark Sky'} can be used`));
+    console.log(chalk.paleBlue('    as fallback weather services.'));
+  }
+  else if (/b/i.test(s)) {
+    console.log(chalk.paleBlue('    Weatherbit.io chosen, but Weather Underground will be used'));
     console.log(chalk.paleBlue('    as a fallback weather service.'));
   }
   else if (/^d/i.test(s)) {
@@ -563,19 +578,31 @@ const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 
 const questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
-  { name: 'AWC_PORT', prompt: 'HTTP server port', ask: true, validate: portValidate },
+  { name: 'AWC_PORT', prompt: 'HTTP server port.', ask: true, validate: portValidate },
   { prompt: 'Allow user to reboot, shutdown, update, etc.?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
   {
     name: 'AWC_GOOGLE_API_KEY',
-    prompt: 'Google Geocoding API key (optional, for city names from GPS coordinates)' +
+    prompt: 'Optional Google geocoding API key (for city names from\n      GPS coordinates).' +
       (settings.AWC_GOOGLE_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
-  { name: 'AWC_PREFERRED_WS', prompt: 'preferred weather service, (w)underground or (d)arksky)', ask: true, validate: wsValidate, after: wsAfter },
+  { // #5
+    name: 'AWC_PREFERRED_WS',
+    prompt: 'preferred weather service, (w)underground, weather(b)it,\n      or (d)arksky).',
+    ask: true,
+    validate: wsValidate,
+    after: wsAfter
+  },
   {
+    name: 'AWC_WEATHERBIT_API_KEY',
+    prompt: 'Optional Weatherbit.io (via RapidAPI) key, for\n      weather and geocoding.' +
+      (settings.AWC_WEATHERBIT_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
+    ask: true
+  },
+  { // #7
     name: 'AWC_DARK_SKY_API_KEY',
-    prompt: 'Dark Sky API key (uses "wunderground" if left blank)' +
+    prompt: 'Optional Dark Sky weather API key.' +
       (settings.AWC_DARK_SKY_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
@@ -585,6 +612,11 @@ const questions = [
   { name: 'AWC_WIRELESS_TH_GPIO', prompt: 'GPIO pin number for wireless temp/humidity sensors', ask: () => doAcu, validate: pinValidate },
   { prompt: `When finished, (l)aunch A/W clock, (r)eboot, or (n)o action ${finalOptions}?`, ask: true, deflt: finalAction, validate: finalActionValidate }
 ];
+
+if (NO_MORE_DARK_SKY) {
+  questions[5].prompt = 'preferred weather service, (w)underground, or weather(b)it';
+  questions.splice(7, 1);
+}
 
 async function promptForConfiguration(): Promise<void> {
   console.log(chalk.cyan('- Configuration -'));

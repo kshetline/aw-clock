@@ -48,6 +48,7 @@
       2,
       {
         "ArrayExpression": "first",
+        "FunctionDeclaration": { "parameters": "off" },
         "ignoredNodes": [
           "IfStatement > :expression *",
           "WhileStatement > :expression *"

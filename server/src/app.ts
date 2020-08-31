@@ -2,11 +2,10 @@
 import { router as adminRouter } from './admin-router';
 import { requestJson } from 'by-request';
 import { execSync } from 'child_process';
-import { jsonOrJsonp } from './common';
 import compareVersions from 'compare-versions';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
-import express, { Router } from 'express';
+import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
@@ -18,10 +17,9 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, noCache, normalizePort } from './util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort } from './util';
 import { Gps } from './gps';
-import { AWC_VERSION, GpsData } from './shared-types';
-import { sleep } from './process-util';
+import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -46,6 +44,13 @@ try {
 catch (err) {
   console.log('Failed check for environment file.');
 }
+
+let wbProxyForecast: (req: Request) => Promise<ForecastData | Error>;
+
+try {
+  wbProxyForecast = require('./aw-clock-private/weatherbit-proxy').getForecast;
+}
+catch {}
 
 // Convert deprecated environment variables
 if (!process.env.AWC_WIRED_TH_GPIO &&
@@ -248,6 +253,17 @@ function getApp() {
   if (allowAdmin)
     theApp.use('/admin', adminRouter);
 
+  if (wbProxyForecast) {
+    theApp.get('/wbproxy', async (req, res) => {
+      const response = await wbProxyForecast(req);
+
+      if (response instanceof Error)
+        res.status(response.message.startsWith('Maximum API calls') ? 400 : 500).send(response.message);
+      else
+        jsonOrJsonp(req, res, response);
+    });
+  }
+
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
 
@@ -277,9 +293,9 @@ function getApp() {
     if (gps) {
       let gpsInfo = gps.getGpsData();
 
-      // Wait a little longer if necessary to see if a name for the current location is found.
-      if (!gpsInfo.city && process.env.AWC_GOOGLE_API_KEY) {
-        await sleep(2000);
+      // Force a location update if city name not available yet.
+      if (!gpsInfo.city) {
+        await gps.checkLocation();
         gpsInfo = gps.getGpsData();
       }
 

@@ -35,13 +35,16 @@
                 text-anchor="middle">---</text>
               <image id="dayN-icon" href="assets/unknown.svg" x="0" y="3" width="12" height="12"/>
               <text id="dayN-low-high" x="6" y="17.5" class="small-caption" text-anchor="middle">--°/--°</text>
-              <text id="dayN-chance-precip" x="6" y="20.5" class="small-caption" text-anchor="middle">--%</text>
+              <text id="dayN-chance-precip" x="6" y="20.5" class="small-caption" text-anchor="middle">--<tspan
+                class="small-percent" dy="-0.2em">%</tspan></text>
               <text id="dayN-precip-accum" x="6" y="23.5" class="small-caption" text-anchor="middle">--</text>
               <text id="dayN-sunrise" x="6" y="28" class="small-caption sun-info" text-anchor="middle">--:--</text>
               <text id="dayN-moonrise" x="6" y="28" class="small-caption moon-info" text-anchor="middle">--:--</text>
               <text id="dayN-sunset" x="6" y="31" class="small-caption sun-info" text-anchor="middle">--:--</text>
               <text id="dayN-moonset" x="6" y="31" class="small-caption moon-info" text-anchor="middle">--:--</text>
               <image id="dayN-moon" href="assets/empty.svg" x="1" y="32" width="10" height="10"/>
+              <text id="dayN-sun-extra" x="6" y="34" class="small-caption sun-info extra" text-anchor="middle"></text>
+              <text id="dayN-moon-extra" x="6" y="34" class="small-caption moon-info extra" text-anchor="middle"></text>
               <text id="dayN-phase-time" x="6" y="44.75" class="small-caption" text-anchor="middle"></text>
               <text id="dayN-equisolstice" x="6" y="47.25" class="small-caption equisolstice"
                 text-anchor="middle"></text>
@@ -83,7 +86,8 @@
         </g>
         <g id="hands">
           <polygon id="hour-hand" points="47.25,52.5 48.5,27 50,24.5 51.5,27 52.75,52.5"/>
-          <rect id="hourly-forecast-divider" x="49.75" y="11" width="0.5" height="9"/>
+          <polygon id="hourly-forecast-start" points="50,10 51.5,12 50,14 50,10"/>
+          <polygon id="hourly-forecast-end" points="50,20 48.5,22 50,24 50,20"/>
           <polygon id="min-hand" points="48.5,52.5 49,15 50,13 51,15 51.5,52.5"/>
           <line id="sec-hand" x1="50" y1="50" x2="50" y2="12">
             <animateTransform id="sweep"
@@ -191,8 +195,8 @@
 
         <text id="temperature-detail" x="136" y="21.5" text-anchor="start"></text>
         <text x="136" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
-        <text x="144.5" y="27" class="small-caption" text-anchor="start"><tspan id="humidity">--%</tspan><tspan
-          id="indoor-humidity" dy="-1"></tspan></text>
+        <text x="144.5" y="27" class="small-caption" text-anchor="start"><tspan id="humidity">--<tspan
+          class="small-percent" dy="-0.2em">%</tspan></tspan><tspan id="indoor-humidity" dy="-1"></tspan></text>
 
         <image id="current-icon" href="assets/unknown.svg" x="123.5" y="30" width="25" height="25"/>
 
@@ -258,19 +262,22 @@
       <img src="assets/dark-sky-logo.png" width="125" height="50" alt="Powered by Dark Sky"></a></span><span
         id="wunderground-logo"><a href="https://wunderground.com/" target="_blank">
       <!--suppress CheckImageSize -->
-      <img src="assets/wunderground-logo.png" width="190" height="50" alt="Powered by Dark Sky"></a></span></div>
+      <img src="assets/wunderground-logo.png" width="190" height="50" alt="wunderground.com"></a></span><span
+        id="weatherbit-logo"><a href="https://weatherbit.io/" target="_blank">
+      <!--suppress CheckImageSize -->
+      <img src="assets/weatherbit-logo.png" width="190" height="50" alt="weatherbit.io"></a></span></div>
     <div id="dimmer"></div>
     <div id="settings-dialog" class="dialog-wrapper">
       <div>
         <div class="user-options">
-          <label for="current-city">Current city:</label><input id="current-city" type="text" size="38">
+          <label for="current-city">Current city:</label><input id="current-city" type="text" size="38" class="gps-flash">
             <span style="white-space: nowrap;">
               <input type="checkbox" id="onscreen-kb" name="onscreen-kb">
               <label for="onscreen-kb">Onscreen keyboard</label>
             </span>
-          <label for="latitude">Latitude:</label><input id="latitude" type="text" size="38"><span>(negative
+          <label for="latitude">Latitude:</label><input id="latitude" type="text" size="38" class="gps-flash"><span>(negative
             for south)</span>
-          <label for="longitude">Longitude:</label><input id="longitude" type="text" size="38"><span>(negative
+          <label for="longitude">Longitude:</label><input id="longitude" type="text" size="38" class="gps-flash"><span>(negative
             for west)</span>
           <label for="indoor-option" class="indoor-outdoor-options">Indoor temp.:</label>
           <select id="indoor-option" class="indoor-outdoor-options">

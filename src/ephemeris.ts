@@ -46,6 +46,7 @@ export class Ephemeris {
   private risenTracks: JQuery;
   private rises: JQuery[][] = [];
   private sets: JQuery[][] = [];
+  private extras: JQuery[][] = [];
   private moons: JQuery[] = [];
   private phaseTimes: JQuery[] = [];
   private esTimes: JQuery[] = [];
@@ -72,12 +73,16 @@ export class Ephemeris {
     this.rises[MOON] = [];
     this.sets[SUN] = [];
     this.sets[MOON] = [];
+    this.extras[SUN] = [];
+    this.extras[MOON] = [];
 
     for (let i = 0; i < 7; ++i) {
       this.rises[SUN][i] = $('#day' + i + '-sunrise');
       this.rises[MOON][i] = $('#day' + i + '-moonrise');
       this.sets[SUN][i] = $('#day' + i + '-sunset');
       this.sets[MOON][i] = $('#day' + i + '-moonset');
+      this.extras[SUN][i] = $('#day' + i + '-sun-extra');
+      this.extras[MOON][i] = $('#day' + i + '-moon-extra');
       this.moons[i] = $('#day' + i + '-moon');
       this.phaseTimes[i] = $('#day' + i + '-phase-time');
       this.esTimes[i] = $('#day' + i + '-equisolstice');
@@ -117,55 +122,65 @@ export class Ephemeris {
     const observer = new SkyObserver(longitude, latitude);
 
     planets.forEach((planet, index) => {
-      const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
-      const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
-      const elem = this.planetElems[index];
-      let targetAltitude = -REFRACTION_AT_HORIZON;
+      eventFinder.getRiseAndSetEvents(planet, wallTime.y, wallTime.m, wallTime.d - 1, 3, observer, timezone).then(daysOfEvents => {
+        const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
+        const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
+        const elem = this.planetElems[index];
+        let targetAltitude = -REFRACTION_AT_HORIZON;
 
-      if (planet === SUN || planet === MOON)
-        targetAltitude -= AVG_SUN_MOON_RADIUS;
+        if (planet === SUN || planet === MOON)
+          targetAltitude -= AVG_SUN_MOON_RADIUS;
 
-      const risen = (altitude >= targetAltitude);
-      const risenTrack = $('#risen-' + planetIds[index]);
-      let rise: AstroEvent;
-      let set: AstroEvent;
+        const risen = (altitude >= targetAltitude);
+        const beforeType = risen ? RISE_EVENT : SET_EVENT;
+        const afterType = risen ? SET_EVENT : RISE_EVENT;
+        let beforeEvent: AstroEvent = null;
+        let afterEvent: AstroEvent = null;
+        const risenTrack = $('#risen-' + planetIds[index]);
 
-      rotate(elem, -eclipticLongitude);
-      elem.css('stroke-width', risen ? '0' : '0.25');
-      elem[0].setAttribute('r', altitude < targetAltitude ? '0.625' : '0.75');
+        rotate(elem, -eclipticLongitude);
+        elem.css('stroke-width', risen ? '0' : '0.25');
+        elem[0].setAttribute('r', altitude < targetAltitude ? '0.625' : '0.75');
 
-      if (risen) {
-        rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU + 2 / 1400, observer, timezone, null, true);
+        daysOfEvents.forEach(events => {
+          events.forEach(event => {
+            if (event.eventType === beforeType && event.ut < time_JDU && (!beforeEvent || event.ut > beforeEvent.ut))
+              beforeEvent = event;
 
-        if (rise)
-          set = eventFinder.findEvent(planet, SET_EVENT, rise.ut, observer, timezone);
-      }
-      else {
-        set = eventFinder.findEvent(planet, SET_EVENT, time_JDU + 2 / 1400, observer, timezone, null, true);
+            if (event.eventType === afterType && beforeEvent && event.ut > time_JDU && (!afterEvent || event.ut < afterEvent.ut))
+              afterEvent = event;
+          });
+        });
 
-        if (set)
-          rise = eventFinder.findEvent(planet, RISE_EVENT, set.ut, observer, timezone);
-      }
-
-      if (rise && rise.ut > time_JDU - 1.1 && set && set.ut < time_JDU + 1.1) {
-        const currentAngle = mod(-eclipticLongitude, 360);
+        const rise = risen ? beforeEvent : afterEvent;
+        const set = risen ? afterEvent : beforeEvent;
         const radius = 10 + index * 2;
-        let riseAngle = currentAngle + (time_JDU - rise.ut) * 360;
-        let setAngle = currentAngle + (time_JDU - set.ut) * 360;
 
-        while (setAngle + 360 < riseAngle)
-          setAngle += 360;
+        if (rise && rise.ut > time_JDU - 1.1 && set && set.ut < time_JDU + 1.1) {
+          const currentAngle = mod(-eclipticLongitude, 360);
+          let riseAngle = currentAngle + (time_JDU - rise.ut) * 360;
+          let setAngle = currentAngle + (time_JDU - set.ut) * 360;
 
-        while (riseAngle < setAngle)
-          riseAngle += 360;
+          while (setAngle + 360 < riseAngle)
+            setAngle += 360;
 
-        const arc = describeArc(50, 50, radius, setAngle, riseAngle);
+          while (riseAngle < setAngle)
+            riseAngle += 360;
 
-        risenTrack[0].setAttribute('d', arc);
-        risenTrack.css('visibility', 'inherited');
-      }
-      else
-        risenTrack.css('visibility', 'hidden');
+          const arc = describeArc(50, 50, radius, setAngle, riseAngle);
+
+          risenTrack[0].setAttribute('d', arc);
+          risenTrack.css('visibility', 'visible');
+        }
+        else if (risen) {
+          // In the sky all day
+          risenTrack[0].setAttribute('d', describeArc(50, 50, radius, 0, 359.99));
+          risenTrack.css('visibility', 'visible');
+        }
+        else
+          // Below the horizon all day
+          risenTrack.css('visibility', 'hidden');
+      });
     });
 
     [SUN, MOON].forEach(body => {
@@ -174,11 +189,17 @@ export class Ephemeris {
         let todaySet: string = null;
 
         daysOfEvents.forEach((events, dayOffset) => {
-          let rise = '--:--';
-          let set = '--:--';
+          let rise = '';
+          let set = '';
+          let extra = '';
 
           events.forEach(event => {
-            if (event.eventType === RISE_EVENT) {
+            // Very rarely, sometimes when an hour gets added to a day when daylight saving time ends, or
+            // occasional odd timing at extreme latitudes, there can be two rise events or two set events
+            // in the same day. A third display position is available for such extra events.
+            if (rise && set && (event.eventType === RISE_EVENT || event.eventType === SET_EVENT))
+              extra = formatTime(event.eventTime, amPm) + (event.eventType === RISE_EVENT ? '⬆︎' : '⬇︎');
+            else if (event.eventType === RISE_EVENT) {
               rise = formatTime(event.eventTime, amPm);
 
               if (dayOffset === 0)
@@ -192,8 +213,9 @@ export class Ephemeris {
             }
           });
 
-          this.rises[body][dayOffset].text(rise);
-          this.sets[body][dayOffset].text(set);
+          this.rises[body][dayOffset].text(rise || '--:--');
+          this.sets[body][dayOffset].text(set || '--:--');
+          this.extras[body][dayOffset].text(extra);
         });
 
         if (body === SUN)

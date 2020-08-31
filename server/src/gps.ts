@@ -5,10 +5,11 @@ import { abs, floor, max, round } from 'ks-math';
 import { asLines, processMillis } from 'ks-util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
-import { GpsData, TimeInfo } from './shared-types';
+import { ForecastData, GpsData, TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
 import { roughDistanceBetweenLocationsInKm } from './util';
+import { getForecast } from './weatherbit-forecast';
 
 const BILLION = BigInt('1000000000');
 const THOUSAND = BigInt('1000');
@@ -31,6 +32,7 @@ export class Gps extends TimePoller {
   private leapSecond = 0;
   private namedGpsData: GpsData;
   private systemTimeIsGps = false;
+  private weatherbitKey: string;
 
   constructor(private taiUtc : TaiUtc) {
     super();
@@ -86,6 +88,7 @@ export class Gps extends TimePoller {
   private monitorGps(): void {
     this.gpspipe = spawn('gpspipe', ['-w']);
     this.googleKey = process.env.AWC_GOOGLE_API_KEY;
+    this.weatherbitKey = process.env.AWC_WEATHERBIT_API_KEY;
 
     this.gpspipe.stdout.on('data', data => {
       this.lastGpsInfo = processMillis();
@@ -210,7 +213,7 @@ export class Gps extends TimePoller {
     }, CLOCK_CHECK);
   }
 
-  private async checkLocation(): Promise<void> {
+  async checkLocation(): Promise<void> {
     if (this.checkingLocation)
       return;
 
@@ -221,8 +224,8 @@ export class Gps extends TimePoller {
 
     // If there are old coordinates wait for at least a tenth of a kilometer change in
     // position before looking up name and timezone for new location.
-    if ((this.namedGpsData == null && now >= this.checkLocationRetry) || roughDistanceBetweenLocationsInKm(
-        this.namedGpsData.latitude, this.namedGpsData.longitude, coords.latitude, coords.longitude) >= 0.1) {
+    if (!this.namedGpsData || now >= this.checkLocationRetry || (this.namedGpsData && roughDistanceBetweenLocationsInKm(
+        this.namedGpsData.latitude, this.namedGpsData.longitude, coords.latitude, coords.longitude) >= 0.1)) {
       delete this.gpsData.city;
       delete this.gpsData.timezone;
 
@@ -234,55 +237,82 @@ export class Gps extends TimePoller {
         altitude: coords.altitude
       };
 
-      if (this.googleKey && !this.googleAccessDenied) {
-        try {
-          const url = `https://maps.googleapis.com/maps/api/geocode/json?key=${this.googleKey}` +
-            `&result_type=locality|administrative_area_level_3&latlng=${coords.latitude},${coords.longitude}`;
-          const data = await requestJson(url);
+      if (this.googleKey && !this.googleAccessDenied)
+        await this.googleLocationCheck(coords, now);
 
-          if (data?.status === 'OK' && data.results?.length > 0)
-            coords.city = data.results[0].formatted_address;
-          else if (data?.errorMessage) {
-            console.error(data.errorMessage);
-
-            if (data.status === 'REQUEST_DENIED')
-              this.googleAccessDenied = true;
-            else if (data.status === 'OVER_DAILY_LIMIT')
-              this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
-            else
-              this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-          }
-        }
-        catch (err) {
-          this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-          console.error(err);
-        }
-
-        try {
-          const url = `https://maps.googleapis.com/maps/api/timezone/json?key=${this.googleKey}` +
-            `&location=${coords.latitude},${coords.longitude}&timestamp=${floor(Date.now() / 1000)}`;
-          const data = await requestJson(url);
-
-          if (data?.status === 'OK' && data.timeZoneId)
-            coords.timezone = data.timeZoneId;
-          else if (data?.errorMessage) {
-            console.error(data.errorMessage);
-
-            if (data.status === 'REQUEST_DENIED')
-              this.googleAccessDenied = true;
-            else if (data.status === 'OVER_DAILY_LIMIT')
-              this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
-            else
-              this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-          }
-        }
-        catch (err) {
-          this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-          console.error(err);
-        }
-      }
+      if (!this.googleKey || this.googleAccessDenied || !coords.city)
+        await this.weatherbitLocationCheck(coords, now);
     }
 
     this.checkingLocation = false;
+  }
+
+  private async googleLocationCheck(coords: GpsData, now: number): Promise<void> {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?key=${this.googleKey}` +
+        `&result_type=locality|administrative_area_level_3&latlng=${coords.latitude},${coords.longitude}`;
+      const data = await requestJson(url);
+
+      if (data?.status === 'OK' && data.results?.length > 0)
+        coords.city = data.results[0].formatted_address;
+      else if (data?.errorMessage) {
+        console.error(data.errorMessage);
+
+        if (data.status === 'REQUEST_DENIED')
+          this.googleAccessDenied = true;
+        else if (data.status === 'OVER_DAILY_LIMIT')
+          this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
+        else
+          this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+      }
+    }
+    catch (err) {
+      this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+      console.error(err);
+    }
+
+    try {
+      const url = `https://maps.googleapis.com/maps/api/timezone/json?key=${this.googleKey}` +
+        `&location=${coords.latitude},${coords.longitude}&timestamp=${floor(Date.now() / 1000)}`;
+      const data = await requestJson(url);
+
+      if (data?.status === 'OK' && data.timeZoneId)
+        coords.timezone = data.timeZoneId;
+      else if (data?.errorMessage) {
+        console.error(data.errorMessage);
+
+        if (data.status === 'REQUEST_DENIED')
+          this.googleAccessDenied = true;
+        else if (data.status === 'OVER_DAILY_LIMIT')
+          this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
+        else
+          this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+      }
+    }
+    catch (err) {
+      this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+      console.error(err);
+    }
+  }
+
+  private async weatherbitLocationCheck(coords: GpsData, now: number): Promise<void> {
+    let forecast: ForecastData | Error;
+    const lat = coords.latitude.toString();
+    const lon = coords.longitude.toString();
+
+    try {
+      if (this.weatherbitKey)
+        forecast = await getForecast({ query: { lat, lon, co: 'true' } } as any);
+      else
+        forecast = await requestJson(`https://weather.shetline.com/wbproxy?lat=${lat}&lon=${lon}&co=true`);
+    }
+    catch {
+      this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+    }
+
+    if (forecast && !(forecast instanceof Error)) {
+      coords.city = forecast.city;
+      coords.timezone = forecast.timezone;
+    }
   }
 }

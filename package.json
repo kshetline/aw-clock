@@ -1,11 +1,11 @@
 {
   "name": "aw-clock",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "first-install": "npm i && cd server && npm i && cd ..",
-    "preinstall": "npx npm-force-resolutions",
+    "preinstall": "npm install --package-lock-only --ignore-scripts --no-audit && npx npm-force-resolutions",
     "start": "webpack-dev-server --port=4200 --host 0.0.0.0",
     "start-server": "cd server && npm start",
     "start-server-win": "cd server && npm run start-win",
@@ -23,14 +23,14 @@
     "ks-astronomy": "^1.1.0",
     "ks-date-time-zone": "^1.6.8",
     "ks-math": "^1.2.1",
-    "ks-util": "^2.1.0",
+    "ks-util": "^2.2.0",
     "rxjs": "^6.6.2",
-    "simple-keyboard": "^2.29.100"
+    "simple-keyboard": "^2.29.104"
   },
   "devDependencies": {
     "@types/copyfiles": "^2.2.0",
     "@types/follow-redirects": "^1.13.0",
-    "@types/jasmine": "^3.5.12",
+    "@types/jasmine": "^3.5.13",
     "@types/jasminewd2": "^2.0.8",
     "@types/jquery": "^3.5.1",
     "@types/js-cookie": "^2.2.6",
@@ -42,9 +42,9 @@
     "circular-dependency-plugin": "^5.2.0",
     "copy-webpack-plugin": "~6.0.3",
     "copyfiles": "^2.3.0",
-    "eslint": "^6.8.0",
+    "eslint": "^7.7.0",
     "eslint-config-standard": "^14.1.1",
-    "eslint-plugin-chai-friendly": "^0.5.0",
+    "eslint-plugin-chai-friendly": "^0.6.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jasmine": "^4.1.1",
     "eslint-plugin-node": "^11.1.0",

@@ -1,4 +1,4 @@
-import { requestJson, requestText } from 'by-request';
+import { requestJson, requestText } from './request-cache';
 import { Request, Router } from 'express';
 import { Alert, ForecastData } from './shared-types';
 
@@ -43,7 +43,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
 
 async function getContent(req: Request): Promise<any> {
   let result: any = null;
-  const content = await requestText(`https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`, {
+  const content = await requestText(240, `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`, {
     followRedirects: true,
     headers: {
       'Accept-Language': 'en-US,en;q=0.5',
@@ -82,14 +82,14 @@ function decodeWeirdJson(s: string): string {
 async function adjustUnits(forecast: any, item: any, category: string, celsius: boolean): Promise<void> {
   if (/&units=e&/.test(item.url)) {
     if (celsius)
-      forecast[category] = await requestJson(item.url.replace('&units=e&', '&units=m&'));
+      forecast[category] = await requestJson(240, item.url.replace('&units=e&', '&units=m&'));
     else
       forecast[category] = item.value;
   }
   else if (celsius)
     forecast[category] = item.value;
   else
-    forecast[category] = await requestJson(item.url.replace('&units=m&', '&units=e&'));
+    forecast[category] = await requestJson(240, item.url.replace('&units=m&', '&units=e&'));
 }
 
 function getIcon(iconCode: number): string {
@@ -114,7 +114,9 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
 
   const wc = wuForecast.currently;
   const wh = wuForecast.hourly;
+  const location = wuForecast.location;
 
+  forecast.city = location && `${location.city}, ${location.adminDistrictCode}, ${location.countryCode}`;
   convertCurrent(forecast, wc, wh);
   convertHourly(forecast, wh);
   convertDaily(forecast, wc, wuForecast.daily);
@@ -152,6 +154,7 @@ function convertHourly(forecast: ForecastData, wh: any): void {
     forecast.hourly.push({
       icon: getIcon(wh.iconCode[i]),
       temperature: wh.temperature[i],
+      precipProbability: wh.precipChance[i] / 100,
       precipType,
       time: wh.validTimeUtc[i]
     });
@@ -181,8 +184,8 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
 
     daily.push({
       icon: getIcon(wddp?.iconCode[i * 2] ?? wddp?.iconCode[i * 2 + 1] ?? -1),
-      narrativeDay: wddp?.narrative[i],
-      narrativeEvening: wddp?.narrative[i + 1],
+      narrativeDay: wddp?.narrative[i * 2],
+      narrativeEvening: wddp?.narrative[i * 2 + 1],
       precipAccumulation,
       precipIntensityMax: 0,
       precipProbability: Math.max(wddp?.precipChance[i * 2] ?? 0, wddp?.precipChance[i * 2 + 1] ?? 0) / 100,

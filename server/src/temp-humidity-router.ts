@@ -1,8 +1,7 @@
 import { Request, Response, Router } from 'express';
-import { jsonOrJsonp } from './common';
 import { processMillis } from 'ks-util';
 import request from 'request';
-import { noCache } from './util';
+import { jsonOrJsonp, noCache } from './util';
 import { TempHumidityItem, TempHumidityData } from './shared-types';
 
 export const router = Router();

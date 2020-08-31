@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { acos, cos_deg, PI, sin_deg } from 'ks-math';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 
@@ -6,6 +6,13 @@ export function noCache(res: Response): void {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   res.header('Expires', '-1');
   res.header('Pragma', 'no-cache');
+}
+
+export function jsonOrJsonp(req: Request, res: Response, data: any): void {
+  if (req.query.callback)
+    res.jsonp(data);
+  else
+    res.json(data);
 }
 
 export function average(values: number[]): number {
@@ -20,6 +27,22 @@ export function stdDev(values: number[]): number {
   });
 
   return Math.sqrt(average(squaredDiffs));
+}
+
+export function fToC(f: number): number {
+  return (f - 32) / 1.8;
+}
+
+export function cToF(c: number): number {
+  return c * 1.8 + 32;
+}
+
+export function inchesToCm(i: number): number {
+  return i * 2.54;
+}
+
+export function cmToInches(cm: number): number {
+  return cm / 2.54;
 }
 
 /**
@@ -45,7 +68,7 @@ export function splitIpAndPort(ipWithPossiblePort: string, defaultPort?: number)
   if (!ipWithPossiblePort)
     return [undefined, defaultPort];
 
-  let $ = /^\[(.+)\]:(\d+)$/.exec(ipWithPossiblePort); // IPv6 with port
+  let $ = /^\[(.+)]:(\d+)$/.exec(ipWithPossiblePort); // IPv6 with port
 
   if ($)
     return [$[1], Number($[2])];
@@ -76,4 +99,8 @@ async function hasCommand(command: string): Promise<boolean> {
 
 export async function hasGps(): Promise<boolean> {
   return await hasCommand('gpspipe') || await hasCommand('ntpq');
+}
+
+export function getRemoteAddress(req: Request): string {
+  return (req.headers['x-real-ip'] as string) || req.connection.remoteAddress;
 }

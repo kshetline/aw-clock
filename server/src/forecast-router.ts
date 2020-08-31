@@ -1,8 +1,9 @@
-import { jsonOrJsonp } from './common';
-import { getForecast as getDsForecast } from './darksky-forecast';
+import { requestJson } from 'by-request';
+import { getForecast as getDsForecast, THE_END_OF_DAYS } from './darksky-forecast';
 import { Request, Response, Router } from 'express';
-import { noCache } from './util';
+import { jsonOrJsonp, noCache } from './util';
 import { ForecastData } from './shared-types';
+import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
 
 export const router = Router();
@@ -10,23 +11,50 @@ export const router = Router();
 router.get('/', async (req: Request, res: Response) => {
   const frequent = (process.env.AWC_FREQUENT_ID && req.query.id === process.env.AWC_FREQUENT_ID);
   const promises: Promise<ForecastData | Error>[] = [];
+  let darkSkyIndex = 1;
+  let weatherBitIndex = 1;
 
   promises.push(getWuForecast(req));
 
-  if (process.env.AWC_DARK_SKY_API_KEY)
+  if (process.env.AWC_WEATHERBIT_API_KEY) {
+    promises.push(getWbForecast(req));
+    ++darkSkyIndex;
+  }
+  else
+    weatherBitIndex = 0;
+
+  if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS)
     promises.push(getDsForecast(req));
+  else
+    darkSkyIndex = 0;
 
   const forecasts = await Promise.all(promises);
-  const forecast = forecasts[Math.min(forecasts.length - 1,
-    process.env.AWC_PREFERRED_WS === 'darksky' || forecasts[0] instanceof Error ? 1 : 0)];
+  let forecast = forecasts[
+    ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
+  const darkSkyForecast = !(forecasts[darkSkyIndex] instanceof Error) && forecasts[darkSkyIndex] as ForecastData;
 
-  if (forecast instanceof Error)
+  for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecast instanceof Error); ++replaceIndex)
+    forecast = forecasts[replaceIndex];
+
+  if (forecast instanceof Error && !process.env.AWC_WEATHERBIT_API_KEY) {
+    const url = `http://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
+      (req.query.id ? `id=${req.query.id}` : '');
+
+    try {
+      forecast = (await requestJson(url)) as ForecastData;
+    }
+    catch (e) {
+      forecast = e;
+    }
+  }
+
+  if (forecast instanceof Error) {
     res.status(500).send(forecast.message);
+  }
   else {
     // Even if Weather Underground is preferred, if Dark Sky is available, use its better summary.
-    if (forecast === forecasts[0] && forecasts.length > 1 && !(forecasts[1] instanceof Error) &&
-        forecasts[1].daily.summary)
-      forecast.daily.summary = forecasts[1].daily.summary;
+    if (forecast === forecasts[0] && forecasts.length > 1 && darkSkyForecast?.daily?.summary)
+      forecast.daily.summary = darkSkyForecast.daily.summary;
 
     noCache(res);
     res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));

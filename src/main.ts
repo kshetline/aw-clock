@@ -27,7 +27,7 @@ import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
-import { setFullScreen } from 'ks-util';
+import { isEffectivelyFullScreen, setFullScreen } from 'ks-util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
@@ -133,6 +133,21 @@ class AwClockApp implements AppService {
     });
 
     $('#settings-btn').on('click', () => this.settingsDialog.openSettings(this.settings));
+
+    $('.weather-logo a').on('click', function (evt) {
+      let href: string;
+
+      if (isEffectivelyFullScreen() && window.innerWidth === window.screen.availWidth && (href = $(this).attr('href'))) {
+        const TITLE_AND_ADDRESS_HEIGHT = 58;
+        const width = window.screen.width * 0.9;
+        const height = window.screen.height * 0.9 - TITLE_AND_ADDRESS_HEIGHT;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height - TITLE_AND_ADDRESS_HEIGHT) / 2;
+
+        evt.preventDefault();
+        window.open(href, '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=yes,titlebar=yes`);
+      }
+    });
   }
 
   getAmPm(): boolean {

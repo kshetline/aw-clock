@@ -203,7 +203,7 @@ export class SettingsDialog {
               dataType: 'text',
               url: this.appService.getApiServer() + `/admin/${command}`,
               error: (jqXHR: JQueryXHR) => {
-                domAlert(jqXHR.responseText);
+                this.alert(jqXHR.responseText);
               }
             });
           }
@@ -245,7 +245,7 @@ export class SettingsDialog {
     const query = $.trim(this.searchCity.val() as string);
 
     if (query.length === 0)
-      domAlert('Please enter a city or partial city name.');
+      this.alert('Please enter a city or partial city name.');
     else {
       (this.searchCity as any).enable(false);
       (this.submitSearch as any).enable(false);
@@ -311,7 +311,7 @@ export class SettingsDialog {
         (this.submitSearch as any).enable(true);
         (this.searchCity as any).enable(true);
         this.searching.css('visibility', 'hidden');
-        domAlert(reason || 'Unable to access geographic database.');
+        this.alert(reason || 'Unable to access geographic database.');
       });
     }
   }
@@ -468,17 +468,15 @@ export class SettingsDialog {
     newSettings.background = this.background.val() as string;
     newSettings.clockFace = this.clockFace.val() as string;
 
-    if (!newSettings.city) {
-      domAlert('Current city must be specified.');
-      this.currentCity.trigger('focus');
-    }
+    if (!newSettings.city)
+      this.alert('Current city must be specified.', () => this.currentCity.trigger('focus'));
     else if (isNaN(newSettings.latitude) || newSettings.latitude < -90 || newSettings.latitude > 90) {
-      domAlert('A valid latitude must be provided from -90 to 90 degrees.');
-      this.latitude.trigger('focus');
+      this.alert('A valid latitude must be provided from -90 to 90 degrees.', () =>
+        this.latitude.trigger('focus'));
     }
     else if (isNaN(newSettings.longitude) || newSettings.longitude < -180 || newSettings.longitude > 180) {
-      domAlert('A valid longitude must be provided from -180 to 180 degrees.');
-      this.longitude.trigger('focus');
+      this.alert('A valid longitude must be provided from -180 to 180 degrees.', () =>
+        this.longitude.trigger('focus'));
     }
     else {
       popKeydownListener();
@@ -496,6 +494,11 @@ export class SettingsDialog {
     else
       this.doOK();
   };
+
+  private alert(message: string, callback?: () => void): void {
+    this.keyboard.hide();
+    domAlert(message, callback);
+  }
 
   private callSearchApi(query: string): Promise<SearchResults> {
     // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations
@@ -537,7 +540,7 @@ export class SettingsDialog {
         this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
         this.latestVersion = data.latestVersion;
 
-        if (data?.latitude != null) {
+        if (data?.latitude != null && data?.longitude != null) {
           this.defaultLocation = data;
           (this.getGps as any).enable(true);
         }
@@ -553,6 +556,11 @@ export class SettingsDialog {
       this.currentCity.val(adjustCityName(this.defaultLocation.city));
       this.latitude.val(this.defaultLocation.latitude.toString());
       this.longitude.val(this.defaultLocation.longitude.toString());
+
+      const gpsFlash = $('.gps-flash');
+
+      gpsFlash.addClass('flash');
+      setTimeout(() => gpsFlash.removeClass('flash'), 500);
     }
   }
 

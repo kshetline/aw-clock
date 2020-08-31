@@ -4,7 +4,7 @@
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType'];
 
-export const AWC_VERSION = '2.4.0';
+export const AWC_VERSION = '2.5.0';
 
 export interface CommonConditions {
   time: number;
@@ -14,7 +14,7 @@ export interface CommonConditions {
   cloudCover: number;
   precipIntensity?: number
   precipIntensityMax?: number;
-  precipProbability: number;
+  precipProbability?: number;
   precipType?: string;
 }
 
@@ -26,9 +26,11 @@ export interface CurrentConditions extends CommonConditions {
 }
 
 export interface HourlyConditions {
+  cloudCover?: number;
   icon: string;
   temperature: number;
   precipType: string;
+  precipProbability: number;
   time: number;
 }
 
@@ -68,6 +70,7 @@ export interface ForecastData {
   latitude?: number;
   longitude?: number;
   timezone?: string;
+  city?: string;
   currently?: CurrentConditions;
   hourly?: HourlyConditions[];
   daily?: DailySummaryConditions;
