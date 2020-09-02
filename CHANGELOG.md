@@ -1,3 +1,7 @@
+## 2.5.1
+
+* Improve wording of the README section about the planetary display.
+
 ## 2.5.0
 
 * Add support for Weatherbit.io forecasts.

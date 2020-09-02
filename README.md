@@ -96,9 +96,9 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 ### How the planet display works
 
-The circular tracks in the center of the clock face display the ecliptic longitude of the Sun, the Moon, Mercury, Venus, Mars, Jupiter, and Saturn (in that order from the innermost track outward), starting with 0° (the First Point of Aries) at three o’clock, and increasing *counterclockwise* from there. Over time the planets will slowly move around the display, mostly moving counterclockwise, but occasionally clockwise when retrograde.
+The circular tracks around the center of the clock face display the ecliptic longitude of the Sun, the Moon, Mercury, Venus, Mars, Jupiter, and Saturn (in that order from the innermost track outward), starting with 0° (the First Point of Aries) at three o’clock, and increasing *counterclockwise* from there. Over time the planets will slowly move around the clock face, mostly moving counterclockwise, but occasionally clockwise when retrograde.
 
-When the symbol for a planet is drawn larger, and is on one of the green arcs along the tracks that indicates the planet is above the local horizon. The clockwise end of each green track represents when the planet rises, and the counter-clockwise end represents when the planet sets.
+When the symbol for a planet is drawn larger, and it appears on top of one of the green arcs along the planet tracks, this indicates the planet is above the local horizon. Otherwise, it is below the horizon. The clockwise end of each green track represents when the planet rises, and the counter-clockwise end represents when the planet sets.
 
 If a green arc becomes a full circle, that means the corresponding planet on that track is above the horizon all day. If there is no arc at all, the planet is below the horizon all day. (These two situations only occur at extreme northern or southern latitudes.)
 <br>
