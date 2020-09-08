@@ -24,6 +24,7 @@ import $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
 import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
+import { TimeFormat } from './settings';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
 import { setSignalLevel } from './util';
 
@@ -86,7 +87,7 @@ export class Clock {
   private upcomingLeapSecond: CurrentDelta;
   private dut1PositionAdjustmentNeeded = true;
 
-  private _amPm = false;
+  private _timeFormat = TimeFormat.UTC;
   private _hideSeconds = false;
 
   public timezone = KsTimeZone.OS_ZONE;
@@ -133,10 +134,10 @@ export class Clock {
     this.lastMinute = -1;
   }
 
-  get amPm(): boolean { return this._amPm; }
-  set amPm(value: boolean) {
-    if (this._amPm !== value) {
-      this._amPm = value;
+  get timeFormat(): TimeFormat { return this._timeFormat; }
+  set timeFormat(value: TimeFormat) {
+    if (this._timeFormat !== value) {
+      this._timeFormat = value;
       this.adjustTimeFontSize();
     }
   }
@@ -263,7 +264,7 @@ export class Clock {
   }
 
   private adjustTimeFontSize(): void {
-    this.timeCaption.style['font-size'] = (this._amPm && !this._hideSeconds ? '8.5' : '10');
+    this.timeCaption.style['font-size'] = (this._timeFormat && !this._hideSeconds ? '8.5' : '10');
     this.dut1PositionAdjustmentNeeded = true;
   }
 
@@ -414,13 +415,14 @@ export class Clock {
       this.zoneCaption.textContent = this.timezone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
 
       let displayHour = hour;
+      let displayMins = mins;
       let suffix = '';
       let secsText = padLeft(secs, 2, '0');
 
       if (!this._hideSeconds && minuteOfLeapSecond && ((timeInfo.leapSecond > 0 && secs === 60) || (timeInfo.leapSecond < 0 && secs === 58)))
         secsText = '<tspan style="fill: #F55">' + secsText + '</tspan>';
 
-      if (this.amPm) {
+      if (this.timeFormat === TimeFormat.AMPM) {
         if (displayHour === 0)
           displayHour = 12;
         else if (displayHour > 12)
@@ -429,10 +431,14 @@ export class Clock {
         suffix = '<tspan style="font-size: 0.5em" dy="-1.4">\u2009' +
           (hour < 12 ? 'AM' : 'PM') + '</tspan>';
       }
+      else if (this.timeFormat === TimeFormat.UTC) {
+        displayHour = wallTimeUtc.hrs;
+        displayMins = wallTimeUtc.min;
+      }
 
       this.timeCaption.innerHTML =
         padLeft(displayHour, 2, '0') + ':' +
-        padLeft(mins, 2, '0') + (this._hideSeconds ? '' : ':' + secsText) + suffix;
+        padLeft(displayMins, 2, '0') + (this._hideSeconds ? '' : ':' + secsText) + suffix;
 
       if (this.dut1PositionAdjustmentNeeded) {
         this.dut1PositionAdjustmentNeeded = false;

@@ -1,3 +1,8 @@
+## 2.6.0
+
+* Add UTC option for digital time display while analog clock shows local time.
+* Improve forecast caching mechanism and fallback mechanism for failed forecast data.
+
 ## 2.5.0
 
 * Add support for Weatherbit.io forecasts.

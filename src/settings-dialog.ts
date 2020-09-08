@@ -22,7 +22,7 @@ import { HourlyForecast } from './forecast';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import { isIE, isIOS, isSafari } from 'ks-util';
-import { apiServer, localServer, raspbianChromium, Settings, updateTest } from './settings';
+import { apiServer, localServer, raspbianChromium, Settings, TimeFormat, toTimeFormat, updateTest } from './settings';
 import { AWC_VERSION } from '../server/src/shared-types';
 import { adjustCityName, domAlert, domConfirm, htmlEncode, popKeydownListener, pushKeydownListener } from './util';
 
@@ -87,7 +87,7 @@ export class SettingsDialog {
   private dimming: JQuery;
   private dimmingTo: JQuery;
   private temperature: JQuery;
-  private hours: JQuery;
+  private format: JQuery;
   private seconds: JQuery;
   private planets: JQuery;
   private hourlyForecast: JQuery;
@@ -136,7 +136,7 @@ export class SettingsDialog {
     this.dimmingTo = $('#dimming-to');
     this.dimmingEnd = $('#dimming-end');
     this.temperature = $('#temperature-option');
-    this.hours = $('#hours-option');
+    this.format = $('#format-option');
     this.seconds = $('#seconds-option');
     this.planets = $('#planets-option');
     this.hourlyForecast = $('#hourly-forecast-option');
@@ -171,8 +171,8 @@ export class SettingsDialog {
       this.enableDimmingRange(this.dimming.val() !== '0');
     });
 
-    this.hours.on('change', () => {
-      const amPm = this.hours.val() === 'AMPM';
+    this.format.on('change', () => {
+      const amPm = this.format.val() === 'AMPM';
 
       SettingsDialog.fillInTimeChoices(this.dimmingStart, amPm);
       SettingsDialog.fillInTimeChoices(this.dimmingEnd, amPm);
@@ -381,7 +381,7 @@ export class SettingsDialog {
     this.outdoor.val(previousSettings.outdoorOption);
     this.userId.val(previousSettings.userId);
     this.temperature.val(previousSettings.celsius ? 'C' : 'F');
-    this.hours.val(previousSettings.amPm ? 'AMPM' : '24');
+    this.format.val(['24', 'AMPM', 'UTC'][previousSettings.timeFormat] ?? '24');
     this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
     this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
     this.hourlyForecast.val(previousSettings.hourlyForecast);
@@ -406,8 +406,8 @@ export class SettingsDialog {
       (emphasizeUpdate ? this.updateButton : (previousSettings.onscreenKB ? this.okButton : this.searchCity)).trigger('focus'),
     500);
 
-    SettingsDialog.fillInTimeChoices(this.dimmingStart, previousSettings.amPm);
-    SettingsDialog.fillInTimeChoices(this.dimmingEnd, previousSettings.amPm);
+    SettingsDialog.fillInTimeChoices(this.dimmingStart, previousSettings.timeFormat === TimeFormat.AMPM);
+    SettingsDialog.fillInTimeChoices(this.dimmingEnd, previousSettings.timeFormat === TimeFormat.AMPM);
     this.enableDimmingRange(!!previousSettings.dimming);
     this.dimming.val(previousSettings.dimming.toString());
     this.dimmingStart.val(previousSettings.dimmingStart);
@@ -460,7 +460,7 @@ export class SettingsDialog {
     newSettings.dimmingStart = this.dimmingStart.val() as string;
     newSettings.dimmingEnd = this.dimmingEnd.val() as string;
     newSettings.celsius = (this.temperature.val() as string) === 'C';
-    newSettings.amPm = (this.hours.val() as string) === 'AMPM';
+    newSettings.timeFormat = toTimeFormat(this.format.val() as string);
     newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
     newSettings.hidePlanets = (this.planets.val() as string) === 'H';
     newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;

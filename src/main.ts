@@ -29,10 +29,10 @@ import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { isEffectivelyFullScreen, setFullScreen } from 'ks-util';
 import { Sensors } from './sensors';
-import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
+import { apiServer, localServer, raspbianChromium, runningDev, Settings, TimeFormat } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
-import { updateSvgFlowItems, reflow } from './svg-flow';
+import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, getJson } from './util';
 
 initTimeZoneSmall();
@@ -88,7 +88,7 @@ class AwClockApp implements AppService {
     AwClockApp.removeDefShadowRoots();
 
     this.clock = new Clock(this);
-    this.clock.amPm = this.settings.amPm;
+    this.clock.timeFormat = this.settings.timeFormat;
     this.clock.hideSeconds = this.settings.hideSeconds;
     this.lastTimezone = this.clock.timezone;
 
@@ -150,8 +150,8 @@ class AwClockApp implements AppService {
     });
   }
 
-  getAmPm(): boolean {
-    return this.settings.amPm;
+  getTimeFormat(): TimeFormat {
+    return this.settings.timeFormat;
   }
 
   getCurrentTime(bias = 0): number {
@@ -229,7 +229,8 @@ class AwClockApp implements AppService {
     if (performance.now() > this.lastCursorMove + 120000)
       this.body.css('cursor', 'none');
 
-    this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone, this.settings.amPm);
+    this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone,
+      this.settings.timeFormat === TimeFormat.AMPM);
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
@@ -349,7 +350,7 @@ class AwClockApp implements AppService {
 
     this.cityLabel.text(newSettings.city);
     this.forecast.hourlyForecast = newSettings.hourlyForecast;
-    this.clock.amPm = newSettings.amPm;
+    this.clock.timeFormat = newSettings.timeFormat;
     this.clock.hideSeconds = newSettings.hideSeconds;
     this.ephemeris.hidePlanets = newSettings.hidePlanets;
 
@@ -387,7 +388,8 @@ class AwClockApp implements AppService {
   }
 
   private updateEphemeris(): void {
-    this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone, this.settings.amPm);
+    this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone,
+      this.settings.timeFormat === TimeFormat.AMPM);
   }
 
   updateSunriseAndSunset(rise: string, set: string): void {

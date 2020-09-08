@@ -35,6 +35,16 @@ export const apiServer = new URL(window.location.href).searchParams.get('weather
   (runningDev ? `http://${apiHost}:${apiPort}` : '');
 export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;
 
+export enum TimeFormat { HR24, AMPM, UTC }
+
+export function toTimeFormat(s: string, deflt = TimeFormat.UTC): TimeFormat {
+  s = s.toLowerCase();
+
+  return s.startsWith('a') || s === 'true' ? TimeFormat.AMPM :
+    (s.startsWith('u') ? TimeFormat.UTC :
+      (s.includes('2') || s === 'false' ? TimeFormat.HR24 : deflt));
+}
+
 export class Settings {
   latitude = 40.75;
   longitude = -73.99;
@@ -46,7 +56,7 @@ export class Settings {
   dimmingStart = '23:00';
   dimmingEnd = '7:00';
   celsius = false;
-  amPm = /[a-z]/i.test(new Date().toLocaleTimeString());
+  timeFormat = /[a-z]/i.test(new Date().toLocaleTimeString()) ? TimeFormat.AMPM : TimeFormat.UTC;
   hideSeconds = false;
   hidePlanets = false;
   hourlyForecast = HourlyForecast.VERTICAL;
@@ -69,7 +79,7 @@ export class Settings {
     this.dimmingStart = Cookies.get('dimming_start') || defaultSettings.dimmingStart;
     this.dimmingEnd = Cookies.get('dimming_end') || defaultSettings.dimmingEnd;
     this.celsius = toBoolean(Cookies.get('celsius'), false);
-    this.amPm = toBoolean(Cookies.get('ampm'), defaultSettings.amPm);
+    this.timeFormat = toTimeFormat(Cookies.get('ampm'), defaultSettings.timeFormat);
     this.hideSeconds = toBoolean(Cookies.get('hides'), false);
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
     this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) ||
@@ -97,7 +107,7 @@ export class Settings {
     Cookies.set('dimming_start', this.dimmingStart, expiration);
     Cookies.set('dimming_end', this.dimmingEnd, expiration);
     Cookies.set('celsius', this.celsius.toString(), expiration);
-    Cookies.set('ampm', this.amPm.toString(), expiration);
+    Cookies.set('ampm', ['24', 'ampm', 'utc'][this.timeFormat] ?? '24', expiration);
     Cookies.set('hides', this.hideSeconds.toString(), expiration);
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);
     Cookies.set('hourly_forecast', this.hourlyForecast, expiration);

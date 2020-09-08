@@ -1,10 +1,10 @@
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import { Settings } from './settings';
+import { Settings, TimeFormat } from './settings';
 import { TimeInfo } from '../server/src/shared-types';
 
 export interface AppService {
   forecastHasBeenUpdated(): void;
-  getAmPm(): boolean;
+  getTimeFormat(): TimeFormat;
   getCurrentTime(bias?: number): number;
   getIndoorOption(): string;
   getOutdoorOption(): string;
