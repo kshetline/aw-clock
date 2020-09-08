@@ -1,4 +1,4 @@
-import { requestJson } from './request-cache';
+import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
 import {
   Alert, AlertKeys,
@@ -9,6 +9,7 @@ import {
   ForecastData,
   ForecastDataKeys, HourlyConditions
 } from './shared-types';
+import { checkForecastIntegrity } from './util';
 
 // The time (with a month of padding) when the Dark Sky API will be shut down, presuming "end of 2021"
 // actually means all the way until 2021-12-31.
@@ -42,8 +43,14 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
 
   try {
     const origForecast = (await requestJson(240, url)) as DarkSkyForecast;
+    const forecast = convertForecast(origForecast, isMetric);
 
-    return convertForecast(origForecast, isMetric);
+    if (checkForecastIntegrity(forecast))
+      return forecast;
+
+    purgeCache(url);
+
+    return new Error('Error retrieving Dark Sky data');
   }
   catch (err) {
     return new Error('Error connecting to Dark Sky: ' + err);
