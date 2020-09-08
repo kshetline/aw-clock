@@ -1,7 +1,7 @@
 ## 2.6.0
 
-* Add UTC option for digital time display while analog clock shows local time.
-* Improve forecast caching mechanism and fallback mechanism for failed forecast data.
+* Add option where digital time display shows UTC while analog clock shows local time.
+* Improve forecast caching and forecast fallback to better handle failed forecast data.
 
 ## 2.5.1
 
