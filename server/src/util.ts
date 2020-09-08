@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { acos, cos_deg, PI, sin_deg } from 'ks-math';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
+import { ForecastData } from './shared-types';
 
 export function noCache(res: Response): void {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -103,4 +104,17 @@ export async function hasGps(): Promise<boolean> {
 
 export function getRemoteAddress(req: Request): string {
   return (req.headers['x-real-ip'] as string) || req.connection.remoteAddress;
+}
+
+export function checkForecastIntegrity(forecast: ForecastData, currentOnly = false): boolean {
+  return forecast && forecast.currently && typeof forecast.currently.temperature === 'number' &&
+    (currentOnly || (
+      forecast.hourly && forecast.hourly.length > 23 && typeof forecast.hourly[0].temperature === 'number' &&
+      forecast.daily && forecast.daily.data && forecast.daily.data.length > 3 && typeof forecast.daily.data[0].time === 'number'));
+}
+
+const charsNeedingRegexEscape = /[-[\]/{}()*+?.\\^$|]/g;
+
+export function escapeForRegex(s: string): string {
+  return s.replace(charsNeedingRegexEscape, '\\$&');
 }

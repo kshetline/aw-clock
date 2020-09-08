@@ -10,6 +10,17 @@ interface CachedJson {
 const cache = new Map<string, CachedJson>();
 const pendingRequests = new Map<string, Promise<any>>();
 
+export function purgeCache(urlMatcher: string | RegExp): void {
+  Array.from(cache.keys()).forEach(key => {
+    if (urlMatcher instanceof RegExp) {
+      if (urlMatcher.test(key))
+        cache.delete(key);
+    }
+    else if (key.includes(urlMatcher))
+      cache.delete(key);
+  });
+}
+
 export function requestJson(maxAgeInSeconds: number,
     urlOrOptions: string | ExtendedRequestOptions, options?: ExtendedRequestOptions): Promise<any> {
   return requestContent(maxAgeInSeconds, true, undefined, urlOrOptions, options);

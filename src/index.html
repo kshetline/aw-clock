@@ -111,6 +111,7 @@
         </g>
         <circle id="subhub" cx="50" cy="50" r="1.5"/>
         <circle id="hub" cx="50" cy="50" r="1.5"/>
+        <text id="utc-date" x="50" y="99" text-anchor="middle"></text>
         <text id="time" x="50" y="105" text-anchor="middle">--:--:--</text>
         <text id="dut1-label" x="73.6" y="102.5" text-anchor="start">&nbsp;ΔUT1:&nbsp;</text>
         <!-- <image id="gps-icon" href="assets/gps.svg" x="23" y="100" width="2.5" height="2.5"/> -->
@@ -333,9 +334,10 @@
               <option value="F">°F</option>
               <option value="C">°C</option>
             </select>
-            <select id="hours-option">
+            <select id="format-option">
               <option value="24">24-hour time</option>
               <option value="AMPM">AM/PM time</option>
+              <option value="UTC">24-hour UTC</option>
             </select>
             <select id="seconds-option">
               <option value="S">Show seconds</option>

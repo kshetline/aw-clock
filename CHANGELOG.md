@@ -1,3 +1,8 @@
+## 2.6.0
+
+* Add option where digital time display shows UTC while analog clock shows local time.
+* Improve forecast caching and forecast fallback to better handle failed forecast data.
+
 ## 2.5.1
 
 * Improve wording of the README section about the planetary display.

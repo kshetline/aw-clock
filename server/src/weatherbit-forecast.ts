@@ -1,8 +1,8 @@
-import { requestJson } from './request-cache';
+import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
 import { toBoolean, toNumber } from 'ks-util';
 import { Alert, ForecastData } from './shared-types';
-import { fToC, inchesToCm } from './util';
+import { checkForecastIntegrity, escapeForRegex, fToC, inchesToCm } from './util';
 
 interface WeatherBitCurrent {
   data: {
@@ -162,7 +162,17 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
       alerts = (await requestJson(2600, url = baseUrl.replace('*', 'alerts'), options)) as WeatherBitAlerts;
     }
 
-    return convertForecast(currentWeather, hourlyForecast, dailyForecast, alerts, isMetric);
+    const forecast = convertForecast(currentWeather, hourlyForecast, dailyForecast, alerts, isMetric);
+
+    if (checkForecastIntegrity(forecast, currentOnly))
+      return forecast;
+
+    const parts = baseUrl.split('*');
+    const pattern = new RegExp('^' + escapeForRegex(parts[0]) + '.+' + escapeForRegex(parts[1]));
+
+    purgeCache(pattern);
+
+    return new Error('Error retrieving Weatherbit.io data');
   }
   catch (err) {
     return new Error(`Error connecting to Weatherbit.io: ${url}, ${err}`);

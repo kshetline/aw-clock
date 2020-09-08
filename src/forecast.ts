@@ -25,6 +25,7 @@ import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, sin_deg } from 'ks-math';
 import { blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis } from 'ks-util';
 import { ForecastData, HourlyConditions } from '../server/src/shared-types';
+import { TimeFormat } from './settings';
 import { reflow } from './svg-flow';
 import { convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
 
@@ -659,7 +660,7 @@ export class Forecast {
     const startOfHour = new KsDateTime({ y: today.y, m: today.m, d: today.d, hrs: today.hrs, min: 0, sec: 0 }, this.timezone).utcTimeMillis;
     const firstHourIndex = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= startOfHour);
     const vertical = (this.hourlyForecast === HourlyForecast.VERTICAL);
-    const amPm = this.appService.getAmPm();
+    const timeFormat = this.appService.getTimeFormat();
     let previousStartOfHour = startOfHour - 3_600_000;
 
     // noinspection DuplicatedCode,DuplicatedCode
@@ -687,7 +688,7 @@ export class Forecast {
         pop = hourInfo.precipProbability != null ? Math.round(hourInfo.precipProbability * 100) + PCT : '--' + PCT;
 
         if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
-          const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, amPm, true)}</tspan>`;
+          const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, timeFormat === TimeFormat.AMPM, true)}</tspan>`;
 
           if (i < 12) {
             temp += ' ' + hourText;

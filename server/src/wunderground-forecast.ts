@@ -1,12 +1,14 @@
-import { requestJson, requestText } from './request-cache';
+import { purgeCache, requestJson, requestText } from './request-cache';
 import { Request, Router } from 'express';
 import { Alert, ForecastData } from './shared-types';
+import { checkForecastIntegrity } from './util';
 
 export const router = Router();
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   try {
-    const items = await getContent(req);
+    const url = `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`;
+    const items = await getContent(req, url);
 
     if (!items)
       return { source: 'wunderground', unavailable: true };
@@ -34,16 +36,23 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
     if (!intermediateForecast.location)
       return new Error('Error parsing Weather Underground data');
 
-    return convertForecast(intermediateForecast, celsius);
+    const forecast = convertForecast(intermediateForecast, celsius);
+
+    if (checkForecastIntegrity(forecast))
+      return forecast;
+
+    purgeCache(url);
+
+    return new Error('Error retrieving Weather Underground data');
   }
   catch (err) {
     return new Error('Error connecting to Weather Underground: ' + err);
   }
 }
 
-async function getContent(req: Request): Promise<any> {
+async function getContent(req: Request, url: string): Promise<any> {
   let result: any = null;
-  const content = await requestText(240, `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`, {
+  const content = await requestText(240, url, {
     followRedirects: true,
     headers: {
       'Accept-Language': 'en-US,en;q=0.5',

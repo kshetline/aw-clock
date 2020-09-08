@@ -142,7 +142,7 @@ module.exports = {
   },
   output: {
     path: path.join(process.cwd(), 'dist', 'public'),
-    filename: '[name].bundle.js',
+    filename: '[name].[contenthash].bundle.js',
     chunkFilename: '[id].chunk.js',
     crossOriginLoading: false
   },
