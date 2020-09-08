@@ -64,6 +64,7 @@ export class Clock {
   private dateCaption: HTMLElement;
   private monthCaption: HTMLElement;
   private yearCaption: HTMLElement;
+  private utcDate: HTMLElement;
   private timeCaption: HTMLElement;
   private gpsIcon: HTMLElement;
   private dut1Label: HTMLElement;
@@ -107,6 +108,7 @@ export class Clock {
     this.dateCaption = document.getElementById('date');
     this.monthCaption = document.getElementById('month');
     this.yearCaption = document.getElementById('year');
+    this.utcDate = document.getElementById('utc-date');
     this.timeCaption = document.getElementById('time');
     this.gpsIcon = document.getElementById('gps-icon');
     this.gpsMeter = document.getElementById('gps-meter');
@@ -264,7 +266,15 @@ export class Clock {
   }
 
   private adjustTimeFontSize(): void {
-    this.timeCaption.style['font-size'] = (this._timeFormat && !this._hideSeconds ? '8.5' : '10');
+    let fontSize = 10;
+
+    if (this._timeFormat === TimeFormat.AMPM && !this._hideSeconds)
+      fontSize = 8.5;
+    else if (this._timeFormat === TimeFormat.UTC)
+      fontSize = 6.5;
+
+    this.timeCaption.style['font-size'] = fontSize.toString();
+    this.utcDate.style.display = this._timeFormat === TimeFormat.UTC ? 'block' : 'none';
     this.dut1PositionAdjustmentNeeded = true;
   }
 
@@ -418,8 +428,10 @@ export class Clock {
       let displayMins = mins;
       let suffix = '';
       let secsText = padLeft(secs, 2, '0');
+      let utcDate = '';
 
-      if (!this._hideSeconds && minuteOfLeapSecond && ((timeInfo.leapSecond > 0 && secs === 60) || (timeInfo.leapSecond < 0 && secs === 58)))
+      if (!this._hideSeconds && minuteOfLeapSecond &&
+          ((timeInfo.leapSecond > 0 && secs === 60) || (timeInfo.leapSecond < 0 && secs === 58)))
         secsText = '<tspan style="fill: #F55">' + secsText + '</tspan>';
 
       if (this.timeFormat === TimeFormat.AMPM) {
@@ -434,11 +446,18 @@ export class Clock {
       else if (this.timeFormat === TimeFormat.UTC) {
         displayHour = wallTimeUtc.hrs;
         displayMins = wallTimeUtc.min;
+
+        const uDay = daysOfWeek[getDayOfWeek(wallTimeUtc.n)].toUpperCase();
+        const uMonth = padLeft(wallTimeUtc.m, 2, '0');
+        const uDate = padLeft(wallTimeUtc.d, 2, '0');
+
+        utcDate = `<tspan style="fill: #9CF">UTC</tspan> ${uDay} ${wallTimeUtc.y}-${uMonth}-${uDate}`;
       }
 
       this.timeCaption.innerHTML =
         padLeft(displayHour, 2, '0') + ':' +
         padLeft(displayMins, 2, '0') + (this._hideSeconds ? '' : ':' + secsText) + suffix;
+      this.utcDate.innerHTML = utcDate;
 
       if (this.dut1PositionAdjustmentNeeded) {
         this.dut1PositionAdjustmentNeeded = false;
