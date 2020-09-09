@@ -89,7 +89,7 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 ### Touchscreen/mouse features
 
-* Swipe left or right on the daily forecast to the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four days.*
+* Swipe left or right on the daily forecast to view the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four days.*
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
 * Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation. Tap/click again to toggle back to temperatures. *After one minute, the display reverts to hourly temperatures.*
