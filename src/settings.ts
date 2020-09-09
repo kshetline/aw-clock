@@ -38,7 +38,7 @@ export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;
 export enum TimeFormat { HR24, AMPM, UTC }
 
 export function toTimeFormat(s: string, deflt = TimeFormat.UTC): TimeFormat {
-  s = s.toLowerCase();
+  s = (s || '').toLowerCase();
 
   return s.startsWith('a') || s === 'true' ? TimeFormat.AMPM :
     (s.startsWith('u') ? TimeFormat.UTC :
