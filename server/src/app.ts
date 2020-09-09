@@ -66,7 +66,7 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
 }
 
 // Poll for software updates
-const UPDATE_POLL_INTERVAL = 21600000; // 6 hours
+const UPDATE_POLL_INTERVAL = 10800000; // 3 hours
 let updatePollTimer: any;
 let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
 

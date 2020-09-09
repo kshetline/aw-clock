@@ -1,3 +1,7 @@
+## 2.6.1
+
+* Fix a user-settings bug for first-time users.
+
 ## 2.6.0
 
 * Add option where digital time display shows UTC while analog clock shows local time.
