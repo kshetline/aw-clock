@@ -46,13 +46,20 @@
               <text id="dayN-sun-extra" x="6" y="34" class="small-caption sun-info extra" text-anchor="middle"></text>
               <text id="dayN-moon-extra" x="6" y="34" class="small-caption moon-info extra" text-anchor="middle"></text>
               <text id="dayN-phase-time" x="6" y="44.75" class="small-caption" text-anchor="middle"></text>
+
+              <rect id="dayN-clicker" x="0" y="0" width="12" height="25" fill="rgba(0, 0, 0, 0)"/>
+
               <text id="dayN-equisolstice" x="6" y="47.25" class="small-caption equisolstice"
                 text-anchor="middle"></text>
             </svg>
           </g>
 
-          <clipPath id="forecast-clip">
+          <clipPath id="forecast-clip-4">
             <rect x="0" y="0" width="52" height="51"/>
+          </clipPath>
+
+          <clipPath id="forecast-clip-5">
+            <rect x="0" y="0" width="65" height="51"/>
           </clipPath>
         </defs>
 
@@ -137,21 +144,6 @@
         <text id="dtai-label" x="73.6" y="105" text-anchor="start">&nbsp;ΔTAI:&nbsp;</text>
         <text id="dtai" x="81.3" y="105" text-anchor="start">--s</text>
 
-        <text id="city" x="136" y="4" text-anchor="middle"></text>
-        <text id="temperature-text" x="136" y="19" text-anchor="middle">
-          <tspan id="curr-temp-balance-space">&nbsp;</tspan>
-          <tspan id="current-temp">--°</tspan><tspan id="indoor-temp" dy="-2"></tspan>
-        </text>
-        <svg id="outdoor-meter" class="svg-flow" svg-flow="current-temp,dx=-5,dy=-3.5" width="2" height="1.6">
-          <use href="#signal-meter"/>
-        </svg>
-        <svg id="outdoor-meter-2" class="svg-flow" svg-flow="current-temp,dx=-3.8,dy=-3.5" width="2" height="1.6">
-          <use href="#signal-meter"/>
-        </svg>
-        <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-3.5,dy=-2" width="2" height="1.6">
-          <use href="#signal-meter"/>
-        </svg>
-
         <text id="low-battery-text" x="165.5" y="2.75" text-anchor="end"></text>
         <!-- Icon made by fjstudio from www.flaticon.com -->
         <!-- <image id="low-battery" href="assets/low-battery.svg" x="169.5" y="0.5" width="2.5" height="2.5"/> -->
@@ -186,20 +178,37 @@
         </svg>
         <text id="update-caption" x="172" y="5" text-anchor="end">Update available</text>
 
-        <g transform="translate(111.5, 24.25)">
-          <text x="0" y="0" class="small-caption" text-anchor="start">
-            <tspan x="0" y="0">Feels</tspan>
-            <tspan x="0" dy="1.1em">like</tspan>
+        <g id="current-forecast" transform="translate(0)">
+          <text id="city" x="136" y="4" text-anchor="middle"></text>
+          <text id="temperature-text" x="136" y="19" text-anchor="middle">
+            <tspan id="curr-temp-balance-space">&nbsp;</tspan>
+            <tspan id="current-temp">--°</tspan><tspan id="indoor-temp" dy="-2"></tspan>
           </text>
+          <svg id="outdoor-meter" class="svg-flow" svg-flow="current-temp,dx=-5,dy=-3.5" width="2" height="1.6">
+            <use href="#signal-meter"/>
+          </svg>
+          <svg id="outdoor-meter-2" class="svg-flow" svg-flow="current-temp,dx=-3.8,dy=-3.5" width="2" height="1.6">
+            <use href="#signal-meter"/>
+          </svg>
+          <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-3.5,dy=-2" width="2" height="1.6">
+            <use href="#signal-meter"/>
+          </svg>
+
+          <g transform="translate(111.5, 24.25)">
+            <text x="0" y="0" class="small-caption" text-anchor="start">
+              <tspan x="0" y="0">Feels</tspan>
+              <tspan x="0" dy="1.1em">like</tspan>
+            </text>
+          </g>
+          <text id="feels-like" x="120" y="27" text-anchor="start">--°</text>
+
+          <text id="temperature-detail" x="136" y="21.5" text-anchor="start"></text>
+          <text x="136" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
+          <text x="144.5" y="27" class="small-caption" text-anchor="start"><tspan id="humidity">--<tspan
+            class="small-percent" dy="-0.2em">%</tspan></tspan><tspan id="indoor-humidity" dy="-1"></tspan></text>
+
+          <image id="current-icon" href="assets/unknown.svg" x="123.5" y="30" width="25" height="25"/>
         </g>
-        <text id="feels-like" x="120" y="27" text-anchor="start">--°</text>
-
-        <text id="temperature-detail" x="136" y="21.5" text-anchor="start"></text>
-        <text x="136" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
-        <text x="144.5" y="27" class="small-caption" text-anchor="start"><tspan id="humidity">--<tspan
-          class="small-percent" dy="-0.2em">%</tspan></tspan><tspan id="indoor-humidity" dy="-1"></tspan></text>
-
-        <image id="current-icon" href="assets/unknown.svg" x="123.5" y="30" width="25" height="25"/>
 
         <svg x="105.5" y="63.5">
           <path id="week-backward" d="M 3 0 L 3 6 L 0 3 L 3 0 Z" fill="rgba(153, 170, 187, 0.25)"></path>
@@ -209,8 +218,8 @@
           <path id="week-forward" d="M 0 0 L 3 3 L 0 6 L 0 0 Z" fill="#9AB"></path>
         </svg>
 
-        <rect id="forecast-rect" x="110.5" y="57" width="52" height="51" style="fill: rgba(0, 0, 0, 0)"/>
-        <svg id="forecast-week" x="110.5" y="57" clip-path="url(#forecast-clip)">
+        <rect id="forecast-rect" x="110.5" y="57" width="52" height="51" fill="rgba(0, 0, 0, 0)"/>
+        <svg id="forecast-week" x="110.5" y="57" clip-path="url(#forecast-clip-4)">
           <g>
             <svg id="day0" x="0" y="0" width="12" height="51">
               <use href="#forecast-day"/>
@@ -239,6 +248,8 @@
             <svg id="day6" x="78" y="0" width="12" height="51">
               <use href="#forecast-day"/>
             </svg>
+
+            <rect id="sun-moon-clicker" x="0" y="25.5" width="52" height="20" fill="rgba(0, 0, 0, 0)"/>
 
             <animateTransform id="start-of-week" attributeName="transform" attributeType="XML" type="translate"
               to="0 0" dur="500ms" fill="freeze" begin="indefinite"/>

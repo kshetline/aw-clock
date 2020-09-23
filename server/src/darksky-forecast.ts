@@ -49,10 +49,10 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
       return forecast;
 
     purgeCache(url);
-
     return new Error('Error retrieving Dark Sky data');
   }
   catch (err) {
+    purgeCache(url);
     return new Error('Error connecting to Dark Sky: ' + err);
   }
 }

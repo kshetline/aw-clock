@@ -8,7 +8,9 @@ The clock displays the time and date in both analog and digital form, in 12- or 
 
 When displaying 24-hour time, that time can either be local time or UTC.
 
-*&#42;A touchscreen or mouse is required to display the last three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, or to switch from hourly temperatures to hourly probability-of-precipitation.*
+On a display which is narrower than a 16-by-9 aspect ratio, four forecast days can be seen at one time without scrolling. On 16-by-9 or wider displays, five days are visible at a glance.
+
+*&#42;A touchscreen or mouse is required to display the last two or three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, or to switch from hourly temperatures to hourly probability-of-precipitation.*
 
 ![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_screenshot.png)
 <br/><br/>
@@ -89,7 +91,7 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 ### Touchscreen/mouse features
 
-* Swipe left or right on the daily forecast to view the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four days.*
+* Swipe left or right on the daily forecast to view the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four (or five) days.*
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
 * Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation. Tap/click again to toggle back to temperatures. *After one minute, the display reverts to hourly temperatures.*

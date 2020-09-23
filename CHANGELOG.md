@@ -1,3 +1,10 @@
+## 2.7.0
+
+* On a 16x9 or wider display, five days of forecast, instead of just four days, will be displayed without the need to scroll sideways.
+* Fixed sometimes-off tap/click detection for forecast days and the sun/moon rise/set toggle.
+* Fix possible "snap-back" when scrolling forecast/alert dialog text.
+* Added a 3D design file to project for a custom monitor stand with mounting for Raspberry Pi and other project hardware.
+
 ## 2.6.1
 
 * Fix a user-settings bug for first-time users.

@@ -143,6 +143,8 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   };
   const options = { headers };
   let url = '';
+  const parts = baseUrl.split('*');
+  const pattern = new RegExp('^' + escapeForRegex(parts[0]) + '.+' + escapeForRegex(parts[1]));
 
   try {
     // noinspection JSUnusedAssignment
@@ -167,14 +169,11 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
     if (checkForecastIntegrity(forecast, currentOnly))
       return forecast;
 
-    const parts = baseUrl.split('*');
-    const pattern = new RegExp('^' + escapeForRegex(parts[0]) + '.+' + escapeForRegex(parts[1]));
-
     purgeCache(pattern);
-
     return new Error('Error retrieving Weatherbit.io data');
   }
   catch (err) {
+    purgeCache(pattern);
     return new Error(`Error connecting to Weatherbit.io: ${url}, ${err}`);
   }
 }

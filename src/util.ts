@@ -332,17 +332,22 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     let scrollY: number;
     let gotTouch = false;
 
-    const mouseDown = (y: number) => {
+    const mouseDown = (target: HTMLElement, offsetX: number, y: number) => {
+      // Ignore clicks inside the scrollbar (if present)
+      if (offsetX > target.clientWidth)
+        return;
+
       dragging = true;
       lastY = downY = y;
       scrollY = textArea.scrollTop();
     };
-    textArea.on('mousedown', event => mouseDown(event.pageY));
+
+    textArea.on('mousedown', event => mouseDown(event.target, event.offsetX, event.pageY));
     textArea.on('touchstart', event => event.touches[0] &&
-      mouseDown(event.touches[0].pageY));
+      mouseDown(event.target, event.touches[0].pageX - event.target.getBoundingClientRect().left, event.touches[0].pageY));
 
     const mouseMove = (y: number) => {
-      if (!dragging || y === lastY)
+      if (!gotTouch || !dragging || y === lastY)
         return;
 
       const dy = y - downY;
@@ -350,6 +355,7 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
       lastY = y;
       textArea.scrollTop(scrollY - dy);
     };
+
     textArea.on('mousemove', event => mouseMove(event.pageY));
     textArea.on('touchmove', event => {
       if (!gotTouch) {
@@ -360,19 +366,14 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
       mouseMove(event.touches[0]?.pageY ?? lastY);
     });
 
-    const mouseUp = (y: number) => {
-      if (dragging) {
-        const dy = (y ?? downY) - downY;
-
-        textArea.scrollTop(scrollY - dy);
-      }
-
+    const mouseUp = () => {
       dragging = false;
       lastY = downY = undefined;
     };
-    textArea.on('mouseup', event => mouseUp(event.pageY));
-    textArea.on('touchend', event => mouseUp(event.touches[0]?.pageY ?? lastY));
-    textArea.on('touchcancel', () => mouseUp(null));
+
+    textArea.on('mouseup', () => mouseUp());
+    textArea.on('touchend', () => mouseUp());
+    textArea.on('touchcancel', () => mouseUp());
 
     closer.on('click', hide);
     textArea.parent().on('click', event => event.stopPropagation());
