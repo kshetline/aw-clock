@@ -46,6 +46,9 @@
               <text id="dayN-sun-extra" x="6" y="34" class="small-caption sun-info extra" text-anchor="middle"></text>
               <text id="dayN-moon-extra" x="6" y="34" class="small-caption moon-info extra" text-anchor="middle"></text>
               <text id="dayN-phase-time" x="6" y="44.75" class="small-caption" text-anchor="middle"></text>
+
+              <rect id="dayN-clicker" x="0" y="0" width="12" height="25" fill="rgba(0, 0, 0, 0)"/>
+
               <text id="dayN-equisolstice" x="6" y="47.25" class="small-caption equisolstice"
                 text-anchor="middle"></text>
             </svg>
@@ -209,7 +212,7 @@
           <path id="week-forward" d="M 0 0 L 3 3 L 0 6 L 0 0 Z" fill="#9AB"></path>
         </svg>
 
-        <rect id="forecast-rect" x="110.5" y="57" width="52" height="51" style="fill: rgba(0, 0, 0, 0)"/>
+        <rect id="forecast-rect" x="110.5" y="57" width="52" height="51" fill="rgba(0, 0, 0, 0)"/>
         <svg id="forecast-week" x="110.5" y="57" clip-path="url(#forecast-clip)">
           <g>
             <svg id="day0" x="0" y="0" width="12" height="51">
@@ -239,6 +242,8 @@
             <svg id="day6" x="78" y="0" width="12" height="51">
               <use href="#forecast-day"/>
             </svg>
+
+            <rect id="sun-moon-clicker" x="0" y="25.5" width="52" height="20" fill="rgba(0, 0, 0, 0)"/>
 
             <animateTransform id="start-of-week" attributeName="transform" attributeType="XML" type="translate"
               to="0 0" dur="500ms" fill="freeze" begin="indefinite"/>

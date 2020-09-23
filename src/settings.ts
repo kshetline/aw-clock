@@ -17,6 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+import { TimeFormat } from './clock';
 import { HourlyForecast } from './forecast';
 import $ from 'jquery';
 import * as Cookies from 'js-cookie';
@@ -34,8 +35,6 @@ const apiHost = ((document.location.hostname || '').startsWith('192.') ? documen
 export const apiServer = new URL(window.location.href).searchParams.get('weather_server') ||
   (runningDev ? `http://${apiHost}:${apiPort}` : '');
 export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;
-
-export enum TimeFormat { HR24, AMPM, UTC }
 
 export function toTimeFormat(s: string, deflt = TimeFormat.UTC): TimeFormat {
   s = (s || '').toLowerCase();

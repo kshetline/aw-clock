@@ -18,14 +18,15 @@
 */
 
 import { AppService } from './app.service';
-import { CLOCK_CENTER } from './clock';
+import { CLOCK_CENTER, TimeFormat } from './clock';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, sin_deg } from 'ks-math';
-import { blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis } from 'ks-util';
+import {
+  blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis, toNumber
+} from 'ks-util';
 import { ForecastData, HourlyConditions } from '../server/src/shared-types';
-import { TimeFormat } from './settings';
 import { reflow } from './svg-flow';
 import { convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
 
@@ -60,7 +61,6 @@ const HOURLY_RIGHT_COLUMN = 99.5;
 const HOURLY_TEMP_VERT_OFFSET = 3.5;
 const HOURLY_VERT_SPACING = 6.7;
 const FORECAST_UNIT_WIDTH = 39;
-const RISE_SET_TOP = 25.4 / 51;
 const BULLET_SPACER = ' \u2022 ';
 const PCT = '<tspan class="small-percent" dy="-0.2em 0.2em">%\u200B</tspan>';
 const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
@@ -178,10 +178,7 @@ export class Forecast {
 
   private detectGestures(): void {
     const forecastRect = $('#forecast-rect')[0];
-    const leftEdge = forecastRect.getBoundingClientRect().x;
-    const topEdge = forecastRect.getBoundingClientRect().y;
     const width = forecastRect.getBoundingClientRect().width;
-    const height = forecastRect.getBoundingClientRect().height;
 
     const dragStartThreshold = 3;
     const swipeThreshold = width * 0.114; // 80% of the distance across one day
@@ -216,24 +213,23 @@ export class Forecast {
       lastAnimX = -FORECAST_UNIT_WIDTH;
     });
 
-    const mouseClick = event => {
-      if (processMillis() < dragEndTime + 500 || dragAnimating || swipeAnimating)
-        return;
-
-      if ((event.pageY - topEdge) / height >= RISE_SET_TOP)
-        this.appService.toggleSunMoon();
-      else {
-        const dayIndex = Math.floor((event.pageX - leftEdge) * 4 / width) + (this.showingStartOfWeek ? 0 : 3);
-
-        this.showDayForecast(dayIndex);
-      }
-    };
-    $('#forecast-week').on('click', event => mouseClick(event));
-    forecastRect.addEventListener('click', event => mouseClick(event));
-
     $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
+    $('#sun-moon-clicker').on('click', () => this.appService.toggleSunMoon());
     $('.hour-temps, .hour-pops, .hour-icon').on('click', () => this.toggleHourInfo());
+
+    const self = this;
+
+    for (let s = 0; s < 7; ++s) {
+      $(`#day${s}-clicker`).on('click', function () {
+        if (processMillis() < dragEndTime + 500 || dragAnimating || swipeAnimating)
+          return;
+
+        const index = toNumber(this.id.replace(/\D/g, ''));
+
+        self.showDayForecast(index);
+      });
+    }
 
     const mouseDown = (x: number) => {
       dragging = true;

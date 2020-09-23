@@ -18,7 +18,7 @@
 */
 
 import { AppService } from './app.service';
-import { Clock } from './clock';
+import { Clock, TimeFormat } from './clock';
 import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
 import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
@@ -29,7 +29,7 @@ import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { isEffectivelyFullScreen, setFullScreen } from 'ks-util';
 import { Sensors } from './sensors';
-import { apiServer, localServer, raspbianChromium, runningDev, Settings, TimeFormat } from './settings';
+import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';

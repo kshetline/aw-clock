@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -25,7 +25,7 @@
     "ks-math": "^1.2.1",
     "ks-util": "^2.2.0",
     "rxjs": "^6.6.3",
-    "simple-keyboard": "^2.30.6"
+    "simple-keyboard": "^2.30.20"
   },
   "devDependencies": {
     "@types/copyfiles": "^2.2.0",
@@ -34,15 +34,15 @@
     "@types/jasminewd2": "^2.0.8",
     "@types/jquery": "^3.5.1",
     "@types/js-cookie": "^2.2.6",
-    "@types/node": "^13.13.17",
+    "@types/node": "^13.13.21",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^2.34.0",
     "autoprefixer": "^9.8.6",
     "chalk": "^4.1.0",
     "circular-dependency-plugin": "^5.2.0",
-    "copy-webpack-plugin": "^6.0.4",
+    "copy-webpack-plugin": "^6.1.1",
     "copyfiles": "^2.3.0",
-    "eslint": "^7.8.1",
+    "eslint": "^7.9.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-chai-friendly": "^0.6.0",
     "eslint-plugin-import": "^2.22.0",
@@ -52,7 +52,7 @@
     "eslint-plugin-standard": "^4.0.1",
     "extract-text-webpack-plugin": "^3.0.2",
     "file-loader": "^6.1.0",
-    "html-webpack-plugin": "^4.4.1",
+    "html-webpack-plugin": "^4.5.0",
     "istanbul-instrumenter-loader": "^3.0.1",
     "jasmine-core": "~3.5.0",
     "jasmine-spec-reporter": "^5.0.2",
@@ -81,7 +81,7 @@
     "ts-node": "~8.8.2",
     "typescript": "^3.9.7",
     "url-loader": "^4.1.0",
-    "webpack": "^4.44.1",
+    "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0"
   },

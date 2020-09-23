@@ -24,9 +24,10 @@ import $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
 import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
-import { TimeFormat } from './settings';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
 import { setSignalLevel } from './util';
+
+export enum TimeFormat { HR24, AMPM, UTC }
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 

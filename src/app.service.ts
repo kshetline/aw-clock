@@ -1,5 +1,6 @@
+import { TimeFormat } from './clock';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
-import { Settings, TimeFormat } from './settings';
+import { Settings } from './settings';
 import { TimeInfo } from '../server/src/shared-types';
 
 export interface AppService {
