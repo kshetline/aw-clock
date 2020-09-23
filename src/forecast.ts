@@ -46,6 +46,7 @@ const WARNING_BACKGROUND = 'red';
 const WARNING_FOREGROUND = 'white';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const SIXTEEN_BY_NINE = 1.77; // Just a little under for rounding
 const CLOCK_ICON_RADIUS = 38;
 const CLOCK_ICON_INNER_RADIUS = 31;
 const CLOCK_TEMPS_RADIUS = 34.5;
@@ -60,7 +61,7 @@ const HOURLY_LEFT_COLUMN = 0.5;
 const HOURLY_RIGHT_COLUMN = 99.5;
 const HOURLY_TEMP_VERT_OFFSET = 3.5;
 const HOURLY_VERT_SPACING = 6.7;
-const FORECAST_UNIT_WIDTH = 39;
+const FORECAST_DAY_WIDTH = 13;
 const BULLET_SPACER = ' \u2022 ';
 const PCT = '<tspan class="small-percent" dy="-0.2em 0.2em">%\u200B</tspan>';
 const BULLET_REGEX = new RegExp(BULLET_SPACER, 'g');
@@ -131,6 +132,7 @@ export class Forecast {
   private showingStartOfWeek = true;
   private showingHourTemps = true;
   private hourInfoTimer: any;
+  private forecastDaysVisible = 4;
 
   private marqueeText = ' ';
   private marqueeDialogText = '';
@@ -170,10 +172,14 @@ export class Forecast {
     else
       this.weatherServer = '';
 
+    this.checkAspectRatio();
     this.decorateClockFace();
     this.detectGestures();
 
-    window.addEventListener('resize', () => this.updateMarqueeAnimation(null));
+    window.addEventListener('resize', () => {
+      this.checkAspectRatio();
+      this.updateMarqueeAnimation(null);
+    });
   }
 
   private detectGestures(): void {
@@ -181,7 +187,7 @@ export class Forecast {
     const width = forecastRect.getBoundingClientRect().width;
 
     const dragStartThreshold = 3;
-    const swipeThreshold = width * 0.114; // 80% of the distance across one day
+    const swipeThreshold = width * 0.8 / this.forecastDaysVisible; // 80% of the distance across one day
     const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
     const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
     const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
@@ -210,7 +216,7 @@ export class Forecast {
     });
     animateToEnd.addEventListener('endEvent', () => {
       swipeAnimating = false;
-      lastAnimX = -FORECAST_UNIT_WIDTH;
+      lastAnimX = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
     });
 
     $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
@@ -320,8 +326,9 @@ export class Forecast {
           doSwipe(dx);
         }
         else if (minMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
-          const currentShift = this.showingStartOfWeek ? 0 : -FORECAST_UNIT_WIDTH;
-          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, -FORECAST_UNIT_WIDTH), 0);
+          const shift = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
+          const currentShift = this.showingStartOfWeek ? 0 : shift;
+          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, shift), 0);
 
           $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
           $(animateWeekDrag).attr('to', `${dragTo} 0`);
@@ -853,6 +860,25 @@ export class Forecast {
     this.updateMarqueeAnimation(newText);
   }
 
+  private checkAspectRatio(): void {
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    const lastVisible = this.forecastDaysVisible;
+
+    this.forecastDaysVisible = (aspectRatio > SIXTEEN_BY_NINE ? 5 : 4);
+
+    if (this.forecastDaysVisible !== lastVisible) {
+      const extraWidth = (this.forecastDaysVisible - 4) * FORECAST_DAY_WIDTH;
+
+      $('#clock-container').toggleClass('display16x9', this.forecastDaysVisible > 4);
+      $('#clock').attr('viewBox', `0 0 ${172 + extraWidth} 108`);
+      $('#current-forecast').attr('transform', `translate(${extraWidth / 2})`);
+      $('#forecast-clip').attr('width', (this.forecastDaysVisible * FORECAST_DAY_WIDTH).toString());
+      $('#end-of-week').attr('to', `-${(7 - this.forecastDaysVisible) * FORECAST_DAY_WIDTH} 0`);
+      $('#forecast-week').attr('clip-path', `url(#forecast-clip-${this.forecastDaysVisible})`);
+      $('#week-forward').attr('transform', `translate(${extraWidth})`);
+    }
+  }
+
   private updateMarqueeAnimation(newText: string): void {
     if (newText !== null) {
       if (newText === this.marqueeText)
@@ -954,10 +980,6 @@ export class Forecast {
 
     if (this.showingHourTemps) {
       this.showingHourTemps = false;
-      tempElems.removeClass('hour-info-show');
-      tempElems.addClass('hour-info-hide');
-      popElems.removeClass('hour-info-hide');
-      popElems.addClass('hour-info-show');
 
       this.hourInfoTimer = setTimeout(() => {
         this.hourInfoTimer = undefined;
@@ -966,12 +988,12 @@ export class Forecast {
           this.toggleHourInfo();
       }, REVERT_TO_SUN_INFO_DELAY);
     }
-    else {
+    else
       this.showingHourTemps = true;
-      popElems.removeClass('hour-info-show');
-      popElems.addClass('hour-info-hide');
-      tempElems.removeClass('hour-info-hide');
-      tempElems.addClass('hour-info-show');
-    }
+
+    popElems.toggleClass('hour-info-show', !this.showingHourTemps);
+    popElems.toggleClass('hour-info-hide', this.showingHourTemps);
+    tempElems.toggleClass('hour-info-hide', !this.showingHourTemps);
+    tempElems.toggleClass('hour-info-show', this.showingHourTemps);
   }
 }

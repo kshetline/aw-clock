@@ -127,6 +127,10 @@ label {
   vertical-align: middle;
   overflow: visible;
   background: var(--background-color);
+
+  &.display16x9 {
+    width: calc(1.675 * (100vh - 2em));
+  }
 }
 
 .clock-container-ie-fix {

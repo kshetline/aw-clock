@@ -128,15 +128,8 @@ export class CurrentTempManager {
 
     this.outdoorHumidity.text(`${humidity != null ? Math.round(humidity) : DD}%`);
     this.outdoorTemp.text(`\u00A0${temperature != null ? Math.round(temperature) : DD}°`);
-
-    if (this.cth.forecastStale) {
-      this.feelsLike.addClass('stale-forecast');
-      this.headers.addClass('stale-forecast');
-    }
-    else {
-      this.feelsLike.removeClass('stale-forecast');
-      this.headers.removeClass('stale-forecast');
-    }
+    this.feelsLike.toggleClass('stale-forecast', this.cth.forecastStale);
+    this.headers.toggleClass('stale-forecast', this.cth.forecastStale);
 
     this.feelsLike.text(`${this.cth.forecastFeelsLike != null ? Math.round(this.cth.forecastFeelsLike) : DD}°`);
     const details = detail.join(', ');

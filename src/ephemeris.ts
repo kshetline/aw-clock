@@ -247,10 +247,6 @@ export class Ephemeris {
 
     if (this.nowShowing === SUN) {
       this.nowShowing = MOON;
-      this.sunElems.removeClass('sun-moon-show');
-      this.sunElems.addClass('sun-moon-hide');
-      this.moonElems.removeClass('sun-moon-hide');
-      this.moonElems.addClass('sun-moon-show');
 
       this.moonInfoTimer = setTimeout(() => {
         this.moonInfoTimer = undefined;
@@ -259,12 +255,12 @@ export class Ephemeris {
           this.toggleSunMoon();
       }, REVERT_TO_SUN_INFO_DELAY);
     }
-    else {
+    else
       this.nowShowing = SUN;
-      this.moonElems.removeClass('sun-moon-show');
-      this.moonElems.addClass('sun-moon-hide');
-      this.sunElems.removeClass('sun-moon-hide');
-      this.sunElems.addClass('sun-moon-show');
-    }
+
+    this.moonElems.toggleClass('sun-moon-show', this.nowShowing === MOON);
+    this.moonElems.toggleClass('sun-moon-hide', this.nowShowing === SUN);
+    this.sunElems.toggleClass('sun-moon-hide', this.nowShowing === MOON);
+    this.sunElems.toggleClass('sun-moon-show', this.nowShowing === SUN);
   }
 }

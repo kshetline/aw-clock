@@ -180,15 +180,10 @@ export class Sensors {
             setSignalLevel(this.outdoorMeter, signalQs[0]);
             setSignalLevel(this.outdoorMeter2, signalQs[1]);
 
-            if (signalQs[0] < 0 || outdoorOption.length === 1 || selectedChannel === outdoorOption.charAt(0))
-              this.outdoorMeter.removeClass('meter-tint');
-            else
-              this.outdoorMeter.addClass('meter-tint');
-
-            if (signalQs[1] < 0 || outdoorOption.length === 1 || selectedChannel === outdoorOption.charAt(1))
-              this.outdoorMeter2.removeClass('meter-tint');
-            else
-              this.outdoorMeter2.addClass('meter-tint');
+            this.outdoorMeter.toggleClass('meter-tint',
+              signalQs[0] >= 0 && outdoorOption.length !== 1 && selectedChannel !== outdoorOption.charAt(0));
+            this.outdoorMeter2.toggleClass('meter-tint',
+              signalQs[1] >= 0 && outdoorOption.length !== 1 && selectedChannel !== outdoorOption.charAt(1));
           }
         }
 
