@@ -6,8 +6,9 @@ import { checkForecastIntegrity } from './util';
 export const router = Router();
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
+  const url = `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`;
+
   try {
-    const url = `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`;
     const items = await getContent(req, url);
 
     if (!items)
@@ -42,10 +43,10 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
       return forecast;
 
     purgeCache(url);
-
     return new Error('Error retrieving Weather Underground data');
   }
   catch (err) {
+    purgeCache(url);
     return new Error('Error connecting to Weather Underground: ' + err);
   }
 }
