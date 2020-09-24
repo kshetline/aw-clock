@@ -867,12 +867,14 @@ export class Forecast {
     this.forecastDaysVisible = (aspectRatio > SIXTEEN_BY_NINE ? 5 : 4);
 
     if (this.forecastDaysVisible !== lastVisible) {
+      const width = this.forecastDaysVisible * FORECAST_DAY_WIDTH;
       const extraWidth = (this.forecastDaysVisible - 4) * FORECAST_DAY_WIDTH;
 
       $('#clock-container').toggleClass('display16x9', this.forecastDaysVisible > 4);
       $('#clock').attr('viewBox', `0 0 ${172 + extraWidth} 108`);
       $('#current-forecast').attr('transform', `translate(${extraWidth / 2})`);
-      $('#forecast-clip').attr('width', (this.forecastDaysVisible * FORECAST_DAY_WIDTH).toString());
+      $('#forecast-rect').attr('width', width.toString());
+      $('#forecast-clip').attr('width', width.toString());
       $('#end-of-week').attr('to', `-${(7 - this.forecastDaysVisible) * FORECAST_DAY_WIDTH} 0`);
       $('#forecast-week').attr('clip-path', `url(#forecast-clip-${this.forecastDaysVisible})`);
       $('#week-forward').attr('transform', `translate(${extraWidth})`);

@@ -966,12 +966,13 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
     max-height: calc(var(--page-lines, 1) * 3.6vh);
     overflow: auto;
     position: relative;
+    --fade-from: transparent;
     --fade-to: black;
     --top-hr-margin: calc(0.6em - 1px);
     --bottom-hr-margin: calc(0.6em - 1px);
 
     .dialog-fader {
-      background-image: linear-gradient(to bottom, rgba(255, 0, 0, 0), var(--fade-to, black));
+      background-image: linear-gradient(to bottom, var(--fade-from, transparent), var(--fade-to, black));
       bottom: 0;
       height: 1.2em;
       left: 0;

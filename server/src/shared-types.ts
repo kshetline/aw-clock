@@ -4,7 +4,7 @@
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType'];
 
-export const AWC_VERSION = '2.7.0';
+export const AWC_VERSION = '2.7.1';
 
 export interface CommonConditions {
   time: number;
