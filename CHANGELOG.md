@@ -1,58 +1,63 @@
+## 2.7.1
+
+* Fixed Safari transparent gradient problem.
+* Fixed Firefox click detection problem.
+
 ## 2.7.0
 
 * On a 16x9 or wider display, five days of forecast, instead of just four days, will be displayed without the need to scroll sideways.
 * Fixed sometimes-off tap/click detection for forecast days and the sun/moon rise/set toggle.
-* Fix possible "snap-back" when scrolling forecast/alert dialog text.
-* Added a 3D design file to project for a custom monitor stand with mounting for Raspberry Pi and other project hardware.
+* Fixed possible "snap-back" when scrolling forecast/alert dialog text.
+* Added a 3D design file to project for printing a custom monitor stand, with mounting for Raspberry Pi and other project hardware.
 
 ## 2.6.1
 
-* Fix a user-settings bug for first-time users.
+* Fixed a user-settings bug for first-time users.
 
 ## 2.6.0
 
-* Add option where digital time display shows UTC while analog clock shows local time.
-* Improve forecast caching and forecast fallback to better handle failed forecast data.
+* Added option where digital time display shows UTC while analog clock shows local time.
+* Improved forecast caching and forecast fallback to better handle failed forecast data.
 
 ## 2.5.1
 
-* Improve wording of the README section about the planetary display.
+* Improved wording of the README section about the planetary display.
 
 ## 2.5.0
 
-* Add support for Weatherbit.io forecasts.
-* Add hourly probability of precipitation, triggered by tap/click on hourly icons or temperatures.
+* Added support for Weatherbit.io forecasts.
+* Added hourly probability of precipitation, triggered by tap/click on hourly icons or temperatures.
 * Weatherbit.io can now be used in place of, or in addition to, the Google geocoding API to translate GPS latitude/longitude into place names.
 * Fixed bug with pop-up weather details for Weather Underground forecast.
 * Prevented onscreen keyboard from covering alert dialogs.
-* Make sure when running in kiosk mode that clicking on a weather service logo doesn't lead to the main display being blocked.
+* Made sure when running in kiosk mode that clicking on a weather service logo doesn't lead to the main display being blocked.
 * Added automatic phase-out of Dark Sky API in December 2021.
 
 ## 2.4.0
 
-* Touchscreen support. This includes:
+* Added touchscreen support. This includes:
   * 7-day forecast, with four days shown at one time, using left/right swipe or tapping arrow icons to shift to the end or the beginning of the forecast week.
   * Tap on scrolling alert "ticker" at bottom of screen to see full text of current alerts.
   * Tap on forecast day to see textual summary for that day.
   * Tap on sunrise/sunset times to shift to display of moonrise/moonset times.
   * Tap on gear icon to bring up Settings dialog, with optional onscreen keyboard.
-* GPS time support.
-* GPS location support.
-* Notifications for software updates.
-* Optional onscreen administrative functions, provided through the Settings dialog. These include:
+* Added GPS time support.
+* Added GPS location support.
+* Added notifications for software updates.
+* Added optional onscreen administrative functions, provided through the Settings dialog. These include:
   * Reboot
   * Shutdown
   * Quit browser
   * Initiate software update.
-* User customizable background and clock face colors.  
+* Added user customizable background and clock face colors.  
 * Assorted minor bug fixes and performance improvements.
 
 ## 2.3.3
 
-* Add hourly forecast feature.
-* Use darksky weather summary for wunderground forecast if available.
-* Eliminate forecast refreshes for preference changes that don't require it.
-* Fix leap second display bug for timezones with positive UTC offset.
+* Added hourly forecast feature.
+* Can use darksky weather summary for wunderground forecast if available.
+* Eliminated forecast refreshes for preference changes that don't require it.
+* Fixed leap second display bug for timezones with positive UTC offset.
 
 ## 2.2.2
 
@@ -64,7 +69,7 @@
 * Improved recovery from TAI-UTC data errors.
 * Improved formatting for AM/PM-style time.
 * Special provisions for developing on Debian Linux with LXDE desktop as a close-to-Raspberry Pi substitute.
-* Fix for Weather Underground snow forecasts.
+* Fixed for Weather Underground snow forecasts.
 
 ## 2.1.2
 
@@ -78,7 +83,7 @@
 
 ## 2.0.4
 
-* Allow project to be developed on Windows and non-Raspbian Linux (already worked on MacOS).
+* Facilitated project development on Windows and non-Raspbian Linux (already worked on MacOS).
 * Display equinoxes and solstices.
 
 ## 2.0.2
@@ -92,8 +97,8 @@
 
 ## 1.2.6
 
-* Reduce NTP polling rate.
-* Update linting and unit tests.
+* Reduced NTP polling rate.
+* Updated linting and unit tests.
 
 ## 1.2.5
 
@@ -108,28 +113,28 @@
 
 ## 1.0.10
 
-* Improve marquee. Add built-in font for astronomical symbols.
+* Improved marquee. Added built-in font for astronomical symbols.
 
 ## 1.0.9
 
-* Improve settings dialog appearance in Firefox and Safari.
+* Improved settings dialog appearance in Firefox and Safari.
 
 ## 1.0.8
 
-* Make dialog grid layout work for IE 11.
+* Made dialog grid layout work for IE 11.
 
 ## 1.0.7
 
-* Improve logic of risen tracks.
+* Improved logic of risen tracks.
 
 ## 1.0.6
 
-* Add rise/set time indicator arcs for planets.
-* Add option to debug time at accelerated rate.
+* Added rise/set time indicator arcs for planets.
+* Added option to debug time at accelerated rate.
 
 ## 1.0.5
 
-* Add version number to settings dialog.
+* Added version number to settings dialog.
 
 ## 1.0.4
 
@@ -137,7 +142,7 @@
 
 ## 1.0.3
 
-* Update lint and e2e.
+* Updated lint and e2e.
 
 ## 1.0.2
 
@@ -145,7 +150,7 @@
 
 ## 1.0.1
 
-* Fix gear.svg image so it's compatible with IE. Add MIT license to individual files.
+* Fixed gear.svg image so it's compatible with IE. Added MIT license to individual files.
 
 ## 1.0.0
 

@@ -27,13 +27,13 @@ import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
-import { isEffectivelyFullScreen, setFullScreen } from 'ks-util';
+import { isEffectivelyFullScreen, isFirefox, setFullScreen } from 'ks-util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
-import { adjustCityName, getJson } from './util';
+import { adjustCityName, anyDialogOpen, getJson } from './util';
 
 initTimeZoneSmall();
 
@@ -148,6 +148,28 @@ class AwClockApp implements AppService {
         window.open(href, '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=yes,titlebar=yes`);
       }
     });
+
+    // Firefox doesn't detect clicks on the following SVG elements without this extra help.
+    if (isFirefox()) {
+      const clickTargets = Array.from(document.getElementsByClassName('ff-click'));
+
+      window.addEventListener('click', evt => {
+        if (anyDialogOpen())
+          return;
+
+        const x = evt.pageX;
+        const y = evt.pageY;
+
+        for (const target of clickTargets) {
+          const rect = target.getBoundingClientRect();
+
+          if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
+            target.dispatchEvent(new Event('click'));
+            break;
+          }
+        }
+      });
+    }
   }
 
   getTimeFormat(): TimeFormat {

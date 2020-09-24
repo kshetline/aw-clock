@@ -20,7 +20,7 @@
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
 import { cos_deg, Point, sin_deg } from 'ks-math';
-import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, processMillis, toNumber } from 'ks-util';
+import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, parseColor, processMillis, toNumber } from 'ks-util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -261,6 +261,10 @@ const initDone = new Set<string>();
 const OUTER_CLICK_DELAY = 500;
 let openTime = 0;
 
+export function anyDialogOpen(): boolean {
+  return dialogStack.length > 0;
+}
+
 function checkFont() {
   const dialogInfo = last(dialogStack);
   const textArea = dialogInfo?.textArea;
@@ -300,9 +304,12 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
   const closer = $(`${id} > div > .dialog-close`);
   const textArea = $(`${id} > div > .dialog-text`);
   const fader = (/(<div class="dialog-fader"[^<]+?<\/div>)\s*$/.exec(textArea.html()) ?? [])[1] ?? '';
+  const rgb = parseColor(background);
 
-  if (fader)
+  if (fader) {
+    textArea.css('--fade-from', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
     textArea.css('--fade-to', background);
+  }
 
   textArea.parent().css('background-color', background);
   textArea.html(html + fader);
@@ -318,9 +325,9 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     dialog.hide();
   };
 
-  pushKeydownListener((event: KeyboardEvent) => {
-    if (event.code === 'Enter' || event.code === 'Escape') {
-      event.preventDefault();
+  pushKeydownListener((evt: KeyboardEvent) => {
+    if (evt.code === 'Enter' || evt.code === 'Escape') {
+      evt.preventDefault();
       hide();
     }
   });
