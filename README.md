@@ -41,7 +41,7 @@ Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if
 
 As of v2.1.0 of this software no API key is required to get weather data. The default weather data, however, is now being acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
 
-Having a back-up weather data is still, therefore, useful. For that there are three options:
+Having a back-up weather data source is still, therefore, a good idea. For that there are three options:
 
 1. Get an API key for [Weatherbit.io via RapidAPI](https://rapidapi.com/weatherbit/api/weather). You can get a free key, but with a hard maximum of 125 API calls allowed per day, that will only be good for occasional back-up service, not full-time weather information (it takes multiple API calls to get a full forecast). The US$10/month Pro plan is more than sufficient, however. With a Weatherbit.io API key, you'll also be able to handle geolocation (turning GPS latitude/longitude into city/place names) without needing to set up a Google API key.
 
