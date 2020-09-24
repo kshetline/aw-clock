@@ -260,9 +260,18 @@ const dialogStack: DialogInfo[] = [];
 const initDone = new Set<string>();
 const OUTER_CLICK_DELAY = 500;
 let openTime = 0;
+let otherDialogCount = 0;
 
 export function anyDialogOpen(): boolean {
-  return dialogStack.length > 0;
+  return dialogStack.length > 0 || otherDialogCount > 0;
+}
+
+export function incrementDialogCounter() {
+  ++otherDialogCount;
+}
+
+export function decrementDialogCounter() {
+  otherDialogCount = Math.max(otherDialogCount - 1, 0);
 }
 
 function checkFont() {
