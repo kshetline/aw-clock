@@ -154,11 +154,13 @@ class AwClockApp implements AppService {
       const clickTargets = Array.from(document.getElementsByClassName('ff-click'));
 
       window.addEventListener('click', evt => {
-        if (anyDialogOpen())
-          return;
-
+        const outerRect = document.getElementById('forecast-rect').getBoundingClientRect();
         const x = evt.pageX;
         const y = evt.pageY;
+
+        if (anyDialogOpen() || evt.defaultPrevented ||
+            x < outerRect.left || x >= outerRect.right || y < outerRect.top || y >= outerRect.bottom)
+          return;
 
         for (const target of clickTargets) {
           const rect = target.getBoundingClientRect();

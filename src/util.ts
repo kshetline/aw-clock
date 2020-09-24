@@ -319,7 +319,10 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
   dialogStack.push({ textArea });
   checkFont();
 
-  const hide = () => {
+  const hide = (evt?: any) => {
+    if (evt?.preventDefault)
+      evt.preventDefault();
+
     popKeydownListener();
     dialogStack.pop();
     dialog.hide();
@@ -384,9 +387,9 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
 
     closer.on('click', hide);
     textArea.parent().on('click', event => event.stopPropagation());
-    dialog.on('click', () => {
+    dialog.on('click', evt => {
       if (processMillis() >= openTime + OUTER_CLICK_DELAY)
-        hide();
+        hide(evt);
     });
 
     initDone.add(dialogId);
