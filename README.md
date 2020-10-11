@@ -12,6 +12,8 @@ On a display which is narrower than a 16-by-9 aspect ratio, four forecast days c
 
 *&#42;A touchscreen or mouse is required to display the last two or three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, or to switch from hourly temperatures to hourly probability-of-precipitation.*
 
+![finished project](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-12.jpg)
+
 ![app screenshot](https://shetline.com/readme/aw-clock/2.4.0/awc_screenshot.png)
 <br/><br/>
 
@@ -43,11 +45,11 @@ As of v2.1.0 of this software no API key is required to get weather data. The de
 
 Having a back-up weather data source is still, therefore, a good idea. For that there are three options:
 
-1. Get an API key for [Weatherbit.io via RapidAPI](https://rapidapi.com/weatherbit/api/weather). You can get a free key, but with a hard maximum of 125 API calls allowed per day, that will only be good for occasional back-up service, not full-time weather information (it takes multiple API calls to get a full forecast). The US$10/month Pro plan is more than sufficient, however. With a Weatherbit.io API key, you'll also be able to handle geolocation (turning GPS latitude/longitude into city/place names) without needing to set up a Google API key.
+1. Get an API key for [Weatherbit.io via RapidAPI](https://rapidapi.com/weatherbit/api/weather). You can get a free key, but with a hard maximum of 125 API calls allowed per day, that will only be good for occasional back-up service, not full-time weather information (it takes multiple API calls to get a full forecast). The US$10/month Pro plan is more than sufficient, however. With a Weatherbit.io API key, you’ll also be able to handle geolocation (turning GPS latitude/longitude into city/place names) without needing to set up a Google API key.
 
-2. *If you already have* a Dark Sky API key, you can use that. Unfortunately, Dark Sky has announced that they have joined Apple, and they will no long accept new sign-ups for API keys. Further, even if you currently have an API key, it will cease to work at the end of 2021. (This software will itself switch off access to Dark Sky in December 2021.) One reason I'm sad to see Dark Sky go away is that the free plan allows 1000 API calls per day, and one single API call is all that's needed to get a full forecast.
+2. *If you already have* a Dark Sky API key, you can use that. Unfortunately, Dark Sky has announced that they have joined Apple, and they will no long accept new sign-ups for API keys. Further, even if you currently have an API key, it will cease to work at the end of 2021. (This software will itself switch off access to Dark Sky in December 2021.) One reason I’m sad to see Dark Sky go away is that the free plan allows 1000 API calls per day, and one single API call is all that’s needed to get a full forecast.
 
-3. There's a limited capability in this software to fall back on using my personal RapidAPI/Weatherbit.io account, but depending on how much traffic I get, there's no guarantee that this back-up will always be there.
+3. There’s a limited capability in this software to fall back on using my personal RapidAPI/Weatherbit.io account, but depending on how much traffic I get, there’s no guarantee that this back-up will always be there.
 
 ### Time keeping
 
@@ -105,6 +107,113 @@ The circular tracks around the center of the clock face display the ecliptic lon
 When the symbol for a planet is drawn larger, and it appears on top of one of the green arcs along the planet tracks, this indicates the planet is above the local horizon. Otherwise, it is below the horizon. The clockwise end of each green track represents when the planet rises, and the counter-clockwise end represents when the planet sets.
 
 If a green arc becomes a full circle, that means the corresponding planet on that track is above the horizon all day. If there is no arc at all, the planet is below the horizon all day. (These two situations only occur at extreme northern or southern latitudes.)
+<br><br>
+
+### Construction with 3D-Printed Stand
+
+#### Rear view of stand
+
+The 3D model for this stand is provided by the project file `raspberry_pi_setup/monitor_stand.stl`. Below is how that model came out when printed using black ABS, 20% infill, at a cost of about $33 USD.
+
+![3D stand rear view](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-01.jpg)
+
+I’m reasonably happy with the results using this stand, but if I did it over again, I’d:
+
+* Make the stand about 0.75" (19 cm) shorter, all of that taken from below the stand-offs for mounting the Raspberry Pi.
+* Move the wire pass-through hole for the temperature/humidity sensor forward, so that it was roughly below the hole for the GPS antenna connector — I hadn’t left as much room for the connectors at the ends of the jumpers as I would have liked.
+* Move the 433 MHz receiver clip outward, away from the surface of the side panel, to allow more room for the hex nut used to secure the temperature/humidity sensor.
+
+<br>
+
+#### Front view
+
+For some reason there was a glossy texture on the front of the stand when it was printed, something that looked like a thin film of plastic, the kind you often see as shipping protection, meant to be peeled off. It wouldn’t peel off, however, and it had some unattractive dimples and bubbles that made me want to remove it. I settled for sanding it off on the bottom of the stand.
+
+![3D stand front view](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-02.jpg)
+
+<br>
+
+#### Side mounting panel
+
+The side panel has a place to attach a quarter-wave 433 MHz antenna, a clip to hold a 433 MHz receiving module, a hole for a female SMA coaxial connector for GPS, and (on the reverse side) a mounting position for a DHT22/AM2302 temperature/humidity sensor.
+
+![3D stand side panel](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-03.jpg)
+
+<br>
+
+#### Original monitor stand
+
+This is the original stand that came with the 2560x1600 ELECROW 10.1" touchscreen monitor. It’s not a bad stand in general, but, with the Raspberry Pi attached to the back of the monitor, the cables and wires were an awkward fit. The stand had to be skewed off-center quite a bit for it to work at all.
+
+![Original monitor stand](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-04.jpg)
+
+<br>
+
+#### Stand attached to monitor
+
+The stand is attached using 4 M3 x 10 mm wafer-head machine screws. Please note that M4 is the typical size screw for a VESA mount of this size (75 mm square spacing), so it’s a little unusual M3s were needed instead.
+
+![Stand attached to monitor](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-05.jpg)
+
+<br>
+
+#### Stand attached to monitor, side view
+
+![Stand attached to monitor, side view](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-06.jpg)
+
+<br>
+
+#### Side panel with components attached
+
+The long arm that reaches out from the side panel is designed so the temperature/humidity sensor can be placed at a distance from the heat generated by the Raspberry Pi. The open design is also to prevent heat build-up that an enclosure might cause, which could also skew indoor temperature readings.
+
+![Side panel with components attached](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-07.jpg)
+
+<br>
+
+#### Raspberry Pi Model 4 attached to stand-offs
+
+I was a bit uncertain how well machine screws would work with the stand-offs that I’d designed, since I wanted them to function like self-tapping screws. As it turned out, the four M2.5 x 6 mm pan-head machine screws fit quite nicely and snuggly, without being difficult to turn. If the Pi were to be repeatedly removed and reattached, however, this design might not be durable enough. For my current purposes, it’s just fine.
+
+![Raspberry Pi Model 4 attached to stand-offs](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-08.jpg)
+
+<br>
+
+#### GPS HAT added, and components wired together
+
+![GPS HAT added, and components wired together](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-09.jpg)
+
+<br>
+
+#### Monitor connections for HDMI video and USB touchscreen
+
+I was able to find a [single, short HDMI cable](https://www.amazon.com/gp/product/B07BLX88H4/) with a 90°-down micro HDMI connector on one end. This is great for use with the Pi 4, replacing the two separate cables plugged together I started out with when I got the 4: a short dual HDMI male cable combined with an HDMI-to-micro-HDMI adapter cable.
+
+I couldn’t find a right-angle USB-C cable for hooking up the touchscreen, but I did find a [right-angle adapter](https://www.amazon.com/gp/product/B07JK1G6W2/) and a short [male USB C to male USB A 2.0 cable](https://www.amazon.com/gp/product/B012V56D2A/).
+
+![Monitor connections for HDMI video and USB touchscreen](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-10.jpg)
+
+<br>
+
+#### Rear view of completed clock project
+
+![finished project](https://shetline.com/readme/aw-clock/2.4.0/aw-clock-w-stand-11.jpg)
+
+<br>
+
+### Parts
+
+* Raspberry Pi 4 with 2 GB RAM
+* [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324) (connected using a stacking header, so it was still easy to attach the leads for the temperature/humidity sensor and the RF receiver)
+* [Active GPS antenna](https://www.amazon.com/gp/product/B07NY16GH5/)
+* 2560x1600 ELECROW 10.1" touchscreen (in pixel doubling mode)
+* Custom-printed 3D stand
+* Wired DHT22/AM2302 sensor
+* 2 x 433 MHz Acu Rite 06002M wireless temperature and humidity sensors
+* 433 MHz receiver module
+* [¼-wave 433 MHz antenna](https://www.digikey.com/en/products/detail/linx-technologies-inc/ANT-433-PW-RA/340122)
+* Miscellaneous jumper wires, cables, machine screws (some specifics listed above), etc.
+
 <br>
 
 ### Info for code development, testing, and non-Raspberry Pi use
@@ -172,7 +281,7 @@ For reference, here’s a break down of the steps performed by a full installati
 1. `xscreensaver` is then disabled. Why install a screen saver just to turn around and disable it? To make sure no other screen saver blanks the screen - the display of the clock is intended to stay on 24/7.
 1. The application client is built.
 1. The application server is built.
-1. If you're running `build.sh`, your Git branch was clean before running the installer, and the only thing that changes as far as Git is concerned are your `package-lock.json` files, a `git --reset hard` will be performed to revert those changes and keep your branch clean.
+1. If you’re running `build.sh`, your Git branch was clean before running the installer, and the only thing that changes as far as Git is concerned are your `package-lock.json` files, a `git --reset hard` will be performed to revert those changes and keep your branch clean.
 1. If specified, server options for wired and/or wireless sensors are installed.
 1. A combined client/server distribution directory is created.
 1. If any of the options `‑‑ddev`, `‑i`, or `‑‑sd` are used, the distribution is copied to the `~/weather` directory (typically `/home/pi/weather`), deleting anything which might have previously been present in that directory.
