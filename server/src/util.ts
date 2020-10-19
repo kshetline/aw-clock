@@ -42,6 +42,10 @@ export function inchesToCm(i: number): number {
   return i * 2.54;
 }
 
+export function milesToKm(m: number): number {
+  return m * 1.609344;
+}
+
 export function cmToInches(cm: number): number {
   return cm / 2.54;
 }

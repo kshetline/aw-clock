@@ -59,6 +59,12 @@
       }
     ],
     "no-control-regex": "off",
+    "no-multi-spaces": [
+      "error",
+      {
+        "ignoreEOLComments": true
+      }
+    ],
     "no-new": "off",
     "no-return-assign": "off",
     "no-unused-expressions": "off",

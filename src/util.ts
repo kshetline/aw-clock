@@ -223,6 +223,10 @@ export function formatTime(date: KsDateTime, amPm: boolean) {
   return hours.substr(0, 2) + ':' + padLeft(date.wallTime.min, 2, '0') + hours.substr(2);
 }
 
+export function convertSpeed(s: number, toKph: boolean): number {
+  return toKph ? s * 1.609344 : s / 1.609344;
+}
+
 export function convertTemp(t: number, toCelsius: boolean): number {
   return toCelsius ? (t - 32) / 1.8 : t * 1.8 + 32;
 }

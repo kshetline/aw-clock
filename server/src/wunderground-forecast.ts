@@ -1,6 +1,8 @@
 import { purgeCache, requestJson, requestText } from './request-cache';
 import { Request, Router } from 'express';
-import { Alert, ForecastData } from './shared-types';
+import { max } from 'ks-math';
+import { toNumber } from 'ks-util';
+import { Alert, ForecastData, PressureTrend } from './shared-types';
 import { checkForecastIntegrity } from './util';
 
 export const router = Router();
@@ -135,7 +137,36 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
   return forecast;
 }
 
+function pressureTrendFromString(trend: string): PressureTrend {
+  trend = (trend || '').toLowerCase();
+
+  if (trend === 'falling')
+    return PressureTrend.FALLING;
+  else if (trend === 'rising')
+    return PressureTrend.RISING;
+  else
+    return PressureTrend.STEADY;
+}
+
+function extractGust(...phrases: string[]): number {
+  let gust: number = null;
+
+  for (const phrase of phrases) {
+    const $ = /gust.*?\s+(\d+)/i.exec(phrase ?? '');
+
+    if ($)
+      gust = max(gust ?? 0, toNumber($[1]));
+  }
+
+  return gust;
+}
+
 function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
+  console.log(wc.pressureTendencyTrend);
+
+  // We want pressure to always be metric. For some strange reason, it always is that way anyway for current conditions,
+  // but needs to be converted from inches of mercury for the hourly imperial values. As I don't trust this inconsistency
+  // I'll just use the value itself to decide on doing the conversion.
   forecast.currently = {
     time: wc.validTimeUtc,
     summary: wc.wxPhraseMedium,
@@ -144,8 +175,13 @@ function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
     cloudCover: wh.cloudCover[0] / 100,
     precipProbability: wh.precipChance[0] / 100,
     precipType: wh.precipType[0],
+    pressure: wc.pressureMeanSeaLevel < 50 ? wc.pressureMeanSeaLevel * 33.864 : wc.pressureMeanSeaLevel,
+    pressureTrend: pressureTrendFromString(wc.pressureTendencyTrend),
     temperature: wc.temperature,
-    feelsLikeTemperature: wc.temperatureFeelsLike
+    feelsLikeTemperature: wc.temperatureFeelsLike,
+    windDirection: wc.windDirection,
+    windGust: wc.windGust,
+    windSpeed: wc.windSpeed
   };
 }
 
@@ -157,16 +193,24 @@ function convertHourly(forecast: ForecastData, wh: any): void {
 
   for (let i = 0; i < length; ++i) {
     let precipType = wh.precipType[i];
+    let pressure = wh.pressureMeanSeaLevel[i];
 
     if (wh.qpfSnow[i] > 0 && precipType === 'precip')
       precipType = 'snow';
+
+    if (pressure < 50)
+      pressure *= 33.864;
 
     forecast.hourly.push({
       icon: getIcon(wh.iconCode[i]),
       temperature: wh.temperature[i],
       precipProbability: wh.precipChance[i] / 100,
       precipType,
-      time: wh.validTimeUtc[i]
+      pressure,
+      time: wh.validTimeUtc[i],
+      windDirection: wh.windDirection[i],
+      windGust: wh.windGust[i],
+      windSpeed: wh.windSpeed[i]
     });
   }
 }
@@ -192,6 +236,8 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
       precipAccumulation = wd.qpfSnow[i];
     }
 
+    const windIndex = wddp?.windSpeed[i * 2] != null ? i * 2 : i * 2 + 1;
+
     daily.push({
       icon: getIcon(wddp?.iconCode[i * 2] ?? wddp?.iconCode[i * 2 + 1] ?? -1),
       narrativeDay: wddp?.narrative[i * 2],
@@ -203,7 +249,11 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
       summary: wd.narrative[i],
       temperatureHigh: wd.temperatureMax[i] ?? wc.temperatureMax24Hour,
       temperatureLow: wd.temperatureMin[i] ?? wc.temperatureMin24Hour,
-      time: wd.validTimeUtc[i]
+      time: wd.validTimeUtc[i],
+      windDirection: wddp?.windDirection[windIndex],
+      windGust: extractGust(wddp?.windPhrase[windIndex], wddp?.narrative[i * 2], wddp?.narrative[i * 2 + 1]),
+      windPhrase: combineWindPhrases(wddp?.windPhrase[i * 2], wddp?.windPhrase[i * 2 + 1]),
+      windSpeed: wddp?.windSpeed[windIndex]
     });
   }
 
@@ -211,6 +261,18 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
     summary: (wd.narrative && wd.narrative[0]) ?? '',
     data: daily
   };
+}
+
+function combineWindPhrases(day: string, night: string): string {
+  // eslint-disable-next-line eqeqeq
+  if (day == night)
+    return day;
+  else if (!night)
+    return day;
+  else if (!day)
+    return night;
+
+  return (day + ', ' + night).replace('., Winds', ', evening').replace('.,', ',');
 }
 
 function convertAlerts(forecast: ForecastData, wa: any): void {

@@ -28,7 +28,7 @@ import {
 } from 'ks-util';
 import { ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
-import { convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
+import { convertSpeed, convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -491,28 +491,38 @@ export class Forecast {
   // Note: This is just for a temporary, quick update. The full forecast needs to be requested to get
   // accurate temperature values, especially when only integer temperature values have been supplied,
   // which don't allow for very good Celsius/Fahrenheit conversions.
-  public swapTemperatureUnits(makeCelsius: boolean): void {
-    if (this.lastForecastData && this.lastForecastData.isMetric !== makeCelsius) {
+  public swapUnits(toMetric: boolean): void {
+    if (this.lastForecastData && this.lastForecastData.isMetric !== toMetric) {
       const forecast = this.lastForecastData;
-      const convert = (t: number) => convertTemp(t, makeCelsius);
+      const convertS = (s: number) => s == null ? s : convertSpeed(s, toMetric);
+      const convertT = (t: number) => convertTemp(t, toMetric);
 
       if (forecast.currently) {
-        forecast.currently.feelsLikeTemperature = convert(forecast.currently.feelsLikeTemperature);
-        forecast.currently.temperature = convert(forecast.currently.temperature);
+        forecast.currently.feelsLikeTemperature = convertT(forecast.currently.feelsLikeTemperature);
+        forecast.currently.temperature = convertT(forecast.currently.temperature);
+        forecast.currently.windSpeed = convertS(forecast.currently.windSpeed);
+        forecast.currently.windGust = convertS(forecast.currently.windGust);
       }
 
-      if (forecast.hourly)
-        forecast.hourly.forEach(hour => hour.temperature = convert(hour.temperature));
+      if (forecast.hourly) {
+        forecast.hourly.forEach(hour => {
+          hour.temperature = convertT(hour.temperature);
+          hour.windSpeed = convertS(hour.windSpeed);
+          hour.windGust = convertS(hour.windGust);
+        });
+      }
 
       this.cachedHourly = [];
 
       if (forecast.daily?.data)
         forecast.daily.data.forEach(day => {
-          day.temperatureLow = convert(day.temperatureLow);
-          day.temperatureHigh = convert(day.temperatureHigh);
+          day.temperatureLow = convertT(day.temperatureLow);
+          day.temperatureHigh = convertT(day.temperatureHigh);
+          day.windSpeed = convertS(day.windSpeed);
+          day.windGust = convertS(day.windGust);
         });
 
-      forecast.isMetric = makeCelsius;
+      forecast.isMetric = toMetric;
       this.displayForecast(forecast);
     }
   }
