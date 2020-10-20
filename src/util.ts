@@ -188,9 +188,9 @@ export function polarToRectangular(cx: number, cy: number, radius: number, angle
   };
 }
 
-export function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number): string {
-  const start = polarToRectangular(x, y, radius, startAngle);
-  const end = polarToRectangular(x, y, radius, endAngle);
+export function describeArc(cx: number, cy: number, radius: number, startAngle: number, endAngle: number): string {
+  const start = polarToRectangular(cx, cy, radius, startAngle);
+  const end = polarToRectangular(cx, cy, radius, endAngle);
   const largeArcFlag = (endAngle - startAngle <= 180 ? 0 : 1);
 
   return [

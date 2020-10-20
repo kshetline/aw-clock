@@ -148,17 +148,17 @@ function pressureTrendFromString(trend: string): PressureTrend {
     return PressureTrend.STEADY;
 }
 
-function extractGust(...phrases: string[]): number {
+function extractGust(baseSpeed: number, ...phrases: string[]): number {
   let gust: number = null;
 
   for (const phrase of phrases) {
-    const $ = /gust.*?\s+(\d+)/i.exec(phrase ?? '');
+    const $ = /gust[^.]*?\s+(\d+)/i.exec(phrase ?? '');
 
     if ($)
       gust = max(gust ?? 0, toNumber($[1]));
   }
 
-  return gust;
+  return gust > baseSpeed ? gust : null;
 }
 
 function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
@@ -237,6 +237,7 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
     }
 
     const windIndex = wddp?.windSpeed[i * 2] != null ? i * 2 : i * 2 + 1;
+    const windSpeed = wddp?.windSpeed[windIndex];
 
     daily.push({
       icon: getIcon(wddp?.iconCode[i * 2] ?? wddp?.iconCode[i * 2 + 1] ?? -1),
@@ -251,9 +252,9 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
       temperatureLow: wd.temperatureMin[i] ?? wc.temperatureMin24Hour,
       time: wd.validTimeUtc[i],
       windDirection: wddp?.windDirection[windIndex],
-      windGust: extractGust(wddp?.windPhrase[windIndex], wddp?.narrative[i * 2], wddp?.narrative[i * 2 + 1]),
+      windGust: extractGust(windSpeed, wddp?.windPhrase[windIndex], wddp?.narrative[i * 2], wddp?.narrative[i * 2 + 1]),
       windPhrase: combineWindPhrases(wddp?.windPhrase[i * 2], wddp?.windPhrase[i * 2 + 1]),
-      windSpeed: wddp?.windSpeed[windIndex]
+      windSpeed
     });
   }
 

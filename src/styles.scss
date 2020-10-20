@@ -667,6 +667,24 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   stroke-width: 0.5px;
 }
 
+#wind-pointer {
+  fill: transparent;
+}
+
+#wind-arc {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  stroke-width: 1px;
+}
+
+#wind-gust-arc {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  stroke-width: 0.5px;
+}
+
 .constellation {
   font-family: $constellation-font;
   font-size: 2.5px;

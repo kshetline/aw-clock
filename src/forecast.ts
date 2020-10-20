@@ -22,13 +22,13 @@ import { CLOCK_CENTER, TimeFormat } from './clock';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, floor, sin_deg } from 'ks-math';
+import { cos_deg, floor, max, min, mod, sin_deg } from 'ks-math';
 import {
   blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis, toNumber
 } from 'ks-util';
-import { ForecastData, HourlyConditions } from '../server/src/shared-types';
+import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
-import { convertSpeed, convertTemp, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
+import { convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -111,6 +111,7 @@ export class Forecast {
   private readonly settingsBtn: JQuery;
   private readonly weatherbitLogo: JQuery;
   private readonly wundergroundLogo: JQuery;
+  private readonly windPointer: JQuery;
 
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
@@ -120,6 +121,9 @@ export class Forecast {
   private hourTemps: SVGTextElement[] = [];
   private hourPops: SVGTextElement[] = [];
   private forecastMarkers: JQuery;
+  private wind: JQuery;
+  private windArc: JQuery;
+  private windGustArc: JQuery;
 
   private readonly weatherServer: string;
 
@@ -164,6 +168,10 @@ export class Forecast {
     this.marquee = $('#marquee');
     this.marqueeBackground = $('body').css('--background-color');
     this.forecastMarkers = $('#hourly-forecast-start, #hourly-forecast-end');
+    this.wind = $('#wind');
+    this.windPointer = $('#wind-pointer');
+    this.windArc = $('#wind-arc');
+    this.windGustArc = $('#wind-gust-arc');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
@@ -593,6 +601,10 @@ export class Forecast {
     this.hourIcons.forEach(icon => icon.setAttribute('href', EMPTY_ICON));
     this.hourTemps.forEach(temp => temp.textContent = '');
     this.hourPops.forEach(pop => pop.textContent = '');
+    this.wind.css('display', 'none');
+    this.windPointer.css('display', 'none');
+    this.windArc.css('display', 'none');
+    this.windGustArc.css('display', 'none');
 
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
@@ -676,7 +688,7 @@ export class Forecast {
     const timeFormat = this.appService.getTimeFormat();
     let previousStartOfHour = startOfHour - 3_600_000;
 
-    // noinspection DuplicatedCode,DuplicatedCode
+    // noinspection DuplicatedCode
     for (let i = 0; i < 24; ++i) {
       let icon = EMPTY_ICON;
       let temp = '';
@@ -749,6 +761,7 @@ export class Forecast {
         forecastTemp: forecastData.currently.temperature,
       });
 
+      this.displayCurrentWind(forecastData.currently, forecastData.isMetric);
       setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
       this.dayIcons.forEach((dayIcon, index) => {
@@ -795,6 +808,62 @@ export class Forecast {
     }
 
     setTimeout(reflow);
+  }
+
+  private static speedToColor(speed: number, isMetric: boolean): string {
+    if (!isMetric)
+      speed = convertSpeed(speed, true);
+
+    const hue = floor(max(208 - speed * 208 / 117, 0));
+
+    return `hsl(${hue}, 100%, 50%)`;
+  }
+
+  private static speedToSpan(speed: number, isMetric: boolean): number {
+    if (!isMetric)
+      speed = convertSpeed(speed, true);
+
+    return 10 + floor(min(speed * 80 / 117, 80));
+  }
+
+  private displayCurrentWind(current: CurrentConditions, isMetric: boolean) {
+    function rotate(elem: HTMLElement, deg: number) {
+      elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
+    }
+
+    if ((current.windSpeed ?? 0) > 0 && current.windDirection != null) {
+      const span = Forecast.speedToSpan(current.windSpeed, isMetric);
+      const arc = describeArc(50, 50, 45.5, current.windDirection - 90 - span / 2, current.windDirection - 90 + span / 2);
+      const color = Forecast.speedToColor(current.windSpeed, isMetric);
+
+      this.windPointer.css('fill', color);
+      rotate(this.windPointer[0], current.windDirection);
+      this.windArc[0].setAttribute('d', arc);
+      this.windPointer.css('display', 'block');
+      this.windArc.css('stroke', color);
+      this.windArc.css('display', 'block');
+
+      $('#wind-speed').text(current.windSpeed.toFixed(0) + (isMetric ? ' km/h' : ' mph'));
+      $('#wind-dir').text(['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+        [floor(mod(current.windDirection - 11.25, 360) / 22.5)]);
+      this.wind.css('display', 'block');
+    }
+    else {
+      this.windPointer.css('display', 'none');
+      this.windArc.css('display', 'none');
+      this.wind.css('display', 'none');
+    }
+
+    if ((current.windGust ?? 0) > 0 && current.windDirection != null) {
+      const span = Forecast.speedToSpan(current.windGust, isMetric);
+      const arc = describeArc(50, 50, 45, current.windDirection - 90 - span / 2, current.windDirection - 90 + span / 2);
+
+      this.windGustArc[0].setAttribute('d', arc);
+      this.windGustArc.css('stroke', Forecast.speedToColor(current.windGust, isMetric));
+      this.windGustArc.css('display', 'block');
+    }
+    else
+      this.windGustArc.css('display', 'none');
   }
 
   public refreshAlerts(forecastData = this.lastForecastData) {
