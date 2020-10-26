@@ -19,7 +19,7 @@
 
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, Point, sin_deg } from 'ks-math';
+import { cos_deg, floor, mod, Point, sin_deg } from 'ks-math';
 import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, parseColor, processMillis, toNumber } from 'ks-util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
@@ -229,6 +229,12 @@ export function convertSpeed(s: number, toKph: boolean): number {
 
 export function convertTemp(t: number, toCelsius: boolean): number {
   return toCelsius ? (t - 32) / 1.8 : t * 1.8 + 32;
+}
+
+const compassPoints = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
+export function compassPoint(angle: number): string {
+  return compassPoints[floor(mod(angle + 11.25, 360) / 22.5)];
 }
 
 export function setSignalLevel(elem: JQuery, quality: number): void {

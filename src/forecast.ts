@@ -22,13 +22,15 @@ import { CLOCK_CENTER, TimeFormat } from './clock';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, floor, max, min, mod, sin_deg } from 'ks-math';
+import { cos_deg, floor, max, min, sin_deg } from 'ks-math';
 import {
   blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis, toNumber
 } from 'ks-util';
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
-import { convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref } from './util';
+import {
+  compassPoint, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref
+} from './util';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -831,6 +833,14 @@ export class Forecast {
       elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
 
+    if ((current.windSpeed ?? -1) >= 0 && current.windDirection != null) {
+      $('#wind-speed').text(current.windSpeed.toFixed(0) + (isMetric ? ' km/h' : ' mph'));
+      $('#wind-dir').text(current.windSpeed >= 0.5 ? compassPoint(current.windDirection) : '');
+      this.wind.css('display', 'block');
+    }
+    else
+      this.wind.css('display', 'none');
+
     if ((current.windSpeed ?? 0) > 0 && current.windDirection != null) {
       const span = Forecast.speedToSpan(current.windSpeed, isMetric);
       const arc = describeArc(50, 50, 45.5, current.windDirection - 90 - span / 2, current.windDirection - 90 + span / 2);
@@ -842,16 +852,10 @@ export class Forecast {
       this.windPointer.css('display', 'block');
       this.windArc.css('stroke', color);
       this.windArc.css('display', 'block');
-
-      $('#wind-speed').text(current.windSpeed.toFixed(0) + (isMetric ? ' km/h' : ' mph'));
-      $('#wind-dir').text(['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
-        [floor(mod(current.windDirection - 11.25, 360) / 22.5)]);
-      this.wind.css('display', 'block');
     }
     else {
       this.windPointer.css('display', 'none');
       this.windArc.css('display', 'none');
-      this.wind.css('display', 'none');
     }
 
     if ((current.windGust ?? 0) > 0 && current.windDirection != null) {

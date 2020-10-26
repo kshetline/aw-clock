@@ -5,6 +5,7 @@ import { asLines, last } from 'ks-util';
 import PromiseFtp from 'promise-ftp';
 import { CurrentDelta } from './shared-types';
 import { URL } from 'url';
+import { timeStamp } from './util';
 
 export interface LeapSecond {
   ntp: number;
@@ -119,7 +120,7 @@ export class TaiUtc {
       gotBulletinA = true;
     }
     catch (err) {
-      console.error('Failed to read IERS Bulletin A from ' + IERS_BULLETIN_A_URL);
+      console.error('%s -- Failed to read IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_URL);
       console.error(err);
     }
 
@@ -137,7 +138,7 @@ export class TaiUtc {
 
     docs.forEach((doc, index) => {
       if (typeof doc !== 'string') {
-        console.error('Failed to leap seconds from ' + this.urls[index]);
+        console.error('%s -- Failed to leap seconds from %s', timeStamp(), this.urls[index]);
         console.error(doc);
 
         return;
