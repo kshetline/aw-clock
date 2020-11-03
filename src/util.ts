@@ -40,7 +40,7 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
 });
 
 $.fn.extend({
-  enable: function (state: boolean) {
+  enable: function (state?: boolean) {
     if (arguments.length === 0) {
       if (this.is('input, button'))
         return !this.attr('disabled');
@@ -229,6 +229,18 @@ export function convertSpeed(s: number, toKph: boolean): number {
 
 export function convertTemp(t: number, toCelsius: boolean): number {
   return toCelsius ? (t - 32) / 1.8 : t * 1.8 + 32;
+}
+
+export function convertPressure(p: number, toHPa: boolean): number {
+  return toHPa ? p * 33.864 : p / 33.864;
+}
+
+export function mphToKnots(m: number): number {
+  return m / 1.15078;
+}
+
+export function kphToKnots(k: number): number {
+  return k / 1.852;
 }
 
 const compassPoints = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];

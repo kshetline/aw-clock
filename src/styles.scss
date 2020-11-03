@@ -175,7 +175,7 @@ label {
   padding-bottom: 0.2em;
 }
 
-.hour-icon {
+.hour-icon, .wind-icon {
   &.vertical {
     opacity: 1;
   }
@@ -198,6 +198,12 @@ label {
 .hour-info-hide, {
   opacity: 0;
   transition: opacity 1s;
+
+  &.circular,
+  &.vertical {
+    opacity: 0;
+    transition: opacity 1s;
+  }
 }
 
 #face {
@@ -268,6 +274,20 @@ label {
 
 .small-caption {
   font-size: 2.5px;
+}
+
+.wind-pressure {
+  font-size: 2.1px;
+}
+
+.wind-barb {
+  fill: white;
+  overflow: visible;
+  stroke: black;
+
+  .compass {
+    stroke: rgba(#FFF, 0.33);
+  }
 }
 
 #timezone {

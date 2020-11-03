@@ -29,8 +29,10 @@ import {
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  compassPoint, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString, setSvgHref
+  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, kphToKnots,
+  localDateString, mphToKnots, setSvgHref
 } from './util';
+import { windBarbsSvg } from './wind-barbs';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -115,17 +117,20 @@ export class Forecast {
   private readonly wundergroundLogo: JQuery;
   private readonly windPointer: JQuery;
 
+  private dailyWinds: JQuery[] = [];
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
   private dayChancePrecips: JQuery[] = [];
   private dayPrecipAccums: JQuery[] = [];
   private hourIcons: SVGImageElement[] = [];
+  private hourWinds: SVGSVGElement[] = [];
   private hourTemps: SVGTextElement[] = [];
   private hourPops: SVGTextElement[] = [];
   private forecastMarkers: JQuery;
   private wind: JQuery;
   private windArc: JQuery;
   private windGustArc: JQuery;
+  private pressure: JQuery;
 
   private readonly weatherServer: string;
 
@@ -154,6 +159,7 @@ export class Forecast {
     this.currentIcon = $('#current-icon');
 
     for (let i = 0; i < 7; ++i) {
+      this.dailyWinds[i] = $('#day' + i + '-wind');
       this.dayIcons[i] = $('#day' + i + '-icon');
       this.dayLowHighs[i] = $('#day' + i + '-low-high');
       this.dayChancePrecips[i] = $('#day' + i + '-chance-precip');
@@ -174,6 +180,7 @@ export class Forecast {
     this.windPointer = $('#wind-pointer');
     this.windArc = $('#wind-arc');
     this.windGustArc = $('#wind-gust-arc');
+    this.pressure = $('#pressure');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
@@ -232,7 +239,7 @@ export class Forecast {
     $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#sun-moon-clicker').on('click', () => this.appService.toggleSunMoon());
-    $('.hour-temps, .hour-pops, .hour-icon').on('click', () => this.toggleHourInfo());
+    $('.hour-temps, .hour-pops, .hour-icon, .hour-wind').on('click', () => this.toggleHourInfo());
 
     const self = this;
 
@@ -382,6 +389,7 @@ export class Forecast {
       const vertical = this.hourlyForecast === HourlyForecast.VERTICAL;
       const deg = i * 30 + 15;
       const hourIcon = isNew ? document.createElementNS(SVG_NAMESPACE, 'image') : this.hourIcons[i];
+      const hourWind = isNew ? document.createElementNS(SVG_NAMESPACE, 'svg') : this.hourWinds[i];
       const hourTemp = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourTemps[i];
       const hourPop = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourPops[i];
       let r, x, y;
@@ -405,7 +413,7 @@ export class Forecast {
       hourIcon.setAttribute('y', ((y - halfIcon) / SCALING_FIX).toString());
       hourIcon.setAttribute('height', HOURLY_ICON_SIZE.toString());
       hourIcon.setAttribute('width', HOURLY_ICON_SIZE.toString());
-      hourIcon.classList.add('hour-icon');
+      hourIcon.classList.add('hour-icon', 'hour-info-show');
       setVerticalOrCircular(hourIcon);
 
       if (SCALING_FIX !== 1)
@@ -413,6 +421,14 @@ export class Forecast {
 
       if (isNew)
         hourIcon.setAttribute('href', EMPTY_ICON);
+
+      hourWind.setAttribute('x', (x - halfIcon).toString());
+      hourWind.setAttribute('y', (y - halfIcon).toString());
+      hourWind.setAttribute('height', HOURLY_ICON_SIZE.toString());
+      hourWind.setAttribute('width', HOURLY_ICON_SIZE.toString());
+      hourWind.setAttribute('viewBox', ' 0 0 100 100');
+      hourWind.classList.add('hour-wind', 'wind-barb', 'hour-info-hide');
+      setVerticalOrCircular(hourWind);
 
       [hourTemp, hourPop].forEach((text, j) => {
         let y2 = y;
@@ -443,6 +459,8 @@ export class Forecast {
         hourTemp.innerHTML = '';
         clock.appendChild(hourIcon);
         this.hourIcons[i] = hourIcon;
+        clock.appendChild(hourWind);
+        this.hourWinds[i] = hourWind;
         clock.appendChild(hourTemp);
         this.hourTemps[i] = hourTemp;
         clock.appendChild(hourPop);
@@ -504,14 +522,16 @@ export class Forecast {
   public swapUnits(toMetric: boolean): void {
     if (this.lastForecastData && this.lastForecastData.isMetric !== toMetric) {
       const forecast = this.lastForecastData;
-      const convertS = (s: number) => s == null ? s : convertSpeed(s, toMetric);
       const convertT = (t: number) => convertTemp(t, toMetric);
+      const convertS = (s: number) => s == null ? s : convertSpeed(s, toMetric);
+      const convertP = (p: number) => convertPressure(p, toMetric);
 
       if (forecast.currently) {
         forecast.currently.feelsLikeTemperature = convertT(forecast.currently.feelsLikeTemperature);
         forecast.currently.temperature = convertT(forecast.currently.temperature);
         forecast.currently.windSpeed = convertS(forecast.currently.windSpeed);
         forecast.currently.windGust = convertS(forecast.currently.windGust);
+        forecast.currently.pressure = convertP(forecast.currently.pressure);
       }
 
       if (forecast.hourly) {
@@ -519,6 +539,7 @@ export class Forecast {
           hour.temperature = convertT(hour.temperature);
           hour.windSpeed = convertS(hour.windSpeed);
           hour.windGust = convertS(hour.windGust);
+          hour.pressure = convertP(hour.pressure);
         });
       }
 
@@ -529,7 +550,8 @@ export class Forecast {
           day.temperatureLow = convertT(day.temperatureLow);
           day.temperatureHigh = convertT(day.temperatureHigh);
           day.windSpeed = convertS(day.windSpeed);
-          day.windGust = convertS(day.windGust);
+          day.windGust = convertT(day.windGust);
+          day.pressure = convertP(day.pressure);
         });
 
       forecast.isMetric = toMetric;
@@ -601,12 +623,16 @@ export class Forecast {
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
     this.appService.updateCurrentTemp(NO_DATA);
     this.hourIcons.forEach(icon => icon.setAttribute('href', EMPTY_ICON));
+    this.hourWinds.forEach(wind => wind.innerHTML = '');
     this.hourTemps.forEach(temp => temp.textContent = '');
     this.hourPops.forEach(pop => pop.textContent = '');
     this.wind.css('display', 'none');
     this.windPointer.css('display', 'none');
     this.windArc.css('display', 'none');
     this.windGustArc.css('display', 'none');
+    this.pressure.css('display', 'none');
+
+    this.dailyWinds.forEach(wind => wind.html(''));
 
     this.dayIcons.forEach((dayIcon, index) => {
       setSvgHref(dayIcon, UNKNOWN_ICON);
@@ -688,6 +714,7 @@ export class Forecast {
     const firstHourIndex = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= startOfHour);
     const vertical = (this.hourlyForecast === HourlyForecast.VERTICAL);
     const timeFormat = this.appService.getTimeFormat();
+    const isMetric = forecastData.isMetric;
     let previousStartOfHour = startOfHour - 3_600_000;
 
     // noinspection DuplicatedCode
@@ -731,6 +758,13 @@ export class Forecast {
       if (this.hourIcons[index])
         this.hourIcons[index].setAttribute('href', icon);
 
+      if (this.hourWinds[index]) {
+        const speed = hourInfo.windSpeed ?? forecastData.currently.windSpeed;
+        const knots = (isMetric ? kphToKnots : mphToKnots)(speed);
+
+        this.hourWinds[index].innerHTML = windBarbsSvg(knots, hourInfo.windDirection ?? forecastData.currently.windDirection);
+      }
+
       // noinspection DuplicatedCode
       if (this.hourTemps[index]) {
         this.hourTemps[index].innerHTML = temp;
@@ -763,14 +797,19 @@ export class Forecast {
         forecastTemp: forecastData.currently.temperature,
       });
 
-      this.displayCurrentWind(forecastData.currently, forecastData.isMetric);
+      this.displayCurrentWind(forecastData.currently, isMetric);
+      this.displayCurrentPressure(forecastData.currently, isMetric);
       setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
       this.dayIcons.forEach((dayIcon, index) => {
+        const wind = this.dailyWinds[index];
+
         if (forecastData.daily.data.length > this.todayIndex + index) {
           const daily = forecastData.daily.data[this.todayIndex + index];
           const textElem = this.dayPrecipAccums[index];
+          const knots = (isMetric ? kphToKnots : mphToKnots)(daily.windSpeed);
 
+          wind.html(windBarbsSvg(knots, daily.windDirection));
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
           const low = Math.round(daily.temperatureLow);
@@ -799,6 +838,7 @@ export class Forecast {
           textElem.text(accum > 0 ? accum.toFixed(precision) + (forecastData.isMetric ? ' cm' : ' in') : '--');
         }
         else {
+          wind.html('');
           setSvgHref(dayIcon, UNKNOWN_ICON);
           this.dayLowHighs[index].text('--°/--°');
           this.dayChancePrecips[index].html('--' + PCT);
@@ -828,7 +868,7 @@ export class Forecast {
     return 10 + floor(min(speed * 80 / 117, 80));
   }
 
-  private displayCurrentWind(current: CurrentConditions, isMetric: boolean) {
+  private displayCurrentWind(current: CurrentConditions, isMetric: boolean): void {
     function rotate(elem: HTMLElement, deg: number) {
       elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
@@ -836,6 +876,7 @@ export class Forecast {
     if ((current.windSpeed ?? -1) >= 0 && current.windDirection != null) {
       $('#wind-speed').text(current.windSpeed.toFixed(0) + (isMetric ? ' km/h' : ' mph'));
       $('#wind-dir').text(current.windSpeed >= 0.5 ? compassPoint(current.windDirection) : '');
+      $('#wind-gust').text((current.windGust ?? 0) > current.windSpeed ? 'Gust: ' + current.windGust.toFixed(0) : '');
       this.wind.css('display', 'block');
     }
     else
@@ -868,6 +909,17 @@ export class Forecast {
     }
     else
       this.windGustArc.css('display', 'none');
+  }
+
+  private displayCurrentPressure(current: CurrentConditions, isMetric: boolean): void {
+    if ((current.pressure ?? -1) >= 0) {
+      $('#pressure-value').text(['⬇︎︎', '', '⬆︎'][(current.pressureTrend ?? 0) + 1] +
+        current.pressure.toFixed(isMetric ? 0 : 2) +
+        (isMetric ? ' hPa' : '"Hg'));
+      this.pressure.css('display', 'block');
+    }
+    else
+      this.pressure.css('display', 'none');
   }
 
   public refreshAlerts(forecastData = this.lastForecastData) {
@@ -1060,6 +1112,8 @@ export class Forecast {
       this.hourInfoTimer = undefined;
     }
 
+    const iconElems = $('.hour-icon');
+    const windElems = $('.hour-wind');
     const tempElems = $('.hour-temps');
     const popElems = $('.hour-pops');
 
@@ -1076,9 +1130,9 @@ export class Forecast {
     else
       this.showingHourTemps = true;
 
-    popElems.toggleClass('hour-info-show', !this.showingHourTemps);
-    popElems.toggleClass('hour-info-hide', this.showingHourTemps);
-    tempElems.toggleClass('hour-info-hide', !this.showingHourTemps);
-    tempElems.toggleClass('hour-info-show', this.showingHourTemps);
+    windElems.toggleClass('hour-info-show', !this.showingHourTemps).toggleClass('hour-info-hide', this.showingHourTemps);
+    iconElems.toggleClass('hour-info-hide', !this.showingHourTemps).toggleClass('hour-info-show', this.showingHourTemps);
+    popElems.toggleClass('hour-info-show', !this.showingHourTemps).toggleClass('hour-info-hide', this.showingHourTemps);
+    tempElems.toggleClass('hour-info-hide', !this.showingHourTemps).toggleClass('hour-info-show', this.showingHourTemps);
   }
 }
