@@ -29,8 +29,8 @@ import {
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, kphToKnots,
-  localDateString, mphToKnots, setSvgHref
+  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString,
+  setSvgHref
 } from './util';
 import { windBarbsSvg } from './wind-barbs';
 
@@ -760,9 +760,9 @@ export class Forecast {
 
       if (this.hourWinds[index]) {
         const speed = hourInfo.windSpeed ?? forecastData.currently.windSpeed;
-        const knots = (isMetric ? kphToKnots : mphToKnots)(speed);
+        const direction = hourInfo.windDirection ?? forecastData.currently.windDirection;
 
-        this.hourWinds[index].innerHTML = windBarbsSvg(knots, hourInfo.windDirection ?? forecastData.currently.windDirection);
+        this.hourWinds[index].innerHTML = windBarbsSvg(speed, isMetric, direction);
       }
 
       // noinspection DuplicatedCode
@@ -807,9 +807,8 @@ export class Forecast {
         if (forecastData.daily.data.length > this.todayIndex + index) {
           const daily = forecastData.daily.data[this.todayIndex + index];
           const textElem = this.dayPrecipAccums[index];
-          const knots = (isMetric ? kphToKnots : mphToKnots)(daily.windSpeed);
 
-          wind.html(windBarbsSvg(knots, daily.windDirection));
+          wind.html(windBarbsSvg(daily.windSpeed, isMetric, daily.windDirection, true));
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
           const low = Math.round(daily.temperatureLow);
@@ -874,8 +873,8 @@ export class Forecast {
     }
 
     if ((current.windSpeed ?? -1) >= 0 && current.windDirection != null) {
+      $('#wind-dir').text('Wind: ' + (current.windSpeed >= 0.5 ? compassPoint(current.windDirection) : ''));
       $('#wind-speed').text(current.windSpeed.toFixed(0) + (isMetric ? ' km/h' : ' mph'));
-      $('#wind-dir').text(current.windSpeed >= 0.5 ? compassPoint(current.windDirection) : '');
       $('#wind-gust').text((current.windGust ?? 0) > current.windSpeed ? 'Gust: ' + current.windGust.toFixed(0) : '');
       this.wind.css('display', 'block');
     }

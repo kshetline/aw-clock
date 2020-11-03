@@ -1,4 +1,5 @@
 import { floor, min, round } from 'ks-math';
+import { mphToKnots } from './util';
 
 interface Barbs {
   half: number;
@@ -6,9 +7,14 @@ interface Barbs {
   pennants: number;
 }
 
-function knotsToBarbs(knots: number): Barbs {
-  knots = min(floor((knots + 2.5) / 5) * 5, 100);
-  let half = round(min(knots, 100) / 5);
+function speedToBarbs(speed: number, isMetric: boolean): Barbs {
+  let half: number;
+
+  if (isMetric)
+    half = min(round(speed * 1000 / 3600 / 2.5), 20);
+  else
+    half = min(round(mphToKnots(speed) / 5), 20);
+
   let full = floor(half / 2);
   half -= full * 2;
   const pennants = floor(full / 5);
@@ -17,19 +23,20 @@ function knotsToBarbs(knots: number): Barbs {
   return { half, full, pennants };
 }
 
-export function windBarbsSvg(knots: number, direction: number): string {
-  if (knots == null || isNaN(knots) || knots < 0 || direction == null || isNaN(direction))
+export function windBarbsSvg(speed: number, isMetric: boolean, direction: number, blankIfLow = false): string {
+  if (speed == null || isNaN(speed) || speed < 0 || direction == null || isNaN(direction))
     return '';
 
-  const barbs = knotsToBarbs(knots);
+  const barbs = speedToBarbs(speed, isMetric);
 
   if (barbs.half === 0 && barbs.full === 0 && barbs.pennants === 0)
-    return '<circle style="stroke-width: 10; fill: transparent" cx="50" cy="50" r="45"/>' +
-           '<circle style="stroke-width: 5; fill: transparent; stroke: currentColor" cx="50" cy="50" r="45"/>';
+    return blankIfLow ? '' :
+      '<circle style="stroke-width: 10; fill: transparent" cx="50" cy="50" r="45"/>' +
+      '<circle style="stroke-width: 5; fill: transparent; stroke: currentColor" cx="50" cy="50" r="45"/>';
 
   let rotation = '';
 
-  if (knots >= 2.5 && direction !== 0)
+  if ((barbs.pennants > 0 || barbs.full > 0 || barbs.half > 0) && direction !== 0)
     rotation = ` transform="rotate(${direction}, 50, 50)"`;
 
   let x = 53.75;
