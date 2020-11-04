@@ -23,16 +23,14 @@ function speedToBarbs(speed: number, isMetric: boolean): Barbs {
   return { half, full, pennants };
 }
 
-export function windBarbsSvg(speed: number, isMetric: boolean, direction: number, blankIfLow = false): string {
-  if (speed == null || isNaN(speed) || speed < 0 || direction == null || isNaN(direction))
-    return '';
-
-  const barbs = speedToBarbs(speed, isMetric);
+function barbPath(barbs: Barbs, direction: number, blankIfLow: boolean, qlass = ''): string {
+  if (qlass)
+    qlass = ` class="${qlass}"`;
 
   if (barbs.half === 0 && barbs.full === 0 && barbs.pennants === 0)
     return blankIfLow ? '' :
       '<circle style="stroke-width: 10; fill: transparent" cx="50" cy="50" r="45"/>' +
-      '<circle style="stroke-width: 5; fill: transparent; stroke: currentColor" cx="50" cy="50" r="45"/>';
+      `<circle${qlass} style="stroke-width: 5; fill: transparent; stroke: currentColor" cx="50" cy="50" r="45"/>`;
 
   let rotation = '';
 
@@ -41,10 +39,7 @@ export function windBarbsSvg(speed: number, isMetric: boolean, direction: number
 
   let x = 53.75;
   let y = 95;
-  let path = '<path class="compass" style="stroke-width: 5; fill: transparent" ' +
-             'd="M 50 0 L 61.5 22.3 L 85.4 14.6 L 77.7 38.5 L 100 50 L 77.7 61.5 L 85.4 85.4 L 61.5 77.7 ' +
-             'L 50 100 L 38.5 77.7 L 14.6 85.4 L 22.3 61.5 L 0 50 L 22.3 38.5 L 14.6 14.6 L 38.5 22.3 Z"/>' +
-             `<g${rotation}><path style="stroke-width: 2.5" d="M ${x} ${y}`;
+  let path = `<g${rotation}><path${qlass} style="stroke-width: 2.5" d="M ${x} ${y}`;
   const addPoint = () => path += ` L ${x} ${y}`;
 
   x -= 7.5;
@@ -91,5 +86,25 @@ export function windBarbsSvg(speed: number, isMetric: boolean, direction: number
     addPoint();
   }
 
-  return path + ' Z"/><g>';
+  return path + ' Z"/></g>';
+}
+
+export function windBarbsSvg(speed: number, gust: number, isMetric: boolean, direction: number, blankIfLow = false): string {
+  if (speed == null || isNaN(speed) || speed < 0 || direction == null || isNaN(direction))
+    return '';
+
+  const barbs = speedToBarbs(speed, isMetric);
+  const gustBarbs = gust && speedToBarbs(gust, isMetric);
+  const windPath = barbPath(barbs, direction, blankIfLow);
+  let path = '';
+
+  if (!windPath.includes('circle'))
+    path = '<path class="compass" style="stroke-width: 5; fill: transparent" ' +
+           'd="M 50 0 L 61.5 22.3 L 85.4 14.6 L 77.7 38.5 L 100 50 L 77.7 61.5 L 85.4 85.4 L 61.5 77.7 ' +
+           'L 50 100 L 38.5 77.7 L 14.6 85.4 L 22.3 61.5 L 0 50 L 22.3 38.5 L 14.6 14.6 L 38.5 22.3 Z"/>';
+
+  if (gustBarbs)
+    path += barbPath(gustBarbs, direction, blankIfLow, 'gust');
+
+  return path + windPath;
 }

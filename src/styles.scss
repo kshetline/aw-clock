@@ -288,6 +288,14 @@ label {
   .compass {
     stroke: rgba(#FFF, 0.33);
   }
+
+  .gust {
+    fill: #FF66FF;
+  }
+
+  circle.gust {
+    stroke: #FF66FF !important;
+  }
 }
 
 #timezone {

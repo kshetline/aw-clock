@@ -760,9 +760,10 @@ export class Forecast {
 
       if (this.hourWinds[index]) {
         const speed = hourInfo.windSpeed ?? forecastData.currently.windSpeed;
+        const gust = hourInfo.windGust ?? forecastData.currently.windGust;
         const direction = hourInfo.windDirection ?? forecastData.currently.windDirection;
 
-        this.hourWinds[index].innerHTML = windBarbsSvg(speed, isMetric, direction);
+        this.hourWinds[index].innerHTML = windBarbsSvg(speed, gust, isMetric, direction);
       }
 
       // noinspection DuplicatedCode
@@ -808,7 +809,7 @@ export class Forecast {
           const daily = forecastData.daily.data[this.todayIndex + index];
           const textElem = this.dayPrecipAccums[index];
 
-          wind.html(windBarbsSvg(daily.windSpeed, isMetric, daily.windDirection, true));
+          wind.html(windBarbsSvg(daily.windSpeed, daily.windGust, isMetric, daily.windDirection, true));
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
           const low = Math.round(daily.temperatureLow);
