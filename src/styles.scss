@@ -6,6 +6,7 @@ $constellation-font: Astronomy, sans-serif;
 $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 $clock-border: #69C;
+$night-sky-track: rgba(153, 102, 204, 0.6);
 $risen-track: rgba(102, 204, 153, 0.5);
 
 html {
@@ -688,6 +689,11 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   stroke: $planet-grid;
   stroke-width: 0.25px;
   fill: none;
+}
+
+.night-sky-track {
+  stroke: $night-sky-track;
+  stroke-width: 0.67px;
 }
 
 .risen-track {

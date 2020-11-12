@@ -166,6 +166,7 @@ export class Clock {
   private decorateClockFace(): void {
     const centerStr = CLOCK_CENTER.toString();
     const planetTracks = document.getElementById('planet-tracks');
+    const nightSkyTracks = document.getElementById('night-sky-tracks');
     const risenTracks = document.getElementById('risen-tracks');
     const faceColor = getCssValue(document.getElementById('face'), 'stroke');
     let firstTick: SVGCircleElement;
@@ -243,6 +244,7 @@ export class Clock {
       const rect = document.createElementNS(SVG_NAMESPACE, 'rect');
       const text = document.createElementNS(SVG_NAMESPACE, 'text');
       const path = document.createElementNS(SVG_NAMESPACE, 'path');
+      const nightPath = document.createElementNS(SVG_NAMESPACE, 'path');
 
       rect.setAttribute('x', (x - 0.9).toString());
       rect.setAttribute('y', (CLOCK_CENTER + dy - 2).toString());
@@ -263,6 +265,12 @@ export class Clock {
       path.classList.add('risen-track');
       path.id = `risen-${planetIds[index]}`;
       risenTracks.appendChild(path);
+
+      nightPath.setAttribute('fill', 'none');
+      nightPath.setAttribute('visibility', 'inherited');
+      nightPath.classList.add('night-sky-track');
+      nightPath.id = `night-sky-${planetIds[index]}`;
+      nightSkyTracks.appendChild(nightPath);
     });
   }
 

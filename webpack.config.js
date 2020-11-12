@@ -14,7 +14,8 @@ const baseHref = '';
 const deployUrl = '';
 const projectRoot = process.cwd();
 const maximumInlineSize = 10;
-const NODE_ENV = process.env.NODE_ENV || 'production';
+const NODE_ENV = (process.env.NODE_ENV === 'local' ? 'development' : process.env.NODE_ENV || 'production');
+const isLocal = (process.env.NODE_ENV === 'local');
 
 const postcssPlugins = function (loader) {
   // noinspection JSValidateTypes
@@ -141,7 +142,7 @@ module.exports = {
     ]
   },
   output: {
-    path: path.join(process.cwd(), 'dist', 'public'),
+    path: path.join(projectRoot, 'dist', 'public'),
     filename: '[name].[contenthash].bundle.js',
     chunkFilename: '[id].chunk.js',
     crossOriginLoading: false
@@ -170,7 +171,7 @@ module.exports = {
       },
       {
         exclude: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.css$/,
         use: [
@@ -189,7 +190,7 @@ module.exports = {
       },
       {
         exclude: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.scss$|\.sass$/,
         use: [
@@ -216,7 +217,7 @@ module.exports = {
       },
       {
         exclude: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.less$/,
         use: [
@@ -241,7 +242,7 @@ module.exports = {
       },
       {
         exclude: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.styl$/,
         use: [
@@ -267,7 +268,7 @@ module.exports = {
       },
       {
         include: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.css$/,
         use: [
@@ -287,7 +288,7 @@ module.exports = {
       },
       {
         include: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.scss$|\.sass$/,
         use: [
@@ -310,7 +311,7 @@ module.exports = {
       },
       {
         include: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.less$/,
         use: [
@@ -336,7 +337,7 @@ module.exports = {
       },
       {
         include: [
-          path.join(process.cwd(), 'src/styles.scss')
+          path.join(projectRoot, 'src/styles.scss')
         ],
         test: /\.styl$/,
         use: [
@@ -369,7 +370,7 @@ module.exports = {
     ]
   },
   optimization: {
-    minimize: true,
+    minimize: !isLocal,
     minimizer: [new TerserPlugin()],
   },
   devtool: 'source-map',
