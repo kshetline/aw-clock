@@ -167,7 +167,7 @@ export class Ephemeris {
         rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU, observer, timezone, null, false, null, 2);
 
         if (set && rise) {
-          if (time_JDU - set.ut < rise.ut - time_JDU)
+          if (time_JDU - set.ut < (rise.ut - time_JDU) / 2)
             rise = eventFinder.findEvent(planet, RISE_EVENT, set.ut, observer, timezone, null, true, null, 2);
           else
             set = eventFinder.findEvent(planet, SET_EVENT, rise.ut, observer, timezone, null, false, null, 2);
@@ -211,7 +211,7 @@ export class Ephemeris {
 
             const endAngle = currentAngle + (time_JDU - endTime) * 360;
 
-            Ephemeris.setArc(nightSkyTrack, radius, startAngle, endAngle);
+            Ephemeris.setArc(nightSkyTrack, radius, endAngle, startAngle);
             append = true;
           }
 
@@ -224,10 +224,10 @@ export class Ephemeris {
 
               Ephemeris.setArc(nightSkyTrack, radius, endAngle, startAngle, append);
             }
-            else
+            else if (!append)
               nightSkyTrack.css('visibility', 'hidden');
           }
-          else
+          else if (!append)
             nightSkyTrack.css('visibility', 'hidden');
         }
         else
