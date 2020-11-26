@@ -882,6 +882,8 @@ export class Forecast {
     else
       this.wind.css('display', 'none');
 
+    let pointerDrawn = false;
+
     if ((current.windSpeed ?? 0) > 0 && current.windDirection != null) {
       const span = Forecast.speedToSpan(current.windSpeed, isMetric);
       const arc = describeArc(50, 50, 45.5, current.windDirection - 90 - span / 2, current.windDirection - 90 + span / 2);
@@ -893,22 +895,32 @@ export class Forecast {
       this.windPointer.css('display', 'block');
       this.windArc.css('stroke', color);
       this.windArc.css('display', 'block');
+      pointerDrawn = true;
     }
-    else {
-      this.windPointer.css('display', 'none');
+    else
       this.windArc.css('display', 'none');
-    }
 
     if ((current.windGust ?? 0) > 0 && current.windDirection != null) {
       const span = Forecast.speedToSpan(current.windGust, isMetric);
       const arc = describeArc(50, 50, 45, current.windDirection - 90 - span / 2, current.windDirection - 90 + span / 2);
+      const color = Forecast.speedToColor(current.windGust, isMetric);
 
       this.windGustArc[0].setAttribute('d', arc);
-      this.windGustArc.css('stroke', Forecast.speedToColor(current.windGust, isMetric));
+      this.windGustArc.css('stroke', color);
       this.windGustArc.css('display', 'block');
+
+      if (!pointerDrawn) {
+        this.windPointer.css('fill', color);
+        rotate(this.windPointer[0], current.windDirection);
+        this.windPointer.css('display', 'block');
+        pointerDrawn = true;
+      }
     }
     else
       this.windGustArc.css('display', 'none');
+
+    if (!pointerDrawn)
+      this.windPointer.css('display', 'none');
   }
 
   private displayCurrentPressure(current: CurrentConditions, isMetric: boolean): void {

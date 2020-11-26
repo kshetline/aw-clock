@@ -29,9 +29,9 @@ In my own case, I needed to use an active GPS antenna to get a good signal, but 
 The next step (or the first, if you’re skipping GPS) is to clone the repository and perform the initial set-up:
 
 ```shell script
-＄ git clone https://github.com/kshetline/aw-clock.git
-＄ cd aw-clock
-＄ sudo ./build.sh -i
+$ git clone https://github.com/kshetline/aw-clock.git
+$ cd aw-clock
+$ sudo ./build.sh -i
 ```
 
 There will possibly be a long delay the first time you run this script while Node.js (if necessary) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
@@ -97,7 +97,7 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 * Swipe left or right on the daily forecast to view the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four (or five) days.*
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
-* Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation. Tap/click again to toggle back to temperatures. *After one minute, the display reverts to hourly temperatures.*
+* Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation and wind speed. Tap/click again to toggle back to weather icons and temperatures. *After one minute, the display reverts to weather icons and hourly temperatures.*
 * Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for them to scroll by.
 * Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
 
@@ -107,11 +107,19 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 Wind speed is displayed using *wind barbs*. When using imperial units, the wind barbs represent wind speed in knots, rounded to the nearest multiple of 5 knots, up to a maximum of 100 knots. In metric mode the wind barbs represent wind speed in meters per second, in increments of 2.5 m/s (in the diagram above, divide the captions by 2 for m/s).
 
-The end of the wind barbs where the barbs are added from represents the direction the wind is blowing from, with north being upward. Wind gust speed is represented by a red wind barb drawn underneath the non-gust wind barb, such that only the excess gust speed is peeks out from behind.
+| &nbsp; | Imperial | Metric |
+|--------|----------|--------|
+| Half barb | 5 knots | 2.5 m/s |
+| Full barb | 10 knots | 5 m/s |
+| Pennant | 50 knots | 25 m/s |
+
+The barbed ends of the wind barbs point in the direction from which the wind is blowing, with north being upward. Wind gust speed is represented by a red wind barb drawn underneath the non-gust wind barb, such that only the excess gust speed is seen, peeking out from behind.
+
+Current wind speed is also shown as an arc along the edge of the clock face, changing in size and color (from cyan to green, to yellow, to orange, and to red) as wind speed increases. If there is a gust speed, that will show as a second thinner but wider arc. These arcs are centered on the direction from which the wind is coming, with an inward pointer pointing in the direction toward which the wind is blowing. There are no arcs drawn for wind below 2.5 knots (or 1.25 m/s).
 
 ### How the planet display works
 
-The circular tracks around the center of the clock face display the ecliptic longitude of the Sun, the Moon, Mercury, Venus, Mars, Jupiter, and Saturn (in that order from the innermost track outward), starting with 0° (the First Point of Aries) at three o’clock, and increasing *counterclockwise* from there. Over time the planets will slowly move around the clock face, mostly moving counterclockwise, but occasionally clockwise when retrograde.
+The circular tracks around the center of the clock face display the ecliptic longitude of the Sun, the Moon, Mercury, Venus, Mars, Jupiter, and Saturn (in that order, from the innermost track outward), starting with 0° (the First Point of Aries) at three o’clock, and increasing *counterclockwise* from there. Over time the planets will slowly move around the clock face, mostly moving counterclockwise, but occasionally clockwise when retrograde.
 
 When the symbol for a planet is drawn larger, and it appears on top of one of the green or purple arcs along the planet tracks, this indicates the planet is above the local horizon. Otherwise, it is below the horizon. The clockwise end of each colored arc represents when the planet rises, and the counter-clockwise end represents when the planet sets. When a planet is on top of the purple portion of an arc, that indicates that the sun is below the horizon at that time &mdash; the planet is therefore in the night sky, and likely visible if twilight doesn’t overpower it.
 
