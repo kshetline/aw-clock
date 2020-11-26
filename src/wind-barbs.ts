@@ -2,39 +2,39 @@ import { floor, min, round } from 'ks-math';
 import { mphToKnots } from './util';
 
 interface Barbs {
-  half: number;
+  halves: number;
   full: number;
   pennants: number;
 }
 
 function speedToBarbs(speed: number, isMetric: boolean): Barbs {
-  let half: number;
+  let halves: number;
 
   if (isMetric)
-    half = min(round(speed * 1000 / 3600 / 2.5), 20);
+    halves = min(round(speed * 1000 / 3600 / 2.5), 20);
   else
-    half = min(round(mphToKnots(speed) / 5), 20);
+    halves = min(round(mphToKnots(speed) / 5), 20);
 
-  let full = floor(half / 2);
-  half -= full * 2;
+  let full = floor(halves / 2);
+  halves -= full * 2;
   const pennants = floor(full / 5);
   full -= pennants * 5;
 
-  return { half, full, pennants };
+  return { halves, full, pennants };
 }
 
 function barbPath(barbs: Barbs, direction: number, blankIfLow: boolean, qlass = ''): string {
   if (qlass)
     qlass = ` class="${qlass}"`;
 
-  if (barbs.half === 0 && barbs.full === 0 && barbs.pennants === 0)
+  if (barbs.halves === 0 && barbs.full === 0 && barbs.pennants === 0)
     return blankIfLow ? '' :
       '<circle style="stroke-width: 10; fill: transparent" cx="50" cy="50" r="45"/>' +
       `<circle${qlass} style="stroke-width: 5; fill: transparent; stroke: currentColor" cx="50" cy="50" r="45"/>`;
 
   let rotation = '';
 
-  if ((barbs.pennants > 0 || barbs.full > 0 || barbs.half > 0) && direction !== 0)
+  if ((barbs.pennants > 0 || barbs.full > 0 || barbs.halves > 0) && direction !== 0)
     rotation = ` transform="rotate(${direction}, 50, 50)"`;
 
   let x = 54;
@@ -72,7 +72,7 @@ function barbPath(barbs: Barbs, direction: number, blankIfLow: boolean, qlass = 
     addPoint();
   }
 
-  if (barbs.half) {
+  if (barbs.halves) {
     if (barbs.pennants === 0 && barbs.full === 0) {
       y += 10;
       addPoint();
