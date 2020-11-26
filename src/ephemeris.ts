@@ -43,6 +43,7 @@ function getMoonPhaseIcon(phase: number) {
 export class Ephemeris {
   private planetTracks: JQuery;
   private planetSymbols: JQuery;
+  private nightSkyTracks: JQuery;
   private risenTracks: JQuery;
   private rises: JQuery[][] = [];
   private sets: JQuery[][] = [];
@@ -65,6 +66,7 @@ export class Ephemeris {
 
     this.planetTracks = $('#planet-tracks');
     this.planetSymbols = $('#planets');
+    this.nightSkyTracks = $('#night-sky-tracks');
     this.risenTracks = $('#risen-tracks');
     this.sunElems = $('.sun-info');
     this.moonElems = $('.moon-info');
@@ -108,7 +110,23 @@ export class Ephemeris {
     }
   }
 
-  public update(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean): void {
+  private static setArc(path: JQuery, radius: number, startAngle: number, endAngle: number, append = false): void {
+    while (startAngle + 360 < endAngle)
+      startAngle += 360;
+
+    while (endAngle < startAngle)
+      endAngle += 360;
+
+    let arc = describeArc(50, 50, radius, startAngle, endAngle);
+
+    if (append)
+      arc = path[0].getAttribute('d') + ' ' + arc;
+
+    path[0].setAttribute('d', arc);
+    path.css('visibility', 'visible');
+  }
+
+  update(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean): void {
     function rotate(elem: JQuery, deg: number) {
       elem.attr('transform', 'rotate(' + deg + ' 50 50)');
     }
@@ -120,67 +138,132 @@ export class Ephemeris {
     const time_JDU = KsDateTime.julianDay(time) + HALF_MINUTE; // Round up half a minute for consistency with rounding of event times.
     const time_JDE = UT_to_TDB(time_JDU);
     const observer = new SkyObserver(longitude, latitude);
+    let sunDownAllDay = false;
+    let sunUpAllDay = false;
+    let sunRiseAngle: number = null;
+    let sunSetAngle: number = null;
 
     planets.forEach((planet, index) => {
-      eventFinder.getRiseAndSetEvents(planet, wallTime.y, wallTime.m, wallTime.d - 1, 3, observer, timezone).then(daysOfEvents => {
-        const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
-        const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
-        const elem = this.planetElems[index];
-        let targetAltitude = -REFRACTION_AT_HORIZON;
+      const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
+      const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
+      const elem = this.planetElems[index];
+      let targetAltitude = -REFRACTION_AT_HORIZON;
 
-        if (planet === SUN || planet === MOON)
-          targetAltitude -= AVG_SUN_MOON_RADIUS;
+      if (planet === SUN || planet === MOON)
+        targetAltitude -= AVG_SUN_MOON_RADIUS;
 
-        const risen = (altitude >= targetAltitude);
-        const beforeType = risen ? RISE_EVENT : SET_EVENT;
-        const afterType = risen ? SET_EVENT : RISE_EVENT;
-        let beforeEvent: AstroEvent = null;
-        let afterEvent: AstroEvent = null;
-        const risenTrack = $('#risen-' + planetIds[index]);
+      const risen = (altitude >= targetAltitude);
+      let rise: AstroEvent;
+      let set: AstroEvent;
+      const nightSkyTrack = $('#night-sky-' + planetIds[index]);
+      const risenTrack = $('#risen-' + planetIds[index]);
 
-        rotate(elem, -eclipticLongitude);
-        elem.css('stroke-width', risen ? '0' : '0.25');
-        elem[0].setAttribute('r', altitude < targetAltitude ? '0.625' : '0.75');
+      if (risen) {
+        rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU, observer, timezone, null, true, null, 2);
+        set = eventFinder.findEvent(planet, SET_EVENT, time_JDU, observer, timezone, null, false, null, 2);
+      }
+      else {
+        set = eventFinder.findEvent(planet, SET_EVENT, time_JDU, observer, timezone, null, true, null, 2);
+        rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU, observer, timezone, null, false, null, 2);
 
-        daysOfEvents.forEach(events => {
-          events.forEach(event => {
-            if (event.eventType === beforeType && event.ut < time_JDU && (!beforeEvent || event.ut > beforeEvent.ut))
-              beforeEvent = event;
-
-            if (event.eventType === afterType && beforeEvent && event.ut > time_JDU && (!afterEvent || event.ut < afterEvent.ut))
-              afterEvent = event;
-          });
-        });
-
-        const rise = risen ? beforeEvent : afterEvent;
-        const set = risen ? afterEvent : beforeEvent;
-        const radius = 10 + index * 2;
-
-        if (rise && rise.ut > time_JDU - 1.1 && set && set.ut < time_JDU + 1.1) {
-          const currentAngle = mod(-eclipticLongitude, 360);
-          let riseAngle = currentAngle + (time_JDU - rise.ut) * 360;
-          let setAngle = currentAngle + (time_JDU - set.ut) * 360;
-
-          while (setAngle + 360 < riseAngle)
-            setAngle += 360;
-
-          while (riseAngle < setAngle)
-            riseAngle += 360;
-
-          const arc = describeArc(50, 50, radius, setAngle, riseAngle);
-
-          risenTrack[0].setAttribute('d', arc);
-          risenTrack.css('visibility', 'visible');
+        if (set && rise) {
+          if (time_JDU - set.ut < (rise.ut - time_JDU) / 2)
+            rise = eventFinder.findEvent(planet, RISE_EVENT, set.ut, observer, timezone, null, true, null, 2);
+          else
+            set = eventFinder.findEvent(planet, SET_EVENT, rise.ut, observer, timezone, null, false, null, 2);
         }
-        else if (risen) {
-          // In the sky all day
-          risenTrack[0].setAttribute('d', describeArc(50, 50, radius, 0, 359.99));
-          risenTrack.css('visibility', 'visible');
+      }
+
+      rotate(elem, -eclipticLongitude);
+      elem.css('stroke-width', risen ? '0' : '0.25');
+      elem[0].setAttribute('r', altitude < targetAltitude ? '0.625' : '0.75');
+
+      const radius = 10 + index * 2;
+
+      if (rise && rise.ut > time_JDU - 1.1 && set && set.ut < time_JDU + 1.1) {
+        const currentAngle = mod(-eclipticLongitude, 360);
+        const riseAngle = currentAngle + (time_JDU - rise.ut) * 360;
+        const setAngle = currentAngle + (time_JDU - set.ut) * 360;
+
+        if (planet === SUN) {
+          sunRiseAngle = riseAngle;
+          sunSetAngle = setAngle;
+        }
+
+        Ephemeris.setArc(risenTrack, radius, setAngle, riseAngle);
+
+        if (planet !== SUN && !sunUpAllDay) {
+          const sunAltitude = solarSystem.getHorizontalPosition(SUN, rise.ut, observer).altitude.degrees;
+          let sunUp = sunAltitude >= -REFRACTION_AT_HORIZON - AVG_SUN_MOON_RADIUS;
+          let append = false;
+          let secondArcStart = rise.ut;
+
+          if (!sunUp) {
+            const startAngle = currentAngle + (time_JDU - rise.ut) * 360;
+            let endTime = set.ut;
+            const sunRise = eventFinder.findEvent(SUN, RISE_EVENT, rise.ut, observer, timezone, null, false, null, 2);
+
+            if (sunRise && sunRise.ut < endTime) {
+              endTime = sunRise.ut;
+              secondArcStart = endTime + 1 / 1440;
+              sunUp = true;
+            }
+
+            const endAngle = currentAngle + (time_JDU - endTime) * 360;
+
+            Ephemeris.setArc(nightSkyTrack, radius, endAngle, startAngle);
+            append = true;
+          }
+
+          if (sunUp) {
+            const sunSet = eventFinder.findEvent(SUN, SET_EVENT, secondArcStart, observer, timezone, null, false, null, 2);
+
+            if (sunSet && sunSet.ut < set.ut) {
+              const startAngle = currentAngle + (time_JDU - sunSet.ut) * 360;
+              const endAngle = currentAngle + (time_JDU - set.ut) * 360;
+
+              Ephemeris.setArc(nightSkyTrack, radius, endAngle, startAngle, append);
+            }
+            else if (!append)
+              nightSkyTrack.css('visibility', 'hidden');
+          }
+          else if (!append)
+            nightSkyTrack.css('visibility', 'hidden');
         }
         else
-          // Below the horizon all day
-          risenTrack.css('visibility', 'hidden');
-      });
+          nightSkyTrack.css('visibility', 'hidden');
+      }
+      else if (risen) {
+        // In the sky all day
+        risenTrack[0].setAttribute('d', describeArc(50, 50, radius, 0, 359.99));
+        risenTrack.css('visibility', 'visible');
+
+        if (planet === SUN)
+          sunUpAllDay = true;
+        else if (sunDownAllDay) {
+          nightSkyTrack[0].setAttribute('d', describeArc(50, 50, radius, 0, 359.99));
+          nightSkyTrack.css('visibility', 'visible');
+        }
+        else if (sunRiseAngle != null) {
+          while (sunSetAngle < sunRiseAngle)
+            sunSetAngle += 360;
+
+          const arc = describeArc(50, 50, radius, sunRiseAngle, sunSetAngle);
+
+          nightSkyTrack[0].setAttribute('d', arc);
+          nightSkyTrack.css('visibility', 'visible');
+        }
+        else
+          nightSkyTrack.css('visibility', 'hidden');
+      }
+      else {
+        // Below the horizon all day
+        nightSkyTrack.css('visibility', 'hidden');
+        risenTrack.css('visibility', 'hidden');
+
+        if (planet === SUN)
+          sunDownAllDay = true;
+      }
     });
 
     [SUN, MOON].forEach(body => {

@@ -3,7 +3,7 @@ import { Request, Router } from 'express';
 import { max } from 'ks-math';
 import { toNumber } from 'ks-util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { checkForecastIntegrity } from './util';
+import { autoHpa, autoInHg, checkForecastIntegrity } from './util';
 
 export const router = Router();
 
@@ -129,8 +129,8 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
   const location = wuForecast.location;
 
   forecast.city = location && `${location.city}, ${location.adminDistrictCode}, ${location.countryCode}`;
-  convertCurrent(forecast, wc, wh);
-  convertHourly(forecast, wh);
+  convertCurrent(forecast, wc, wh, isMetric);
+  convertHourly(forecast, wh, isMetric);
   convertDaily(forecast, wc, wuForecast.daily);
   convertAlerts(forecast, wuForecast.alerts);
 
@@ -161,12 +161,10 @@ function extractGust(baseSpeed: number, ...phrases: string[]): number {
   return gust > baseSpeed ? gust : null;
 }
 
-function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
-  console.log(wc.pressureTendencyTrend);
-
-  // We want pressure to always be metric. For some strange reason, it always is that way anyway for current conditions,
-  // but needs to be converted from inches of mercury for the hourly imperial values. As I don't trust this inconsistency
-  // I'll just use the value itself to decide on doing the conversion.
+function convertCurrent(forecast: ForecastData, wc: any, wh: any, isMetric: boolean): void {
+  // For some strange reason pressure is always metric for current conditions, but changes to inches of mercury
+  // (inHg) for the hourly imperial values. As I don't trust this inconsistency so I'll use the numeric range of
+  // the input values to decide on what conversion to do.
   forecast.currently = {
     time: wc.validTimeUtc,
     summary: wc.wxPhraseMedium,
@@ -175,7 +173,7 @@ function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
     cloudCover: wh.cloudCover[0] / 100,
     precipProbability: wh.precipChance[0] / 100,
     precipType: wh.precipType[0],
-    pressure: wc.pressureMeanSeaLevel < 50 ? wc.pressureMeanSeaLevel * 33.864 : wc.pressureMeanSeaLevel,
+    pressure: isMetric ? autoHpa(wc.pressureMeanSeaLevel) : autoInHg(wc.pressureMeanSeaLevel),
     pressureTrend: pressureTrendFromString(wc.pressureTendencyTrend),
     temperature: wc.temperature,
     feelsLikeTemperature: wc.temperatureFeelsLike,
@@ -185,28 +183,25 @@ function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
   };
 }
 
-function convertHourly(forecast: ForecastData, wh: any): void {
+function convertHourly(forecast: ForecastData, wh: any, isMetric: boolean): void {
   forecast.hourly = [];
 
   const length = Math.min(36, wh.iconCode?.length ?? 0, wh.precipType?.length ?? 0, wh.qpf?.length ?? 0,
                           wh.qpfSnow?.length ?? 0, wh.temperature?.length ?? 0, wh.validTimeUtc?.length ?? 0);
 
   for (let i = 0; i < length; ++i) {
+    const pressure = wh.pressureMeanSeaLevel[i];
     let precipType = wh.precipType[i];
-    let pressure = wh.pressureMeanSeaLevel[i];
 
     if (wh.qpfSnow[i] > 0 && precipType === 'precip')
       precipType = 'snow';
-
-    if (pressure < 50)
-      pressure *= 33.864;
 
     forecast.hourly.push({
       icon: getIcon(wh.iconCode[i]),
       temperature: wh.temperature[i],
       precipProbability: wh.precipChance[i] / 100,
       precipType,
-      pressure,
+      pressure: isMetric ? autoHpa(pressure) : autoInHg(pressure),
       time: wh.validTimeUtc[i],
       windDirection: wh.windDirection[i],
       windGust: wh.windGust[i],

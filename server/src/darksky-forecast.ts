@@ -9,7 +9,7 @@ import {
   ForecastData,
   ForecastDataKeys, HourlyConditions, PressureTrend
 } from './shared-types';
-import { checkForecastIntegrity } from './util';
+import { checkForecastIntegrity, hpaToInHg } from './util';
 
 // The time (with a month of padding) when the Dark Sky API will be shut down, presuming "end of 2021"
 // actually means all the way until 2021-12-31.
@@ -173,6 +173,9 @@ function convertConditions(dsConditions: CommonConditions, keys: string[], isMet
       (conditions as any)[key] = (dsConditions as any)[key];
   });
 
+  if (!isMetric && conditions.pressure != null)
+    conditions.pressure = hpaToInHg(conditions.pressure);
+
   if (isMetric && conditions.windSpeed != null) // Convert m/s to km/hour
     conditions.windSpeed *= 3.6;
 
@@ -189,7 +192,7 @@ function convertHourly(dsHourly: DSHourlyConditions, isMetric: boolean): HourlyC
         temperature: hour.temperature,
         precipProbability: hour.precipProbability,
         precipType: hour.icon === 'snow' || /\bsnow\b/i.test(hour.summary || '') ? 'snow' : hour.icon === 'rain' ? 'rain' : '',
-        pressure: hour.pressure,
+        pressure: isMetric ? hour.pressure : hpaToInHg(hour.pressure),
         time: hour.time,
         windDirection: hour.windBearing,
         windGust: hour.windGust,

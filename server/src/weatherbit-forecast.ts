@@ -2,7 +2,7 @@ import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
 import { last, toBoolean, toNumber } from 'ks-util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { checkForecastIntegrity, escapeForRegex, fToC, inchesToCm, milesToKm } from './util';
+import { checkForecastIntegrity, escapeForRegex, fToC, hpaToInHg, inchesToCm, milesToKm } from './util';
 
 interface WeatherBitCurrent {
   data: {
@@ -237,7 +237,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
     icon: convertIcon(currentData.weather?.icon, currentData.clouds),
     precipIntensity: conditionalCm(currentData.precip, isMetric),
     precipType: getPrecipType(currentData.weather.code),
-    pressure: currentData.slp,
+    pressure: isMetric ? currentData.slp : hpaToInHg(currentData.slp),
     pressureTrend: null,
     windSpeed: conditionalKph(currentData.wind_spd, isMetric),
     windDirection: currentData.wind_dir,
@@ -255,7 +255,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
         icon: convertIcon(hour.weather?.icon, hour.clouds),
         precipProbability: hour.pop / 100,
         precipType: getPrecipType(hour.weather?.code),
-        pressure: hour.slp,
+        pressure: isMetric ? hour.slp : hpaToInHg(hour.slp),
         windSpeed: conditionalKph(hour.wind_spd, isMetric),
         windDirection: hour.wind_dir,
         windGust: conditionalKph(hour.wind_gust_spd, isMetric),
@@ -291,7 +291,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
       precipAccumulation: conditionalCm(day.precip, isMetric),
       precipProbability: day.pop / 100,
       precipType: getPrecipType(day.weather?.code),
-      pressure: day.slp,
+      pressure: isMetric ? day.slp : hpaToInHg(day.slp),
       windSpeed: conditionalKph(day.wind_spd, isMetric),
       windDirection: day.wind_dir,
       windGust: conditionalKph(day.wind_gust_spd, isMetric),

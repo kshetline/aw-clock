@@ -6,6 +6,7 @@ $constellation-font: Astronomy, sans-serif;
 $dialog-font: Arial, sans-serif;
 $planet-grid: #369;
 $clock-border: #69C;
+$night-sky-track: rgba(153, 102, 204, 0.6);
 $risen-track: rgba(102, 204, 153, 0.5);
 
 html {
@@ -175,7 +176,7 @@ label {
   padding-bottom: 0.2em;
 }
 
-.hour-icon {
+.hour-icon, .wind-icon {
   &.vertical {
     opacity: 1;
   }
@@ -198,6 +199,12 @@ label {
 .hour-info-hide, {
   opacity: 0;
   transition: opacity 1s;
+
+  &.circular,
+  &.vertical {
+    opacity: 0;
+    transition: opacity 1s;
+  }
 }
 
 #face {
@@ -268,6 +275,28 @@ label {
 
 .small-caption {
   font-size: 2.5px;
+}
+
+.wind-pressure {
+  font-size: 2.1px;
+}
+
+.wind-barb {
+  fill: white;
+  overflow: visible;
+  stroke: black;
+
+  .compass {
+    stroke: rgba(#FFF, 0.25);
+  }
+
+  .gust {
+    fill: #FF66FF;
+  }
+
+  circle.gust {
+    stroke: #FF66FF !important;
+  }
 }
 
 #timezone {
@@ -660,6 +689,11 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   stroke: $planet-grid;
   stroke-width: 0.25px;
   fill: none;
+}
+
+.night-sky-track {
+  stroke: $night-sky-track;
+  stroke-width: 0.67px;
 }
 
 .risen-track {
