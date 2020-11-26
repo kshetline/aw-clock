@@ -1,8 +1,8 @@
 import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
-import { toBoolean, toNumber } from 'ks-util';
-import { Alert, ForecastData } from './shared-types';
-import { checkForecastIntegrity, escapeForRegex, fToC, inchesToCm } from './util';
+import { last, toBoolean, toNumber } from 'ks-util';
+import { Alert, ForecastData, PressureTrend } from './shared-types';
+import { checkForecastIntegrity, escapeForRegex, fToC, hpaToInHg, inchesToCm, milesToKm } from './util';
 
 interface WeatherBitCurrent {
   data: {
@@ -17,6 +17,9 @@ interface WeatherBitCurrent {
     rh: number;
     clouds: number;
     precip: number;
+    slp: number;
+    wind_spd: number;
+    wind_dir: number;
     weather: {
       icon: string;
       code: string;
@@ -40,6 +43,10 @@ interface WeatherBitHourly {
       description: string;
     },
     precip: number;
+    slp: number;
+    wind_spd: number;
+    wind_dir: number;
+    wind_gust_spd: number;
     timestamp_local: string;
     timestamp_utc: string;
     temp: number;
@@ -64,6 +71,10 @@ interface WeatherBitDaily {
     snow_depth: number;
     pop: number;
     clouds: number;
+    slp: number;
+    wind_spd: number;
+    wind_dir: number;
+    wind_gust_spd: number;
     weather: {
       icon: string;
       code: string;
@@ -208,6 +219,10 @@ function conditionalCm(i: number, isMetric: boolean): number {
   return isMetric ? inchesToCm(i) : i;
 }
 
+function conditionalKph(mph: number, isMetric: boolean): number {
+  return isMetric ? milesToKm(mph) : mph;
+}
+
 function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, daily: WeatherBitDaily,
     alerts: WeatherBitAlerts, isMetric: boolean): ForecastData {
   const currentData = current.data[0];
@@ -222,6 +237,10 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
     icon: convertIcon(currentData.weather?.icon, currentData.clouds),
     precipIntensity: conditionalCm(currentData.precip, isMetric),
     precipType: getPrecipType(currentData.weather.code),
+    pressure: isMetric ? currentData.slp : hpaToInHg(currentData.slp),
+    pressureTrend: null,
+    windSpeed: conditionalKph(currentData.wind_spd, isMetric),
+    windDirection: currentData.wind_dir,
     summary: currentData.weather?.description,
     temperature: conditionalCelsius(currentData.temp, isMetric),
     time: currentData.ts
@@ -230,14 +249,35 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
   forecast.hourly = [];
 
   if (hourly) {
-    hourly.data.forEach(hour => forecast.hourly.push({
-      cloudCover: hour.clouds / 100,
-      icon: convertIcon(hour.weather?.icon, hour.clouds),
-      precipProbability: hour.pop / 100,
-      precipType: getPrecipType(hour.weather?.code),
-      temperature: conditionalCelsius(hour.temp, isMetric),
-      time: hour.ts
-    }));
+    hourly.data.forEach((hour, index) => {
+      forecast.hourly.push({
+        cloudCover: hour.clouds / 100,
+        icon: convertIcon(hour.weather?.icon, hour.clouds),
+        precipProbability: hour.pop / 100,
+        precipType: getPrecipType(hour.weather?.code),
+        pressure: isMetric ? hour.slp : hpaToInHg(hour.slp),
+        windSpeed: conditionalKph(hour.wind_spd, isMetric),
+        windDirection: hour.wind_dir,
+        windGust: conditionalKph(hour.wind_gust_spd, isMetric),
+        temperature: conditionalCelsius(hour.temp, isMetric),
+        time: hour.ts
+      });
+
+      // This forecast does not provide a current wind gust value, so use the current hourly value.
+      if (index === 0)
+        forecast.currently.windGust = forecast.hourly[0].windGust;
+
+      if (forecast.currently.pressureTrend === null && hour.ts > forecast.currently.time) {
+        const hour = last(forecast.hourly);
+
+        if (forecast.currently.pressure < hour.pressure)
+          forecast.currently.pressureTrend = PressureTrend.RISING;
+        else if (forecast.currently.pressure > hour.pressure)
+          forecast.currently.pressureTrend = PressureTrend.FALLING;
+        else
+          forecast.currently.pressureTrend = PressureTrend.STEADY;
+      }
+    });
   }
 
   forecast.daily = { data: [] };
@@ -251,6 +291,10 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
       precipAccumulation: conditionalCm(day.precip, isMetric),
       precipProbability: day.pop / 100,
       precipType: getPrecipType(day.weather?.code),
+      pressure: isMetric ? day.slp : hpaToInHg(day.slp),
+      windSpeed: conditionalKph(day.wind_spd, isMetric),
+      windDirection: day.wind_dir,
+      windGust: conditionalKph(day.wind_gust_spd, isMetric),
       summary: day.weather?.description,
       temperatureHigh: conditionalCelsius(day.high_temp, isMetric),
       temperatureLow: conditionalCelsius(day.low_temp, isMetric),

@@ -1,7 +1,7 @@
 import { requestJson } from 'by-request';
 import { getForecast as getDsForecast, THE_END_OF_DAYS } from './darksky-forecast';
 import { Request, Response, Router } from 'express';
-import { jsonOrJsonp, noCache } from './util';
+import { jsonOrJsonp, noCache, timeStamp } from './util';
 import { ForecastData } from './shared-types';
 import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
@@ -28,7 +28,31 @@ router.get('/', async (req: Request, res: Response) => {
   else
     darkSkyIndex = 0;
 
-  const forecasts = await Promise.all(promises);
+  // None of these promises *should* throw any errors. Errors should be returned as values, not thrown.
+  // But it seems that sometimes errors are getting thrown, and this is resulting in no weather data
+  // being returned. So I'm going to try catching errors anyway, and if any are caught, giving up on
+  // having all forecast queries done simultaneously, instead processing queries one at a time.
+
+  let forecasts: (Error | ForecastData)[];
+
+  try {
+    forecasts = await Promise.all(promises);
+  }
+  catch (err) {
+    console.error('%s: Unexpected forecast error:', timeStamp(), err);
+    forecasts = [];
+
+    for (let i = 0; i < promises.length; ++i) {
+      try {
+        forecasts[i] = await promises[i];
+      }
+      catch (err2) {
+        forecasts[i] = err2;
+        console.error('%s: Unexpected forecast error:', timeStamp(), err2);
+      }
+    }
+  }
+
   let forecast = forecasts[
     ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
   const darkSkyForecast = !(forecasts[darkSkyIndex] instanceof Error) && forecasts[darkSkyIndex] as ForecastData;

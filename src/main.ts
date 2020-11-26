@@ -389,7 +389,7 @@ class AwClockApp implements AppService {
 
       if (this.settings.celsius !== oldSettings.celsius) {
         this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
-        this.forecast.swapTemperatureUnits(this.settings.celsius);
+        this.forecast.swapUnits(this.settings.celsius);
         doRefresh = true;
       }
 

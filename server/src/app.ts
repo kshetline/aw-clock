@@ -17,7 +17,7 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort } from './util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp } from './util';
 import { Gps } from './gps';
 import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
 
@@ -87,7 +87,7 @@ async function checkForUpdate() {
       throw new Error('Could not parse tag_name');
   }
   catch (e) {
-    console.error('Update info request failed: ' + (e.message ?? e.toString()));
+    console.error('%s: Update info request failed: %s', timeStamp(), e.message ?? e.toString());
   }
 
   updatePollTimer = setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL);
@@ -111,7 +111,7 @@ let startAttempts = 0;
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 process.on('SIGUSR2', shutdown);
-process.on('unhandledRejection', err => console.error(err));
+process.on('unhandledRejection', err => console.error(`${timeStamp()} -- Unhandled rejection:`, err));
 
 createAndStartServer();
 
@@ -134,7 +134,7 @@ else
   hasGps().then(hasIt => gps = hasIt ? new Gps(taiUtc) : null);
 
 function createAndStartServer(): void {
-  console.log(`*** starting server on port ${httpPort} at ${new Date().toISOString()} ***`);
+  console.log(`*** Starting server on port ${httpPort} at ${timeStamp()} ***`);
   httpServer = http.createServer(app);
   httpServer.on('error', onError);
   httpServer.on('listening', onListening);
@@ -188,7 +188,7 @@ function canReleasePortAndRestart(): boolean {
       if ($) {
         const signal = (startAttempts > 1 ? '-9 ' : '');
 
-        console.warn('Killing process: ' + $[1]);
+        console.warn('%s -- Killing process: %s', timeStamp(), $[1]);
         execSync(`kill ${signal}${$[1]}`);
         setTimeout(createAndStartServer, 3000);
 
@@ -197,7 +197,7 @@ function canReleasePortAndRestart(): boolean {
     }
   }
   catch (err) {
-    console.log(`Failed to kill process using port ${httpPort}: ` + err);
+    console.log(`${timeStamp()} -- Failed to kill process using port ${httpPort}: ${err}`);
   }
 
   return false;
@@ -210,7 +210,7 @@ function shutdown(signal?: string) {
   if (updatePollTimer)
     clearTimeout(updatePollTimer);
 
-  console.log(`\n*** ${signal ? signal + ': ' : ''}closing server at ${new Date().toISOString()} ***`);
+  console.log(`\n*** ${signal ? signal + ': ' : ''}closing server at ${timeStamp()} ***`);
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
   setTimeout(() => process.exit(0), 5000);
   httpServer.close(() => process.exit(0));
@@ -271,7 +271,7 @@ function getApp() {
     theApp.use('/indoor', indoorRouter);
   else {
     theApp.get('/indoor', (req, res) => {
-      console.warn('Indoor temp/humidity sensor not available.');
+      console.warn('%s: Indoor temp/humidity sensor not available.', timeStamp());
       jsonOrJsonp(req, res, { temperature: 0, humidity: -1, error: 'n/a' });
     });
   }

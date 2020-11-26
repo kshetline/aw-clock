@@ -42,8 +42,28 @@ export function inchesToCm(i: number): number {
   return i * 2.54;
 }
 
+export function milesToKm(m: number): number {
+  return m * 1.609344;
+}
+
 export function cmToInches(cm: number): number {
   return cm / 2.54;
+}
+
+export function inHgToHpa(p: number): number {
+  return p * 33.864;
+}
+
+export function hpaToInHg(p: number): number {
+  return p / 33.864;
+}
+
+export function autoHpa(p: number): number {
+  return p > 100 ? p : inHgToHpa(p);
+}
+
+export function autoInHg(p: number): number {
+  return p < 100 ? p : hpaToInHg(p);
 }
 
 /**
@@ -117,4 +137,8 @@ const charsNeedingRegexEscape = /[-[\]/{}()*+?.\\^$|]/g;
 
 export function escapeForRegex(s: string): string {
   return s.replace(charsNeedingRegexEscape, '\\$&');
+}
+
+export function timeStamp(): string {
+  return new Date().toISOString().replace('T', ' ');
 }

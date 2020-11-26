@@ -19,7 +19,7 @@
 
 import $ from 'jquery';
 import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, Point, sin_deg } from 'ks-math';
+import { cos_deg, floor, mod, Point, sin_deg } from 'ks-math';
 import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, parseColor, processMillis, toNumber } from 'ks-util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
@@ -40,7 +40,7 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
 });
 
 $.fn.extend({
-  enable: function (state: boolean) {
+  enable: function (state?: boolean) {
     if (arguments.length === 0) {
       if (this.is('input, button'))
         return !this.attr('disabled');
@@ -188,9 +188,9 @@ export function polarToRectangular(cx: number, cy: number, radius: number, angle
   };
 }
 
-export function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number): string {
-  const start = polarToRectangular(x, y, radius, startAngle);
-  const end = polarToRectangular(x, y, radius, endAngle);
+export function describeArc(cx: number, cy: number, radius: number, startAngle: number, endAngle: number): string {
+  const start = polarToRectangular(cx, cy, radius, startAngle);
+  const end = polarToRectangular(cx, cy, radius, endAngle);
   const largeArcFlag = (endAngle - startAngle <= 180 ? 0 : 1);
 
   return [
@@ -223,8 +223,30 @@ export function formatTime(date: KsDateTime, amPm: boolean) {
   return hours.substr(0, 2) + ':' + padLeft(date.wallTime.min, 2, '0') + hours.substr(2);
 }
 
+export function convertSpeed(s: number, toKph: boolean): number {
+  return toKph ? s * 1.609344 : s / 1.609344;
+}
+
 export function convertTemp(t: number, toCelsius: boolean): number {
   return toCelsius ? (t - 32) / 1.8 : t * 1.8 + 32;
+}
+
+export function convertPressure(p: number, toHPa: boolean): number {
+  return toHPa ? p * 33.864 : p / 33.864;
+}
+
+export function mphToKnots(m: number): number {
+  return m / 1.15078;
+}
+
+export function kphToKnots(k: number): number {
+  return k / 1.852;
+}
+
+const compassPoints = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
+export function compassPoint(angle: number): string {
+  return compassPoints[floor(mod(angle + 11.25, 360) / 22.5)];
 }
 
 export function setSignalLevel(elem: JQuery, quality: number): void {

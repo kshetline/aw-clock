@@ -8,7 +8,7 @@ import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData, GpsData, TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
-import { roughDistanceBetweenLocationsInKm } from './util';
+import { roughDistanceBetweenLocationsInKm, timeStamp } from './util';
 import { getForecast } from './weatherbit-forecast';
 
 const BILLION = BigInt('1000000000');
@@ -163,7 +163,7 @@ export class Gps extends TimePoller {
     });
 
     this.gpspipe.on('exit', () => this.lastGpsInfo = -1);
-    this.gpspipe.on('error', err => console.error('gpspipe error:', err));
+    this.gpspipe.on('error', err => console.error('%s -- gpspipe error:', timeStamp(), err));
   }
 
   private async checkSystemTime(): Promise<void> {
@@ -256,7 +256,7 @@ export class Gps extends TimePoller {
       if (data?.status === 'OK' && data.results?.length > 0)
         coords.city = data.results[0].formatted_address;
       else if (data?.errorMessage) {
-        console.error(data.errorMessage);
+        console.error('%s -- Google location check: %s', timeStamp(), data.errorMessage);
 
         if (data.status === 'REQUEST_DENIED')
           this.googleAccessDenied = true;
@@ -268,7 +268,7 @@ export class Gps extends TimePoller {
     }
     catch (err) {
       this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-      console.error(err);
+      console.error('%s -- Google location check:', timeStamp(), err);
     }
 
     try {
@@ -279,7 +279,7 @@ export class Gps extends TimePoller {
       if (data?.status === 'OK' && data.timeZoneId)
         coords.timezone = data.timeZoneId;
       else if (data?.errorMessage) {
-        console.error(data.errorMessage);
+        console.error('%s -- Google timezone check: %s', timeStamp(), data.errorMessage);
 
         if (data.status === 'REQUEST_DENIED')
           this.googleAccessDenied = true;
@@ -291,7 +291,7 @@ export class Gps extends TimePoller {
     }
     catch (err) {
       this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-      console.error(err);
+      console.error('%s -- Google timezone check:', timeStamp(), err);
     }
   }
 

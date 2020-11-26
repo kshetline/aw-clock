@@ -1,7 +1,9 @@
 import { purgeCache, requestJson, requestText } from './request-cache';
 import { Request, Router } from 'express';
-import { Alert, ForecastData } from './shared-types';
-import { checkForecastIntegrity } from './util';
+import { max } from 'ks-math';
+import { toNumber } from 'ks-util';
+import { Alert, ForecastData, PressureTrend } from './shared-types';
+import { autoHpa, autoInHg, checkForecastIntegrity } from './util';
 
 export const router = Router();
 
@@ -127,15 +129,42 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
   const location = wuForecast.location;
 
   forecast.city = location && `${location.city}, ${location.adminDistrictCode}, ${location.countryCode}`;
-  convertCurrent(forecast, wc, wh);
-  convertHourly(forecast, wh);
+  convertCurrent(forecast, wc, wh, isMetric);
+  convertHourly(forecast, wh, isMetric);
   convertDaily(forecast, wc, wuForecast.daily);
   convertAlerts(forecast, wuForecast.alerts);
 
   return forecast;
 }
 
-function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
+function pressureTrendFromString(trend: string): PressureTrend {
+  trend = (trend || '').toLowerCase();
+
+  if (trend === 'falling')
+    return PressureTrend.FALLING;
+  else if (trend === 'rising')
+    return PressureTrend.RISING;
+  else
+    return PressureTrend.STEADY;
+}
+
+function extractGust(baseSpeed: number, ...phrases: string[]): number {
+  let gust: number = null;
+
+  for (const phrase of phrases) {
+    const $ = /gust[^.]*?\s+(\d+)/i.exec(phrase ?? '');
+
+    if ($)
+      gust = max(gust ?? 0, toNumber($[1]));
+  }
+
+  return gust > baseSpeed ? gust : null;
+}
+
+function convertCurrent(forecast: ForecastData, wc: any, wh: any, isMetric: boolean): void {
+  // For some strange reason pressure is always metric for current conditions, but changes to inches of mercury
+  // (inHg) for the hourly imperial values. As I don't trust this inconsistency so I'll use the numeric range of
+  // the input values to decide on what conversion to do.
   forecast.currently = {
     time: wc.validTimeUtc,
     summary: wc.wxPhraseMedium,
@@ -144,18 +173,24 @@ function convertCurrent(forecast: ForecastData, wc: any, wh: any): void {
     cloudCover: wh.cloudCover[0] / 100,
     precipProbability: wh.precipChance[0] / 100,
     precipType: wh.precipType[0],
+    pressure: isMetric ? autoHpa(wc.pressureMeanSeaLevel) : autoInHg(wc.pressureMeanSeaLevel),
+    pressureTrend: pressureTrendFromString(wc.pressureTendencyTrend),
     temperature: wc.temperature,
-    feelsLikeTemperature: wc.temperatureFeelsLike
+    feelsLikeTemperature: wc.temperatureFeelsLike,
+    windDirection: wc.windDirection,
+    windGust: wc.windGust,
+    windSpeed: wc.windSpeed
   };
 }
 
-function convertHourly(forecast: ForecastData, wh: any): void {
+function convertHourly(forecast: ForecastData, wh: any, isMetric: boolean): void {
   forecast.hourly = [];
 
   const length = Math.min(36, wh.iconCode?.length ?? 0, wh.precipType?.length ?? 0, wh.qpf?.length ?? 0,
                           wh.qpfSnow?.length ?? 0, wh.temperature?.length ?? 0, wh.validTimeUtc?.length ?? 0);
 
   for (let i = 0; i < length; ++i) {
+    const pressure = wh.pressureMeanSeaLevel[i];
     let precipType = wh.precipType[i];
 
     if (wh.qpfSnow[i] > 0 && precipType === 'precip')
@@ -166,7 +201,11 @@ function convertHourly(forecast: ForecastData, wh: any): void {
       temperature: wh.temperature[i],
       precipProbability: wh.precipChance[i] / 100,
       precipType,
-      time: wh.validTimeUtc[i]
+      pressure: isMetric ? autoHpa(pressure) : autoInHg(pressure),
+      time: wh.validTimeUtc[i],
+      windDirection: wh.windDirection[i],
+      windGust: wh.windGust[i],
+      windSpeed: wh.windSpeed[i]
     });
   }
 }
@@ -192,6 +231,9 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
       precipAccumulation = wd.qpfSnow[i];
     }
 
+    const windIndex = wddp?.windSpeed[i * 2] != null ? i * 2 : i * 2 + 1;
+    const windSpeed = wddp?.windSpeed[windIndex];
+
     daily.push({
       icon: getIcon(wddp?.iconCode[i * 2] ?? wddp?.iconCode[i * 2 + 1] ?? -1),
       narrativeDay: wddp?.narrative[i * 2],
@@ -203,7 +245,11 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
       summary: wd.narrative[i],
       temperatureHigh: wd.temperatureMax[i] ?? wc.temperatureMax24Hour,
       temperatureLow: wd.temperatureMin[i] ?? wc.temperatureMin24Hour,
-      time: wd.validTimeUtc[i]
+      time: wd.validTimeUtc[i],
+      windDirection: wddp?.windDirection[windIndex],
+      windGust: extractGust(windSpeed, wddp?.windPhrase[windIndex], wddp?.narrative[i * 2], wddp?.narrative[i * 2 + 1]),
+      windPhrase: combineWindPhrases(wddp?.windPhrase[i * 2], wddp?.windPhrase[i * 2 + 1]),
+      windSpeed
     });
   }
 
@@ -211,6 +257,18 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
     summary: (wd.narrative && wd.narrative[0]) ?? '',
     data: daily
   };
+}
+
+function combineWindPhrases(day: string, night: string): string {
+  // eslint-disable-next-line eqeqeq
+  if (day == night)
+    return day;
+  else if (!night)
+    return day;
+  else if (!day)
+    return night;
+
+  return (day + ', ' + night).replace('., Winds', ', evening').replace('.,', ',');
 }
 
 function convertAlerts(forecast: ForecastData, wa: any): void {

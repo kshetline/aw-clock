@@ -7,9 +7,9 @@ import {
   CurrentConditionsKeys,
   DailyConditions, DailyConditionsKeys, DailySummaryConditions, DailySummaryConditionsKeys,
   ForecastData,
-  ForecastDataKeys, HourlyConditions
+  ForecastDataKeys, HourlyConditions, PressureTrend
 } from './shared-types';
-import { checkForecastIntegrity } from './util';
+import { checkForecastIntegrity, hpaToInHg } from './util';
 
 // The time (with a month of padding) when the Dark Sky API will be shut down, presuming "end of 2021"
 // actually means all the way until 2021-12-31.
@@ -17,10 +17,14 @@ export const THE_END_OF_DAYS = Date.UTC(2021, 10 /* November */, 30);
 
 interface DSCurrentConditions extends Omit<CommonConditions, 'feelsLikeTemperature'> {
   apparentTemperature: number;
+  windBearing: number;
 }
 
 interface DSHourlyItems extends CommonConditions {
   temperature: number;
+  windBearing?: number;
+  windGust?: number;     // In m/s when metric, needs conversion to kph
+  windSpeed?: number;    // In m/s when metric, needs conversion to kph
 }
 
 interface DSHourlyConditions {
@@ -126,6 +130,29 @@ function convertForecast(dsForecast: DarkSkyForecast, isMetric: boolean): Foreca
       (forecast as any)[key] = (dsForecast as any)[key];
   });
 
+  if (forecast.hourly) {
+    let tryAgainIfEqual = true;
+
+    for (const hour of forecast.hourly) {
+      if (hour.time > forecast.currently.time) {
+        if (forecast.currently.pressure < hour.pressure)
+          forecast.currently.pressureTrend = PressureTrend.RISING;
+        else if (forecast.currently.pressure > hour.pressure)
+          forecast.currently.pressureTrend = PressureTrend.FALLING;
+        else {
+          forecast.currently.pressureTrend = PressureTrend.STEADY;
+
+          if (tryAgainIfEqual) {
+            tryAgainIfEqual = false;
+            continue;
+          }
+        }
+
+        break;
+      }
+    }
+  }
+
   if ((dsForecast.flags && dsForecast.flags['darksky-unavailable']) || !forecast.currently || !forecast.daily)
     forecast.unavailable = true;
 
@@ -140,9 +167,17 @@ function convertConditions(dsConditions: CommonConditions, keys: string[], isMet
       conditions.icon = getIcon(dsConditions, isMetric);
     else if (key === 'apparentTemperature')
       (conditions as CurrentConditions).feelsLikeTemperature = (dsConditions as DSCurrentConditions).apparentTemperature;
+    else if (key === 'windBearing')
+      (conditions as CurrentConditions).windDirection = (dsConditions as DSCurrentConditions).windBearing;
     else if (keys.includes(key))
       (conditions as any)[key] = (dsConditions as any)[key];
   });
+
+  if (!isMetric && conditions.pressure != null)
+    conditions.pressure = hpaToInHg(conditions.pressure);
+
+  if (isMetric && conditions.windSpeed != null) // Convert m/s to km/hour
+    conditions.windSpeed *= 3.6;
 
   return conditions;
 }
@@ -156,9 +191,12 @@ function convertHourly(dsHourly: DSHourlyConditions, isMetric: boolean): HourlyC
         icon: getIcon(hour, isMetric),
         temperature: hour.temperature,
         precipProbability: hour.precipProbability,
-        precipType: hour.icon === 'snow' || /\bsnow\b/i.test(hour.summary || '') ? 'snow' :
-          hour.icon === 'rain' ? 'rain' : '',
-        time: hour.time
+        precipType: hour.icon === 'snow' || /\bsnow\b/i.test(hour.summary || '') ? 'snow' : hour.icon === 'rain' ? 'rain' : '',
+        pressure: isMetric ? hour.pressure : hpaToInHg(hour.pressure),
+        time: hour.time,
+        windDirection: hour.windBearing,
+        windGust: hour.windGust,
+        windSpeed: hour.windSpeed
       });
 
       if (hourly.length >= 36)
@@ -193,8 +231,8 @@ function convertAlerts(dsAlerts: Alert[]): Alert[] {
         (alert as any)[key] = (dsAlert as any)[key];
 
       if (key === 'description')
-        alert.description = alert.description.replace(/ (\* (WHAT|WHERE|WHEN|IMPACTS)|PRECAUTIONARY.*?ACTIONS)\.\.\./g,
-          '\n\n$1...');
+        alert.description = alert.description.replace(/ ((\* )?(WHAT|WHERE|WHEN|IMPACTS|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./g,
+          '\n\n$1...').replace(/^\.{3,}/g, '');
     });
 
     return alert;

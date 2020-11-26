@@ -250,8 +250,8 @@ export class SettingsDialog {
     if (query.length === 0)
       this.alert('Please enter a city or partial city name.');
     else {
-      (this.searchCity as any).enable(false);
-      (this.submitSearch as any).enable(false);
+      this.searchCity.enable(false);
+      this.submitSearch.enable(false);
       this.searching.css('visibility', 'visible');
       this.searchMessage.html('&nbsp;');
       this.searchMessage.css('background-color', 'white');
@@ -276,8 +276,8 @@ export class SettingsDialog {
         this.cityTable.html(rows);
         setTimeout(() => this.cityTableWrapper.scrollTop(0));
         this.cityTableWrapper.show();
-        (this.submitSearch as any).enable(true);
-        (this.searchCity as any).enable(true);
+        this.submitSearch.enable(true);
+        this.searchCity.enable(true);
         this.searching.css('visibility', 'hidden');
 
         if (response.error) {
@@ -311,8 +311,8 @@ export class SettingsDialog {
           }
         });
       }).catch(reason => {
-        (this.submitSearch as any).enable(true);
-        (this.searchCity as any).enable(true);
+        this.submitSearch.enable(true);
+        this.searchCity.enable(true);
         this.searching.css('visibility', 'hidden');
         this.alert(reason || 'Unable to access geographic database.');
       });
@@ -393,11 +393,11 @@ export class SettingsDialog {
 
     this.enableAutocomplete(!previousSettings.onscreenKB);
 
-    (this.submitSearch as any).enable(true);
-    (this.getGps as any).enable(false);
+    this.submitSearch.enable(true);
+    this.getGps.enable(false);
     this.defaultLocation = undefined;
     this.getDefaults();
-    (this.searchCity as any).enable(true);
+    this.searchCity.enable(true);
     this.searchCity.val('');
     this.searchMessage.html('&nbsp;');
     this.searchMessage.css('background-color', 'white');
@@ -548,7 +548,7 @@ export class SettingsDialog {
 
         if (data?.latitude != null && data?.longitude != null) {
           this.defaultLocation = data;
-          (this.getGps as any).enable(true);
+          this.getGps.enable(true);
         }
       },
       error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {

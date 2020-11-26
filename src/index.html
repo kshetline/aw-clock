@@ -34,6 +34,7 @@
               <text id="dayN-caption" x="6" y="2" class="small-caption forecast-day-header"
                 text-anchor="middle">---</text>
               <image id="dayN-icon" href="assets/unknown.svg" x="0" y="3" width="12" height="12"/>
+              <svg id="dayN-wind" class="wind-barb" x="0.25" y="3.25" width="3" height="3" viewBox="0 0 100 100"/>
               <text id="dayN-low-high" x="6" y="17.5" class="small-caption" text-anchor="middle">--°/--°</text>
               <text id="dayN-chance-precip" x="6" y="20.5" class="small-caption" text-anchor="middle">--<tspan
                 class="small-percent" dy="-0.2em">%</tspan></text>
@@ -69,6 +70,15 @@
         <text id="date" x="99" y="9" text-anchor="end">---</text>
         <text id="year" x="99" y="99" text-anchor="end">----</text>
         <circle id="face" cx="50" cy="50" r="45"/>
+
+        <polygon id="wind-pointer" points="48.5,5 51.5,5 50,7 48.5,5"/>
+        <g>
+          <path id="wind-arc" d=""/>
+        </g>
+        <g>
+          <path id="wind-gust-arc" d=""/>
+        </g>
+
         <g id="planet-tracks">
           <circle cx="50" cy="50" r="22" class="planet-track"/>
           <circle cx="50" cy="50" r="20" class="planet-track"/>
@@ -107,6 +117,7 @@
           </line>
         </g>
         <g id="risen-tracks"></g>
+        <g id="night-sky-tracks"></g>
         <g id="planets">
           <circle id="saturn"  cx="72" cy="50" r="0.75" stroke="black" stroke-width="0" fill="#FF8"/>
           <circle id="jupiter" cx="70" cy="50" r="0.75" stroke="black" stroke-width="0" fill="orange"/>
@@ -201,6 +212,17 @@
             </text>
           </g>
           <text id="feels-like" x="120" y="27" text-anchor="start">--°</text>
+
+          <g id="wind">
+            <text id="wind-dir" x="110" y="40" class="wind-pressure" text-anchor="start">Wind: --</text>
+            <text id="wind-speed" x="110" y="40" dy="1.1em" class="wind-pressure" text-anchor="start">--</text>
+            <text id="wind-gust" x="110" y="40" dy="2.2em" class="wind-pressure" text-anchor="start"></text>
+          </g>
+
+          <g id="pressure">
+            <text id="pressure-header" x="165" y="40" class="wind-pressure" text-anchor="end">Pressure:</text>
+            <text id="pressure-value" x="165" y="40" dy="1.1em" class="wind-pressure" text-anchor="end">--</text>
+          </g>
 
           <text id="temperature-detail" x="136" y="21.5" text-anchor="start"></text>
           <text x="136" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
@@ -342,8 +364,8 @@
           <span></span>
           <span class="colspan-full">
             <select id="temperature-option">
-              <option value="F">°F</option>
-              <option value="C">°C</option>
+              <option value="F">°F / imp.</option>
+              <option value="C">°C / metric</option>
             </select>
             <select id="format-option">
               <option value="24">24-hour time</option>
