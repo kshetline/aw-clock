@@ -114,7 +114,7 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
       clearInterval(slowSpin);
 
       if (errorMode !== ErrorMode.NO_ERRORS)
-        resolve();
+        resolve(output);
       else
         reject(err);
     });
