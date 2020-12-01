@@ -14,6 +14,7 @@
       <div class="simple-keyboard"></div>
     </div>
     <div id="clock-container">
+      <input id="test-time" type="datetime-local">
       <svg id="clock" viewBox="0 0 172 108">
         <!-- <rect x="0" y="0" width="172" height="108" stroke-width="1" stroke="black" fill="none"></rect> -->
         <defs>
@@ -63,6 +64,15 @@
             <rect x="0" y="0" width="65" height="51"/>
           </clipPath>
         </defs>
+
+        <filter id="tint-blue" x="-20%" y="-20%" width="140%" height="140%" filterUnits="objectBoundingBox"
+            primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
+	        <feColorMatrix type="matrix" values="0 0 0 0 0
+                                               0.11 0.11 0.11 0 0.3
+                                               0.22 0.22 0.22 0 0.8
+                                               0 0 0 1 0"
+            x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" result="colormatrix"/>
+        </filter>
 
         <text id="timezone" x="50" y="2.5" text-anchor="middle"></text>
         <text id="day-of-week" x="1" y="9">---</text>
