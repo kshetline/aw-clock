@@ -313,11 +313,11 @@ class AwClockApp implements AppService {
             const localInstallation = raspbianChromium && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
+            const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable ? 'block' : 'none');
 
             this.adminAllowed = data[0]?.allowAdmin;
-            this.updateAvailable.css('display', localInstallation && this.adminAllowed &&
-              data[0]?.updateAvailable ? 'block' : 'none');
-            this.updateCaption.css('display', localInstallation && data[0]?.updateAvailable ? 'block' : 'none');
+            this.updateAvailable.css('display', showUpdate);
+            this.updateCaption.css('display', showUpdate);
 
             if (data[0]?.indoorOption && data[0].outdoorOption) {
               this.settings.indoorOption = data[0].indoorOption;
@@ -367,9 +367,9 @@ class AwClockApp implements AppService {
       const doUpdate = () => {
         getJson(`${apiServer}/defaults`).then(data => {
           this.adminAllowed = data?.allowAdmin;
-          this.updateAvailable.css('display', this.adminAllowed &&
-            data?.updateAvailable ? 'block' : 'none');
-          this.updateCaption.css('display', data?.updateAvailable ? 'block' : 'none');
+          const updateAvailable = (this.adminAllowed && data?.updateAvailable ? 'block' : 'none');
+          this.updateAvailable.css('display', updateAvailable);
+          this.updateCaption.css('display', updateAvailable);
         });
 
         this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.userId);
