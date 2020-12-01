@@ -24,7 +24,7 @@ import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
-import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+import { KsDateTime, KsTimeZone, parseISODateTime } from 'ks-date-time-zone';
 import { irandom } from 'ks-math';
 import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
 import { isEffectivelyFullScreen, isFirefox, setFullScreen } from 'ks-util';
@@ -64,6 +64,7 @@ class AwClockApp implements AppService {
   private body: JQuery;
   private cityLabel: JQuery;
   private dimmer: JQuery;
+  private testTime: JQuery;
   private updateAvailable: JQuery;
   private updateCaption: JQuery;
 
@@ -79,6 +80,8 @@ class AwClockApp implements AppService {
   private frequent = false;
   private proxyStatus: boolean | Promise<boolean> = undefined;
   private adminAllowed = false;
+  private showTestTime = false;
+  private testTimeValue = '';
 
   private settings = new Settings();
   private settingsChecked = false;
@@ -107,6 +110,7 @@ class AwClockApp implements AppService {
     this.body = $('body');
     this.cityLabel = $('#city');
     this.dimmer = $('#dimmer');
+    this.testTime = $('#test-time');
 
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
@@ -123,6 +127,30 @@ class AwClockApp implements AppService {
           setFullScreen(true);
         else if (event.code === 'KeyN' || event.key === 'N' || event.key === 'n')
           setFullScreen(false);
+        else if (event.code === 'KeyT' && event.ctrlKey && event.shiftKey) {
+          this.showTestTime = !this.showTestTime;
+          this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
+
+          const updateTestEphemeris = () => {
+            // TODO: Get parseISODateTime() from ks-date-time-zone when updated.
+            const time = new KsDateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
+
+            this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
+              this.settings.timeFormat === TimeFormat.AMPM);
+          };
+
+          if (this.showTestTime && !this.testTimeValue) {
+            this.testTimeValue = new KsDateTime(this.getCurrentTime(), this.lastTimezone).toIsoString().substr(0, 16);
+            this.testTime.on('input', () => {
+              this.testTimeValue = this.testTime.val() as string;
+              updateTestEphemeris();
+            });
+            this.testTime.val(this.testTimeValue);
+            updateTestEphemeris();
+          }
+          else
+            this.updateEphemeris();
+        }
       }
     });
 
@@ -253,8 +281,9 @@ class AwClockApp implements AppService {
     if (performance.now() > this.lastCursorMove + 120000)
       this.body.css('cursor', 'none');
 
-    this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone,
-      this.settings.timeFormat === TimeFormat.AMPM);
+    if (!this.showTestTime)
+      this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone,
+        this.settings.timeFormat === TimeFormat.AMPM);
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
@@ -284,11 +313,11 @@ class AwClockApp implements AppService {
             const localInstallation = raspbianChromium && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
+            const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable ? 'block' : 'none');
 
             this.adminAllowed = data[0]?.allowAdmin;
-            this.updateAvailable.css('display', localInstallation && this.adminAllowed &&
-              data[0]?.updateAvailable ? 'block' : 'none');
-            this.updateCaption.css('display', localInstallation && data[0]?.updateAvailable ? 'block' : 'none');
+            this.updateAvailable.css('display', showUpdate);
+            this.updateCaption.css('display', showUpdate);
 
             if (data[0]?.indoorOption && data[0].outdoorOption) {
               this.settings.indoorOption = data[0].indoorOption;
@@ -338,9 +367,9 @@ class AwClockApp implements AppService {
       const doUpdate = () => {
         getJson(`${apiServer}/defaults`).then(data => {
           this.adminAllowed = data?.allowAdmin;
-          this.updateAvailable.css('display', this.adminAllowed &&
-            data?.updateAvailable ? 'block' : 'none');
-          this.updateCaption.css('display', data?.updateAvailable ? 'block' : 'none');
+          const updateAvailable = (this.adminAllowed && data?.updateAvailable ? 'block' : 'none');
+          this.updateAvailable.css('display', updateAvailable);
+          this.updateCaption.css('display', updateAvailable);
         });
 
         this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.userId);

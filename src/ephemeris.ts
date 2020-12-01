@@ -19,7 +19,7 @@
 
 import {
   AstroEvent,
-  AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MOON, REFRACTION_AT_HORIZON, RISE_EVENT, SATURN,
+  AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MINUTE, MOON, REFRACTION_AT_HORIZON, RISE_EVENT, SATURN,
   SET_EVENT, SkyObserver, SolarSystem, SUN, UT_to_TDB, VENUS
 } from 'ks-astronomy';
 import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
@@ -135,7 +135,7 @@ export class Ephemeris {
 
     const dateTime = new KsDateTime(time, timezone);
     const wallTime = dateTime.wallTime;
-    const time_JDU = KsDateTime.julianDay(time) + HALF_MINUTE; // Round up half a minute for consistency with rounding of event times.
+    const time_JDU = KsDateTime.julianDay(time);
     const time_JDE = UT_to_TDB(time_JDU);
     const observer = new SkyObserver(longitude, latitude);
     let sunDownAllDay = false;
@@ -145,7 +145,8 @@ export class Ephemeris {
 
     planets.forEach((planet, index) => {
       const eclipticLongitude = solarSystem.getEclipticPosition(planet, time_JDE).longitude.degrees;
-      const altitude = solarSystem.getHorizontalPosition(planet, time_JDU, observer).altitude.degrees;
+      // Round up half a minute for consistency with rounding of event times.
+      const altitude = solarSystem.getHorizontalPosition(planet, time_JDU + HALF_MINUTE, observer).altitude.degrees;
       const elem = this.planetElems[index];
       let targetAltitude = -REFRACTION_AT_HORIZON;
 
@@ -157,20 +158,28 @@ export class Ephemeris {
       let set: AstroEvent;
       const nightSkyTrack = $('#night-sky-' + planetIds[index]);
       const risenTrack = $('#risen-' + planetIds[index]);
+      const bothTracks = nightSkyTrack.add(risenTrack);
 
       if (risen) {
+        bothTracks.removeAttr('filter');
         rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU, observer, timezone, null, true, null, 2);
         set = eventFinder.findEvent(planet, SET_EVENT, time_JDU, observer, timezone, null, false, null, 2);
       }
       else {
-        set = eventFinder.findEvent(planet, SET_EVENT, time_JDU, observer, timezone, null, true, null, 2);
+        set = eventFinder.findEvent(planet, SET_EVENT, time_JDU + MINUTE, observer, timezone, null, true, null, 2);
         rise = eventFinder.findEvent(planet, RISE_EVENT, time_JDU, observer, timezone, null, false, null, 2);
 
         if (set && rise) {
-          if (time_JDU - set.ut < (rise.ut - time_JDU) / 2)
+          if (time_JDU - set.ut < (rise.ut - time_JDU) / 24) {
+            // Arc being left behind shown
+            bothTracks.attr('filter', 'url(#tint-blue)');
             rise = eventFinder.findEvent(planet, RISE_EVENT, set.ut, observer, timezone, null, true, null, 2);
-          else
+          }
+          else {
+            // Upcoming arc shown
+            bothTracks.removeAttr('filter');
             set = eventFinder.findEvent(planet, SET_EVENT, rise.ut, observer, timezone, null, false, null, 2);
+          }
         }
       }
 
@@ -235,6 +244,7 @@ export class Ephemeris {
       }
       else if (risen) {
         // In the sky all day
+        bothTracks.removeAttr('filter');
         risenTrack[0].setAttribute('d', describeArc(50, 50, radius, 0, 359.99));
         risenTrack.css('visibility', 'visible');
 

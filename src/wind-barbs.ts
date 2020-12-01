@@ -102,7 +102,7 @@ export function windBarbsSvg(speed: number, gust: number, isMetric: boolean, dir
   const windPath = barbPath(barbs, direction, blankIfLow);
   let path = '';
 
-  if (!windPath.includes('circle'))
+  if (windPath && !windPath.includes('circle'))
     path = compass;
   else if (gust)
     path += compass;

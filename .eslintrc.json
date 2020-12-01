@@ -50,7 +50,10 @@
         "ArrayExpression": "first",
         "FunctionDeclaration": { "parameters": "off" },
         "ignoredNodes": [
+          "CallExpression > :expression *",
+          "ClassProperty Literal",
           "IfStatement > :expression *",
+          "NewExpression *",
           "WhileStatement > :expression *"
         ],
         "ignoreComments": true,
