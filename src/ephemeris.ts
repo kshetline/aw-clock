@@ -21,13 +21,13 @@ import {
   AstroEvent,
   AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MINUTE, MOON, REFRACTION_AT_HORIZON, RISE_EVENT, SATURN,
   SET_EVENT, SkyObserver, SolarSystem, SUN, UT_to_TDB, VENUS
-} from 'ks-astronomy';
-import { getDateFromDayNumber_SGC, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
+} from '@tubular/astronomy';
+import { getDateFromDayNumber_SGC, DateTime, Timezone } from '@tubular/time';
 import $ from 'jquery';
-import { describeArc, formatTime, setSvgHref } from './util';
+import { describeArc, formatTime, setSvgHref } from './awc-util';
 import { AppService } from './app.service';
-import { padLeft } from 'ks-util';
-import { mod } from 'ks-math';
+import { padLeft } from '@tubular/util';
+import { mod } from '@tubular/math';
 
 const solarSystem = new SolarSystem();
 const eventFinder = new EventFinder();
@@ -126,16 +126,16 @@ export class Ephemeris {
     path.css('visibility', 'visible');
   }
 
-  update(latitude: number, longitude: number, time: number, timezone: KsTimeZone, amPm: boolean): void {
+  update(latitude: number, longitude: number, time: number, timezone: Timezone, amPm: boolean): void {
     function rotate(elem: JQuery, deg: number) {
       elem.attr('transform', 'rotate(' + deg + ' 50 50)');
     }
 
     time = Math.floor(time / 60_000) * 60_000; // Make sure time is in whole minutes.
 
-    const dateTime = new KsDateTime(time, timezone);
+    const dateTime = new DateTime(time, timezone);
     const wallTime = dateTime.wallTime;
-    const time_JDU = KsDateTime.julianDay(time);
+    const time_JDU = DateTime.julianDay(time);
     const time_JDE = UT_to_TDB(time_JDU);
     const observer = new SkyObserver(longitude, latitude);
     let sunDownAllDay = false;
@@ -318,8 +318,8 @@ export class Ephemeris {
 
     for (let dayIndex = 0; dayIndex < 7; ++dayIndex) {
       const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
-      const noon = new KsDateTime({ y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0 }, timezone);
-      const noon_JDU = KsDateTime.julianDay(noon.utcTimeMillis);
+      const noon = new DateTime({ y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0 }, timezone);
+      const noon_JDU = DateTime.julianDay(noon.utcTimeMillis);
       const noon_JDE = UT_to_TDB(noon_JDU);
       const phase = solarSystem.getLunarPhase(noon_JDE);
       const lpEvent = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);

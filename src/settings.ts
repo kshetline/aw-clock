@@ -21,7 +21,7 @@ import { TimeFormat } from './clock';
 import { HourlyForecast } from './forecast';
 import $ from 'jquery';
 import * as Cookies from 'js-cookie';
-import { isChromium, isRaspbian, toBoolean } from 'ks-util';
+import { isChromium, isRaspbian, toBoolean } from '@tubular/util';
 
 export const runningDev = (document.location.port === '4200');
 export const localServer = (document.location.port &&

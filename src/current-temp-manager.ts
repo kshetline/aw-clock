@@ -2,7 +2,7 @@ import { AppService } from './app.service';
 import $ from 'jquery';
 import { reflow } from './svg-flow';
 import { localServer } from './settings';
-import { convertTemp } from './util';
+import { convertTemp } from './awc-util';
 
 const DD = '\u2012\u2012';
 

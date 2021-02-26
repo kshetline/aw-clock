@@ -16,14 +16,14 @@
   },
   "private": true,
   "dependencies": {
+    "@tubular/astronomy": "^2.1.7",
+    "@tubular/math": "^2.2.1",
+    "@tubular/time": "^2.4.1",
+    "@tubular/util": "^3.4.1",
     "classlist-polyfill": "^1.2.0",
     "es6-shim": "^0.35.6",
     "jquery": "^3.5.1",
     "js-cookie": "^2.2.1",
-    "ks-astronomy": "^1.3.2",
-    "ks-date-time-zone": "^1.9.0",
-    "ks-math": "^1.2.1",
-    "ks-util": "^2.2.1",
     "rxjs": "^6.6.3",
     "simple-keyboard": "^2.32.50"
   },

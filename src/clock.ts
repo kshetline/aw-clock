@@ -21,11 +21,11 @@
 
 import { AppService } from './app.service';
 import $ from 'jquery';
-import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from 'ks-math';
-import { getCssValue, isIE, isRaspbian, padLeft } from 'ks-util';
+import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, DateTime, Timezone } from '@tubular/time';
+import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from '@tubular/math';
+import { getCssValue, isIE, isRaspbian, padLeft } from '@tubular/util';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
-import { setSignalLevel } from './util';
+import { setSignalLevel } from './awc-util';
 
 export enum TimeFormat { HR24, AMPM, UTC }
 
@@ -92,7 +92,7 @@ export class Clock {
   private _timeFormat = TimeFormat.UTC;
   private _hideSeconds = false;
 
-  public timezone = KsTimeZone.OS_ZONE;
+  public timezone = Timezone.OS_ZONE;
   public hasCompletingAnimation = false;
 
   constructor(private appService: AppService) {
@@ -329,9 +329,9 @@ export class Clock {
     const animationTime = (doMechanicalSecondHandEffect ? SECOND_HAND_ANIMATION_TIME : 0);
     const timeInfo = this.appService.getTimeInfo(animationTime);
     const now = timeInfo.time;
-    const date = new KsDateTime(now, this.timezone);
+    const date = new DateTime(now, this.timezone);
     const wallTime = date.wallTime;
-    const wallTimeUtc = new KsDateTime(now, KsTimeZone.UT_ZONE).wallTime;
+    const wallTimeUtc = new DateTime(now, Timezone.UT_ZONE).wallTime;
     const secs = wallTime.sec + (timeInfo.leapExcess > 0 ? 1 : 0);
     const millis = (timeInfo.leapExcess > 0 ? timeInfo.leapExcess - 1 : wallTime.millis);
     let secRotation = 6 * secs;
@@ -431,7 +431,7 @@ export class Clock {
       for (let i = 2; i < 7; ++i)
         this.dayHeaders[i].textContent = daysOfWeek[(dayOfTheWeek + i) % 7];
 
-      this.zoneCaption.textContent = this.timezone.zoneName + ' UTC' + KsTimeZone.formatUtcOffset(date.utcOffsetSeconds);
+      this.zoneCaption.textContent = this.timezone.zoneName + ' UTC' + Timezone.formatUtcOffset(date.utcOffsetSeconds);
 
       let displayHour = hour;
       let displayMins = mins;

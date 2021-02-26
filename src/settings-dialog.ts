@@ -22,12 +22,12 @@ import { TimeFormat } from './clock';
 import { HourlyForecast } from './forecast';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
-import { isIE, isIOS, isSafari } from 'ks-util';
+import { isIE, isIOS, isSafari } from '@tubular/util';
 import { apiServer, localServer, raspbianChromium, Settings, toTimeFormat, updateTest } from './settings';
 import { AWC_VERSION } from '../server/src/shared-types';
 import {
   adjustCityName, decrementDialogCounter, domAlert, domConfirm, htmlEncode, incrementDialogCounter, popKeydownListener, pushKeydownListener
-} from './util';
+} from './awc-util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';

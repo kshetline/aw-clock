@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import SimpleKeyboard from 'simple-keyboard';
-import { isTypeInInput } from './util';
+import { isTypeInInput } from './awc-util';
 
 interface Point {
   x: number;

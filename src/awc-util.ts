@@ -18,9 +18,12 @@
 */
 
 import $ from 'jquery';
-import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, floor, mod, Point, sin_deg } from 'ks-math';
-import { asLines, htmlEscape, isEdge, isSafari, last, padLeft, parseColor, processMillis, toNumber } from 'ks-util';
+import { DateTime, Timezone } from '@tubular/time';
+import { cos_deg, floor, mod, Point, sin_deg } from '@tubular/math';
+import {
+  asLines, htmlEscape, isEdge, isFunction, isSafari, isString, last, padLeft, parseColor,
+  processMillis, toNumber
+} from '@tubular/util';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -121,9 +124,9 @@ export function domConfirm(message: string, optionsHtml: string, callback: OkCal
 export function domConfirm(message: string, callbackOrOptions: OkCallback | string, callback?: OkCallback): void {
   let optionalHtml: string;
 
-  if (typeof callbackOrOptions === 'string')
+  if (isString(callbackOrOptions))
     optionalHtml = callbackOrOptions;
-  else if (!(typeof callback === 'function'))
+  else if (!isFunction(callback))
     callback = callbackOrOptions;
 
   const confirmDialog = $('#confirm-dialog');
@@ -217,7 +220,7 @@ export function formatHour(hours: number, amPm: boolean, withH = false) {
   return padLeft(hour, 2, '0') + suffix;
 }
 
-export function formatTime(date: KsDateTime, amPm: boolean) {
+export function formatTime(date: DateTime, amPm: boolean) {
   const hours = formatHour(date.wallTime.hrs, amPm);
 
   return hours.substr(0, 2) + ':' + padLeft(date.wallTime.min, 2, '0') + hours.substr(2);
@@ -427,8 +430,8 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
   }
 }
 
-export function localDateString(time: number, zone: KsTimeZone): string {
-  const wallTime = new KsDateTime(time, zone).wallTime;
+export function localDateString(time: number, zone: Timezone): string {
+  const wallTime = new DateTime(time, zone).wallTime;
 
   return new Date(wallTime.y, wallTime.m - 1, wallTime.d, 12).toLocaleDateString(undefined,
     { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

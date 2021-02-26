@@ -6,9 +6,23 @@
     <title>Astronomy/Weather Clock</title>
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script> window.canDoES6 = false; </script>
+    <script>
+      // Check that ES6 (ES2015) features work.
+      let a = 5;
+      const b = -7;
+      [7].forEach(n => a = n);
+      window.canDoES6 = true;
+    </script>
+    <script>
+      function onLoadCheck() {
+        if (!window.canDoES6)
+          document.body.innerHTML = 'Sorry, this web browser is too out-of-date to use with this website.';
+      }
+    </script>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
   </head>
-  <body>
+  <body onload="onLoadCheck()">
     <div class="keyboard">
       <div class="keyboard-title">&nbsp;<span id="keyboard-close"><span>✕</span></span></div>
       <div class="simple-keyboard"></div>

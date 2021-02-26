@@ -23,7 +23,7 @@ import $ from 'jquery';
 import { apiServer, localServer } from './settings';
 import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/shared-types';
 import { updateSvgFlowItems } from './svg-flow';
-import { getJson, setSignalLevel } from './util';
+import { getJson, setSignalLevel } from './awc-util';
 
 function errorText(err: any): string {
   err = err instanceof Error ? err.message : err.error;
