@@ -1,7 +1,7 @@
 /* eslint @typescript-eslint/indent: 0 */
 /* eslint no-multi-spaces: 0 */
 import fs from 'fs';
-import { asLines } from 'ks-util';
+import { asLines, isString } from '@tubular/util';
 
 // Pin conversion tables below taken from Gordon Henderson's WiringPi
 
@@ -237,7 +237,7 @@ export function convertPin(pin: number | string, pinSystem0: PinSystem, pinSyste
   let pinSystemFrom: number;
   let pinSystemTo: number;
 
-  if (typeof pin === 'string') {
+  if (isString(pin)) {
     const $ = /^(\d+)\s*([gpvw]?)$/.exec(pin.trim().toLowerCase());
 
     if ($) {
@@ -267,7 +267,7 @@ export function convertPin(pin: number | string, pinSystem0: PinSystem, pinSyste
 }
 
 export function convertPinToGpio(pinNumber: number | string, pinSys = PinSystem.GPIO) {
-  if (typeof pinNumber === 'string')
+  if (isString(pinNumber))
     return convertPin(pinNumber as string, PinSystem.GPIO);
 
   return convertPin(pinNumber as number, pinSys, PinSystem.GPIO);

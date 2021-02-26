@@ -1,4 +1,4 @@
-import { processMillis } from 'ks-util';
+import { isNumber, processMillis } from '@tubular/util';
 import { NtpData } from './ntp-data';
 import { TimeInfo } from './shared-types';
 
@@ -199,7 +199,7 @@ export abstract class TimePoller {
 
   getTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
     const internalAdjust = (internalAdjustOrBias === true);
-    const bias = (typeof internalAdjustOrBias === 'number' ? internalAdjustOrBias : 0);
+    const bias = (isNumber(internalAdjustOrBias) ? internalAdjustOrBias : 0);
     let time: number;
     let timeInfo: TimeInfo;
 

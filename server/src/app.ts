@@ -9,7 +9,7 @@ import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
-import { asLines, toBoolean } from 'ks-util';
+import { asLines, isString, toBoolean } from '@tubular/util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
@@ -17,7 +17,7 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp } from './util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
 
@@ -145,9 +145,7 @@ function onError(error: any) {
   if (error.syscall !== 'listen')
     throw error;
 
-  const bind = typeof httpPort === 'string'
-    ? 'Pipe ' + httpPort
-    : 'Port ' + httpPort;
+  const bind = isString(httpPort) ? 'Pipe ' + httpPort : 'Port ' + httpPort;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -169,9 +167,8 @@ function onError(error: any) {
 
 function onListening() {
   const addr = httpServer.address();
-  const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+  const bind = isString(addr) ? 'pipe ' + addr : 'port ' + addr.port;
+
   debug('Listening on ' + bind);
 }
 

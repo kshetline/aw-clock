@@ -1,11 +1,11 @@
 import { requestText } from 'by-request';
-import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from 'ks-date-time-zone';
-import { interpolate, irandom } from 'ks-math';
-import { asLines, last } from 'ks-util';
+import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from '@tubular/time';
+import { interpolate, irandom } from '@tubular/math';
+import { asLines, isString, last } from '@tubular/util';
 import PromiseFtp from 'promise-ftp';
 import { CurrentDelta } from './shared-types';
 import { URL } from 'url';
-import { timeStamp } from './util';
+import { timeStamp } from './awcs-util';
 
 export interface LeapSecond {
   ntp: number;
@@ -137,7 +137,7 @@ export class TaiUtc {
     let newLeaps: LeapSecond[] = [];
 
     docs.forEach((doc, index) => {
-      if (typeof doc !== 'string') {
+      if (!isString(doc)) {
         console.error('%s -- Failed to leap seconds from %s', timeStamp(), this.urls[index]);
         console.error(doc);
 

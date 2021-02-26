@@ -1,8 +1,8 @@
 import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
-import { last, toBoolean, toNumber } from 'ks-util';
+import { last, toBoolean, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { checkForecastIntegrity, escapeForRegex, fToC, hpaToInHg, inchesToCm, milesToKm } from './util';
+import { checkForecastIntegrity, escapeForRegex, fToC, hpaToInHg, inchesToCm, milesToKm } from './awcs-util';
 
 interface WeatherBitCurrent {
   data: {
@@ -326,6 +326,16 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
       title: alert.title,
       url: alert.uri
     }));
+  }
+
+  if (forecast.daily?.data?.length > 0) {
+    const daily = forecast.daily.data;
+
+    if (daily[0].narrativeDay)
+      forecast.daily.summary = `Today: ${daily[0].narrativeDay}.`;
+
+    if (daily.length > 1 && daily[1].narrativeDay)
+      forecast.daily.summary += ` Tomorrow: ${daily[1].narrativeDay}.`;
   }
 
   return forecast;

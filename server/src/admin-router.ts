@@ -1,8 +1,8 @@
 import { exec } from 'child_process';
 import { Request, Response, Router } from 'express';
 import fs from 'fs';
-import { asLines, toNumber, toBoolean } from 'ks-util';
-import { noCache } from './util';
+import { asLines, toNumber, toBoolean } from '@tubular/util';
+import { noCache } from './awcs-util';
 import { monitorProcess, spawn } from './process-util';
 
 export const router = Router();

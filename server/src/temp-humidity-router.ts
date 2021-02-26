@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
-import { processMillis } from 'ks-util';
+import { processMillis } from '@tubular/util';
 import request from 'request';
-import { jsonOrJsonp, noCache } from './util';
+import { jsonOrJsonp, noCache } from './awcs-util';
 import { TempHumidityItem, TempHumidityData } from './shared-types';
 
 export const router = Router();
