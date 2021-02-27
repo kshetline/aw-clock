@@ -14,36 +14,10 @@ if [ "$EUID" != 0 ]; then
   exit
 fi
 
-echo "Checking installation pre-requisites..."
-
-if [ ! "$(command -v node)" ]; then
-  version=0
-else
-  version=$(node --version)
-  pattern='v?([0-9]+)'
-  [[ $version =~ $pattern ]]
-  version="${BASH_REMATCH[1]}"
-fi
-
-if (( version < 12 )); then
-  echo "Installing nodejs. This could take several minutes..."
-  apt-get update
-  curl -sL https://deb.nodesource.com/setup_12.x | bash -
-  apt-get install -y nodejs
-fi
-
-if [ ! -f ".first-time-install" ]; then
-  echo "Installing npm packages."
-  echo "Warning: first time installation of node-sass can be VERY slow!"
-  npm i
-
-  if [ "$SUDO_USER" ]; then
-    chown -R "$SUDO_USER" node_modules
-  fi
-
-  touch .first-time-install
-fi
+sudo -u "$SUDO_USER" bash -c ./build_node_check.sh
+path="$(cat node_path.txt)"
+rm node_path.txt
 
 echo "Starting main installer..."
 # shellcheck disable=SC2048,SC2086 # this should become separate items with spaces in between, not one quoted thing
-npm run build -- --bash $*
+npm run build:prod -- --path "$path" --bash $*

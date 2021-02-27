@@ -1,9 +1,9 @@
 import { purgeCache, requestJson, requestText } from './request-cache';
 import { Request, Router } from 'express';
-import { max } from 'ks-math';
-import { toNumber } from 'ks-util';
+import { max } from '@tubular/math';
+import { isObject, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { autoHpa, autoInHg, checkForecastIntegrity } from './util';
+import { autoHpa, autoInHg, checkForecastIntegrity } from './awcs-util';
 
 export const router = Router();
 
@@ -13,8 +13,10 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   try {
     const items = await getContent(req, url);
 
-    if (!items)
+    if (!items) {
+      purgeCache(url);
       return { source: 'wunderground', unavailable: true };
+    }
 
     const celsius = (req.query.du === 'c');
     const intermediateForecast: any = { alerts: [] };
@@ -66,7 +68,7 @@ async function getContent(req: Request, url: string): Promise<any> {
 
   if ($) {
     result = JSON.parse(decodeWeirdJson($[1]))['wu-next-state-key'];
-    result = (typeof result === 'object' ? result : null);
+    result = (isObject(result) ? result : null);
   }
 
   return result;
@@ -133,6 +135,21 @@ function convertForecast(wuForecast: any, isMetric: boolean): ForecastData {
   convertHourly(forecast, wh, isMetric);
   convertDaily(forecast, wc, wuForecast.daily);
   convertAlerts(forecast, wuForecast.alerts);
+
+  if (forecast.daily?.data?.length > 0) {
+    const daily = forecast.daily.data;
+
+    if (daily[0].narrativeDay)
+      forecast.daily.summary = `Today: ${daily[0].narrativeDay}.`;
+    else if (!forecast.daily.summary.endsWith('.'))
+      forecast.daily.summary += '.';
+
+    if (daily[0].narrativeEvening)
+      forecast.daily.summary += ` Evening: ${daily[0].narrativeEvening}.`;
+
+    if (daily.length > 1 && daily[1].narrativeDay)
+      forecast.daily.summary += ` Tomorrow: ${daily[1].narrativeDay}.`;
+  }
 
   return forecast;
 }

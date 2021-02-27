@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { splitIpAndPort } from './util';
+import { splitIpAndPort } from './awcs-util';
 import { describe, it } from 'mocha';
 
 describe('util', () => {

@@ -1,8 +1,8 @@
-import { mod } from 'ks-math';
-import { processMillis } from 'ks-util';
+import { mod } from '@tubular/math';
+import { isNumber, processMillis } from '@tubular/util';
 import { createSocket, RemoteInfo } from 'dgram';
 import { NtpData } from './ntp-data';
-import { splitIpAndPort } from './util';
+import { splitIpAndPort } from './awcs-util';
 
 export const DEFAULT_NTP_SERVER = 'pool.ntp.org';
 
@@ -35,8 +35,8 @@ export class Ntp {
   private timeCallback: TimeCallback;
 
   constructor(
-    private server = DEFAULT_NTP_SERVER,
-    private port = 123,
+    private readonly server = DEFAULT_NTP_SERVER,
+    private readonly port = 123,
     private maxRetries = DEFAULT_MAX_RETRIES
   ) {
     [this.server, this.port] = splitIpAndPort(server, port);
@@ -51,7 +51,7 @@ export class Ntp {
   }
 
   setDebugTime(baseTime: Date | number, leap = 0): void {
-    const base = typeof baseTime === 'number' ? baseTime : baseTime.getTime();
+    const base = isNumber(baseTime) ? baseTime : baseTime.getTime();
 
     // Assumes system time is at least close to NTP server time
     this.debugOffset = base - Date.now();

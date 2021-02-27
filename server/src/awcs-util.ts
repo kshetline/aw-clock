@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { acos, cos_deg, PI, sin_deg } from 'ks-math';
+import { acos, cos_deg, PI, sin_deg } from '@tubular/math';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData } from './shared-types';
+import { isNumber } from '@tubular/util';
 
 export function noCache(res: Response): void {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -127,10 +128,10 @@ export function getRemoteAddress(req: Request): string {
 }
 
 export function checkForecastIntegrity(forecast: ForecastData, currentOnly = false): boolean {
-  return forecast && forecast.currently && typeof forecast.currently.temperature === 'number' &&
+  return forecast && forecast.currently && isNumber(forecast.currently.temperature) &&
     (currentOnly || (
-      forecast.hourly && forecast.hourly.length > 23 && typeof forecast.hourly[0].temperature === 'number' &&
-      forecast.daily && forecast.daily.data && forecast.daily.data.length > 3 && typeof forecast.daily.data[0].time === 'number'));
+      forecast.hourly && forecast.hourly.length > 23 && isNumber(forecast.hourly[0].temperature) &&
+      forecast.daily && forecast.daily.data && forecast.daily.data.length > 3 && isNumber(forecast.daily.data[0].time)));
 }
 
 const charsNeedingRegexEscape = /[-[\]/{}()*+?.\\^$|]/g;

@@ -35,6 +35,7 @@ yarn-error.log
 testem.log
 /typings
 .first-time-install
+node_path.txt
 
 # e2e
 /e2e/*.js

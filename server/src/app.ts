@@ -1,4 +1,23 @@
 // #!/usr/bin/env node
+/*
+  Copyright © 2018-2021 Kerry Shetline, kerry@shetline.com
+
+  MIT license: https://opensource.org/licenses/MIT
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+  persons to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+  Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 import { router as adminRouter } from './admin-router';
 import { requestJson } from 'by-request';
 import { execSync } from 'child_process';
@@ -9,7 +28,7 @@ import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
-import { asLines, toBoolean } from 'ks-util';
+import { asLines, isString, toBoolean } from '@tubular/util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
@@ -17,7 +36,7 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp } from './util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
 
@@ -145,9 +164,7 @@ function onError(error: any) {
   if (error.syscall !== 'listen')
     throw error;
 
-  const bind = typeof httpPort === 'string'
-    ? 'Pipe ' + httpPort
-    : 'Port ' + httpPort;
+  const bind = isString(httpPort) ? 'Pipe ' + httpPort : 'Port ' + httpPort;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -169,9 +186,8 @@ function onError(error: any) {
 
 function onListening() {
   const addr = httpServer.address();
-  const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+  const bind = isString(addr) ? 'pipe ' + addr : 'port ' + addr.port;
+
   debug('Listening on ' + bind);
 }
 

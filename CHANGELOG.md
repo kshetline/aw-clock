@@ -1,3 +1,21 @@
+## 2.9.0
+
+* Updated timezones to 2021a, with new ability to update timezones automatically, while running.
+* New marquee weather summary.
+* Yet another attempt to fix a pesky, hard-to-track-down, impossible-to-reproduce bug where weather forecasts mysteriously stop updating until you reboot.
+
+## 2.8.2
+
+* Update timezones to 2020d.
+* Fix and improve ephemeris rise/set tracks.
+* Fix Raspbian detection.
+
+## 2.8.0
+
+* Added wind speed and barometric pressure.
+* Added night sky indication to planet display.
+* Improved forecast failover.
+
 ## 2.7.3
 
 * Timezone database update (tz 2020b).
@@ -92,7 +110,7 @@
 
 ## 2.0.4
 
-* Facilitated project development on Windows and non-Raspbian Linux (already worked on MacOS).
+* Facilitated project development on Windows and non-Raspbian Linux (already worked on macOS).
 * Display equinoxes and solstices.
 
 ## 2.0.2

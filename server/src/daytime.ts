@@ -1,7 +1,7 @@
-import { processMillis } from 'ks-util';
+import { processMillis } from '@tubular/util';
 import { Socket } from 'net';
-import { splitIpAndPort } from './util';
-import { getDateFromDayNumber_SGC, getISOFormatDate } from 'ks-date-time-zone';
+import { splitIpAndPort } from './awcs-util';
+import { getDateFromDayNumber_SGC, getISOFormatDate } from '@tubular/time';
 
 export interface DaytimeData {
   text: string;
@@ -26,8 +26,8 @@ export class Daytime {
   private lastTime = '';
 
   constructor(
-    private server = DEFAULT_DAYTIME_SERVER,
-    private port = 13
+    private readonly server = DEFAULT_DAYTIME_SERVER,
+    private readonly port = 13
   ) {
     [this.server, this.port] = splitIpAndPort(server, port);
   }

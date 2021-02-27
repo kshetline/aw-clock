@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import request from 'request';
-import { average, jsonOrJsonp, noCache, stdDev } from './util';
+import { average, jsonOrJsonp, noCache, stdDev } from './awcs-util';
 import { DhtSensorData } from './shared-types';
 import { convertPinToGpio } from './rpi-pin-conversions';
 

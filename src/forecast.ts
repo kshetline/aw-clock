@@ -1,37 +1,19 @@
-/*
-  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
-
-  MIT license: https://opensource.org/licenses/MIT
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-  documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
-  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-  persons to whom the Software is furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
-  Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
 import { AppService } from './app.service';
 import { CLOCK_CENTER, TimeFormat } from './clock';
 import { CurrentTemperatureHumidity } from './current-temp-manager';
 import $ from 'jquery';
-import { KsDateTime, KsTimeZone } from 'ks-date-time-zone';
-import { cos_deg, floor, max, min, sin_deg } from 'ks-math';
+import { DateTime, Timezone } from '@tubular/time';
+import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
 import {
-  blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, last, processMillis, toNumber
-} from 'ks-util';
+  blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, isObject,
+  last, processMillis, toNumber
+} from '@tubular/util';
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
   compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString,
   setSvgHref
-} from './util';
+} from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
@@ -77,6 +59,7 @@ let SUBJECT_INTRO_PATTERN: RegExp;
 
 try {
   // Firefox fails on this pattern.
+  // eslint-disable-next-line prefer-regex-literals
   SUBJECT_INTRO_PATTERN = new RegExp('^((• )?\\p{Lu}{4,}[ \\p{Lu}]*)\\.\\.\\.(?!\\.)', 'gmu');
 }
 catch {
@@ -139,7 +122,7 @@ export class Forecast {
   private todayIndex = 0;
   private cachedHourly: HourlyConditions[] = [];
   private lastForecastTime = 0;
-  private timezone = KsTimeZone.OS_ZONE;
+  private timezone = Timezone.OS_ZONE;
   private showingStartOfWeek = true;
   private showingHourTemps = true;
   private hourInfoTimer: any;
@@ -653,7 +636,7 @@ export class Forecast {
     this.updateMarqueeAnimation(error || '\u00A0');
   }
 
-  public getTimezone(): KsTimeZone {
+  public getTimezone(): Timezone {
     return this.timezone;
   }
 
@@ -675,14 +658,14 @@ export class Forecast {
         success: (data: ForecastData, textStatus: string, jqXHR: JQueryXHR) => {
           const cacheControl = jqXHR.getResponseHeader('cache-control');
 
-          if (cacheControl && typeof data === 'object') {
+          if (cacheControl && isObject(data)) {
             const match = /max-age=(\d+)/.exec(cacheControl);
 
             if (match && Number(match[1]) <= FREQUENT_THRESHOLD)
               data.frequent = true;
           }
 
-          if (!data || typeof data !== 'object' || data.unavailable)
+          if (!data || !isObject(data) || data.unavailable)
             reject(new Error('Forecast unavailable'));
           else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
             reject(new Error('Incomplete data'));
@@ -706,11 +689,11 @@ export class Forecast {
   }
 
   private displayForecast(forecastData: ForecastData) {
-    this.timezone = KsTimeZone.getTimeZone(forecastData.timezone);
+    this.timezone = Timezone.getTimezone(forecastData.timezone);
 
     const now = this.appService.getCurrentTime();
-    const today = new KsDateTime(now, this.timezone).wallTime;
-    const startOfHour = new KsDateTime({ y: today.y, m: today.m, d: today.d, hrs: today.hrs, min: 0, sec: 0 }, this.timezone).utcTimeMillis;
+    const today = new DateTime(now, this.timezone).wallTime;
+    const startOfHour = new DateTime({ y: today.y, m: today.m, d: today.d, hrs: today.hrs, min: 0, sec: 0 }, this.timezone).utcTimeMillis;
     const firstHourIndex = forecastData.hourly.findIndex(hourInfo => hourInfo.time * 1000 >= startOfHour);
     const vertical = (this.hourlyForecast === HourlyForecast.VERTICAL);
     const timeFormat = this.appService.getTimeFormat();
@@ -724,7 +707,7 @@ export class Forecast {
       let pop = '';
       const hourInfo = forecastData.hourly[i + firstHourIndex];
       const startOfHour = hourInfo ? hourInfo.time * 1000 : previousStartOfHour + 3_600_000;
-      const hour = new KsDateTime(startOfHour, this.timezone).wallTime;
+      const hour = new DateTime(startOfHour, this.timezone).wallTime;
       let index: number;
 
       if (vertical)
@@ -784,7 +767,7 @@ export class Forecast {
     }
 
     this.todayIndex = forecastData.daily.data.findIndex(cond => {
-      const wallTime = new KsDateTime(cond.time * 1000, this.timezone).wallTime;
+      const wallTime = new DateTime(cond.time * 1000, this.timezone).wallTime;
 
       return wallTime.y === today.y && wallTime.m === today.m && wallTime.d === today.d;
     });

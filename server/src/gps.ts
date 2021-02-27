@@ -1,14 +1,14 @@
 import { requestJson } from 'by-request';
 import { ChildProcess } from 'child_process';
-import { parseISODate } from 'ks-date-time-zone';
-import { abs, floor, max, round } from 'ks-math';
-import { asLines, processMillis } from 'ks-util';
+import { parseISODate } from '@tubular/time';
+import { abs, floor, max, round } from '@tubular/math';
+import { asLines, processMillis } from '@tubular/util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData, GpsData, TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
-import { roughDistanceBetweenLocationsInKm, timeStamp } from './util';
+import { roughDistanceBetweenLocationsInKm, timeStamp } from './awcs-util';
 import { getForecast } from './weatherbit-forecast';
 
 const BILLION = BigInt('1000000000');

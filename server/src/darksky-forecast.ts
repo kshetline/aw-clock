@@ -9,7 +9,7 @@ import {
   ForecastData,
   ForecastDataKeys, HourlyConditions, PressureTrend
 } from './shared-types';
-import { checkForecastIntegrity, hpaToInHg } from './util';
+import { checkForecastIntegrity, hpaToInHg } from './awcs-util';
 
 // The time (with a month of padding) when the Dark Sky API will be shut down, presuming "end of 2021"
 // actually means all the way until 2021-12-31.

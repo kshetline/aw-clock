@@ -1,6 +1,6 @@
 import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
 import * as readline from 'readline';
-import { asLines } from 'ks-util';
+import { asLines, isNumber } from '@tubular/util';
 
 const isMacOS = (process.platform === 'darwin');
 const isWindows = (process.platform === 'win32');
@@ -29,13 +29,24 @@ export enum ErrorMode { DEFAULT, ANY_ERROR, NO_ERRORS }
 const MAX_MARK_TIME_DELAY = 100;
 const NO_OP = () => {};
 
+export function stripFormatting(s: string): string {
+  return s?.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
+}
+
+function errorish(s: string): boolean {
+  s = stripFormatting(s);
+
+  return /\b(failed|exception|invalid|operation not permitted|isn't a valid|Cannot resolve|must be specified|must implement|need to install|doesn't exist|are required|should be strings?)\b/i.test(s) ||
+         /[_0-9a-z](Error|Exception|Invalid)\b/.test(s);
+}
+
 export function spawn(command: string, args: string[], options?: any): ChildProcess;
 export function spawn(command: string, uid?: number, args?: string[], options?: any): ChildProcess;
 export function spawn(command: string, uidOrArgs?: string[] | number, optionsOrArgs?: any, options?: any): ChildProcess {
   let uid: number;
   let args: string[];
 
-  if (typeof uidOrArgs === 'number') {
+  if (isNumber(uidOrArgs)) {
     uid = uidOrArgs;
     args = optionsOrArgs || [];
   }
@@ -96,7 +107,8 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
 
     proc.stderr.on('data', data => {
       (markTime || NO_OP)();
-      data = data.toString();
+      data = stripFormatting(data.toString());
+
       // This gets confusing, because a lot of non-error progress messaging goes to stderr, and the
       //   webpack process doesn't exit with an error for compilation errors unless you make it do so.
       if (/(\[webpack.Progress])|Warning\b/.test(data))
@@ -108,7 +120,9 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
       (markTime || NO_OP)();
       data = data.toString();
       output += data;
-      errors = '';
+
+      if (errorish(data))
+        errors = errors ? errors + '\n' + data : data;
     });
     proc.on('error', err => {
       clearInterval(slowSpin);
@@ -121,11 +135,7 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
     proc.on('close', () => {
       clearInterval(slowSpin);
 
-      if (errorMode !== ErrorMode.NO_ERRORS && errors && (
-        errorMode === ErrorMode.ANY_ERROR ||
-        /\b(error|exception|operation not permitted)\b/i.test(errors) ||
-        /[_0-9a-z](Error|Exception)\b/.test(errors)
-      ))
+      if (errorMode !== ErrorMode.NO_ERRORS && errors && (errorMode === ErrorMode.ANY_ERROR || errorish(errors)))
         reject(errors.replace(/\bE:\s+/g, '').trim());
       else
         resolve(output);

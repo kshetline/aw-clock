@@ -1,7 +1,8 @@
 import { TimePoller } from './time-poller';
 import { DEFAULT_NTP_SERVER, Ntp } from './ntp';
 import { NtpData } from './ntp-data';
-import { splitIpAndPort } from './util';
+import { splitIpAndPort } from './awcs-util';
+import { isNumber } from '@tubular/util';
 
 export class NtpPoller extends TimePoller {
   private static allOpenPollers = new Set<NtpPoller>();
@@ -34,7 +35,7 @@ export class NtpPoller extends TimePoller {
     if (this.ntp)
       this.ntp.setDebugTime(baseTime, leap);
 
-    this.reset(typeof baseTime === 'number' ? baseTime : baseTime.getTime());
+    this.reset(isNumber(baseTime) ? baseTime : baseTime.getTime());
   }
 
   protected getNtpData(requestTime: number): Promise<NtpData> {

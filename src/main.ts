@@ -1,5 +1,6 @@
+import { AppService } from './app.service';
 /*
-  Copyright © 2018-2020 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2021 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -17,25 +18,23 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { AppService } from './app.service';
 import { Clock, TimeFormat } from './clock';
 import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
 import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
-import { KsDateTime, KsTimeZone, parseISODateTime } from 'ks-date-time-zone';
-import { irandom } from 'ks-math';
-import { initTimeZoneSmall } from 'ks-date-time-zone/dist/ks-timezone-small';
-import { isEffectivelyFullScreen, isFirefox, setFullScreen } from 'ks-util';
+import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
+import { irandom } from '@tubular/math';
+import { isBoolean, isEffectivelyFullScreen, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
-import { adjustCityName, anyDialogOpen, getJson } from './util';
+import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
 
-initTimeZoneSmall();
+pollForTimezoneUpdates(zonePollerBrowser);
 
 const ntpPoller = new HttpTimePoller(apiServer);
 const baseTime = ntpPoller.getTimeInfo().time;
@@ -75,7 +74,7 @@ class AwClockApp implements AppService {
 
   private lastCursorMove = 0;
   private lastForecast = 0;
-  private lastTimezone: KsTimeZone;
+  private lastTimezone: Timezone;
   private lastHour = -1;
   private frequent = false;
   private proxyStatus: boolean | Promise<boolean> = undefined;
@@ -132,15 +131,15 @@ class AwClockApp implements AppService {
           this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
 
           const updateTestEphemeris = () => {
-            // TODO: Get parseISODateTime() from ks-date-time-zone when updated.
-            const time = new KsDateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
+            // TODO: Get parseISODateTime() from @tubular/time when updated.
+            const time = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
 
             this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
               this.settings.timeFormat === TimeFormat.AMPM);
           };
 
           if (this.showTestTime && !this.testTimeValue) {
-            this.testTimeValue = new KsDateTime(this.getCurrentTime(), this.lastTimezone).toIsoString().substr(0, 16);
+            this.testTimeValue = new DateTime(this.getCurrentTime(), this.lastTimezone).toIsoString().substr(0, 16);
             this.testTime.on('input', () => {
               this.testTimeValue = this.testTime.val() as string;
               updateTestEphemeris();
@@ -160,9 +159,31 @@ class AwClockApp implements AppService {
       this.lastCursorMove = performance.now();
     });
 
-    $('#settings-btn').on('click', () => this.settingsDialog.openSettings(this.settings));
+    const settingsButton = $('#settings-btn');
 
-    $('.weather-logo a').on('click', function (evt) {
+    settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
+
+    const weatherLogo = $('.weather-logo a');
+
+    // Weather logo is too big a target on a touchscreen compared to the settings button.
+    weatherLogo.on('touchstart', function (evt) {
+      if (evt.targetTouches?.length > 0) {
+        const fromRightEdge = window.screen.width - evt.targetTouches[0].pageX;
+        const logoWidth = this.offsetWidth;
+
+        if (fromRightEdge > logoWidth * 2 / 3) {
+          evt.preventDefault();
+          settingsButton.trigger('click');
+        }
+        else if (fromRightEdge > logoWidth / 3)
+          evt.preventDefault();
+        // ...else let the touch be a click on the weather logo
+      }
+      else
+        evt.preventDefault();
+    });
+
+    weatherLogo.on('click', function (evt) {
       let href: string;
 
       if (isEffectivelyFullScreen() && window.innerWidth === window.screen.availWidth && (href = $(this).attr('href'))) {
@@ -225,7 +246,7 @@ class AwClockApp implements AppService {
   proxySensorUpdate(): Promise<boolean> {
     if (this.proxyStatus instanceof Promise)
       return this.proxyStatus;
-    else if (typeof this.proxyStatus === 'boolean')
+    else if (isBoolean(this.proxyStatus))
       return Promise.resolve(this.proxyStatus);
 
     this.proxyStatus = new Promise(resolve => $.ajax({
@@ -233,7 +254,7 @@ class AwClockApp implements AppService {
       dataType: 'json',
       success: data => {
         (this.proxyStatus as Promise<boolean>).then(() => this.clock.triggerRefresh());
-        resolve(this.proxyStatus = typeof data === 'object' && data?.error !== 'n/a');
+        resolve(this.proxyStatus = isObject(data) && data?.error !== 'n/a');
       },
       error: () => {
         (this.proxyStatus as Promise<boolean>).then(() => this.clock.triggerRefresh());
@@ -485,7 +506,7 @@ class AwClockApp implements AppService {
         const endMinute = parseTime(end);
 
         if (startMinute !== endMinute) {
-          const time = new KsDateTime(now, this.lastTimezone);
+          const time = new DateTime(now, this.lastTimezone);
           const currentMinute = time.wallTime.hrs * 60 + time.wallTime.min;
 
           if ((startMinute > endMinute && (startMinute <= currentMinute || currentMinute < endMinute)) ||

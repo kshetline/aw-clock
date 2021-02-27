@@ -1,5 +1,5 @@
-import { floor, min, round } from 'ks-math';
-import { mphToKnots } from './util';
+import { floor, min, round } from '@tubular/math';
+import { mphToKnots } from './awc-util';
 
 interface Barbs {
   halves: number;

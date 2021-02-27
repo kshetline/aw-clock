@@ -2,7 +2,7 @@ import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
-import { asLines, processMillis, toBoolean } from 'ks-util';
+import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
 import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
@@ -18,6 +18,7 @@ const isWindows = (process.platform === 'win32');
 let spinStep = 0;
 let lastSpin = 0;
 let doUpdateUpgrade = true;
+let doNpmI = true;
 let npmInitDone = false;
 let doAcu = false;
 let clearAcu = false;
@@ -28,6 +29,7 @@ let doStdDeploy = false;
 let doDedicated = false;
 let doLaunch = false;
 let doReboot = false;
+let prod = false;
 let viaBash = false;
 let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
@@ -56,8 +58,9 @@ chalk.paleBlue = chalk.hex('#66CCFF');
 chalk.paleYellow = chalk.hex('#FFFFAA');
 
 let backspace = '\x08';
+let sol = '\x1B[1G';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 5;
+let totalSteps = 3;
 let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
@@ -82,6 +85,7 @@ const fontSrc = rpiSetupStuff + '/fonts/';
 const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
+let nodePath = process.env.PATH;
 
 if (process.platform === 'linux') {
   try {
@@ -121,8 +125,17 @@ if (process.argv.length === 0 && treatAsRaspberryPi && !viaBash) {
 const onlyOnRaspberryPi: string[] = [];
 const onlyDedicated: string[] = [];
 let helpMsg: string;
+let getPathArg = false;
 
 process.argv.forEach(arg => {
+  if (getPathArg) {
+    process.env.NODE_PATH = arg.trim();
+    process.env.PATH = nodePath = arg.trim() + (nodePath ? ':' + nodePath : nodePath);
+    getPathArg = false;
+
+    return;
+  }
+
   switch (arg) {
     case '--acu':
       doAcu = true;
@@ -163,10 +176,17 @@ process.argv.forEach(arg => {
       onlyOnRaspberryPi.push(arg);
       onlyDedicated.push(arg);
       break;
+    case '-p':
+      prod = true;
+      break;
+    case '--path':
+      getPathArg = true;
+      break;
     case '--pt':
       spin = undefined;
       chalk.level = 0;
       backspace = '';
+      sol = '';
       trailingSpace = ' ';
       break;
     case '--reboot':
@@ -183,13 +203,16 @@ process.argv.forEach(arg => {
       doUpdateUpgrade = false;
       onlyOnRaspberryPi.push(arg);
       break;
+    case '--skip-npm-i':
+      doNpmI = false;
+      break;
     case '--tarp':
       break; // ignore - already handled
     default:
       if (arg !== '--help' && arg !== '-h') {
         helpMsg =
           'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
-          '                       [--launch] [--pt] [--reboot] [--sd] [--skip-upgrade]\n' +
+          '                       [--launch] [-p] [--pt] [--reboot] [--sd] [--skip-upgrade]\n' +
           '                       [--tarp]\n\n' +
           'The options --acu, --admin, and --dht can be followed by an extra dash (e.g.\n' +
           '--acu-) to clear a previously enabled option.';
@@ -321,19 +344,16 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
 
 function getWebpackSummary(s: string): string {
   const lines = asLines(s);
-  let summary = '';
-  let count = 0;
+  const summary: string[] = [];
 
-  for (let i = 0; i < lines.length && count < 4; ++i) {
-    const line = lines[i];
-
-    if (line && !line.startsWith('>')) {
-      summary += '    ' + line.trim() + (count < 3 ? '\n' : '');
-      ++count;
+  for (let line of lines) {
+    if (/^(hash|version|time|built at):/i.test(line)) {
+      line = line.trim();
+      summary.push(line.substr(0, 72) + (line.length > 72 ? '...' : ''));
     }
   }
 
-  return summary || s.trim();
+  return '    ' + summary.join('\n    ');
 }
 
 async function npmInit(): Promise<void> {
@@ -415,7 +435,7 @@ async function checkForGps(): Promise<void> {
       try {
         const obj = JSON.parse(line);
 
-        if (typeof obj === 'object' && typeof obj.lat === 'number' && typeof obj.lon === 'number') {
+        if (isObject(obj) && isNumber(obj.lat) && isNumber(obj.lon)) {
           gpsLocationIsWorking = true;
           break;
         }
@@ -534,6 +554,10 @@ function upgradeValidate(s: string): boolean {
   return yesOrNo(s, isYes => doUpdateUpgrade = isYes);
 }
 
+function npmIValidate(s: string): boolean {
+  return yesOrNo(s, isYes => doNpmI = isYes);
+}
+
 function acuValidate(s: string): boolean {
   return yesOrNo(s, isYes => doAcu = isYes);
 }
@@ -578,6 +602,7 @@ const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 
 const questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
+  { prompt: 'Perform npm install? (N option for debug only)', ask: true, yn: true, deflt: doNpmI ? 'Y' : 'N', validate: npmIValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port.', ask: true, validate: portValidate },
   { prompt: 'Allow user to reboot, shutdown, update, etc.?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
   { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
@@ -619,12 +644,12 @@ if (NO_MORE_DARK_SKY) {
 }
 
 async function promptForConfiguration(): Promise<void> {
-  console.log(chalk.cyan('- Configuration -'));
+  console.log(chalk.cyan(sol + '- Configuration -'));
 
   for (let i = 0; i < questions.length; ++i) {
     const q = questions[i];
 
-    if (!(typeof q.ask === 'function' ? q.ask() : q.ask))
+    if (!(isFunction(q.ask) ? q.ask() : q.ask))
       continue;
 
     if (q.name) {
@@ -645,7 +670,7 @@ async function promptForConfiguration(): Promise<void> {
     if (response) {
       const validation = q.validate ? q.validate(response) : true;
 
-      if (typeof validation === 'string')
+      if (isString(validation))
         settings[q.name] = validation;
       else if (!validation) {
         --i;
@@ -723,10 +748,12 @@ async function disableScreenSaver(uid: number): Promise<void> {
 }
 
 async function doClientBuild(): Promise<void> {
-  showStep();
-  write('Updating client' + trailingSpace);
-  await monitorProcess(spawn('npm', uid, ['i', '--no-save']), spin);
-  stepDone();
+  if (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) {
+    showStep();
+    write('Updating client' + trailingSpace);
+    await monitorProcess(spawn('npm', uid, ['i', '--no-save']), spin);
+    stepDone();
+  }
 
   showStep();
   write('Building client' + trailingSpace);
@@ -734,17 +761,35 @@ async function doClientBuild(): Promise<void> {
   if (fs.existsSync('dist'))
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
-  const output = await monitorProcess(spawn('webpack', uid), spin);
+  const opts = { shell: true, env: process.env };
+  let output: string;
+
+  for (let i = 0; i < 2; ++i) {
+    try {
+      output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin);
+      break;
+    }
+    catch (err) {
+      if (i === 0 && (err.message ?? err.toString()).toLowerCase().includes('node sass does not yet support')) {
+        write(chalk.paleYellow(' ' + FAIL_MARK + ' (rebuilding node-sass)  '));
+        await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : [], opts), spin);
+      }
+      else
+        throw err;
+    }
+  }
 
   stepDone();
   console.log(chalk.mediumGray(getWebpackSummary(output)));
 }
 
 async function doServerBuild(): Promise<void> {
-  showStep();
-  write('Updating server' + trailingSpace);
-  await monitorProcess(spawn('npm', uid, ['i', '--no-save'], { cwd: path.join(__dirname, 'server') }), spin);
-  stepDone();
+  if (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) {
+    showStep();
+    write('Updating server' + trailingSpace);
+    await monitorProcess(spawn('npm', uid, ['i', '--no-save'], { cwd: path.join(__dirname, 'server') }), spin);
+    stepDone();
+  }
 
   showStep();
   write('Building server' + trailingSpace);
@@ -752,7 +797,8 @@ async function doServerBuild(): Promise<void> {
   if (fs.existsSync('server/dist'))
     await monitorProcess(spawn('rm', uid, ['-Rf', 'server/dist']), spin);
 
-  const output = await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }), spin);
+  const opts = { shell: true, cwd: path.join(__dirname, 'server'), env: process.env };
+  const output = await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], opts), spin);
 
   stepDone();
   console.log(chalk.mediumGray(getWebpackSummary(output)));
@@ -851,8 +897,18 @@ async function doServiceDeployment(): Promise<void> {
 
 (async () => {
   try {
+    uid = Number((await monitorProcess(spawn('id', ['-u', user]))).trim() || '1000');
+
+    const nodeVersionStr = (await monitorProcess(spawn('node', uid, ['--version']))).trim();
+    const nodeVersion = toNumber((/v(\d+)/.exec(nodeVersionStr) ?? [])[1]);
+
+    if (isRaspberryPi && nodeVersion !== 14) {
+      console.error(chalk.redBright(`Node.js version 14.x required. Version ${nodeVersionStr} found.`));
+      process.exit(0);
+    }
+
     if (treatAsRaspberryPi && !isRaspberryPi) {
-      const isDebian = /^Linux \w+ .*\bDebian\b/i.test(await monitorProcess(spawn('uname', ['-a']), spin));
+      const isDebian = /^Linux \w+ .*\bDebian\b/i.test(await monitorProcess(spawn('uname', ['-a'])));
       const isLxde = await isInstalled('lxpanel');
 
       if (!isDebian || !isLxde) {
@@ -861,14 +917,14 @@ async function doServiceDeployment(): Promise<void> {
       }
     }
 
-    uid = Number((await monitorProcess(spawn('id', ['-u', user]))).trim() || '1000');
-
     if (isRaspberryPi)
       await checkForGps();
 
     if (interactive)
       await promptForConfiguration();
 
+    totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
+    totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
     totalSteps += doAcu ? 1 : 0;
     totalSteps += doDht ? 1 : 0;
     totalSteps += (doStdDeploy || doDedicated ? 1 : 0);
@@ -882,7 +938,7 @@ async function doServiceDeployment(): Promise<void> {
 
     if (doDedicated) {
       totalSteps += 9 + (doUpdateUpgrade ? 1 : 0);
-      console.log(chalk.cyan('- Dedicated device setup -'));
+      console.log(chalk.cyan(sol + '- Dedicated device setup -'));
       showStep();
       write('Stopping weatherService if currently running' + trailingSpace);
       await monitorProcess(spawn('service', ['weatherService', 'stop']), spin, ErrorMode.NO_ERRORS);
@@ -910,7 +966,7 @@ async function doServiceDeployment(): Promise<void> {
     if (!settings.AWC_GIT_REPO_PATH)
       delete settings.AWC_GIT_REPO_PATH;
 
-    console.log(chalk.cyan('- Building application -'));
+    console.log(chalk.cyan(sol + '- Building application -'));
     const repoStatus1 = await getRepoStatus();
     await doClientBuild();
     await doServerBuild();
@@ -923,7 +979,7 @@ async function doServiceDeployment(): Promise<void> {
     showStep();
     write('Copying server to top-level dist directory' + trailingSpace);
     await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
-    await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'], { shell: true, uid: viaBash ? 0 : uid }), spin, ErrorMode.ANY_ERROR);
+    await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'], { shell: true }), spin, ErrorMode.ANY_ERROR);
     stepDone();
 
     if (doStdDeploy) {
@@ -940,12 +996,12 @@ async function doServiceDeployment(): Promise<void> {
     }
 
     if (doDedicated) {
-      console.log(chalk.cyan('- Dedicated device service deployment -'));
+      console.log(chalk.cyan(sol + '- Dedicated device service deployment -'));
       await doServiceDeployment();
     }
 
     if (doLaunch) {
-      console.log(chalk.cyan('- Launching Astronomy/Weather Clock -'));
+      console.log(chalk.cyan(sol + '- Launching Astronomy/Weather Clock -'));
       showStep();
       write(' ');
       await sleep(3000, spin);
@@ -959,7 +1015,7 @@ async function doServiceDeployment(): Promise<void> {
     }
 
     if (doReboot) {
-      console.log(chalk.cyan('- Rebooting system in 5 seconds... -'));
+      console.log(chalk.cyan(sol + '- Rebooting system in 5 seconds... -'));
       showStep();
       write('Press any key to stop reboot:' + trailingSpace);
 

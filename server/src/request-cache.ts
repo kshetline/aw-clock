@@ -1,5 +1,6 @@
 import { ExtendedRequestOptions, requestJson as byRequestJson, requestText as byRequestText } from 'by-request';
 import { format } from 'url';
+import { isString } from '@tubular/util';
 
 interface CachedJson {
   content?: any;
@@ -34,7 +35,7 @@ export function requestText(maxAgeInSeconds: number,
 function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: string,
     urlOrOptions: string | ExtendedRequestOptions, options?: ExtendedRequestOptions): Promise<any> {
   const now = Date.now() / 1000;
-  const key = (typeof urlOrOptions === 'string' ? urlOrOptions : format(urlOrOptions));
+  const key = (isString(urlOrOptions) ? urlOrOptions : format(urlOrOptions));
 
   // Purge outdated cache items
   Array.from(cache.keys()).forEach(key => {
