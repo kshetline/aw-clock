@@ -9,7 +9,7 @@ const autoprefixer = require('autoprefixer');
 const postcssUrl = require('postcss-url');
 const postcssImports = require('postcss-import');
 
-const entryPoints = ['inline', 'polyfills', 'sw-register', 'styles', 'vendor', 'main'];
+const entryPoints = ['inline', 'sw-register', 'styles', 'vendor', 'main'];
 const baseHref = '';
 const deployUrl = '';
 const projectRoot = process.cwd();
@@ -118,9 +118,10 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
       ],
       alias: rxPaths(),
       mainFields: [
-        'browser',
+        'es2015',
         'module',
-        'main'
+        'main',
+        'browser'
       ]
     },
     resolveLoader: {
@@ -132,9 +133,6 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
     entry: {
       main: [
         './src/main.ts'
-      ],
-      polyfills: [
-        './src/polyfills.ts'
       ],
       styles: [
         './src/styles.scss'
@@ -260,12 +258,12 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
         {
           test: /\.ts|\.tsx$/,
           use: 'ts-loader',
-          exclude: [/node_modules/, '/server/**/*']
+          exclude: [/\/node_modules\//, /\/server\/(?!src\/(ntp-data|shared-types|time-poller)\.ts$).*/]
         }
       ]
     },
     optimization: {
-      minimize: (process.env.NODE_ENV !== 'local'),
+      minimize: (env && env.mode) !== 'local',
       minimizer: [new TerserPlugin()],
     },
     devtool: 'source-map',
@@ -322,21 +320,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
 
           return Math.sign(leftIndex - rightIndex);
         }
-      }),
-      function () {
-        this.plugin('done', stats => {
-          if (stats.compilation.errors && stats.compilation.errors.length > 0) {
-            if (stats.compilation.errors.length === 0)
-              console.error(stats.compilation.errors[0]);
-            else {
-              console.error(stats.compilation.errors.map(err =>
-                err && typeof err === 'object' && err.message ? err.message : '').join('\n'));
-            }
-
-            process.exit(1);
-          }
-        });
-      }
+      })
     ],
     node: {
       global: true

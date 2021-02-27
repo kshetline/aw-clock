@@ -130,7 +130,7 @@ If an arc becomes a full circle, that means the corresponding planet on that tra
 
 ### Construction with 3D-Printed Stand
 
-#### Rear view of stand
+#### Rearview of stand
 
 The 3D model for this stand is provided by the project file `raspberry_pi_setup/monitor_stand.stl`. Below is how that model came out when printed using black ABS, 20% infill, at a cost of about $33 USD.
 
@@ -192,7 +192,7 @@ The long arm that reaches out from the side panel is designed so the temperature
 
 #### Raspberry Pi Model 4 attached to stand-offs
 
-I was a bit uncertain how well machine screws would work with the stand-offs that I’d designed, since I wanted them to function like self-tapping screws. As it turned out, the four M2.5 x 6 mm pan-head machine screws fit quite nicely and snuggly, without being difficult to turn. If the Pi were to be repeatedly removed and reattached, however, this design might not be durable enough. For my current purposes, it’s just fine.
+I was a bit uncertain how well machine screws would work with the stand-offs that I’d designed, since I wanted them to function like self-tapping screws. As it turned out, the four M2.5 x 6 mm pan-head machine screws fit quite nicely and snugly, without being difficult to turn. If the Pi were to be repeatedly removed and reattached, however, this design might not be durable enough. For my current purposes, it’s just fine.
 
 ![Raspberry Pi Model 4 attached to stand-offs](https://shetline.com/readme/aw-clock/2.8.0/aw-clock-w-stand-08.jpg)
 
@@ -214,7 +214,7 @@ I couldn’t find a right-angle USB-C cable for hooking up the touchscreen, but 
 
 <br>
 
-#### Rear view of completed clock project
+#### Rearview of completed clock project
 
 ![finished project](https://shetline.com/readme/aw-clock/2.8.0/aw-clock-w-stand-11.jpg)
 
@@ -290,7 +290,8 @@ Don’t forget to run `sudo update-rc.d weatherService defaults` after editing t
 
 For reference, here’s a break down of the steps performed by a full installation:
 
-1. Node.js is installed if not present, or updated if earlier than version 12.
+1. Node.js is installed if not present, or updated if earlier than version 14. Switch to Node 14 using nvm (Node Version Manager) may occur if nvm is installed.
+1. If Node.js is greater than version 14, nvm will be used to step down to version 14, installing nvm if necessary to do so.
 1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time because of one npm package in particular &mdash; node-sass &mdash; which can take ten minutes or more to install and build.
 1. A check for GPS configuration is performed.
 1. If running in interactive mode (`‑i`), the user is queried about various configuration and installation options.
