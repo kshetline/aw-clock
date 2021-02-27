@@ -129,6 +129,7 @@ let getPathArg = false;
 
 process.argv.forEach(arg => {
   if (getPathArg) {
+    process.env.NODE_PATH = arg.trim();
     process.env.PATH = nodePath = arg.trim() + (nodePath ? ':' + nodePath : nodePath);
     getPathArg = false;
 
@@ -760,17 +761,18 @@ async function doClientBuild(): Promise<void> {
   if (fs.existsSync('dist'))
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
+  const opts = { shell: true, env: process.env };
   let output: string;
 
   for (let i = 0; i < 2; ++i) {
     try {
-      output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : []), spin);
+      output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin);
       break;
     }
     catch (err) {
-      if (i === 0 && (err.message ?? '').toLowerCase().includes('node sass does not yet support')) {
-        write(chalk.paleYellow(CHECK_MARK));
-        await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : []), spin);
+      if (i === 0 && (err.message ?? err.toString()).toLowerCase().includes('node sass does not yet support')) {
+        write(chalk.paleYellow(' ' + FAIL_MARK + ' (rebuilding node-sass)  '));
+        await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : [], opts), spin);
       }
       else
         throw err;
@@ -795,7 +797,8 @@ async function doServerBuild(): Promise<void> {
   if (fs.existsSync('server/dist'))
     await monitorProcess(spawn('rm', uid, ['-Rf', 'server/dist']), spin);
 
-  const output = await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], { cwd: path.join(__dirname, 'server') }), spin);
+  const opts = { shell: true, cwd: path.join(__dirname, 'server'), env: process.env };
+  const output = await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], opts), spin);
 
   stepDone();
   console.log(chalk.mediumGray(getWebpackSummary(output)));
