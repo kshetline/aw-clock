@@ -344,20 +344,11 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
 function getWebpackSummary(s: string): string {
   const lines = asLines(s);
   const summary: string[] = [];
-  let count = 0;
 
-  for (let i = 0; i < lines.length && count < 4; ++i) {
-    let line = lines[i];
-
-    if (line && !/^(>|\s|asset|modules by|\.)/.test(line)) {
+  for (let line of lines) {
+    if (/^(hash|version|time|built at):/i.test(line)) {
       line = line.trim();
       summary.push(line.substr(0, 72) + (line.length > 72 ? '...' : ''));
-      ++count;
-
-      if (count === 4 && !/successfully|(\d+ ms$)/.test(summary[3]) && i < lines.length - 1) {
-        summary.splice(0, 1);
-        --count;
-      }
     }
   }
 
