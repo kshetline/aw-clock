@@ -28,12 +28,13 @@ if (( version > maxVersion )) && [ ! -s "$NVM_DIR/nvm.sh" ]; then
 fi
 
 if [ ! "$version" -eq "$maxVersion" ] && [ -s "$NVM_DIR/nvm.sh" ]; then
-  if [ "$(nvm use v"$maxVersion")" ]; then
+  if [ "$(nvm use "v$maxVersion")" ]; then
+    nvm use "v$maxVersion"
     version="$maxVersion"
     nvm alias default "$maxVersion"
     versionChanged=1
   else
-    echo "Installing Node.js v12 via nvm. This could take several minutes..."
+    echo "Installing Node.js v$maxVersion via nvm. This could take several minutes..."
     nvm install v"$maxVersion" && nvm use v"$maxVersion" && nvm alias default "$maxVersion" && version="$maxVersion" && versionChanged=1
   fi
 fi
