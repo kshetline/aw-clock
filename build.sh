@@ -15,10 +15,8 @@ if [ "$EUID" != 0 ]; then
 fi
 
 sudo -u "$SUDO_USER" bash -c ./build_node_check.sh
-path="$(sudo -u "$SUDO_USER" bash -c ./build_get_path.sh)"
-pattern='^(.*\/\.nvm\/[^:]*):'
-[[ $path =~ $pattern ]]
-path="${BASH_REMATCH[1]}"
+path="$(cat node_path.txt)"
+rm node_path.txt
 
 echo "Starting main installer..."
 # shellcheck disable=SC2048,SC2086 # this should become separate items with spaces in between, not one quoted thing

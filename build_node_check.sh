@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Checking installation pre-requisites..."
-\. "$HOME/.bashrc"
+[ -s "$HOME/.bashrc" ] && \. "$HOME/.bashrc"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
@@ -66,3 +66,7 @@ if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ 
   npm i
   touch .first-time-install
 fi
+
+pattern='^(.*\/\.nvm\/[^:]*):'
+[[ $PATH =~ $pattern ]]
+echo "${BASH_REMATCH[1]}" > node_path.txt
