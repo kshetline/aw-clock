@@ -50,7 +50,7 @@ const postcssPlugins = function (loader) {
       load: (filename) => {
         return new Promise((resolve, reject) => {
           // noinspection JSValidateTypes
-          loader.fs.readFile(filename, (err, data) => {
+          loader.fs.readFile(filename, (err, data) => { // Complains about missing argument, but causes error if removed.
             if (err) {
               reject(err);
               return;
@@ -215,57 +215,6 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
           ]
         },
         {
-          exclude: [
-            path.join(projectRoot, 'src/styles.scss')
-          ],
-          test: /\.less$/,
-          use: [
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            },
-            {
-              loader: 'less-loader',
-              options: {
-                sourceMap: true
-              }
-            }
-          ]
-        },
-        {
-          exclude: [
-            path.join(projectRoot, 'src/styles.scss')
-          ],
-          test: /\.styl$/,
-          use: [
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            },
-            {
-              loader: 'stylus-loader',
-              options: {
-                sourceMap: true,
-                paths: []
-              }
-            }
-          ]
-        },
-        {
           include: [
             path.join(projectRoot, 'src/styles.scss')
           ],
@@ -305,59 +254,6 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
             },
             {
               loader: 'sass-loader'
-            }
-          ]
-        },
-        {
-          include: [
-            path.join(projectRoot, 'src/styles.scss')
-          ],
-          test: /\.less$/,
-          use: [
-            'style-loader',
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            },
-            {
-              loader: 'less-loader',
-              options: {
-                sourceMap: true
-              }
-            }
-          ]
-        },
-        {
-          include: [
-            path.join(projectRoot, 'src/styles.scss')
-          ],
-          test: /\.styl$/,
-          use: [
-            'style-loader',
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            },
-            {
-              loader: 'stylus-loader',
-              options: {
-                sourceMap: true,
-                paths: []
-              }
             }
           ]
         },
