@@ -1,9 +1,9 @@
 const webpack = require('webpack');
 const path = require('path');
-const NODE_ENV = process.env.NODE_ENV || 'production';
+const mode = process.env.NODE_ENV || 'production';
 
 module.exports = {
-  mode: NODE_ENV,
+  mode,
   entry: './src/app.ts',
   target: 'node',
   output: {
@@ -16,6 +16,7 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    mainFields: ['main', 'main-es5']
   },
   module: {
     rules: [

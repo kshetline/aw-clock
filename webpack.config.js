@@ -14,8 +14,6 @@ const baseHref = '';
 const deployUrl = '';
 const projectRoot = process.cwd();
 const maximumInlineSize = 10;
-const NODE_ENV = (process.env.NODE_ENV === 'local' ? 'development' : process.env.NODE_ENV || 'production');
-const isLocal = (process.env.NODE_ENV === 'local');
 
 const postcssPlugins = function (loader) {
   // noinspection JSValidateTypes
@@ -104,349 +102,351 @@ const postcssPlugins = function (loader) {
 };
 
 // noinspection JSUnusedGlobalSymbols
-module.exports = {
-  mode: NODE_ENV,
-  performance: { hints: false },
-  resolve: {
-    extensions: [
-      '.ts',
-      '.js'
-    ],
-    symlinks: true,
-    modules: [
-      './src',
-      './node_modules'
-    ],
-    alias: rxPaths(),
-    mainFields: [
-      'browser',
-      'module',
-      'main'
-    ]
-  },
-  resolveLoader: {
-    modules: [
-      './node_modules'
-    ],
-    alias: rxPaths()
-  },
-  entry: {
-    main: [
-      './src/main.ts'
-    ],
-    polyfills: [
-      './src/polyfills.ts'
-    ],
-    styles: [
-      './src/styles.scss'
-    ]
-  },
-  output: {
-    path: path.join(projectRoot, 'dist', 'public'),
-    filename: '[name].[contenthash].bundle.js',
-    chunkFilename: '[id].chunk.js',
-    crossOriginLoading: false
-  },
-  module: {
-    rules: [
-      {
-        test: /\.html$/,
-        loader: 'raw-loader'
-      },
-      {
-        test: /\.(eot|svg|cur)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name].[hash:20].[ext]',
-          limit: 10000
-        }
-      },
-      {
-        test: /\.(jpg|png|webp|gif|otf|ttf|woff|woff2|ani)$/,
-        loader: 'url-loader',
-        options: {
-          name: '[name].[hash:20].[ext]',
-          limit: 10000
-        }
-      },
-      {
-        exclude: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.css$/,
-        use: [
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          }
-        ]
-      },
-      {
-        exclude: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.scss$|\.sass$/,
-        use: [
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          },
-          {
-            loader: 'sass-loader',
-            options: {
-              sourceMap: true,
-              precision: 8,
-              includePaths: []
-            }
-          }
-        ]
-      },
-      {
-        exclude: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.less$/,
-        use: [
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          },
-          {
-            loader: 'less-loader',
-            options: {
-              sourceMap: true
-            }
-          }
-        ]
-      },
-      {
-        exclude: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.styl$/,
-        use: [
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          },
-          {
-            loader: 'stylus-loader',
-            options: {
-              sourceMap: true,
-              paths: []
-            }
-          }
-        ]
-      },
-      {
-        include: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.css$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          }
-        ]
-      },
-      {
-        include: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.scss$|\.sass$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          },
-          {
-            loader: 'sass-loader'
-          }
-        ]
-      },
-      {
-        include: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.less$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          },
-          {
-            loader: 'less-loader',
-            options: {
-              sourceMap: true
-            }
-          }
-        ]
-      },
-      {
-        include: [
-          path.join(projectRoot, 'src/styles.scss')
-        ],
-        test: /\.styl$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'raw-loader'
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'embedded',
-              plugins: postcssPlugins,
-              sourceMap: true
-            }
-          },
-          {
-            loader: 'stylus-loader',
-            options: {
-              sourceMap: true,
-              paths: []
-            }
-          }
-        ]
-      },
-      {
-        test: /\.ts|\.tsx$/,
-        use: 'ts-loader',
-        exclude: [/node_modules/, '/server/**/*']
-      }
-    ]
-  },
-  optimization: {
-    minimize: !isLocal,
-    minimizer: [new TerserPlugin()],
-  },
-  devtool: 'source-map',
-  plugins: [
-    new CopyWebpackPlugin({
-      patterns: [
+module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  return {
+    mode: (env && env.mode) === 'prod' ? 'production' : 'development',
+    performance: { hints: false },
+    resolve: {
+      extensions: [
+        '.ts',
+        '.js'
+      ],
+      symlinks: true,
+      modules: [
+        './src',
+        './node_modules'
+      ],
+      alias: rxPaths(),
+      mainFields: [
+        'browser',
+        'module',
+        'main'
+      ]
+    },
+    resolveLoader: {
+      modules: [
+        './node_modules'
+      ],
+      alias: rxPaths()
+    },
+    entry: {
+      main: [
+        './src/main.ts'
+      ],
+      polyfills: [
+        './src/polyfills.ts'
+      ],
+      styles: [
+        './src/styles.scss'
+      ]
+    },
+    output: {
+      path: path.join(projectRoot, 'dist', 'public'),
+      filename: '[name].[contenthash].bundle.js',
+      chunkFilename: '[id].chunk.js',
+      crossOriginLoading: false
+    },
+    module: {
+      rules: [
         {
-          context: 'src',
-          to: '',
-          from: 'assets/**/*',
-          globOptions: {
-            dot: true,
-            ignore: [
-              '.gitkeep',
-              '**/.DS_Store',
-              '**/Thumbs.db'
-            ],
-            debug: 'warning'
+          test: /\.html$/,
+          loader: 'raw-loader'
+        },
+        {
+          test: /\.(eot|svg|cur)$/,
+          loader: 'file-loader',
+          options: {
+            name: '[name].[hash:20].[ext]',
+            limit: 10000
           }
         },
         {
-          context: 'src',
-          to: '',
-          from: 'favicon.ico'
+          test: /\.(jpg|png|webp|gif|otf|ttf|woff|woff2|ani)$/,
+          loader: 'url-loader',
+          options: {
+            name: '[name].[hash:20].[ext]',
+            limit: 10000
+          }
+        },
+        {
+          exclude: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.css$/,
+          use: [
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            }
+          ]
+        },
+        {
+          exclude: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.scss$|\.sass$/,
+          use: [
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            },
+            {
+              loader: 'sass-loader',
+              options: {
+                sourceMap: true,
+                precision: 8,
+                includePaths: []
+              }
+            }
+          ]
+        },
+        {
+          exclude: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.less$/,
+          use: [
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            },
+            {
+              loader: 'less-loader',
+              options: {
+                sourceMap: true
+              }
+            }
+          ]
+        },
+        {
+          exclude: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.styl$/,
+          use: [
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            },
+            {
+              loader: 'stylus-loader',
+              options: {
+                sourceMap: true,
+                paths: []
+              }
+            }
+          ]
+        },
+        {
+          include: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.css$/,
+          use: [
+            'style-loader',
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            }
+          ]
+        },
+        {
+          include: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.scss$|\.sass$/,
+          use: [
+            'style-loader',
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            },
+            {
+              loader: 'sass-loader'
+            }
+          ]
+        },
+        {
+          include: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.less$/,
+          use: [
+            'style-loader',
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            },
+            {
+              loader: 'less-loader',
+              options: {
+                sourceMap: true
+              }
+            }
+          ]
+        },
+        {
+          include: [
+            path.join(projectRoot, 'src/styles.scss')
+          ],
+          test: /\.styl$/,
+          use: [
+            'style-loader',
+            {
+              loader: 'raw-loader'
+            },
+            {
+              loader: 'postcss-loader',
+              options: {
+                ident: 'embedded',
+                plugins: postcssPlugins,
+                sourceMap: true
+              }
+            },
+            {
+              loader: 'stylus-loader',
+              options: {
+                sourceMap: true,
+                paths: []
+              }
+            }
+          ]
+        },
+        {
+          test: /\.ts|\.tsx$/,
+          use: 'ts-loader',
+          exclude: [/node_modules/, '/server/**/*']
         }
       ]
-    }),
-    new ProgressPlugin({}),
-    new CircularDependencyPlugin({
-      exclude: /([\\/])node_modules([\\/])/,
-      failOnError: false,
-      onDetected: false,
-      cwd: projectRoot
-    }),
-    new HtmlWebpackPlugin({
-      template: './src/index.html',
-      filename: './index.html',
-      hash: false,
-      inject: 'head',
-      compile: true,
-      favicon: false,
-      minify: false,
-      cache: true,
-      showErrors: true,
-      chunks: 'all',
-      excludeChunks: [],
-      title: 'Webpack App',
-      xhtml: true,
-      chunksSortMode: function sort(left, right) {
-        // noinspection JSUnresolvedVariable
-        const leftIndex = entryPoints.indexOf((left.names && left.names[0]) || left.toString());
-        // noinspection JSUnresolvedVariable
-        const rightIndex = entryPoints.indexOf((right.names && right.names[0]) || right.toString());
-
-        return Math.sign(leftIndex - rightIndex);
-      }
-    }),
-    function () {
-      this.plugin('done', stats => {
-        if (stats.compilation.errors && stats.compilation.errors.length > 0) {
-          if (stats.compilation.errors.length === 0)
-            console.error(stats.compilation.errors[0]);
-          else {
-            console.error(stats.compilation.errors.map(err =>
-              err && typeof err === 'object' && err.message ? err.message : '').join('\n'));
+    },
+    optimization: {
+      minimize: (process.env.NODE_ENV !== 'local'),
+      minimizer: [new TerserPlugin()],
+    },
+    devtool: 'source-map',
+    plugins: [
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            context: 'src',
+            to: '',
+            from: 'assets/**/*',
+            globOptions: {
+              dot: true,
+              ignore: [
+                '.gitkeep',
+                '**/.DS_Store',
+                '**/Thumbs.db'
+              ],
+              debug: 'warning'
+            }
+          },
+          {
+            context: 'src',
+            to: '',
+            from: 'favicon.ico'
           }
+        ]
+      }),
+      new ProgressPlugin({}),
+      new CircularDependencyPlugin({
+        exclude: /([\\/])node_modules([\\/])/,
+        failOnError: false,
+        onDetected: false,
+        cwd: projectRoot
+      }),
+      new HtmlWebpackPlugin({
+        template: './src/index.html',
+        filename: './index.html',
+        hash: false,
+        inject: 'head',
+        compile: true,
+        favicon: false,
+        minify: false,
+        cache: true,
+        showErrors: true,
+        chunks: 'all',
+        excludeChunks: [],
+        title: 'Webpack App',
+        xhtml: true,
+        chunksSortMode: function sort(left, right) {
+          // noinspection JSUnresolvedVariable
+          const leftIndex = entryPoints.indexOf((left.names && left.names[0]) || left.toString());
+          // noinspection JSUnresolvedVariable
+          const rightIndex = entryPoints.indexOf((right.names && right.names[0]) || right.toString());
 
-          process.exit(1);
+          return Math.sign(leftIndex - rightIndex);
         }
-      });
+      }),
+      function () {
+        this.plugin('done', stats => {
+          if (stats.compilation.errors && stats.compilation.errors.length > 0) {
+            if (stats.compilation.errors.length === 0)
+              console.error(stats.compilation.errors[0]);
+            else {
+              console.error(stats.compilation.errors.map(err =>
+                err && typeof err === 'object' && err.message ? err.message : '').join('\n'));
+            }
+
+            process.exit(1);
+          }
+        });
+      }
+    ],
+    node: {
+      global: true
+    },
+    devServer: {
+      historyApiFallback: true
     }
-  ],
-  node: {
-    global: true
-  },
-  devServer: {
-    historyApiFallback: true
-  }
+  };
 };
