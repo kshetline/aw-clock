@@ -768,7 +768,7 @@ async function doClientBuild(): Promise<void> {
       break;
     }
     catch (err) {
-      if (i === 0 && (err.message ?? '').toLowerCase().contains('node sass does not yet support')) {
+      if (i === 0 && (err.message ?? '').toLowerCase().includes('node sass does not yet support')) {
         write(chalk.paleYellow(CHECK_MARK));
         await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : []), spin);
       }
