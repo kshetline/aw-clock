@@ -264,7 +264,11 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
     },
     optimization: {
       minimize: (env && env.mode) !== 'local',
-      minimizer: [new TerserPlugin()],
+      minimizer: [new TerserPlugin({
+        terserOptions: {
+          output: { max_line_len: 511 }
+        }
+      })],
     },
     devtool: 'source-map',
     plugins: [
