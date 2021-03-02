@@ -1,4 +1,9 @@
-## 2.9.0
+## 2.8.5
+
+* Minor dependency updates to fix Safari bug.
+* Better detect node-sass build errors.
+
+## 2.8.4
 
 * Updated timezones to 2021a, with new ability to update timezones automatically, while running.
 * New marquee weather summary.
