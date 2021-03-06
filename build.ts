@@ -2,7 +2,7 @@ import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
-import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
+import { asLines, compareStrings, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
 import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
@@ -86,6 +86,8 @@ const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
 let nodePath = process.env.PATH;
+const nodeSassVersions = { 10: '4.9', 11: '4.10', 12: '4.12', 13: '4.13', 14: '4.14', 15: '5.0' };
+let sassVersionChange = '';
 
 if (process.platform === 'linux') {
   try {
@@ -105,6 +107,10 @@ if (process.platform === 'linux') {
   catch (err) {
     console.error(chalk.redBright('Raspberry Pi check failed'));
   }
+}
+
+if (!process.env.DISPLAY) {
+  process.env.DISPLAY = ':0.0';
 }
 
 const launchChromium = chromium + ' --kiosk http://localhost:8080/';
@@ -303,16 +309,24 @@ function stepDone(): void {
   console.log(backspace + chalk.green(CHECK_MARK));
 }
 
+function compareVersions(va: string, vb: string): number {
+  va = va.replace(/\d+/g, m => m.padStart(4, '0'));
+  vb = vb.replace(/\d+/g, m => m.padStart(4, '0'));
+
+  return compareStrings(va, vb);
+}
+
 async function isInstalled(command: string): Promise<boolean> {
   return !!(await monitorProcess(spawn('command', ['-v', command], { shell: true }), null, ErrorMode.ANY_ERROR))?.trim();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promise<boolean> {
+async function install(cmdPkg: string, viaNpm = false, realOnly = false, quiet = false): Promise<boolean> {
   let packageArgs = [cmdPkg];
   let name = cmdPkg;
 
-  showStep();
+  if (!quiet)
+    showStep();
 
   if (realOnly && !isRaspberryPi) {
     console.log(`${chalk.bold(cmdPkg)} won't be installed (not real Raspberry Pi)` +
@@ -326,11 +340,14 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
   }
 
   if (await isInstalled(name)) {
-    console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
+    if (!quiet)
+      console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
+
     return false;
   }
   else {
-    write(`Installing ${chalk.bold(cmdPkg)}` + trailingSpace);
+    if (!quiet)
+      write(`Installing ${chalk.bold(cmdPkg)}` + trailingSpace);
 
     if (viaNpm)
       await monitorProcess(spawn('npm', ['install', '-g', ...packageArgs]), spin, ErrorMode.ANY_ERROR);
@@ -721,11 +738,11 @@ async function disableScreenSaver(uid: number): Promise<void> {
     const saverRunning = /\d\s+xscreensaver\b/.test(procList);
 
     if (!saverRunning) {
-      spawn('xscreensaver', [], { uid, detached: true });
+      spawn('xscreensaver', [], { uid, detached: true, env: process.env });
       await sleep(500);
     }
 
-    const settingsProcess = spawn('xscreensaver-demo', [], { uid });
+    const settingsProcess = spawn('xscreensaver-demo', [], { uid, env: process.env });
 
     await sleep(3000, spin);
     settingsProcess.kill('SIGTERM');
@@ -748,6 +765,12 @@ async function disableScreenSaver(uid: number): Promise<void> {
 }
 
 async function doClientBuild(): Promise<void> {
+  if (sassVersionChange) {
+    write(`Pre-step ${currentStep} to change node-sass version (can be slow): `);
+    await monitorProcess(spawn('npm', uid, ['i', `node-sass@${sassVersionChange}`]), spin);
+    stepDone();
+  }
+
   if (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) {
     showStep();
     write('Updating client' + trailingSpace);
@@ -771,7 +794,7 @@ async function doClientBuild(): Promise<void> {
     }
     catch (err) {
       if (i === 0 && /node.sass/i.test(err.message ?? err.toString())) {
-        write(chalk.paleYellow(' ' + FAIL_MARK + ' (rebuilding node-sass)  '));
+        write(chalk.paleYellow(backspace + FAIL_MARK + ' (rebuilding node-sass)  '));
         await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : [], opts), spin);
       }
       else
@@ -902,9 +925,16 @@ async function doServiceDeployment(): Promise<void> {
     const nodeVersionStr = (await monitorProcess(spawn('node', uid, ['--version']))).trim();
     const nodeVersion = toNumber((/v(\d+)/.exec(nodeVersionStr) ?? [])[1]);
 
-    if (isRaspberryPi && nodeVersion !== 14) {
-      console.error(chalk.redBright(`Node.js version 14.x required. Version ${nodeVersionStr} found.`));
+    if (isRaspberryPi && (nodeVersion < 10 || nodeVersion > 14)) {
+      console.error(chalk.redBright(`Node.js version 10.x-14.x required. Version ${nodeVersionStr} found.`));
       process.exit(0);
+    }
+
+    const nodeSassVersion = (await monitorProcess(spawn('awk', uid, ['/node-sass/ {print $2}', 'package.json']))).replace(/[^.0-9]/g, '');
+
+    if (compareVersions(nodeSassVersion, nodeSassVersions[nodeVersion]) < 0 ||
+        compareVersions(nodeSassVersion, nodeSassVersions[nodeVersion + 1]) >= 0) {
+      sassVersionChange = nodeSassVersions[nodeVersion];
     }
 
     if (treatAsRaspberryPi && !isRaspberryPi) {
@@ -955,9 +985,25 @@ async function doServiceDeployment(): Promise<void> {
       await install('pigpio', false, true);
       await install(chromium);
       await install('unclutter');
-      await install('forever', true);
+
+      for (let i = 0; i < 2; ++i) {
+        try {
+          await install('forever', true, false, i > 0);
+        }
+        catch {
+          if (i > 0)
+            console.log(backspace + chalk.paleYellow(FAIL_MARK));
+        }
+      }
+
       await installFonts();
-      await disableScreenSaver(uid);
+
+      try {
+        await disableScreenSaver(uid);
+      }
+      catch {
+        console.log(backspace + chalk.paleYellow(FAIL_MARK));
+      }
     }
 
     settings.AWC_GIT_REPO_PATH = (await monitorProcess(spawn('pwd'), spin, ErrorMode.NO_ERRORS)).trim() ||
@@ -1009,7 +1055,7 @@ async function doServiceDeployment(): Promise<void> {
       await monitorProcess(spawn('pkill', uid, ['-o', chromium]), spin, ErrorMode.NO_ERRORS);
       await monitorProcess(spawn('pkill', uid, ['-o', chromium.substr(0, 15)]), spin, ErrorMode.NO_ERRORS);
       await sleep(500, spin);
-      const display = process.env.DISPLAY ?? ':0';
+      const display = process.env.DISPLAY;
       exec(`DISPLAY=${display} ${launchChromium} --user-data-dir='${userHome}'`, { uid });
       await sleep(1000);
     }
