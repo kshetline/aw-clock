@@ -85,6 +85,7 @@ const fontSrc = rpiSetupStuff + '/fonts/';
 const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
+const lxdePiCheck = '.config/lxpanel/LXDE-pi';
 let nodePath = process.env.PATH;
 
 if (process.platform === 'linux') {
@@ -331,7 +332,9 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false, quiet =
   }
 
   if (await isInstalled(name)) {
-    if (!quiet)
+    if (quiet)
+      stepDone();
+    else
       console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
 
     return false;
@@ -814,7 +817,14 @@ async function doServerBuild(): Promise<void> {
 }
 
 async function doServiceDeployment(): Promise<void> {
-  const autostartDir = path.join(userHome, autostartDst);
+  let autostartDir = path.join(userHome, autostartDst);
+
+  if (!autostartDir.endsWith('-pi')) {
+    const lxdePiCheckDir = path.join(userHome, lxdePiCheck);
+
+    if (fs.existsSync(lxdePiCheckDir))
+      autostartDir += '-pi';
+  }
 
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
