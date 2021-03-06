@@ -38,6 +38,7 @@ export NVM_DIR="$(nvm_install_dir)"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 bashrcBackup=
+originalPath="$PATH"
 
 install_nvm() {
   echo "Installing nvm (Node Version Manager)"
@@ -117,8 +118,9 @@ if (( version < 0 )); then
     rm -rf "$NVM_DIR"
   fi
 
+  export PATH="$originalPath"
   version="$(current_node_version)"
-  # I'd rather no settle for Node 10, but, oh well...
+  # I'd rather not settle for Node 10, but, oh well...
   minVersion=10
 fi
 

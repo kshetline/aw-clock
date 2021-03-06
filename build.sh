@@ -17,11 +17,13 @@ fi
 sudo -u "$SUDO_USER" bash -c ./build_node_check.sh
 
 if [ -f "node_path.txt" ]; then
-  path="--path \"$(cat node_path.txt)\""
+  path="$(cat node_path.txt)"
   rm node_path.txt
 
   if [ "$path" == "failed" ]; then
     exit;
+  else
+    path="--path \"$path\""
   fi
 fi
 
