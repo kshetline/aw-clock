@@ -766,8 +766,22 @@ async function disableScreenSaver(uid: number): Promise<void> {
 
 async function doClientBuild(): Promise<void> {
   if (sassVersionChange) {
-    write(`Pre-step ${currentStep} to change node-sass version (can be slow): `);
-    await monitorProcess(spawn('npm', uid, ['i', `node-sass@${sassVersionChange}`]), spin);
+    write(`Pre-step ${currentStep + 1} to change node-sass version (can be slow): `);
+
+    for (let i = 0; i < 2; ++i) {
+      try {
+        await monitorProcess(spawn('npm', uid, ['i', `node-sass@${sassVersionChange}`]), spin);
+      }
+      catch (err) {
+        if (i === 0) {
+          write(chalk.paleYellow(backspace + chalk.paleYellow(FAIL_MARK) + ' (rebuilding node-sass)  '));
+          await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : []), spin);
+        }
+        else
+          throw err;
+      }
+    }
+
     stepDone();
   }
 
@@ -794,7 +808,7 @@ async function doClientBuild(): Promise<void> {
     }
     catch (err) {
       if (i === 0 && /node.sass/i.test(err.message ?? err.toString())) {
-        write(chalk.paleYellow(backspace + FAIL_MARK + ' (rebuilding node-sass)  '));
+        write(chalk.paleYellow(backspace + chalk.paleYellow(FAIL_MARK) + ' (rebuilding node-sass)  '));
         await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : [], opts), spin);
       }
       else
