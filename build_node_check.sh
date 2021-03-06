@@ -95,7 +95,7 @@ if (( version < minVersion )); then
   version="$(current_node_version)"
 fi
 
-# Check version again. Version 10 can annoyingly supersede version 12.
+# Check version again. Version 10 can annoyingly supersede version 12 with apt-get.
 if (( version < minVersion )); then
   if [ ! -s "$NVM_DIR/nvm.sh" ]; then
     install_nvm
@@ -121,8 +121,12 @@ if (( version < 0 )); then
 
   export PATH="$originalPath"
   version="$(current_node_version)"
-  # I'd rather not settle for Node 10, but, oh well...
-  minVersion=10
+
+  re="[^:]*nvm[^:]*:(.*)"
+  if (( version < 0 )) && [[ "$PATH" =~ $re ]]; then
+    export PATH="${BASH_REMATCH[1]}"
+    version="$(current_node_version)"
+  fi
 fi
 
 if (( version < sadVersion )); then
