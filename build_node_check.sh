@@ -119,6 +119,7 @@ if (( version < 0 )); then
     rm -rf "$NVM_DIR"
   fi
 
+  [ -d "$HOME/.nvm" ] rm -rf "$HOME/.nvm"
   export PATH="$originalPath"
   version="$(current_node_version)"
 

@@ -818,12 +818,15 @@ async function doServerBuild(): Promise<void> {
 
 async function doServiceDeployment(): Promise<void> {
   let autostartDir = path.join(userHome, autostartDst);
+  let morePi_ish = false;
 
   if (!autostartDir.endsWith('-pi')) {
     const lxdePiCheckDir = path.join(userHome, lxdePiCheck);
 
-    if (fs.existsSync(lxdePiCheckDir))
+    if (fs.existsSync(lxdePiCheckDir)) {
+      morePi_ish = true;
       autostartDir += '-pi';
+    }
   }
 
   showStep();
@@ -853,7 +856,7 @@ async function doServiceDeployment(): Promise<void> {
     lines = asLines(fs.readFileSync(autostartPath).toString()).filter(line => !!line.trim());
   }
   catch (err) {
-    if (isRaspberryPi) {
+    if (isRaspberryPi || morePi_ish) {
       lines = [
         '@lxpanel --profile LXDE-pi',
         '@pcmanfm --desktop --profile LXDE-pi',
