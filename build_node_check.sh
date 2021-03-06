@@ -130,7 +130,7 @@ if (( version < minVersion )); then
   exit;
 fi
 
-if [ ! "$(command -v node)" ]; then
+if [ ! "$(command -v npm)" ]; then
   echo "Installing npm as a separate step"
   sudo apt-get install -y npm
 fi
