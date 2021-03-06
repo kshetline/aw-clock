@@ -153,6 +153,7 @@ if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ 
     rm -rf node_modules
   fi
 
+  npm uninstall node-sass
   npm i
   touch .first-time-install
 fi

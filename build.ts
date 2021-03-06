@@ -86,7 +86,7 @@ const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
 let nodePath = process.env.PATH;
-const nodeSassVersions = { 10: '4.9', 11: '4.10', 12: '4.12', 13: '4.13', 14: '4.14', 15: '5.0' };
+const nodeSassVersions = { 10: '4.9', 11: '4.10', 12: '4.12', 13: '4.13', 14: '4.14.1', 15: '5.0' };
 let sassVersionChange = '';
 
 if (process.platform === 'linux') {
@@ -768,18 +768,12 @@ async function doClientBuild(): Promise<void> {
   if (sassVersionChange) {
     write(`Pre-step ${currentStep + 1} to change node-sass version (can be slow): `);
 
-    for (let i = 0; i < 2; ++i) {
-      try {
-        await monitorProcess(spawn('npm', uid, ['i', `node-sass@${sassVersionChange}`]), spin);
-      }
-      catch (err) {
-        if (i === 0) {
-          write(chalk.paleYellow(backspace + chalk.paleYellow(FAIL_MARK) + ' (rebuilding node-sass)  '));
-          await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : []), spin);
-        }
-        else
-          throw err;
-      }
+    try {
+      await monitorProcess(spawn('npm', uid, ['i', '-D', `node-sass@${sassVersionChange}`]), spin);
+    }
+    catch (err) {
+      write(chalk.paleYellow(backspace + chalk.paleYellow(FAIL_MARK) + ' (rebuilding node-sass)  '));
+      await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : []), spin);
     }
 
     stepDone();
@@ -946,7 +940,7 @@ async function doServiceDeployment(): Promise<void> {
 
     const nodeSassVersion = (await monitorProcess(spawn('awk', uid, ['/node-sass/ {print $2}', 'package.json']))).replace(/[^.0-9]/g, '');
 
-    if (compareVersions(nodeSassVersion, nodeSassVersions[nodeVersion]) < 0 ||
+    if (!nodeSassVersion || compareVersions(nodeSassVersion, nodeSassVersions[nodeVersion]) < 0 ||
         compareVersions(nodeSassVersion, nodeSassVersions[nodeVersion + 1]) >= 0) {
       sassVersionChange = nodeSassVersions[nodeVersion];
     }
