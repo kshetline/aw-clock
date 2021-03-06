@@ -54,9 +54,10 @@ install_nvm() {
 }
 
 # Sync version changes with build.ts
+sadVersion=10
 minVersion=14
 maxVersion=14
-free=$(free)
+free=$(free || echo "4194304")
 pattern='([0-9]+)'
 [[ $free =~ $pattern ]]
 free="${BASH_REMATCH[1]}"
@@ -124,7 +125,7 @@ if (( version < 0 )); then
   minVersion=10
 fi
 
-if (( version < minVersion )); then
+if (( version < sadVersion )); then
   echo "Failed to install minimal version of Node.js"
   echo "failed" > node_path.txt
   exit;
@@ -137,9 +138,7 @@ fi
 
 if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ "$origVersion" -ne "$version" ]; then
   echo "Installing npm packages."
-  echo "Warning: first time installation of node-sass can be VERY slow!"
 
-  # node-sass can cause a mess by not being built with the same version of Node.js.
   # Best to wipe out all of node_modules and start from scratch.
   if [ "$origVersion" -ne "$version" ]; then
     # shellcheck disable=SC2164
@@ -153,7 +152,6 @@ if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ 
     rm -rf node_modules
   fi
 
-  npm uninstall node-sass
   npm i
   touch .first-time-install
 fi

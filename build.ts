@@ -2,7 +2,7 @@ import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
-import { asLines, compareStrings, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
+import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
 import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
@@ -86,8 +86,6 @@ const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
 let nodePath = process.env.PATH;
-const nodeSassVersions = { 10: '4.9', 11: '4.10', 12: '4.12', 13: '4.13', 14: '4.14.1', 15: '5.0' };
-let sassVersionChange = '';
 
 if (process.platform === 'linux') {
   try {
@@ -109,7 +107,7 @@ if (process.platform === 'linux') {
   }
 }
 
-if (!process.env.DISPLAY) {
+if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
   process.env.DISPLAY = ':0.0';
 }
 
@@ -307,13 +305,6 @@ function write(s: string): void {
 
 function stepDone(): void {
   console.log(backspace + chalk.green(CHECK_MARK));
-}
-
-function compareVersions(va: string, vb: string): number {
-  va = va.replace(/\d+/g, m => m.padStart(4, '0'));
-  vb = vb.replace(/\d+/g, m => m.padStart(4, '0'));
-
-  return compareStrings(va, vb);
 }
 
 async function isInstalled(command: string): Promise<boolean> {
@@ -765,20 +756,6 @@ async function disableScreenSaver(uid: number): Promise<void> {
 }
 
 async function doClientBuild(): Promise<void> {
-  if (sassVersionChange) {
-    write(`Pre-step ${currentStep + 1} to change node-sass version (can be slow): `);
-
-    try {
-      await monitorProcess(spawn('npm', uid, ['i', '-D', `node-sass@${sassVersionChange}`]), spin);
-    }
-    catch (err) {
-      write(chalk.paleYellow(backspace + chalk.paleYellow(FAIL_MARK) + ' (rebuilding node-sass)  '));
-      await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : []), spin);
-    }
-
-    stepDone();
-  }
-
   if (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) {
     showStep();
     write('Updating client' + trailingSpace);
@@ -793,22 +770,7 @@ async function doClientBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
   const opts = { shell: true, env: process.env };
-  let output: string;
-
-  for (let i = 0; i < 2; ++i) {
-    try {
-      output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin);
-      break;
-    }
-    catch (err) {
-      if (i === 0 && /node.sass/i.test(err.message ?? err.toString())) {
-        write(chalk.paleYellow(backspace + chalk.paleYellow(FAIL_MARK) + ' (rebuilding node-sass)  '));
-        await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : [], opts), spin);
-      }
-      else
-        throw err;
-    }
-  }
+  const output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin);
 
   stepDone();
   console.log(chalk.mediumGray(getWebpackSummary(output)));
@@ -936,13 +898,6 @@ async function doServiceDeployment(): Promise<void> {
     if (isRaspberryPi && (nodeVersion < 10 || nodeVersion > 14)) {
       console.error(chalk.redBright(`Node.js version 10.x-14.x required. Version ${nodeVersionStr} found.`));
       process.exit(0);
-    }
-
-    const nodeSassVersion = (await monitorProcess(spawn('awk', uid, ['/node-sass/ {print $2}', 'package.json']))).replace(/[^.0-9]/g, '');
-
-    if (!nodeSassVersion || compareVersions(nodeSassVersion, nodeSassVersions[nodeVersion]) < 0 ||
-        compareVersions(nodeSassVersion, nodeSassVersions[nodeVersion + 1]) >= 0) {
-      sassVersionChange = nodeSassVersions[nodeVersion];
     }
 
     if (treatAsRaspberryPi && !isRaspberryPi) {

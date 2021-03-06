@@ -135,7 +135,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
         './src/main.ts'
       ],
       styles: [
-        './src/styles.scss'
+        './src/styles.css'
       ]
     },
     output: {
@@ -167,54 +167,8 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
           }
         },
         {
-          exclude: [
-            path.join(projectRoot, 'src/styles.scss')
-          ],
-          test: /\.css$/,
-          use: [
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            }
-          ]
-        },
-        {
-          exclude: [
-            path.join(projectRoot, 'src/styles.scss')
-          ],
-          test: /\.scss$|\.sass$/,
-          use: [
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            },
-            {
-              loader: 'sass-loader',
-              options: {
-                sourceMap: true,
-                precision: 8,
-                includePaths: []
-              }
-            }
-          ]
-        },
-        {
           include: [
-            path.join(projectRoot, 'src/styles.scss')
+            path.join(projectRoot, 'src/styles.css')
           ],
           test: /\.css$/,
           use: [
@@ -229,29 +183,6 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
                 plugins: postcssPlugins,
                 sourceMap: true
               }
-            }
-          ]
-        },
-        {
-          include: [
-            path.join(projectRoot, 'src/styles.scss')
-          ],
-          test: /\.scss$|\.sass$/,
-          use: [
-            'style-loader',
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            },
-            {
-              loader: 'sass-loader'
             }
           ]
         },
