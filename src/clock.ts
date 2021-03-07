@@ -39,9 +39,9 @@ export class Clock {
   private readonly hands: HTMLElement;
   private readonly gpsMeter: HTMLElement;
 
-  private readonly sweep: SVGAnimationElement;
+  private readonly secTurn: SVGAnimationElement;
   private readonly hourTurn: SVGAnimationElement;
-  private readonly minuteTurn: SVGAnimationElement;
+  private readonly minTurn: SVGAnimationElement;
 
   private zoneCaption: HTMLElement;
   private hub: HTMLElement;
@@ -84,9 +84,9 @@ export class Clock {
 
   constructor(private appService: AppService) {
     this.secHand = document.getElementById('sec-hand');
-    this.sweep = document.getElementById('sweep') as SVGAnimationElement;
+    this.secTurn = document.getElementById('sec-turn') as SVGAnimationElement;
     this.minHand = document.getElementById('min-hand');
-    this.minuteTurn = document.getElementById('minute-turn') as SVGAnimationElement;
+    this.minTurn = document.getElementById('minute-turn') as SVGAnimationElement;
     this.hourHand = document.getElementById('hour-hand');
     this.hourTurn = document.getElementById('hour-turn') as SVGAnimationElement;
     this.forecastStart = document.getElementById('hourly-forecast-start');
@@ -110,7 +110,7 @@ export class Clock {
       .filter(h => !h.id.includes('dayN'))
       .sort((a, b) => parseFloat(a.id.substr(3)) - parseFloat(b.id.substr(3)));
 
-    this.hasBeginElement = !!this.sweep.beginElement;
+    this.hasBeginElement = !!this.secTurn.beginElement;
 
     this.decorateClockFace();
 
@@ -302,13 +302,15 @@ export class Clock {
       elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
 
-    const turnIt = (elem: SVGAnimationElement, start: number, end: number, duration?: number) => {
-      if (end < start)
+    const rotanimate = (elem: SVGAnimationElement, start: number, end: number, duration?: number) => {
+      const isSec = elem === this.secHand;
+
+      if (isSec && end < start)
         end += 360;
 
-      elem.setAttribute('from', start + ' 50 50');
-      elem.setAttribute('to', end + ' 50 50');
-      elem.setAttribute('values', start + ' 50 50; ' + (end + 2) + ' 50 50; ' + end + ' 50 50');
+      elem.setAttribute('from', `${start} 50 50`);
+      elem.setAttribute('to', `${end} 50 50`);
+      elem.setAttribute('values', `${start} 50 50; ${end} 50 50` + (isSec ? `; ${end} 50 50` : ''));
 
       if (duration != null)
         elem.setAttribute('dur', duration + 's');
@@ -401,7 +403,7 @@ export class Clock {
     this.dtaiCaption.textContent = dtai + 's';
 
     if (doMechanicalSecondHandEffect)
-      turnIt(this.sweep, this.lastSecRotation, secRotation);
+      rotanimate(this.secTurn, this.lastSecRotation, secRotation + 2);
 
     rotate(this.secHand, secRotation);
     this.lastSecRotation = secRotation;
@@ -415,8 +417,8 @@ export class Clock {
       const minuteStart = minuteAngle - 6 * change;
       const hourStart = hourAngle - change / 2;
 
-      turnIt(this.minuteTurn, minuteStart, minuteAngle += duration / 360, duration);
-      turnIt(this.hourTurn, hourStart, hourAngle, duration);
+      rotanimate(this.minTurn, minuteStart, minuteAngle += duration / 10, duration);
+      rotanimate(this.hourTurn, hourStart, hourAngle, duration);
       this.turnDelay = duration;
     }
     else

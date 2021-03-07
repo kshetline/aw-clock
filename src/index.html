@@ -130,6 +130,8 @@
             <animateTransform id="hour-turn"
                               attributeName="transform" attributeType="XML" type="rotate"
                               from="0 50 50" to="0 50 50" dur="4s"
+                              values="0 50 50; 0 50 50; 0 50 50"
+                              calcMode="spline" keyTimes="0; 1" keySplines="0.5 0 0.5 1"
                               repeatCount="1"/>
           </polygon>
           <polygon id="hourly-forecast-start" points="50,10 51.5,12 50,14 50,10"/>
@@ -138,10 +140,12 @@
             <animateTransform id="minute-turn"
                               attributeName="transform" attributeType="XML" type="rotate"
                               from="0 50 50" to="0 50 50" dur="4s"
+                              values="0 50 50; 0 50 50"
+                              calcMode="spline" keyTimes="0; 1" keySplines="0.5 0 0.5 1"
                               repeatCount="1"/>
           </polygon>
           <line id="sec-hand" x1="50" y1="50" x2="50" y2="12">
-            <animateTransform id="sweep"
+            <animateTransform id="sec-turn"
                               attributeName="transform" attributeType="XML" type="rotate"
                               from="270 50 50" to="276 50 50" dur="0.2s"
                               values="270 50 50; 278 50 50; 276 50 50"
