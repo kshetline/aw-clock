@@ -81,6 +81,7 @@ const settingsPath = '/etc/default/weatherService';
 const rpiSetupStuff = path.join(__dirname, 'raspberry_pi_setup');
 const serviceSrc = rpiSetupStuff + '/weatherService';
 const serviceDst = '/etc/init.d/.';
+const serviceDstFull = '/etc/init.d/weatherService';
 const fontSrc = rpiSetupStuff + '/fonts/';
 const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
@@ -832,7 +833,7 @@ async function doServiceDeployment(): Promise<void> {
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
   await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
-  await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chmod', ['+x', serviceDstFull], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   const settingsText =
     `# If you edit AWC_PORT below, be sure to update\n# ${userHome}/${autostartDst}/autostart accordingly.\n` +
