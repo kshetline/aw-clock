@@ -303,7 +303,7 @@ export class Clock {
     }
 
     const rotanimate = (elem: SVGAnimationElement, start: number, end: number, duration?: number) => {
-      const isSec = elem === this.secHand;
+      const isSec = elem === this.secTurn;
 
       if (isSec && end < start)
         end += 360;
