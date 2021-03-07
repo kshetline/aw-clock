@@ -3,7 +3,7 @@
 import { AppService } from './app.service';
 import $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, DateTime, Timezone } from '@tubular/time';
-import { cos_deg, floor, interpolate, irandom, max, min, sin_deg } from '@tubular/math';
+import { abs, cos_deg, floor, interpolate, irandom, max, min, mod2, sin_deg } from '@tubular/math';
 import { getCssValue, isIE, isRaspbian, padLeft } from '@tubular/util';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
 import { setSignalLevel } from './awc-util';
@@ -39,7 +39,10 @@ export class Clock {
   private readonly hands: HTMLElement;
   private readonly gpsMeter: HTMLElement;
 
-  private sweep: SVGAnimationElement;
+  private readonly sweep: SVGAnimationElement;
+  private readonly hourTurn: SVGAnimationElement;
+  private readonly minuteTurn: SVGAnimationElement;
+
   private zoneCaption: HTMLElement;
   private hub: HTMLElement;
   private dayOfWeekCaption: HTMLElement;
@@ -60,9 +63,12 @@ export class Clock {
 
   private gpsActive = false;
   private gpsAvailable = false;
+  private checkingGps = false;
   private lastSecRotation = 0;
+  private lastHourMinute = -1;
   private lastMinute = -1;
   private lastTick = -1;
+  private turnDelay = -1;
   private inMinuteOfLeapSecond = false;
   private pendingLeapSecondForMonth = 0;
   private firstLeapSecondPoll = true;
@@ -80,7 +86,9 @@ export class Clock {
     this.secHand = document.getElementById('sec-hand');
     this.sweep = document.getElementById('sweep') as SVGAnimationElement;
     this.minHand = document.getElementById('min-hand');
+    this.minuteTurn = document.getElementById('minute-turn') as SVGAnimationElement;
     this.hourHand = document.getElementById('hour-hand');
+    this.hourTurn = document.getElementById('hour-turn') as SVGAnimationElement;
     this.forecastStart = document.getElementById('hourly-forecast-start');
     this.forecastEnd = document.getElementById('hourly-forecast-end');
     this.hands = document.getElementById('hands');
@@ -294,15 +302,18 @@ export class Clock {
       elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
 
-    const sweepSecondHand = (start, end) => {
-      if (end < start) {
+    const turnIt = (elem: SVGAnimationElement, start: number, end: number, duration?: number) => {
+      if (end < start)
         end += 360;
-      }
 
-      this.sweep.setAttribute('from', start + ' 50 50');
-      this.sweep.setAttribute('to', end + ' 50 50');
-      this.sweep.setAttribute('values', start + ' 50 50; ' + (end + 2) + ' 50 50; ' + end + ' 50 50');
-      this.sweep.beginElement();
+      elem.setAttribute('from', start + ' 50 50');
+      elem.setAttribute('to', end + ' 50 50');
+      elem.setAttribute('values', start + ' 50 50; ' + (end + 2) + ' 50 50; ' + end + ' 50 50');
+
+      if (duration != null)
+        elem.setAttribute('dur', duration + 's');
+
+      elem.beginElement();
     };
 
     const doMechanicalSecondHandEffect = this.hasBeginElement && !this.appService.isTimeAccelerated() &&
@@ -318,6 +329,8 @@ export class Clock {
     let secRotation = 6 * secs;
     const mins = wallTime.min;
     const hour = wallTime.hrs;
+    const hourMinute = (hour % 12) * 60 + mins;
+    let discontinuity = secs === 0 && this.hasBeginElement && !!date.getDiscontinuityDuringDay();
     const minuteOfLeapSecond = !!timeInfo.leapSecond && wallTimeUtc.min === 59 && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
             wallTimeUtc.d === getLastDateInMonthGregorian(wallTimeUtc.y, wallTimeUtc.m);
     const leapSecondForMonth = (minuteOfLeapSecond && timeInfo.leapSecond) || this.checkPendingLeapSecondForMonth(wallTimeUtc);
@@ -388,12 +401,37 @@ export class Clock {
     this.dtaiCaption.textContent = dtai + 's';
 
     if (doMechanicalSecondHandEffect)
-      sweepSecondHand(this.lastSecRotation, secRotation);
+      turnIt(this.sweep, this.lastSecRotation, secRotation);
 
     rotate(this.secHand, secRotation);
     this.lastSecRotation = secRotation;
-    rotate(this.minHand, 6 * mins + 0.1 * min(secs, 59));
-    rotate(this.hourHand, 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120);
+
+    let minuteAngle = 6 * mins + 0.1 * min(secs, 59);
+    const hourAngle = 30 * (hour % 12) + mins / 2 + min(secs, 59) / 120;
+    const change = mod2(hourMinute - this.lastHourMinute - 1, 720);
+
+    if (discontinuity && this.lastMinute >= 0 && this.lastHourMinute >= 0 && abs(change) >= 15 && abs(change) <= 120) {
+      const duration = abs(change / 15);
+      const minuteStart = minuteAngle - 6 * change;
+      const hourStart = hourAngle - change / 2;
+
+      turnIt(this.minuteTurn, minuteStart, minuteAngle += duration / 360, duration);
+      turnIt(this.hourTurn, hourStart, hourAngle, duration);
+      this.turnDelay = duration;
+    }
+    else
+      discontinuity = false;
+
+    if (discontinuity || this.turnDelay < 0 || secs > this.turnDelay) {
+      rotate(this.minHand, minuteAngle);
+      rotate(this.hourHand, hourAngle);
+
+      if (!discontinuity)
+        this.turnDelay = -1;
+    }
+
+    this.lastHourMinute = hourMinute;
+
     rotate(this.forecastStart, 30 * (hour % 12) + 8.5);
     rotate(this.forecastEnd, 30 * (hour % 12) - 6);
     this.gpsActive = !!timeInfo.fromGps;
@@ -494,11 +532,18 @@ export class Clock {
   }
 
   private checkGps(): void {
+    if (this.checkingGps)
+      return;
+
+    this.checkingGps = true;
+
     // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url: this.appService.getApiServer() + '/gps',
       dataType: 'json',
       success: (data: GpsData) => {
+        this.checkingGps = false;
+
         if (data.error === 'n/a')
           this.gpsAvailable = false;
         else {
@@ -513,7 +558,8 @@ export class Clock {
           setSignalLevel($(this.gpsMeter), data.signalQuality > 0 ? data.signalQuality : -1);
           this.gpsIcon.style.opacity = (data.pps && data.signalQuality > 0 ? '1' : '0.33');
         }
-      }
+      },
+      error: () => this.checkingGps = false
     });
   }
 }

@@ -749,11 +749,15 @@ export class Forecast {
         this.hourIcons[index].setAttribute('href', icon);
 
       if (this.hourWinds[index]) {
-        const speed = hourInfo.windSpeed ?? forecastData.currently.windSpeed;
-        const gust = hourInfo.windGust ?? forecastData.currently.windGust;
-        const direction = hourInfo.windDirection ?? forecastData.currently.windDirection;
+        if (hourInfo) {
+          const speed = hourInfo.windSpeed ?? forecastData.currently.windSpeed;
+          const gust = hourInfo.windGust ?? forecastData.currently.windGust;
+          const direction = hourInfo.windDirection ?? forecastData.currently.windDirection;
 
-        this.hourWinds[index].innerHTML = windBarbsSvg(speed, gust, isMetric, direction);
+          this.hourWinds[index].innerHTML = windBarbsSvg(speed, gust, isMetric, direction);
+        }
+        else
+          this.hourWinds[index].innerHTML = '';
       }
 
       // noinspection DuplicatedCode
