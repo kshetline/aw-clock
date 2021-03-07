@@ -832,8 +832,21 @@ async function doServiceDeployment(): Promise<void> {
 
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
-  await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
-  await monitorProcess(spawn('chmod', ['+x', serviceDstFull], { shell: true }), spin, ErrorMode.ANY_ERROR);
+
+  for (let i = 0; i < 2; ++i) {
+    try {
+      await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
+      await monitorProcess(spawn('chmod', ['+x', serviceDstFull], { shell: true }), spin, ErrorMode.ANY_ERROR);
+      break;
+    }
+    catch (e) {
+      // Try once again to stop weatherService if deployment fails.
+      if (i === 0)
+        await monitorProcess(spawn('service', ['weatherService', 'stop']), spin, ErrorMode.NO_ERRORS);
+      else
+        throw e;
+    }
+  }
 
   const settingsText =
     `# If you edit AWC_PORT below, be sure to update\n# ${userHome}/${autostartDst}/autostart accordingly.\n` +
@@ -966,6 +979,7 @@ async function doServiceDeployment(): Promise<void> {
       for (let i = 0; i < 2; ++i) {
         try {
           await install('forever', true, false, i > 0);
+          break;
         }
         catch {
           if (i > 0)
