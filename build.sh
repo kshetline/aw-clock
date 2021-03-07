@@ -30,5 +30,5 @@ if [ -f "node_path.txt" ]; then
 fi
 
 echo "Starting main installer..."
-# shellcheck disable=SC2090 disable=SC2048 disable=SC2086
+# shellcheck disable=SC2090,SC2048,SC2086
 npm run build:prod -- $path --bash $*
