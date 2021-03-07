@@ -914,7 +914,7 @@ async function doServiceDeployment(): Promise<void> {
     }
 
     if (treatAsRaspberryPi && !isRaspberryPi) {
-      const isDebian = /^Linux \w+ .*\bDebian\b/i.test(await monitorProcess(spawn('uname', ['-a'])));
+      const isDebian = /^Linux\b.+\bDebian\b/i.test(await monitorProcess(spawn('uname', ['-a'])));
       const isLxde = await isInstalled('lxpanel');
 
       if (!isDebian || !isLxde) {

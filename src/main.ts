@@ -375,13 +375,13 @@ class AwClockApp implements AppService {
     if (this.sensors.available)
       this.sensors.update(this.settings.celsius);
 
-    let interval = (this.frequent ? 5 : 15);
+    let interval = (this.forecast.hasGoodData ? (this.frequent ? 5 : 15) : 1);
 
     if (this.isTimeAccelerated())
       interval *= debugTimeRate;
 
     const runningLate = (this.lastForecast + interval * 60000 <= now);
-    const minuteOffset = (this.frequent ? 0 : this.pollingMinute);
+    const minuteOffset = (this.frequent || !this.forecast.hasGoodData ? 0 : this.pollingMinute);
     const millisOffset = (this.frequent || forceRefresh || runningLate ? 0 : this.pollingMillis);
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {

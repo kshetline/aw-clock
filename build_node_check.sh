@@ -63,7 +63,7 @@ pattern='([0-9]+)'
 free="${BASH_REMATCH[1]}"
 
 # If less than 2G RAM, go with Node 12 instead
-if (( free < 2000000 ));then
+if (( free < 1500000 ));then
   minVersion=12
   maxVersion=12
 fi
@@ -142,7 +142,7 @@ if [ ! "$(command -v npm)" ]; then
 fi
 
 if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ "$origVersion" -ne "$version" ]; then
-  echo "Installing npm packages."
+  echo "Installing npm packages. This process can be very slow!"
 
   # Best to wipe out all of node_modules and start from scratch.
   if [ "$origVersion" -ne "$version" ]; then

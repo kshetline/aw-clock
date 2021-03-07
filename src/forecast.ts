@@ -127,6 +127,7 @@ export class Forecast {
   private showingHourTemps = true;
   private hourInfoTimer: any;
   private forecastDaysVisible = 4;
+  private _hasGoodData = false;
 
   private marqueeText = ' ';
   private marqueeDialogText = '';
@@ -181,6 +182,8 @@ export class Forecast {
       this.updateMarqueeAnimation(null);
     });
   }
+
+  get hasGoodData(): boolean { return this._hasGoodData; }
 
   private detectGestures(): void {
     const forecastRect = $('#forecast-rect')[0];
@@ -456,6 +459,7 @@ export class Forecast {
 
   public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
     this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
+      this._hasGoodData = true;
       this.updateHourlyCache(forecastData);
       this.lastForecastData = forecastData;
       this.lastForecastTime = performance.now();
@@ -476,6 +480,8 @@ export class Forecast {
 
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
+      this._hasGoodData = false;
+
       const now = performance.now();
 
       if (!this.lastForecastData || now >= this.lastForecastTime + MAX_FORECAST_STALENESS) {
@@ -603,6 +609,7 @@ export class Forecast {
   }
 
   public showUnknown(error?: string): void {
+    this._hasGoodData = false;
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
     this.appService.updateCurrentTemp(NO_DATA);
     this.hourIcons.forEach(icon => icon.setAttribute('href', EMPTY_ICON));
