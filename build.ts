@@ -85,6 +85,7 @@ const fontSrc = rpiSetupStuff + '/fonts/';
 const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
+const lxdePiCheck = '.config/lxpanel/LXDE-pi';
 let nodePath = process.env.PATH;
 
 if (process.platform === 'linux') {
@@ -105,6 +106,10 @@ if (process.platform === 'linux') {
   catch (err) {
     console.error(chalk.redBright('Raspberry Pi check failed'));
   }
+}
+
+if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
+  process.env.DISPLAY = ':0.0';
 }
 
 const launchChromium = chromium + ' --kiosk http://localhost:8080/';
@@ -308,11 +313,12 @@ async function isInstalled(command: string): Promise<boolean> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promise<boolean> {
+async function install(cmdPkg: string, viaNpm = false, realOnly = false, quiet = false): Promise<boolean> {
   let packageArgs = [cmdPkg];
   let name = cmdPkg;
 
-  showStep();
+  if (!quiet)
+    showStep();
 
   if (realOnly && !isRaspberryPi) {
     console.log(`${chalk.bold(cmdPkg)} won't be installed (not real Raspberry Pi)` +
@@ -326,11 +332,16 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false): Promis
   }
 
   if (await isInstalled(name)) {
-    console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
+    if (quiet)
+      stepDone();
+    else
+      console.log(`${chalk.bold(cmdPkg)} already installed` + trailingSpace + backspace + chalk.green(CHECK_MARK));
+
     return false;
   }
   else {
-    write(`Installing ${chalk.bold(cmdPkg)}` + trailingSpace);
+    if (!quiet)
+      write(`Installing ${chalk.bold(cmdPkg)}` + trailingSpace);
 
     if (viaNpm)
       await monitorProcess(spawn('npm', ['install', '-g', ...packageArgs]), spin, ErrorMode.ANY_ERROR);
@@ -721,11 +732,11 @@ async function disableScreenSaver(uid: number): Promise<void> {
     const saverRunning = /\d\s+xscreensaver\b/.test(procList);
 
     if (!saverRunning) {
-      spawn('xscreensaver', [], { uid, detached: true });
+      spawn('xscreensaver', [], { uid, detached: true, env: process.env });
       await sleep(500);
     }
 
-    const settingsProcess = spawn('xscreensaver-demo', [], { uid });
+    const settingsProcess = spawn('xscreensaver-demo', [], { uid, env: process.env });
 
     await sleep(3000, spin);
     settingsProcess.kill('SIGTERM');
@@ -762,22 +773,7 @@ async function doClientBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
   const opts = { shell: true, env: process.env };
-  let output: string;
-
-  for (let i = 0; i < 2; ++i) {
-    try {
-      output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin);
-      break;
-    }
-    catch (err) {
-      if (i === 0 && /node.sass/i.test(err.message ?? err.toString())) {
-        write(chalk.paleYellow(' ' + FAIL_MARK + ' (rebuilding node-sass)  '));
-        await monitorProcess(spawn('npm ', uid, prod ? ['rebuild', 'node-sass'] : [], opts), spin);
-      }
-      else
-        throw err;
-    }
-  }
+  const output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin);
 
   stepDone();
   console.log(chalk.mediumGray(getWebpackSummary(output)));
@@ -821,7 +817,17 @@ async function doServerBuild(): Promise<void> {
 }
 
 async function doServiceDeployment(): Promise<void> {
-  const autostartDir = path.join(userHome, autostartDst);
+  let autostartDir = path.join(userHome, autostartDst);
+  let morePi_ish = false;
+
+  if (!autostartDir.endsWith('-pi')) {
+    const lxdePiCheckDir = path.join(userHome, lxdePiCheck);
+
+    if (fs.existsSync(lxdePiCheckDir)) {
+      morePi_ish = true;
+      autostartDir += '-pi';
+    }
+  }
 
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
@@ -850,7 +856,7 @@ async function doServiceDeployment(): Promise<void> {
     lines = asLines(fs.readFileSync(autostartPath).toString()).filter(line => !!line.trim());
   }
   catch (err) {
-    if (isRaspberryPi) {
+    if (isRaspberryPi || morePi_ish) {
       lines = [
         '@lxpanel --profile LXDE-pi',
         '@pcmanfm --desktop --profile LXDE-pi',
@@ -902,13 +908,13 @@ async function doServiceDeployment(): Promise<void> {
     const nodeVersionStr = (await monitorProcess(spawn('node', uid, ['--version']))).trim();
     const nodeVersion = toNumber((/v(\d+)/.exec(nodeVersionStr) ?? [])[1]);
 
-    if (isRaspberryPi && nodeVersion !== 14) {
-      console.error(chalk.redBright(`Node.js version 14.x required. Version ${nodeVersionStr} found.`));
+    if (isRaspberryPi && (nodeVersion < 10 || nodeVersion > 14)) {
+      console.error(chalk.redBright(`Node.js version 10.x-14.x required. Version ${nodeVersionStr} found.`));
       process.exit(0);
     }
 
     if (treatAsRaspberryPi && !isRaspberryPi) {
-      const isDebian = /^Linux \w+ .*\bDebian\b/i.test(await monitorProcess(spawn('uname', ['-a'])));
+      const isDebian = /^Linux\b.+\bDebian\b/i.test(await monitorProcess(spawn('uname', ['-a'])));
       const isLxde = await isInstalled('lxpanel');
 
       if (!isDebian || !isLxde) {
@@ -955,9 +961,25 @@ async function doServiceDeployment(): Promise<void> {
       await install('pigpio', false, true);
       await install(chromium);
       await install('unclutter');
-      await install('forever', true);
+
+      for (let i = 0; i < 2; ++i) {
+        try {
+          await install('forever', true, false, i > 0);
+        }
+        catch {
+          if (i > 0)
+            console.log(backspace + chalk.paleYellow(FAIL_MARK));
+        }
+      }
+
       await installFonts();
-      await disableScreenSaver(uid);
+
+      try {
+        await disableScreenSaver(uid);
+      }
+      catch {
+        console.log(backspace + chalk.paleYellow(FAIL_MARK));
+      }
     }
 
     settings.AWC_GIT_REPO_PATH = (await monitorProcess(spawn('pwd'), spin, ErrorMode.NO_ERRORS)).trim() ||
@@ -1009,7 +1031,7 @@ async function doServiceDeployment(): Promise<void> {
       await monitorProcess(spawn('pkill', uid, ['-o', chromium]), spin, ErrorMode.NO_ERRORS);
       await monitorProcess(spawn('pkill', uid, ['-o', chromium.substr(0, 15)]), spin, ErrorMode.NO_ERRORS);
       await sleep(500, spin);
-      const display = process.env.DISPLAY ?? ':0';
+      const display = process.env.DISPLAY;
       exec(`DISPLAY=${display} ${launchChromium} --user-data-dir='${userHome}'`, { uid });
       await sleep(1000);
     }

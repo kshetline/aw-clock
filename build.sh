@@ -15,9 +15,20 @@ if [ "$EUID" != 0 ]; then
 fi
 
 sudo -u "$SUDO_USER" bash -c ./build_node_check.sh
-path="$(cat node_path.txt)"
-rm node_path.txt
+
+if [ -f "node_path.txt" ]; then
+  path="$(cat node_path.txt)"
+  rm node_path.txt
+
+  if [ "$path" == "failed" ]; then
+    exit;
+  elif [ -n "$path" ]; then
+    echo "here"
+    args=(--path \""$path"\")
+    path="${args[*]}"
+  fi
+fi
 
 echo "Starting main installer..."
-# shellcheck disable=SC2048,SC2086 # this should become separate items with spaces in between, not one quoted thing
-npm run build:prod -- --path "$path" --bash $*
+# shellcheck disable=SC2090,SC2048,SC2086
+npm run build:prod -- $path --bash $*

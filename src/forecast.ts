@@ -127,6 +127,7 @@ export class Forecast {
   private showingHourTemps = true;
   private hourInfoTimer: any;
   private forecastDaysVisible = 4;
+  private _hasGoodData = false;
 
   private marqueeText = ' ';
   private marqueeDialogText = '';
@@ -181,6 +182,8 @@ export class Forecast {
       this.updateMarqueeAnimation(null);
     });
   }
+
+  get hasGoodData(): boolean { return this._hasGoodData; }
 
   private detectGestures(): void {
     const forecastRect = $('#forecast-rect')[0];
@@ -456,6 +459,7 @@ export class Forecast {
 
   public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
     this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
+      this._hasGoodData = true;
       this.updateHourlyCache(forecastData);
       this.lastForecastData = forecastData;
       this.lastForecastTime = performance.now();
@@ -476,6 +480,8 @@ export class Forecast {
 
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {
+      this._hasGoodData = false;
+
       const now = performance.now();
 
       if (!this.lastForecastData || now >= this.lastForecastTime + MAX_FORECAST_STALENESS) {
@@ -603,6 +609,7 @@ export class Forecast {
   }
 
   public showUnknown(error?: string): void {
+    this._hasGoodData = false;
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
     this.appService.updateCurrentTemp(NO_DATA);
     this.hourIcons.forEach(icon => icon.setAttribute('href', EMPTY_ICON));
@@ -742,11 +749,15 @@ export class Forecast {
         this.hourIcons[index].setAttribute('href', icon);
 
       if (this.hourWinds[index]) {
-        const speed = hourInfo.windSpeed ?? forecastData.currently.windSpeed;
-        const gust = hourInfo.windGust ?? forecastData.currently.windGust;
-        const direction = hourInfo.windDirection ?? forecastData.currently.windDirection;
+        if (hourInfo) {
+          const speed = hourInfo.windSpeed ?? forecastData.currently.windSpeed;
+          const gust = hourInfo.windGust ?? forecastData.currently.windGust;
+          const direction = hourInfo.windDirection ?? forecastData.currently.windDirection;
 
-        this.hourWinds[index].innerHTML = windBarbsSvg(speed, gust, isMetric, direction);
+          this.hourWinds[index].innerHTML = windBarbsSvg(speed, gust, isMetric, direction);
+        }
+        else
+          this.hourWinds[index].innerHTML = '';
       }
 
       // noinspection DuplicatedCode

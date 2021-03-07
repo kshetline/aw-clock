@@ -18,6 +18,8 @@ router.get('/', async (req: Request, res: Response) => {
   let darkSkyIndex = 1;
   let weatherBitIndex = 1;
 
+  noCache(res);
+  res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));
   promises.push(getWuForecast(req));
 
   if (process.env.AWC_WEATHERBIT_API_KEY) {
@@ -77,19 +79,15 @@ router.get('/', async (req: Request, res: Response) => {
     }
   }
 
-  if (forecast instanceof Error) {
+  if (forecast instanceof Error)
     res.status(500).send(forecast.message);
-  }
-  else if (forecast.unavailable) {
+  else if (forecast.unavailable)
     res.status(500).send('Forecast unavailable');
-  }
   else {
     // Even if Weather Underground is preferred, if Dark Sky is available, use its better summary.
     if (forecast === forecasts[0] && forecasts.length > 1 && darkSkyForecast?.daily?.summary)
       forecast.daily.summary = darkSkyForecast.daily.summary;
 
-    noCache(res);
-    res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));
     jsonOrJsonp(req, res, forecast);
   }
 });

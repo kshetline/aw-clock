@@ -246,8 +246,6 @@ To build and run this project you can use the following commands:
 * “`npm run start-server-win`” to start the data server for this project (on Windows) on `localhost:4201`.
 * “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code. _(Note that for development and testing, two different ports are used (4200, 4201), but that when the server is deployed, all content and data is served on a single port, by default 8080.)_
 
-> Note: A dependency on `node-sass` sometimes causes build problems. It often helps to delete the top-level `node_modules` directory, and then do `npm install` over again. I’ve also found that using `LIBSASS_EXT=”no” npm install` helps.
-
 To build the server along with the web client, use `npm run build`, possibly followed by `‑‑` and other options listed below:
 
 | &nbsp; | &nbsp; |
@@ -292,7 +290,8 @@ For reference, here’s a break down of the steps performed by a full installati
 
 1. Node.js is installed if not present, or updated if earlier than version 14. Switch to Node 14 using nvm (Node Version Manager) may occur if nvm is installed.
 1. If Node.js is greater than version 14, nvm will be used to step down to version 14, installing nvm if necessary to do so.
-1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time because of one npm package in particular &mdash; node-sass &mdash; which can take ten minutes or more to install and build.
+1. For Node.js version 14, substitute version 12 in the descriptions above for a Raspberry Pi with less than 2 GB RAM.
+1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time.
 1. A check for GPS configuration is performed.
 1. If running in interactive mode (`‑i`), the user is queried about various configuration and installation options.
 1. If the `weatherService` service is running, it’s stopped.
@@ -313,3 +312,9 @@ For reference, here’s a break down of the steps performed by a full installati
 1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `-pi` on the end for Debian), or the existing `autostart` file is modified, to launch the Chromium web browser in kiosk mode, displaying the Astronomy/Weather Clock.
 1. The included file `autostart_extra.sh` is also copied to the above directory. This adds code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up.
 1. The options `‑‑launch` or `‑‑reboot` are performed if specified.
+
+### Developer notes
+
+To greatly improve the speed and reliability of automated installations and updates, the often troublesome node-sass has been moved into a separate `sass` directory. To set up node-sass, `cd` into the `sass` directory and enter `npm i`. This prepares you for translating the source file `styles.scss` into `styles.css`.
+
+Once this is set up, you can use `npm run build:sass` to make sure any changes you make to `styles.scss` are carried over into `styles.css`. `styles.css` is also automatically updated any time you use `npm start`.
