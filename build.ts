@@ -2,11 +2,15 @@ import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
+import * as readline from 'readline';
 import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
 import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
+
+readline.emitKeypressEvents(process.stdin);
+process.stdin.setRawMode(true);
 
 const CHECK_MARK = '\u2714';
 const FAIL_MARK = '\u2718';
@@ -297,14 +301,56 @@ if (treatAsRaspberryPi) {
 if (!isRaspberryPi && doAcu)
   console.warn(chalk.yellow('Warning: this setup will only generate fake wireless sensor data'));
 
-async function readLine(): Promise<string> {
+async function readUserInput(): Promise<string> {
   return new Promise<string>(resolve => {
-    const callback = (data: any) => {
-      process.stdin.off('data', callback);
-      resolve(data.toString().trim());
+    let buffer = '';
+    let length = 0;
+    const clearLine = () => write('\x08 \x08'.repeat(length));
+
+    const callback = (ch: any, key: any) => {
+      if (ch === '\x03') { // ctrl-C
+        write('^C\n');
+        process.exit(130);
+      }
+      else if (ch === '\x15') { // ctrl-U
+        clearLine();
+        length = 0;
+      }
+      else if (key.name === 'enter' || key.name === 'return') {
+        write('\n');
+        process.stdin.off('keypress', callback);
+        resolve(buffer.substr(0, length).trim());
+      }
+      else if (key.name === 'backspace' || key.name === 'left') {
+        if (length > 0) {
+          write('\x08 \x08');
+          --length;
+        }
+      }
+      else if (key.name === 'delete') {
+        if (length > 0) {
+          write('\x08 \x08');
+          buffer = buffer.substr(0, --length) + buffer.substr(length + 1);
+        }
+      }
+      else if (key.name === 'up') {
+        clearLine();
+        write('\n');
+        process.stdin.off('keypress', callback);
+        resolve('\x18');
+      }
+      else if (key.name === 'right') {
+        if (length < buffer.length) {
+          write(buffer.charAt(length++));
+        }
+      }
+      else if (ch != null && ch >= ' ' && !key.ctrl && !key.meta) {
+        write(ch);
+        buffer = buffer.substr(0, length) + ch + buffer.substr(length++);
+      }
     };
 
-    process.stdin.on('data', callback);
+    process.stdin.on('keypress', callback);
   });
 }
 
@@ -687,9 +733,13 @@ async function promptForConfiguration(): Promise<void> {
       write(': ');
     }
 
-    const response = await readLine();
+    const response = await readUserInput();
 
-    if (response) {
+    if (response === '\x18') {
+      i = Math.max(i - 2, -1);
+      continue;
+    }
+    else if (response) {
       const validation = q.validate ? q.validate(response) : true;
 
       if (isString(validation))
@@ -1083,8 +1133,10 @@ async function doServiceDeployment(): Promise<void> {
       showStep();
       write('Press any key to stop reboot:' + trailingSpace);
 
-      if (!(await sleep(5000, spin, true)))
+      if (!(await sleep(5000, spin, true))) {
+        console.log();
         exec('reboot');
+      }
       else
         console.log();
     }
