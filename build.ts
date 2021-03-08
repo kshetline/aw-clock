@@ -29,6 +29,7 @@ let doStdDeploy = false;
 let doDedicated = false;
 let doLaunch = false;
 let doReboot = false;
+let noStop = false;
 let prod = false;
 let viaBash = false;
 let interactive = false;
@@ -60,7 +61,7 @@ chalk.paleYellow = chalk.hex('#FFFFAA');
 let backspace = '\x08';
 let sol = '\x1B[1G';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 3;
+let totalSteps = 2;
 let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
@@ -182,6 +183,9 @@ process.argv.forEach(arg => {
       onlyOnRaspberryPi.push(arg);
       onlyDedicated.push(arg);
       break;
+    case '--nostop':
+      noStop = true;
+      break;
     case '-p':
       prod = true;
       break;
@@ -228,21 +232,24 @@ process.argv.forEach(arg => {
 
         console.error('Unrecognized option "' + chalk.redBright(arg) + '"');
         console.log(helpMsg);
-        process.exit(0);
+        process.exit(1);
       }
   }
 });
 
+if (noStop)
+  doReboot = doLaunch = false;
+
 if (!treatAsRaspberryPi && onlyOnRaspberryPi.length > 0) {
   onlyOnRaspberryPi.forEach(opt =>
     console.error(chalk.redBright(opt) + ' option is only valid on Raspberry Pi'));
-  process.exit(0);
+  process.exit(1);
 }
 
 if (!doDedicated && onlyDedicated.length > 0) {
   onlyDedicated.forEach(opt =>
     console.error(chalk.redBright(opt) + ' option is only valid when used with the --ddev or -i options'));
-  process.exit(0);
+  process.exit(1);
 }
 
 if (treatAsRaspberryPi) {
@@ -612,7 +619,7 @@ function finalActionValidate(s: string): boolean {
 const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : 'N');
 const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 
-const questions = [
+let questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
   { prompt: 'Perform npm install? (N option for debug only)', ask: true, yn: true, deflt: doNpmI ? 'Y' : 'N', validate: npmIValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port.', ask: true, validate: portValidate },
@@ -654,6 +661,9 @@ if (NO_MORE_DARK_SKY) {
   questions[5].prompt = 'preferred weather service, (w)underground, or weather(b)it';
   questions.splice(7, 1);
 }
+
+if (noStop)
+  questions = questions.slice(0, -1);
 
 async function promptForConfiguration(): Promise<void> {
   console.log(chalk.cyan(sol + '- Configuration -'));
@@ -832,21 +842,8 @@ async function doServiceDeployment(): Promise<void> {
 
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
-
-  for (let i = 0; i < 2; ++i) {
-    try {
-      await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
-      await monitorProcess(spawn('chmod', ['+x', serviceDstFull], { shell: true }), spin, ErrorMode.ANY_ERROR);
-      break;
-    }
-    catch (e) {
-      // Try once again to stop weatherService if deployment fails.
-      if (i === 0)
-        await monitorProcess(spawn('service', ['weatherService', 'stop']), spin, ErrorMode.NO_ERRORS);
-      else
-        throw e;
-    }
-  }
+  await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chmod', ['+x', serviceDstFull], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   const settingsText =
     `# If you edit AWC_PORT below, be sure to update\n# ${userHome}/${autostartDst}/autostart accordingly.\n` +
@@ -911,7 +908,12 @@ async function doServiceDeployment(): Promise<void> {
     { shell: true }), spin, ErrorMode.ANY_ERROR);
   await monitorProcess(spawn('chmod', uid, ['+x', autostartDir + '/autostart*'],
     { shell: true }), spin, ErrorMode.ANY_ERROR);
-  await monitorProcess(spawn('service', ['weatherService', 'start']), spin);
+
+  if (noStop)
+    console.log(backspace + trailingSpace + '\n\nReboot to complete set-up.');
+  else
+    await monitorProcess(spawn('service', ['weatherService', 'start']), spin);
+
   stepDone();
 }
 
@@ -924,7 +926,7 @@ async function doServiceDeployment(): Promise<void> {
 
     if (isRaspberryPi && (nodeVersion < 10 || nodeVersion > 14)) {
       console.error(chalk.redBright(`Node.js version 10.x-14.x required. Version ${nodeVersionStr} found.`));
-      process.exit(0);
+      process.exit(1);
     }
 
     if (treatAsRaspberryPi && !isRaspberryPi) {
@@ -933,7 +935,7 @@ async function doServiceDeployment(): Promise<void> {
 
       if (!isDebian || !isLxde) {
         console.error(chalk.redBright('--tarp option (Treat As Raspberry Pi) only available for Linux Debian with LXDE'));
-        process.exit(0);
+        process.exit(1);
       }
     }
 
@@ -943,6 +945,7 @@ async function doServiceDeployment(): Promise<void> {
     if (interactive)
       await promptForConfiguration();
 
+    totalSteps += noStop ? 0 : 1;
     totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
     totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
     totalSteps += doAcu ? 1 : 0;
@@ -959,10 +962,34 @@ async function doServiceDeployment(): Promise<void> {
     if (doDedicated) {
       totalSteps += 9 + (doUpdateUpgrade ? 1 : 0);
       console.log(chalk.cyan(sol + '- Dedicated device setup -'));
-      showStep();
-      write('Stopping weatherService if currently running' + trailingSpace);
-      await monitorProcess(spawn('service', ['weatherService', 'stop']), spin, ErrorMode.NO_ERRORS);
-      stepDone();
+
+      if (!noStop) {
+        showStep();
+        write('Stopping weatherService if currently running' + trailingSpace);
+
+        try {
+          await monitorProcess(spawn('service', ['weatherService', 'stop']), spin, ErrorMode.ANY_ERROR);
+        }
+        catch (err) {
+          const msg = err.message || err.toString();
+
+          // Grief from polkit?
+          if (/Interactive authentication required/i.test(msg)) {
+            console.log(backspace + trailingSpace);
+            console.error(err);
+            console.log('\npolkit is requiring interactive authentication to stop weatherService.');
+            console.log('Please enter "sudo service stop weatherService" at the prompt below.');
+            console.log('\nWhen that is done, restart this installation with either: ');
+            console.log('    sudo ./build.sh --nostop -i        (for interactive set-up)');
+            console.log('    sudo ./build.sh --nostop -ddev     (for automated set-up)');
+            process.exit(1);
+          }
+          // TODO: else? Probably just weatherService not installed yet
+          // Might check /unrecognized service|not loaded/ to be more certain.
+        }
+
+        stepDone();
+      }
 
       if (doUpdateUpgrade) {
         showStep();
@@ -1056,7 +1083,7 @@ async function doServiceDeployment(): Promise<void> {
       showStep();
       write('Press any key to stop reboot:' + trailingSpace);
 
-      if (!(await sleep(3000, spin, true)))
+      if (!(await sleep(5000, spin, true)))
         exec('reboot');
       else
         console.log();
