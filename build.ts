@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
 import * as readline from 'readline';
+import { Key } from 'readline';
 import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
 import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
@@ -307,7 +308,7 @@ async function readUserInput(): Promise<string> {
     let length = 0;
     const clearLine = () => write('\x08 \x08'.repeat(length));
 
-    const callback = (ch: any, key: any) => {
+    const callback = (ch: string, key: Key) => {
       if (ch === '\x03') { // ctrl-C
         write('^C\n');
         process.exit(130);
