@@ -100,8 +100,10 @@ async function checkForUpdate() {
     });
     const currentVersion = repoInfo?.tag_name?.replace(/^\D+/, '');
 
-    if (currentVersion)
-      latestVersion = currentVersion;
+    if (currentVersion) {
+      if (!currentVersion.endsWith('_nu'))
+        latestVersion = currentVersion;
+    }
     else // noinspection ExceptionCaughtLocallyJS
       throw new Error('Could not parse tag_name');
   }

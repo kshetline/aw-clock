@@ -5,7 +5,7 @@ export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'clo
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend',
                                      'windDirection', 'windGust', 'windPhrase', 'windSpeed'];
 
-export const AWC_VERSION = '2.9.0';
+export const AWC_VERSION = '2.9.1';
 
 // The following interfaces represent common interfaces to which all weather services will be
 // translated, but most closely coincides with Weather Underground data, especially the icon code.
