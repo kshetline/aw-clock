@@ -4,7 +4,7 @@
 
 ## 2.9.1
 
-* Daylight Saving Time spring-forward/fallback animation.
+* Daylight Saving Time spring-forward/fall-back animation.
 * Fixed some build issues caused by Node.js version 14 not being reliable on Raspberry Pi systems with less than 2 GB RAM — Node.js 12 used on these systems instead.
 * Removed dependency on node-sass for basic installation, which was often the source of build problems. (If you are trying to modify the code as a developer, node-sass is still needed in the development process, but is now decoupled from deployment.)
 

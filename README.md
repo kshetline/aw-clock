@@ -16,6 +16,8 @@ On a display which is narrower than a 16-by-9 aspect ratio, four forecast days c
 
 ![app screenshot](https://shetline.com/readme/aw-clock/2.8.0/awc_screenshot.png)
 
+![app dst animation](https://shetline.com/readme/aw-clock/2.8.0/spring-forward-480.gif)
+
 <br/><br/>
 
 ### Getting started
