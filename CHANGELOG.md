@@ -1,4 +1,8 @@
-## 2.9.0
+## 2.9.2
+
+* Better identifies Raspberry Pi hardware.
+
+## 2.9.1
 
 * Daylight Saving Time spring-forward/fallback animation.
 * Fixed some build issues caused by Node.js version 14 not being reliable on Raspberry Pi systems with less than 2 GB RAM — Node.js 12 used on these systems instead.

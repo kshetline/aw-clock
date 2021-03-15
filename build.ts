@@ -83,6 +83,7 @@ const sudoUser = getSudoUser();
 const user = process.env.SUDO_USER || process.env.USER || 'pi';
 let uid: number;
 const cpuPath = '/proc/cpuinfo';
+const cpuPath2 = '/sys/firmware/devicetree/base/model';
 const settingsPath = '/etc/default/weatherService';
 const rpiSetupStuff = path.join(__dirname, 'raspberry_pi_setup');
 const serviceSrc = rpiSetupStuff + '/weatherService';
@@ -100,8 +101,11 @@ if (process.platform === 'linux') {
     if (fs.existsSync(cpuPath)) {
       const lines = asLines(fs.readFileSync(cpuPath).toString());
 
+      if (fs.existsSync(cpuPath2))
+        lines.push(...asLines(fs.readFileSync(cpuPath2).toString()));
+
       for (const line of lines) {
-        if (/\bModel\s*:\s*Raspberry Pi\b/i.test(line)) {
+        if (/\b(Raspberry Pi|BCM\d+)\b/i.test(line)) {
           isRaspberryPi = treatAsRaspberryPi = true;
           autostartDst += '-pi';
           chromium += '-browser';

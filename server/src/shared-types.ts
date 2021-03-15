@@ -1,3 +1,5 @@
+const { version } = require('../package.json');
+
 // It's annoying that TypeScript doesn't itself provide a way to create a runtime list of
 // the allowed keys for an interface, so for now, I'll have to settle for repeating things.
 
@@ -5,7 +7,7 @@ export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'clo
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend',
                                      'windDirection', 'windGust', 'windPhrase', 'windSpeed'];
 
-export const AWC_VERSION = '2.9.1';
+export const AWC_VERSION = version;
 
 // The following interfaces represent common interfaces to which all weather services will be
 // translated, but most closely coincides with Weather Underground data, especially the icon code.
