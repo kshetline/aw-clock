@@ -5,6 +5,7 @@ import { jsonOrJsonp, noCache, timeStamp } from './awcs-util';
 import { ForecastData } from './shared-types';
 import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
+import { toNumber } from '@tubular/util';
 
 export const router = Router();
 
@@ -20,6 +21,8 @@ router.get('/', async (req: Request, res: Response) => {
 
   noCache(res);
   res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));
+  req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(4);
+  req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(4);
   promises.push(getWuForecast(req));
 
   if (process.env.AWC_WEATHERBIT_API_KEY) {

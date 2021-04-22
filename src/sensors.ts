@@ -1,5 +1,5 @@
 import { AppService } from './app.service';
-import { CurrentTemperatureHumidity } from './current-temp-manager';
+import { CurrentTemperatureHumidity } from './shared-types';
 import $ from 'jquery';
 import { apiServer, localServer } from './settings';
 import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/shared-types';

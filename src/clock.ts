@@ -5,10 +5,9 @@ import $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, DateTime, Timezone } from '@tubular/time';
 import { abs, cos_deg, floor, interpolate, irandom, max, min, mod2, sin_deg } from '@tubular/math';
 import { getCssValue, isIE, isRaspbian, padLeft } from '@tubular/util';
+import { TimeFormat } from './shared-types';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
 import { setSignalLevel } from './awc-util';
-
-export enum TimeFormat { HR24, AMPM, UTC }
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 

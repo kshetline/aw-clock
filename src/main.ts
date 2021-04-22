@@ -18,8 +18,8 @@ import { AppService } from './app.service';
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { Clock, TimeFormat } from './clock';
-import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
+import { Clock } from './clock';
+import { CurrentTempManager } from './current-temp-manager';
 import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
@@ -33,6 +33,7 @@ import { SettingsDialog } from './settings-dialog';
 import { TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
+import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
 
 pollForTimezoneUpdates(zonePollerBrowser);
 

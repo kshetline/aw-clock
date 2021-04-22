@@ -3,21 +3,9 @@ import $ from 'jquery';
 import { reflow } from './svg-flow';
 import { localServer } from './settings';
 import { convertTemp } from './awc-util';
+import { CurrentTemperatureHumidity } from './shared-types';
 
 const DD = '\u2012\u2012';
-
-export interface CurrentTemperatureHumidity {
-  forecastFeelsLike?: number;
-  forecastHumidity?: number;
-  forecastStale?: boolean;
-  forecastTemp?: number;
-  indoorHumidity?: number;
-  indoorTemp?: number;
-  outdoorHumidity?: number;
-  outdoorTemp?: number;
-  sensorTempDetail?: string;
-  celsius?: boolean;
-}
 
 export class CurrentTempManager {
   private readonly currentTempBalanceSpace: JQuery;

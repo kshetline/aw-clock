@@ -1,7 +1,6 @@
 import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
 import * as readline from 'readline';
 import { asLines, isNumber } from '@tubular/util';
-import { unref } from './awcs-util';
 
 const isMacOS = (process.platform === 'darwin');
 const isWindows = (process.platform === 'win32');
@@ -15,6 +14,13 @@ try {
 }
 catch (err) {
   console.error(err);
+}
+
+function unref(timer: any): any {
+  if (timer?.unref)
+    timer.unref();
+
+  return timer;
 }
 
 export function getUserHome(): string {

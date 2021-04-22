@@ -1,6 +1,5 @@
 import { AppService } from './app.service';
-import { CLOCK_CENTER, TimeFormat } from './clock';
-import { CurrentTemperatureHumidity } from './current-temp-manager';
+import { CLOCK_CENTER } from './clock';
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
@@ -15,6 +14,7 @@ import {
   setSvgHref
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
+import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -78,8 +78,6 @@ const UNKNOWN_ICON = 'assets/unknown.svg';
 const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
 
 const REVERT_TO_START_OF_WEEK_DELAY = 60_000; // 1 minute
-
-export enum HourlyForecast { NONE = 'N', CIRCULAR = 'C', VERTICAL = 'V' }
 
 function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
   const rect = elem.getBoundingClientRect();

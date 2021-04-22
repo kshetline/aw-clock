@@ -1,6 +1,5 @@
 import { AppService } from './app.service';
-import { TimeFormat } from './clock';
-import { HourlyForecast } from './forecast';
+import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import { isIE, isIOS, isSafari } from '@tubular/util';

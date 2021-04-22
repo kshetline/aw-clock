@@ -143,10 +143,3 @@ export function escapeForRegex(s: string): string {
 export function timeStamp(): string {
   return new Date().toISOString().replace('T', ' ');
 }
-
-export function unref(timer: any): any {
-  if (timer?.unref)
-    timer.unref();
-
-  return timer;
-}

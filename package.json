@@ -13,7 +13,7 @@
     "build:sass": "cd sass && npx node-sass ../src/styles.scss ../src/styles.css && cd ..",
     "build:prod": "ts-node build.ts -p",
     "test": "karma start ./karma.conf.js",
-    "lint": "eslint '**/*.ts' '**/*.js' '**/*.cjs'",
+    "lint": "eslint '**/*.ts' '**/*.js'",
     "e2e": "protractor ./protractor.conf.js"
   },
   "private": true,
