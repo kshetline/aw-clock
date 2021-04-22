@@ -172,11 +172,11 @@ class AwClockApp implements AppService {
         const fromRightEdge = window.screen.width - evt.targetTouches[0].pageX;
         const logoWidth = this.offsetWidth;
 
-        if (fromRightEdge > logoWidth * 2 / 3) {
+        if (fromRightEdge < logoWidth / 3) {
           evt.preventDefault();
           settingsButton.trigger('click');
         }
-        else if (fromRightEdge > logoWidth / 3)
+        else if (fromRightEdge < logoWidth / 2)
           evt.preventDefault();
         // ...else let the touch be a click on the weather logo
       }

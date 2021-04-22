@@ -427,9 +427,7 @@ export class SettingsDialog {
       this.dialog.css('display', 'none');
     });
 
-    this.reloadButton.one('click', () => {
-      window.location.reload();
-    });
+    this.reloadButton.on('click', () => setTimeout(() => window.location.reload()));
   }
 
   private doOK = () => {

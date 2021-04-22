@@ -28,7 +28,7 @@ import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
-import { asLines, isString, processMillis, toBoolean } from '@tubular/util';
+import { asLines, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
@@ -284,6 +284,9 @@ function getApp() {
 
   if (wbProxyForecast) {
     theApp.get('/wbproxy', async (req, res) => {
+      req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(5);
+      req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(5);
+
       const response = await wbProxyForecast(req);
 
       if (response instanceof Error)
@@ -329,8 +332,8 @@ function getApp() {
       }
 
       if (gpsInfo.latitude != null && gpsInfo.longitude != null) {
-        defaults.latitude = Number(gpsInfo.latitude.toFixed(4));
-        defaults.longitude = Number(gpsInfo.longitude.toFixed(4));
+        defaults.latitude = Number(gpsInfo.latitude.toFixed(5));
+        defaults.longitude = Number(gpsInfo.longitude.toFixed(5));
         defaults.city = gpsInfo.city || '';
       }
     }

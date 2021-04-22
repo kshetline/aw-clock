@@ -468,11 +468,11 @@ export class Forecast {
       const wb = (forecastData.source === 'weatherbit');
       const wu = (forecastData.source === 'wunderground');
       const buttonWidth = this.settingsBtn.width();
-      const logoWidth = (ds ? 118 : (wb || wu ? 183 : 8)) + 14;
+      const logoWidth = (ds ? 118 : (wb || wu ? 183 : 8)) + 20;
 
-      this.darkskyLogo.css('display', ds ? 'inline-block' : 'none');
-      this.weatherbitLogo.css('display', wb ? 'inline-block' : 'none');
-      this.wundergroundLogo.css('display', wu ? 'inline-block' : 'none');
+      this.darkskyLogo.css('display', ds ? 'flex' : 'none');
+      this.weatherbitLogo.css('display', wb ? 'flex' : 'none');
+      this.wundergroundLogo.css('display', wu ? 'flex' : 'none');
       this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
       this.settingsBtn.css('margin-right', ds || wu || wb ? 0 : 8);
 

@@ -1,6 +1,7 @@
 ## 2.9.3
 
-* Dependency updates.
+* Moved settings button into lower right corner.
+* Fix Reload button.
 
 ## 2.9.2
 

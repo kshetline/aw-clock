@@ -123,7 +123,7 @@ if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
   process.env.DISPLAY = ':0.0';
 }
 
-const launchChromium = chromium + ' http://localhost:8080/'; // ' --kiosk http://localhost:8080/' TODO: Restore after test
+const launchChromium = chromium + ' http://localhost:8080/'; // ' --kiosk http://localhost:8080/'; // TODO: Restore after test
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
