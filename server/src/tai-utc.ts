@@ -4,6 +4,7 @@ import { interpolate, irandom } from '@tubular/math';
 import { asLines, isString, last } from '@tubular/util';
 import PromiseFtp from 'promise-ftp';
 import { CurrentDelta } from './shared-types';
+import os from 'os';
 import { URL } from 'url';
 import { timeStamp, unref } from './awcs-util';
 
@@ -120,8 +121,10 @@ export class TaiUtc {
       gotBulletinA = true;
     }
     catch (err) {
-      console.error('%s -- Failed to read IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_URL);
-      console.error(err);
+      if (os.uptime() > 90) {
+        console.error('%s -- Failed to read IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_URL);
+        console.error(err);
+      }
     }
 
     const promises: Promise<string | Error>[] = [];
@@ -138,8 +141,10 @@ export class TaiUtc {
 
     docs.forEach((doc, index) => {
       if (!isString(doc)) {
-        console.error('%s -- Failed to leap seconds from %s', timeStamp(), this.urls[index]);
-        console.error(doc);
+        if (os.uptime() > 90) {
+          console.error('%s -- Failed to leap seconds from %s', timeStamp(), this.urls[index]);
+          console.error(doc);
+        }
 
         return;
       }

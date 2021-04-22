@@ -1,4 +1,5 @@
 import { ChildProcess } from 'child_process';
+import os from 'os';
 import { parseISODate } from '@tubular/time';
 import { abs, floor, max, round } from '@tubular/math';
 import { asLines, processMillis, toNumber } from '@tubular/util';
@@ -258,7 +259,8 @@ export class Gps extends TimePoller {
       if (data?.status === 'OK' && data.results?.length > 0)
         coords.city = data.results[0].formatted_address;
       else if (data?.errorMessage) {
-        console.error('%s -- Google location check: %s', timeStamp(), data.errorMessage);
+        if (os.uptime() > 90)
+          console.error('%s -- Google location check: %s', timeStamp(), data.errorMessage);
 
         if (data.status === 'REQUEST_DENIED')
           this.googleAccessDenied = true;
@@ -270,7 +272,9 @@ export class Gps extends TimePoller {
     }
     catch (err) {
       this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-      console.error('%s -- Google location check:', timeStamp(), err);
+
+      if (os.uptime() > 90)
+        console.error('%s -- Google location check:', timeStamp(), err);
     }
 
     try {
@@ -292,8 +296,10 @@ export class Gps extends TimePoller {
       }
     }
     catch (err) {
+      if (os.uptime() > 90)
+        console.error('%s -- Google timezone check:', timeStamp(), err);
+
       this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-      console.error('%s -- Google timezone check:', timeStamp(), err);
 
       if ((err.message ?? err).toString().includes(' exceeded your daily request quota '))
         this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;

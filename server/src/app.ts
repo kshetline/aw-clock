@@ -28,6 +28,7 @@ import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
+import os from 'os';
 import { asLines, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
@@ -61,7 +62,7 @@ try {
   }
 }
 catch (err) {
-  console.log('Failed check for environment file.');
+  console.error('Failed check for environment file.');
 }
 
 let wbProxyForecast: (req: Request) => Promise<ForecastData | Error>;
@@ -86,11 +87,14 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
 
 // Poll for software updates
 const UPDATE_POLL_INTERVAL = 10800000; // 3 hours
+const UPDATE_POLL_RETRY_TIME = 60_000; // 10 minutes
 let updatePollTimer: any;
 let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
 
 async function checkForUpdate() {
   updatePollTimer = undefined;
+
+  let delay = UPDATE_POLL_INTERVAL;
 
   try {
     const repoInfo = await requestJson('https://api.github.com/repos/kshetline/aw-clock/releases/latest', {
@@ -108,10 +112,13 @@ async function checkForUpdate() {
       throw new Error('Could not parse tag_name');
   }
   catch (e) {
-    console.error('%s: Update info request failed: %s', timeStamp(), e.message ?? e.toString());
+    delay = UPDATE_POLL_RETRY_TIME;
+
+    if (os.uptime() > 90)
+      console.error('%s: Update info request failed: %s', timeStamp(), e.message ?? e.toString());
   }
 
-  updatePollTimer = unref(setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL));
+  updatePollTimer = unref(setTimeout(checkForUpdate, delay));
 }
 
 if (!process.env.AWC_FAKE_UPDATE_VERSION)
