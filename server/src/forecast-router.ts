@@ -60,16 +60,19 @@ router.get('/', async (req: Request, res: Response) => {
     }
   }
 
-  let forecast = forecasts[
+  let usedIndex: number; // TODO: Remove after test
+  let forecast = forecasts[usedIndex =
     ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
   const darkSkyForecast = !(forecasts[darkSkyIndex] instanceof Error) && forecasts[darkSkyIndex] as ForecastData;
 
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)
-    forecast = forecasts[replaceIndex];
+    forecast = forecasts[usedIndex = replaceIndex];
+
+  console.info(timeStamp(), forecasts.length, usedIndex, forecasts.map(f => f instanceof Error ? 'X' : '*').join('')); // TODO: Remove after test
 
   if (forecastBad(forecast) && !process.env.AWC_WEATHERBIT_API_KEY) {
-    const url = `http://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
-      (req.query.id ? `id=${req.query.id}` : '');
+    const url = `https://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
+      (req.query.id ? `&id=${req.query.id}` : '');
 
     try {
       forecast = (await requestJson(url)) as ForecastData;

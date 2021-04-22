@@ -2,7 +2,7 @@ import { mod } from '@tubular/math';
 import { isNumber, processMillis } from '@tubular/util';
 import { createSocket, RemoteInfo } from 'dgram';
 import { NtpData } from './ntp-data';
-import { splitIpAndPort } from './awcs-util';
+import { splitIpAndPort, unref } from './awcs-util';
 
 export const DEFAULT_NTP_SERVER = 'pool.ntp.org';
 
@@ -85,7 +85,7 @@ export class Ntp {
       return;
     }
 
-    this.responseTimer = setTimeout(() => {
+    this.responseTimer = unref(setTimeout(() => {
       if (this.responseTimer) {
         this.responseTimer = undefined;
 
@@ -96,7 +96,7 @@ export class Ntp {
           errorCallback(new Error('NTP failed'));
         }
       }
-    }, MAX_RESPONSE_WAIT);
+    }, MAX_RESPONSE_WAIT));
   }
 
   getTime(pollTime = Date.now()): Promise<NtpData> {

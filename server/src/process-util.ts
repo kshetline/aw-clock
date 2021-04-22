@@ -1,6 +1,7 @@
 import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
 import * as readline from 'readline';
 import { asLines, isNumber } from '@tubular/util';
+import { unref } from './awcs-util';
 
 const isMacOS = (process.platform === 'darwin');
 const isWindows = (process.platform === 'win32');
@@ -103,7 +104,7 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
   let output = '';
 
   return new Promise<string>((resolve, reject) => {
-    const slowSpin = setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY);
+    const slowSpin = unref(setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY));
 
     proc.stderr.on('data', data => {
       (markTime || NO_OP)();
@@ -149,11 +150,11 @@ export async function monitorProcessLines(proc: ChildProcess, markTime: () => vo
 
 export function sleep(delay: number, markTime: () => void = undefined, stopOnKeypress = false): Promise<boolean> {
   return new Promise<boolean>(resolve => {
-    const slowSpin = setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY);
-    const timeout = setTimeout(() => {
+    const slowSpin = unref(setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY));
+    const timeout = unref(setTimeout(() => {
       clearInterval(slowSpin);
       resolve(false);
-    }, delay);
+    }, delay));
 
     if (stopOnKeypress) {
       readline.emitKeypressEvents(process.stdin);

@@ -8,7 +8,7 @@ import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData, GpsData, TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
-import { roughDistanceBetweenLocationsInKm, timeStamp } from './awcs-util';
+import { roughDistanceBetweenLocationsInKm, timeStamp, unref } from './awcs-util';
 import { getForecast } from './weatherbit-forecast';
 
 const BILLION = BigInt('1000000000');
@@ -207,10 +207,10 @@ export class Gps extends TimePoller {
     if (this.lastGpsInfo < 0)
       this.monitorGps();
 
-    this.clockCheckTimeout = setTimeout(() => {
+    this.clockCheckTimeout = unref(setTimeout(() => {
       this.clockCheckTimeout = undefined;
       this.checkSystemTime();
-    }, CLOCK_CHECK);
+    }, CLOCK_CHECK));
   }
 
   async checkLocation(): Promise<void> {

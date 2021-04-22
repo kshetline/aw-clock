@@ -20,6 +20,13 @@ export interface ClockReferencePoint {
   pt: number;
 }
 
+function unref(timer: any): any {
+  if (timer?.unref)
+    timer.unref();
+
+  return timer;
+}
+
 export abstract class TimePoller {
   private clockReferencePoints: ClockReferencePoint[];
   private clockSpeed: number;
@@ -75,7 +82,7 @@ export abstract class TimePoller {
     const proximity = (timeRequested + MIDNIGHT_POLLING_AVOIDANCE) % MILLIS_PER_DAY;
 
     if (proximity < MIDNIGHT_POLLING_AVOIDANCE * 2) {
-      this.pollTimer = setTimeout(() => this.pollCurrentTime(), MIDNIGHT_POLLING_AVOIDANCE * 2 - proximity + 500);
+      this.pollTimer = unref(setTimeout(() => this.pollCurrentTime(), MIDNIGHT_POLLING_AVOIDANCE * 2 - proximity + 500));
       return;
     }
 
@@ -93,7 +100,7 @@ export abstract class TimePoller {
 
       this.pollCount = 0;
       this.errorCount = 0;
-      this.pollTimer = setTimeout(() => this.pollCurrentTime(), DELAY_AFTER_ERROR);
+      this.pollTimer = unref(setTimeout(() => this.pollCurrentTime(), DELAY_AFTER_ERROR));
 
       return;
     }
@@ -183,7 +190,7 @@ export abstract class TimePoller {
     else
       repoll = RETRY_POLLING_DELAY;
 
-    this.pollTimer = setTimeout(() => this.pollCurrentTime(), repoll);
+    this.pollTimer = unref(setTimeout(() => this.pollCurrentTime(), repoll));
   }
 
   private clearPollTimer(): void {

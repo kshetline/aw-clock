@@ -28,7 +28,7 @@ import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
-import { asLines, isString, toBoolean } from '@tubular/util';
+import { asLines, isString, processMillis, toBoolean } from '@tubular/util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
@@ -36,7 +36,7 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp } from './awcs-util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
 
@@ -111,7 +111,7 @@ async function checkForUpdate() {
     console.error('%s: Update info request failed: %s', timeStamp(), e.message ?? e.toString());
   }
 
-  updatePollTimer = setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL);
+  updatePollTimer = unref(setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL));
 }
 
 if (!process.env.AWC_FAKE_UPDATE_VERSION)
@@ -208,7 +208,7 @@ function canReleasePortAndRestart(): boolean {
 
         console.warn('%s -- Killing process: %s', timeStamp(), $[1]);
         execSync(`kill ${signal}${$[1]}`);
-        setTimeout(createAndStartServer, 3000);
+        unref(setTimeout(createAndStartServer, 3000));
 
         return true;
       }
@@ -230,7 +230,7 @@ function shutdown(signal?: string) {
 
   console.log(`\n*** ${signal ? signal + ': ' : ''}closing server at ${timeStamp()} ***`);
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
-  setTimeout(() => process.exit(0), 5000);
+  unref(setTimeout(() => process.exit(0), 5000));
   httpServer.close(() => process.exit(0));
   cleanUp();
 
@@ -242,6 +242,17 @@ function shutdown(signal?: string) {
 
 function getApp() {
   const theApp = express();
+  let lastRequest = processMillis(); // TODO: Remove after test
+
+  theApp.use((req, res, next) => {  // TODO: Remove after test
+    lastRequest = processMillis();
+    next();
+  });
+
+  unref(setInterval(() => { // TODO: Remove after test
+    if (processMillis() > lastRequest + 600000)
+      console.info(timeStamp(), 'No requests for ' + ((processMillis() - lastRequest) / 60000) + ' minutes');
+  }, 300000));
 
   theApp.use(logger(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:http-version" :status :res[content-length] :response-time'));
   theApp.use(express.json());

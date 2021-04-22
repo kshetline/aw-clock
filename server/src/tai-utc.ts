@@ -5,7 +5,7 @@ import { asLines, isString, last } from '@tubular/util';
 import PromiseFtp from 'promise-ftp';
 import { CurrentDelta } from './shared-types';
 import { URL } from 'url';
-import { timeStamp } from './awcs-util';
+import { timeStamp, unref } from './awcs-util';
 
 export interface LeapSecond {
   ntp: number;
@@ -112,7 +112,7 @@ export class TaiUtc {
     await new Promise<void>(resolve => {
       // Randomly delay polling so that multiple TaiUtc instances don't all poll at the same time every day.
       const delay = (this.firstLeapSecondPoll ? 0 : irandom(MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
-      setTimeout(() => resolve(), delay);
+      unref(setTimeout(() => resolve(), delay));
     });
 
     try {

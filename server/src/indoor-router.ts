@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import request from 'request';
-import { average, jsonOrJsonp, noCache, stdDev } from './awcs-util';
+import { average, jsonOrJsonp, noCache, stdDev, unref } from './awcs-util';
 import { DhtSensorData } from './shared-types';
 import { convertPinToGpio } from './rpi-pin-conversions';
 
@@ -70,7 +70,7 @@ function readSensor() {
         humidities = [];
       }
 
-      setTimeout(readSensor, POLLING_INTERVAL);
+      unref(setTimeout(readSensor, POLLING_INTERVAL));
     });
   }
   catch (err) {
@@ -78,7 +78,7 @@ function readSensor() {
     // sensor never reports a value without restarting the server. One possible explanation is that the
     // first read attempt fails, throws an error, and without the code below would never be polled again.
     console.error('readSensor error: ' + err);
-    setTimeout(readSensor, POLLING_INTERVAL);
+    unref(setTimeout(readSensor, POLLING_INTERVAL));
   }
 }
 
