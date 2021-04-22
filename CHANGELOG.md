@@ -1,3 +1,7 @@
+## 2.9.3
+
+* Dependency updates.
+
 ## 2.9.2
 
 * Better identifies Raspberry Pi hardware.

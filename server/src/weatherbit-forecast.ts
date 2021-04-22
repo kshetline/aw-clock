@@ -168,7 +168,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
       // noinspection JSUnusedAssignment (actually, this is used... IF there's an error)
       hourlyForecast = (await requestJson(3600, url = baseUrl.replace('*', 'forecast/hourly') + '&hours=30', options)) as WeatherBitHourly;
       // noinspection JSUnusedAssignment
-      dailyForecast = (await requestJson(21600, url = baseUrl.replace('*', 'forecast/daily') + '&days=9', options)) as WeatherBitDaily;
+      dailyForecast = (await requestJson(7200, url = baseUrl.replace('*', 'forecast/daily') + '&days=9', options)) as WeatherBitDaily;
       // Alert text isn't sensitive to the `units` parameter. Text comes back using whatever format
       // and units the alerts were issued using by the local weather authorities.
       // noinspection JSUnusedAssignment

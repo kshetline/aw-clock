@@ -23,7 +23,7 @@ export function purgeCache(urlMatcher: string | RegExp): void {
 }
 
 export function requestJson(maxAgeInSeconds: number,
-    urlOrOptions: string | ExtendedRequestOptions, options?: ExtendedRequestOptions): Promise<any> {
+    urlOrOptions: string | URL, options?: ExtendedRequestOptions): Promise<any> {
   return requestContent(maxAgeInSeconds, true, undefined, urlOrOptions, options);
 }
 
@@ -33,7 +33,7 @@ export function requestText(maxAgeInSeconds: number,
 }
 
 function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: string,
-    urlOrOptions: string | ExtendedRequestOptions, options?: ExtendedRequestOptions): Promise<any> {
+    urlOrOptions: string | URL, options?: ExtendedRequestOptions): Promise<any> {
   const now = Date.now() / 1000;
   const key = (isString(urlOrOptions) ? urlOrOptions : format(urlOrOptions));
 
