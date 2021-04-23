@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import { processMillis } from '@tubular/util';
 import { jsonOrJsonp, noCache } from './awcs-util';
 import { TempHumidityItem, TempHumidityData } from './shared-types';
-import { requestJson } from './request-cache';
+import { purgeCache, requestJson } from './request-cache';
 
 export const router = Router();
 
@@ -71,10 +71,13 @@ router.get('/', async (req: Request, res: Response) => {
   let result: TempHumidityData;
 
   if (process.env.AWC_ALT_DEV_SERVER) {
+    const url = process.env.AWC_ALT_DEV_SERVER + '/wireless-th';
+
     try {
-      result = await requestJson(/\blocalhost\b/.test(process.env.AWC_ALT_DEV_SERVER) ? 30 : 600, process.env.AWC_ALT_DEV_SERVER + '/wireless-th');
+      result = await requestJson(/\blocalhost\b/.test(process.env.AWC_ALT_DEV_SERVER) ? 30 : 600, url);
     }
     catch (err) {
+      purgeCache(url);
       res.status(500).send('Error connecting to development server: ' + err);
     }
   }

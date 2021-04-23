@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import { average, jsonOrJsonp, noCache, stdDev, unref } from './awcs-util';
 import { DhtSensorData } from './shared-types';
 import { convertPinToGpio } from './rpi-pin-conversions';
-import { requestJson } from './request-cache';
+import { purgeCache, requestJson } from './request-cache';
 
 export const router = Router();
 
@@ -120,10 +120,13 @@ router.get('/', async (req: Request, res: Response) => {
       result = { temperature: lastTemp, humidity: lastHumidity };
   }
   else if (process.env.AWC_ALT_DEV_SERVER) {
+    const url = process.env.AWC_ALT_DEV_SERVER + '/indoor';
+
     try {
-      result = await requestJson(/\blocalhost\b/.test(process.env.AWC_ALT_DEV_SERVER) ? 30 : 600, process.env.AWC_ALT_DEV_SERVER + '/indoor');
+      result = await requestJson(/\blocalhost\b/.test(process.env.AWC_ALT_DEV_SERVER) ? 30 : 600, url);
     }
     catch (err) {
+      purgeCache(url);
       res.status(500).send('Error connecting to development server: ' + err);
     }
   }
