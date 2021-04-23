@@ -1,5 +1,5 @@
 import { requestText } from 'by-request';
-import { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate } from '@tubular/time';
+import ttime, { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate, Timezone } from '@tubular/time';
 import { interpolate, irandom } from '@tubular/math';
 import { asLines, isString, last } from '@tubular/util';
 import PromiseFtp from 'promise-ftp';
@@ -69,8 +69,12 @@ export class TaiUtc {
     const now = Math.floor(this.getUtcMillis() / 1000);
     const dut1 = this.getDeltaUtc1(now);
 
-    if (this.leapSeconds.length < 2)
-      return { delta: 0, dut1, pendingLeap: 0, pendingLeapDate: null };
+    if (this.leapSeconds.length < 2) {
+      const delta = Timezone.findDeltaTaiFromUtc(this.getUtcMillis())?.deltaTai ?? 0;
+      const upcomingLeap = Timezone.getUpcomingLeapSecond();
+
+      return { delta, dut1, pendingLeap: 0, pendingLeapDate: upcomingLeap && ttime(upcomingLeap, 'UTC').format(ttime.DATE) };
+    }
 
     const nextIndex = this.leapSeconds.findIndex((ls, index) => index > 0 && ls.utc > now);
 
@@ -121,10 +125,10 @@ export class TaiUtc {
       gotBulletinA = true;
     }
     catch (err) {
-      if (os.uptime() > 90) {
-        console.error('%s -- Failed to read IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_URL);
+      console.error('%s -- Failed to read IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_URL);
+
+      if (os.uptime() > 90)
         console.error(err);
-      }
     }
 
     const promises: Promise<string | Error>[] = [];
@@ -141,10 +145,10 @@ export class TaiUtc {
 
     docs.forEach((doc, index) => {
       if (!isString(doc)) {
-        if (os.uptime() > 90) {
-          console.error('%s -- Failed to leap seconds from %s', timeStamp(), this.urls[index]);
+        console.error('%s -- Failed to leap seconds from %s', timeStamp(), this.urls[index]);
+
+        if (os.uptime() > 90)
           console.error(doc);
-        }
 
         return;
       }
@@ -227,7 +231,7 @@ export class TaiUtc {
     const newDeltas: DeltaUt1Utc[] = [];
 
     lines.forEach(line => {
-      const $ = /[ \d]{6}\s+(\d{5,})[.\d]*\s+[IP](?:\s+[-.\d]+){4}\s+[IP](?:[ +]?)([-.\d]+)/i.exec(line);
+      const $ = /[ \d]{6}\s+(\d{5,})[.\d]*\s+[IP](?:\s+[-.\d]+){4}\s+[IP][ +]?([-.\d]+)/i.exec(line);
 
       if ($)
         newDeltas.push({ utc: getUtcFromMJD(Number($[1])), delta: Number($[2]) });
@@ -244,6 +248,8 @@ export class TaiUtc {
   }
 
   private static getFtpText(url: string, throwError = false): Promise<string | Error> {
+    console.log(timeStamp(), url);
+
     const parsed = new URL(url);
     const port = Number(parsed.port || 21);
     const options: PromiseFtp.Options = { host: parsed.hostname, port, connTimeout: FTP_TIMEOUT, pasvTimeout: FTP_TIMEOUT };

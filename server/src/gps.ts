@@ -251,6 +251,8 @@ export class Gps extends TimePoller {
   }
 
   private async googleLocationCheck(coords: GpsData, now: number): Promise<void> {
+    this.checkLocationRetry = Number.MAX_SAFE_INTEGER;
+
     try {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?key=${this.googleKey}` +
         `&result_type=locality|administrative_area_level_3&latlng=${coords.latitude},${coords.longitude}`;
@@ -264,18 +266,26 @@ export class Gps extends TimePoller {
 
         if (data.status === 'REQUEST_DENIED')
           this.googleAccessDenied = true;
-        else if (data.status === 'OVER_DAILY_LIMIT')
+        else if (data.status === 'OVER_DAILY_LIMIT' || data.errorMessage.includes(' exceeded your daily request quota '))
           this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
         else
           this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
       }
     }
     catch (err) {
-      this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
-
       if (os.uptime() > 90)
         console.error('%s -- Google location check:', timeStamp(), err);
+
+      this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+
+      this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
+
+      if ((err.message ?? err).toString().includes(' exceeded your daily request quota '))
+        this.checkLocationRetry = now + OVER_QUOTA_RETRY_DELAY;
     }
+
+    if (this.checkLocationRetry !== Number.MAX_SAFE_INTEGER)
+      return;
 
     try {
       const url = `https://maps.googleapis.com/maps/api/timezone/json?key=${this.googleKey}` +
