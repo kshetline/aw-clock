@@ -1,8 +1,8 @@
 import { Request, Response, Router } from 'express';
-import request from 'request';
 import { average, jsonOrJsonp, noCache, stdDev, unref } from './awcs-util';
 import { DhtSensorData } from './shared-types';
 import { convertPinToGpio } from './rpi-pin-conversions';
+import { requestJson } from './request-cache';
 
 export const router = Router();
 
@@ -106,7 +106,7 @@ if (indoorSensor)
 
 let warnIndoorNA = true;
 
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   noCache(res);
 
   let result: DhtSensorData;
@@ -120,16 +120,12 @@ router.get('/', (req: Request, res: Response) => {
       result = { temperature: lastTemp, humidity: lastHumidity };
   }
   else if (process.env.AWC_ALT_DEV_SERVER) {
-    req.pipe(request({
-      url: process.env.AWC_ALT_DEV_SERVER + '/indoor',
-      method: req.method
-    }))
-      .on('error', err => {
-        res.status(500).send('Error connecting to development server: ' + err);
-      })
-      .pipe(res);
-
-    return;
+    try {
+      result = await requestJson(/\blocalhost\b/.test(process.env.AWC_ALT_DEV_SERVER) ? 30 : 600, process.env.AWC_ALT_DEV_SERVER + '/indoor');
+    }
+    catch (err) {
+      res.status(500).send('Error connecting to development server: ' + err);
+    }
   }
   else {
     if (warnIndoorNA) {

@@ -27,12 +27,12 @@ export function purgeCache(urlMatcher: string | RegExp): void {
   });
 }
 
-export function requestJson(maxAgeInSeconds: number,
+export async function requestJson(maxAgeInSeconds: number,
     urlOrOptions: string | URL, options?: ExtendedRequestOptions): Promise<any> {
   return requestContent(maxAgeInSeconds, true, undefined, urlOrOptions, options);
 }
 
-export function requestText(maxAgeInSeconds: number,
+export async function requestText(maxAgeInSeconds: number,
     url: string, options: ExtendedRequestOptions, encoding?: string): Promise<string> {
   return requestContent(maxAgeInSeconds, false, encoding, url, options);
 }

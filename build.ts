@@ -123,7 +123,7 @@ if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
   process.env.DISPLAY = ':0.0';
 }
 
-const launchChromium = chromium + ' http://localhost:8080/'; // ' --kiosk http://localhost:8080/'; // TODO: Restore after test
+const launchChromium = chromium + ' --kiosk http://localhost:8080/';
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
@@ -914,7 +914,7 @@ async function doServiceDeployment(): Promise<void> {
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';
   const autostartLine2 = '@' + launchChromium.replace(/:8080\b/, ':' + settings.AWC_PORT);
-  const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}\/?/, ':!!!')
+  const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}\/?/, ':!!!').replace(' --kiosk', '(?: --kiosk)?')
     .replace(/[^- /:!@0-9a-z]/g, '.').replace(/\//g, '\\/').replace(':!!!', ':\\d+\\b') + '\\/?$');
   let lines: string[] = [];
 
