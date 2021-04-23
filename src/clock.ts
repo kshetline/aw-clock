@@ -334,7 +334,8 @@ export class Clock {
     let discontinuity = secs === 0 && this.hasBeginElement && !!date.getDiscontinuityDuringDay();
     const minuteOfLeapSecond = !!timeInfo.leapSecond && wallTimeUtc.min === 59 && timeInfo.time % MILLIS_PER_DAY >= MILLIS_PER_DAY - 60000 &&
             wallTimeUtc.d === getLastDateInMonthGregorian(wallTimeUtc.y, wallTimeUtc.m);
-    const leapSecondForMonth = (minuteOfLeapSecond && timeInfo.leapSecond) || this.checkPendingLeapSecondForMonth(wallTimeUtc);
+    const leapSecondForMonth = (minuteOfLeapSecond && timeInfo.leapSecond) ||
+      this.checkPendingLeapSecondForMonth(wallTimeUtc);
 
     if (this.lastLeapSecondCheckDay !== wallTimeUtc.d) {
       this.lastLeapSecondCheckDay = wallTimeUtc.d;
@@ -522,7 +523,12 @@ export class Clock {
       $.ajax({
         url: this.appService.getApiServer() + '/tai-utc',
         dataType: 'json',
-        success: (data: CurrentDelta) => this.upcomingLeapSecond = data,
+        success: (data: CurrentDelta) => {
+          this.upcomingLeapSecond = data;
+
+          if (data.delta === 0 || !data.dut1)
+            this.lastLeapSecondCheckDay = -1;
+        },
         error: () => setTimeout(() => {
           this.upcomingLeapSecond = undefined;
           this.lastLeapSecondCheckDay = -1;
