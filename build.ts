@@ -158,6 +158,8 @@ process.argv.forEach(arg => {
   }
 
   switch (arg) {
+    case '--':
+      break;
     case '--acu':
       doAcu = true;
       break;
@@ -241,21 +243,23 @@ process.argv.forEach(arg => {
     case '--tarp':
       break; // ignore - already handled
     default:
-      if (arg !== '--help' && arg !== '-h') {
-        helpMsg =
-          'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
-          '                       [--launch] [-p] [--pt] [--reboot] [--sd] [--skip-upgrade]\n' +
-          '                       [--tarp]\n\n' +
-          'The options --acu, --admin, and --dht can be followed by an extra dash (e.g.\n' +
-          '--acu-) to clear a previously enabled option.';
+    {
+      helpMsg =
+        'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
+        '                       [--launch] [--kiosk] [-p] [--pt] [--reboot] [--sd]\n' +
+        '                       [--skip-upgrade] [--tarp]\n\n' +
+        'The options --acu, --admin, --dht, and --kiosk can be followed by an extra\n' +
+        'dash (e.g. --acu-) to clear a previously enabled option.';
 
-        if (!viaBash)
-          helpMsg = helpMsg.replace('sudo ./build.sh', 'npm run build').replace(/\n {2}/g, '\n');
+      if (!viaBash)
+        helpMsg = helpMsg.replace('sudo ./build.sh', 'npm run build').replace(/\n {2}/g, '\n');
 
+      if (arg !== '--help' && arg !== '-h')
         console.error('Unrecognized option "' + chalk.redBright(arg) + '"');
-        console.log(helpMsg);
-        process.exit(1);
-      }
+
+      console.log(helpMsg);
+      process.exit(1);
+    }
   }
 });
 
@@ -1043,6 +1047,8 @@ async function doServiceDeployment(): Promise<void> {
 
     if (interactive)
       await promptForConfiguration();
+
+    process.stdin.setRawMode(false);
 
     totalSteps += noStop ? 0 : 1;
     totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;

@@ -14,7 +14,8 @@ const pendingRequests = new Map<string, Promise<any>>();
 const log = toBoolean(process.env.AWC_LOG_CACHE_ACTIVITY);
 
 function filterUrl(url: string): string {
-  return url.replace(/(?<=\?)key=\w+(?=&)/, 'key=...').replace(/(?<=\/forecast\/)[0-9A-F]+(?=\/)/i, '...');
+  return url.replace(/(?<=\?key=)\w+(?=&)/, '...').replace(/(?<=\/forecast\/)[0-9A-F]+(?=\/)/i, '...')
+    .replace(/(?<=&id=)\w+(?=[& ])/, '...');
 }
 
 export function purgeCache(urlMatcher: string | RegExp): void {
