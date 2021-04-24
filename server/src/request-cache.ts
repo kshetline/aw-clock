@@ -13,6 +13,10 @@ const cache = new Map<string, CachedJson>();
 const pendingRequests = new Map<string, Promise<any>>();
 const log = toBoolean(process.env.AWC_LOG_CACHE_ACTIVITY);
 
+function filterUrl(url: string): string {
+  return url.replace(/(?<=\?)key=\w+(?=&)/, 'key=...').replace(/(?<=\/forecast\/)[0-9A-F]+(?=\/)/i, '...');
+}
+
 export function purgeCache(urlMatcher: string | RegExp): void {
   Array.from(cache.keys()).forEach(key => {
     if (urlMatcher instanceof RegExp) {
@@ -20,14 +24,14 @@ export function purgeCache(urlMatcher: string | RegExp): void {
         cache.delete(key);
 
         if (log)
-          console.info(timeStamp(), 'cleared from cache:', key);
+          console.info(timeStamp(), 'cleared from cache:', filterUrl(key));
       }
     }
     else if (key.includes(urlMatcher)) {
       cache.delete(key);
 
       if (log)
-        console.info(timeStamp(), 'cleared from cache:', key);
+        console.info(timeStamp(), 'cleared from cache:', filterUrl(key));
     }
   });
 }
@@ -55,7 +59,7 @@ function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: stri
       cache.delete(key);
 
       if (log)
-        console.info(timeStamp(), 'aged out of cache:', key);
+        console.info(timeStamp(), 'aged out of cache:', filterUrl(key));
     }
   });
 
@@ -63,13 +67,13 @@ function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: stri
     return pendingRequests.get(key);
   else if (cache.has(key)) {
     if (log)
-      console.info(timeStamp(), 'from cache:', key);
+      console.info(timeStamp(), 'from cache:', filterUrl(key));
 
     return Promise.resolve(cache.get(key).content);
   }
 
   if (log)
-    console.info(timeStamp(), 'fresh request:', key);
+    console.info(timeStamp(), 'fresh request:', filterUrl(key));
 
   const promise = asJson ? byRequestJson(urlOrOptions, options) : byRequestText(urlOrOptions as string, options, encoding);
 

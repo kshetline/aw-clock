@@ -692,7 +692,7 @@ function finalActionValidate(s: string): boolean {
 }
 
 const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : '#');
-const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
+const finalOptions = '(l/r/n)'.replace(finalAction.toLowerCase(), finalAction);
 
 let questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
