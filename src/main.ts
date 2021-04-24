@@ -132,7 +132,6 @@ class AwClockApp implements AppService {
           this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
 
           const updateTestEphemeris = () => {
-            // TODO: Get parseISODateTime() from @tubular/time when updated.
             const time = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
 
             this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,

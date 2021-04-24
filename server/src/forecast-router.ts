@@ -18,6 +18,7 @@ router.get('/', async (req: Request, res: Response) => {
   const promises: Promise<ForecastData | Error>[] = [];
   let darkSkyIndex = 1;
   let weatherBitIndex = 1;
+  let sources = 'WB';
 
   noCache(res);
   res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));
@@ -27,13 +28,16 @@ router.get('/', async (req: Request, res: Response) => {
 
   if (process.env.AWC_WEATHERBIT_API_KEY) {
     promises.push(getWbForecast(req));
+    sources += ',WB';
     ++darkSkyIndex;
   }
   else
     weatherBitIndex = 0;
 
-  if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS)
+  if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS) {
+    sources += ',DS';
     promises.push(getDsForecast(req));
+  }
   else
     darkSkyIndex = 0;
 
@@ -63,7 +67,7 @@ router.get('/', async (req: Request, res: Response) => {
     }
   }
 
-  let usedIndex: number; // TODO: Remove after test
+  let usedIndex: number;
   let forecast = forecasts[usedIndex =
     ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
   const darkSkyForecast = !(forecasts[darkSkyIndex] instanceof Error) && forecasts[darkSkyIndex] as ForecastData;
@@ -71,7 +75,7 @@ router.get('/', async (req: Request, res: Response) => {
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)
     forecast = forecasts[usedIndex = replaceIndex];
 
-  console.info(timeStamp(), forecasts.length, usedIndex, forecasts.map(f => f instanceof Error ? 'X' : '*').join('')); // TODO: Remove after test
+  console.log(timeStamp(), sources, usedIndex, forecasts.map(f => f instanceof Error ? 'X' : f.unavailable ? '-' : '*').join(''));
 
   if (forecastBad(forecast) && !process.env.AWC_WEATHERBIT_API_KEY) {
     const url = `https://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +

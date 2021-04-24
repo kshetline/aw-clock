@@ -249,16 +249,16 @@ function shutdown(signal?: string) {
 
 function getApp() {
   const theApp = express();
-  let lastRequest = processMillis(); // TODO: Remove after test
+  let lastRequest = processMillis();
 
-  theApp.use((req, res, next) => {  // TODO: Remove after test
+  theApp.use((req, res, next) => {
     lastRequest = processMillis();
     next();
   });
 
-  unref(setInterval(() => { // TODO: Remove after test
+  unref(setInterval(() => {
     if (processMillis() > lastRequest + 600000)
-      console.info(timeStamp(), 'No requests for ' + ((processMillis() - lastRequest) / 60000) + ' minutes');
+      console.log(timeStamp(), 'No requests for ' + ((processMillis() - lastRequest) / 60000).toFixed(1) + ' minutes');
   }, 300000));
 
   theApp.use(logger(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:http-version" :status :res[content-length] :response-time'));
