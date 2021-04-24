@@ -743,7 +743,7 @@ if (NO_MORE_DARK_SKY) {
 }
 
 if (doDedicated) {
-  questions.splice(questions.length - 2, 0,
+  questions.splice(questions.length - 1, 0,
     { prompt: 'Launch browser in kiosk mode?', ask: true, yn: true, deflt: doKiosk ? 'Y' : 'N', validate: kioskValidate }
   );
 }
@@ -794,6 +794,10 @@ async function promptForConfiguration(): Promise<void> {
         else
           settings[q.name] = response;
       }
+    }
+    else if (!response && !q.deflt) {
+      --i;
+      console.log(chalk.redBright('Response required'));
     }
 
     if (q.after)

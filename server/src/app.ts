@@ -261,7 +261,7 @@ function getApp() {
       console.log(timeStamp(), 'No requests for ' + ((processMillis() - lastRequest) / 60000).toFixed(1) + ' minutes');
   }, 300000));
 
-  theApp.use(logger(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:http-version" :status :res[content-length] :response-time'));
+  theApp.use(logger('[:date[iso]] :remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] :response-time'));
   theApp.use(express.json());
   theApp.use(express.urlencoded({ extended: false }));
   theApp.use(cookieParser());

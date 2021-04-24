@@ -145,7 +145,7 @@ export class TaiUtc {
 
     docs.forEach((doc, index) => {
       if (!isString(doc)) {
-        console.error('%s -- Failed to leap seconds from %s', timeStamp(), this.urls[index]);
+        console.error('%s -- Failed to retrieve leap seconds from %s', timeStamp(), this.urls[index]);
 
         if (os.uptime() > 90)
           console.error(doc);
