@@ -691,7 +691,7 @@ function finalActionValidate(s: string): boolean {
   return false;
 }
 
-const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : '');
+const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : '#');
 const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
 
 let questions = [
@@ -795,7 +795,7 @@ async function promptForConfiguration(): Promise<void> {
           settings[q.name] = response;
       }
     }
-    else if (!response && !q.deflt) {
+    else if (!response && q.deflt === '#') {
       --i;
       console.log(chalk.redBright('Response required'));
     }
