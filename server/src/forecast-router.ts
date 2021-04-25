@@ -41,32 +41,7 @@ router.get('/', async (req: Request, res: Response) => {
   else
     darkSkyIndex = 0;
 
-  // None of these promises *should* throw any errors. Errors should be returned as values, rather
-  // than thrown. It seems, however, that errors are possibly thrown on occasion anyway, and this
-  // might result in a failure to obtain weather data. So I'm going to try catching errors if any,
-  // and if any are caught, giving up on having all forecast queries done simultaneously, instead
-  // processing queries one at a time.
-
-  let forecasts: (Error | ForecastData)[];
-
-  try {
-    forecasts = await Promise.all(promises);
-  }
-  catch (err) {
-    console.error('%s: Unexpected forecast error:', timeStamp(), err);
-    forecasts = [];
-
-    for (let i = 0; i < promises.length; ++i) {
-      try {
-        forecasts[i] = await promises[i];
-      }
-      catch (err2) {
-        forecasts[i] = err2;
-        console.error('%s: Unexpected forecast error:', timeStamp(), err2);
-      }
-    }
-  }
-
+  const forecasts = await Promise.all(promises);
   let usedIndex: number;
   let forecast = forecasts[usedIndex =
     ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
@@ -82,7 +57,7 @@ router.get('/', async (req: Request, res: Response) => {
       (req.query.id ? `&id=${req.query.id}` : '');
 
     try {
-      forecast = (await requestJson(url)) as ForecastData;
+      forecast = (await requestJson(url, { timeout: 60000 })) as ForecastData;
     }
     catch (e) {
       forecast = e;

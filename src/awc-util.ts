@@ -8,6 +8,13 @@ import {
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
+export interface JsonOptions {
+  jsonp?: boolean;
+  params?: Record<string, string>;
+  timeout?: number;
+  xhr?: JQueryXHR;
+}
+
 const keydownListeners: KeyListener[] = [];
 
 export function pushKeydownListener(listener: KeyListener): void {
@@ -48,20 +55,21 @@ $.fn.extend({
   }
 });
 
-export function getJson<T>(url: string, jsonp = false, params?: Record<string, string>, xhr?: JQueryXHR[]): Promise<T> {
+export function getJson<T>(url: string, options?: JsonOptions): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     // `$.ajax()` returns a Promise, but if I try to use that Promise directly, I can't find a way to get
     //   around "Uncaught (in promise)" errors, when what I want is a Promise resolved with an Error value.
     // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url,
-      data: params || undefined,
-      dataType: jsonp ? 'jsonp' : 'json',
+      data: options?.params || undefined,
+      dataType: options?.jsonp ? 'jsonp' : 'json',
+      timeout: options?.timeout != null ? options.timeout : 60000,
       success: (data: T, _textStatus: string, jqXHR: JQueryXHR) => {
         resolve(data);
 
-        if (xhr)
-          xhr.push(jqXHR);
+        if (options)
+          options.xhr = jqXHR;
       },
       error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
     });

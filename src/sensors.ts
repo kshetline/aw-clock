@@ -61,8 +61,8 @@ export class Sensors {
 
     Promise.all(promises)
       .then(data => {
-        const wired: DhtSensorData = data[0];
-        const wireless: TempHumidityData = data[1];
+        const wired = data[0] as DhtSensorData;
+        const wireless = data[1] as TempHumidityData;
         const lowBatteries: string[] = [];
         let thd: TempHumidityItem;
         const cth: CurrentTemperatureHumidity = {

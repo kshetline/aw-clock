@@ -10,8 +10,8 @@ import {
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getJson, htmlEncode, localDateString,
-  setSvgHref
+  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
+  getJson, htmlEncode, JsonOptions, localDateString, setSvgHref
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
@@ -655,9 +655,9 @@ export class Forecast {
     if (userId)
       url += '&id=' + encodeURI(userId);
 
-    const xhr: JQueryXHR[] = [];
-    const data = await getJson<ForecastData>(url, false, null, xhr);
-    const cacheControl = xhr[0].getResponseHeader('cache-control');
+    const options: JsonOptions = {};
+    const data = await getJson<ForecastData>(url, options);
+    const cacheControl = options.xhr.getResponseHeader('cache-control');
 
     if (cacheControl && isObject(data)) {
       const match = /max-age=(\d+)/.exec(cacheControl);
