@@ -18,10 +18,10 @@
   },
   "private": true,
   "dependencies": {
-    "@tubular/astronomy": "^2.2.2",
+    "@tubular/astronomy": "^2.2.3",
     "@tubular/math": "^2.2.1",
-    "@tubular/time": "^2.6.1",
-    "@tubular/util": "^3.6.0",
+    "@tubular/time": "^2.6.2",
+    "@tubular/util": "^3.6.1",
     "jquery": "^3.5.1",
     "js-cookie": "^2.2.1",
     "rxjs": "^6.6.7",
