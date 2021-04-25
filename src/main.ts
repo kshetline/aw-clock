@@ -384,11 +384,14 @@ class AwClockApp implements AppService {
     if (this.isTimeAccelerated())
       interval *= debugTimeRate;
 
-    const runningLate = (this.lastForecast + interval * 60000 <= now);
+    const runningLate = (this.lastForecast + (interval + 2) * 60000 <= now);
     const minuteOffset = (this.frequent || !this.forecast.hasGoodData ? 0 : this.pollingMinute);
     const millisOffset = (this.frequent || forceRefresh || runningLate ? 0 : this.pollingMillis);
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {
+      if (runningLate)
+        this.lastForecast = now; // Pretend we've got something now so runningLate isn't true again until the next delay or failure.
+
       const doUpdate = () => {
         getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
           this.adminAllowed = data?.allowAdmin;

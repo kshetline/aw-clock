@@ -455,7 +455,7 @@ export class Forecast {
     }
   }
 
-  public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
+  update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
     this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
       this._hasGoodData = true;
       this.updateHourlyCache(forecastData);
@@ -498,7 +498,7 @@ export class Forecast {
     });
   }
 
-  public refreshFromCache(): void {
+  refreshFromCache(): void {
     if (this.lastForecastData)
       this.displayForecast(this.lastForecastData);
   }
@@ -506,7 +506,7 @@ export class Forecast {
   // Note: This is just for a temporary, quick update. The full forecast needs to be requested to get
   // accurate temperature values, especially when only integer temperature values have been supplied,
   // which don't allow for very good Celsius/Fahrenheit conversions.
-  public swapUnits(toMetric: boolean): void {
+  swapUnits(toMetric: boolean): void {
     if (this.lastForecastData && this.lastForecastData.isMetric !== toMetric) {
       const forecast = this.lastForecastData;
       const convertT = (t: number) => convertTemp(t, toMetric);
@@ -546,7 +546,7 @@ export class Forecast {
     }
   }
 
-  public clearCache(): void {
+  clearCache(): void {
     this.lastForecastData = undefined;
     this.cachedHourly = [];
   }
@@ -606,7 +606,7 @@ export class Forecast {
     }
   }
 
-  public showUnknown(error?: string): void {
+  showUnknown(error?: string): void {
     this._hasGoodData = false;
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
     this.appService.updateCurrentTemp(NO_DATA);
@@ -641,11 +641,11 @@ export class Forecast {
     this.updateMarqueeAnimation(error || '\u00A0');
   }
 
-  public getTimezone(): Timezone {
+  getTimezone(): Timezone {
     return this.timezone;
   }
 
-  public getFrequent(): boolean {
+  getFrequent(): boolean {
     return !!this.lastForecastData?.frequent;
   }
 
@@ -916,7 +916,7 @@ export class Forecast {
       this.pressure.css('display', 'none');
   }
 
-  public refreshAlerts(forecastData = this.lastForecastData) {
+  refreshAlerts(forecastData = this.lastForecastData) {
     let newText;
     let maxSeverity = 0;
     const alerts: string[] = [];
