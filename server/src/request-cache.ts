@@ -114,9 +114,12 @@ function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: stri
   promise.then(content => {
     pendingRequests.delete(key);
     cache.get(key).content = content;
-  }).catch(() => {
+  }).catch(err => {
     pendingRequests.delete(key);
     cache.delete(key);
+
+    if (log)
+      console.error(timeStamp(), 'request error: ' + err, filterUrl(key));
   });
 
   return promise;
