@@ -3,7 +3,7 @@
 * Moved settings button into lower right corner.
 * Improved retrieval and display of ΔTAI/ΔUT1.
 * Fix browser Reload button.
-* Provide option to disable kiosk mode for auto-start browser.
+* Provided option to disable kiosk mode for auto-start browser.
 * Server stability improvements.
 * Reduce calls to Google geocoding API.
 

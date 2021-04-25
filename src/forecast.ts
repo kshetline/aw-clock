@@ -10,7 +10,7 @@ import {
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString,
+  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getJson, htmlEncode, localDateString,
   setSvgHref
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
@@ -649,41 +649,31 @@ export class Forecast {
     return !!this.lastForecastData?.frequent;
   }
 
-  private getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {
+  private async getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {
     let url = `${this.weatherServer}/forecast/?lat=${latitude}&lon=${longitude}&du=${isMetric ? 'c' : 'f'}`;
 
     if (userId)
       url += '&id=' + encodeURI(userId);
 
-    return new Promise((resolve, reject) => {
-      // noinspection JSIgnoredPromiseFromCall
-      $.ajax({
-        url,
-        dataType: 'json',
-        success: (data: ForecastData, textStatus: string, jqXHR: JQueryXHR) => {
-          const cacheControl = jqXHR.getResponseHeader('cache-control');
+    const xhr: JQueryXHR[] = [];
+    const data = await getJson<ForecastData>(url, false, null, xhr);
+    const cacheControl = xhr[0].getResponseHeader('cache-control');
 
-          if (cacheControl && isObject(data)) {
-            const match = /max-age=(\d+)/.exec(cacheControl);
+    if (cacheControl && isObject(data)) {
+      const match = /max-age=(\d+)/.exec(cacheControl);
 
-            if (match && Number(match[1]) <= FREQUENT_THRESHOLD)
-              data.frequent = true;
-          }
+      if (match && Number(match[1]) <= FREQUENT_THRESHOLD)
+        data.frequent = true;
+    }
 
-          if (!data || !isObject(data) || data.unavailable)
-            reject(new Error('Forecast unavailable'));
-          else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
-            reject(new Error('Incomplete data'));
-          else {
-            data.isMetric = isMetric;
-            resolve(data);
-          }
-        },
-        error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-          reject(errorThrown);
-        }
-      });
-    });
+    if (!data || !isObject(data) || data.unavailable)
+      throw new Error('Forecast unavailable');
+    else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
+      throw new Error('Incomplete data');
+
+    data.isMetric = isMetric;
+
+    return data;
   }
 
   getIconSource(icon: string) {

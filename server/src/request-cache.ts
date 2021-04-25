@@ -13,7 +13,8 @@ const cache = new Map<string, CachedJson>();
 const pendingRequests = new Map<string, Promise<any>>();
 const log = toBoolean(process.env.AWC_LOG_CACHE_ACTIVITY);
 
-const REQUEST_TIMEOUT = 90; // seconds
+const REQUEST_TIMEOUT = 60000; // 1 minute
+const REQUEST_TIMEOUT_CHECK = 90; // seconds
 
 function filterUrl(url: string): string {
   return url.replace(/(?<=\?key=)\w+(?=&)/, '...').replace(/(?<=\/forecast\/)[0-9A-F]+(?=\/)/i, '...')
@@ -52,15 +53,21 @@ export async function requestText(maxAgeInSeconds: number,
 }
 
 function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: string,
-    urlOrOptions: string | URL, options?: ExtendedRequestOptions): Promise<any> {
+    url: string | URL, options?: ExtendedRequestOptions): Promise<any> {
   const now = Date.now() / 1000;
-  const key = (isString(urlOrOptions) ? urlOrOptions : format(urlOrOptions));
+  const key = (isString(url) ? url : format(url));
+
+  if (!options)
+    options = {};
+
+  if (options.timeout == null)
+    options.timeout = REQUEST_TIMEOUT;
 
   // Purge outdated cache items
   Array.from(cache.keys()).forEach(key => {
     const item = cache.get(key);
 
-    if (pendingRequests.has(key) && item.time + REQUEST_TIMEOUT < now) {
+    if (pendingRequests.has(key) && item.time + REQUEST_TIMEOUT_CHECK < now) {
       cache.delete(key);
       pendingRequests.delete(key);
 
@@ -92,11 +99,11 @@ function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: stri
   if (log)
     console.info(timeStamp(), 'fresh request:', filterUrl(key));
 
-  const requestPromise = asJson ? byRequestJson(urlOrOptions, options) : byRequestText(urlOrOptions as string, options, encoding);
+  const requestPromise = asJson ? byRequestJson(url, options) : byRequestText(url as string, options, encoding);
   const promise = new Promise<any>((resolve, reject) => {
     const timer = unref(setTimeout(() => {
-      reject(new Error('request timed out'));
-    }, REQUEST_TIMEOUT * 1000));
+      reject(new Error('request timed out for ' + filterUrl(key)));
+    }, REQUEST_TIMEOUT_CHECK * 1000));
 
     requestPromise.then(content => resolve(content)).catch(err => reject(err)).finally(() => clearTimeout(timer));
   });

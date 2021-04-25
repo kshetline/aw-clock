@@ -75,7 +75,7 @@ router.get('/', async (req: Request, res: Response) => {
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)
     forecast = forecasts[usedIndex = replaceIndex];
 
-  console.log(timeStamp(), sources, usedIndex, forecasts.map(f => f instanceof Error ? 'X' : f.unavailable ? '-' : '*').join(''));
+  console.log(timeStamp(), sources, usedIndex, forecasts.map(f => forecastResultCode(f)).join(''));
 
   if (forecastBad(forecast) && !process.env.AWC_WEATHERBIT_API_KEY) {
     const url = `https://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
@@ -101,3 +101,16 @@ router.get('/', async (req: Request, res: Response) => {
     jsonOrJsonp(req, res, forecast);
   }
 });
+
+function forecastResultCode(forecast: Error | ForecastData): string {
+  if (forecast instanceof Error) {
+    const msg = forecast.message ?? forecast.toString();
+
+    if (/\btimeout\b'/i.test(msg))
+      return 'T';
+    else
+      return 'X';
+  }
+
+  return forecast.unavailable ? '-' : '*';
+}

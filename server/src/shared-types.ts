@@ -154,3 +154,15 @@ export interface TimeInfo {
   text: string;
   fromGps?: boolean;
 }
+
+export interface AwcDefaults {
+  indoorOption: string;
+  outdoorOption: string;
+  ip: string;
+  allowAdmin: boolean;
+  latestVersion: string;
+  updateAvailable: boolean;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+}

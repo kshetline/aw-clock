@@ -7,7 +7,7 @@ import { abs, cos_deg, floor, interpolate, irandom, max, min, mod2, sin_deg } fr
 import { getCssValue, isIE, isRaspbian, padLeft } from '@tubular/util';
 import { TimeFormat } from './shared-types';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
-import { setSignalLevel } from './awc-util';
+import { getJson, setSignalLevel } from './awc-util';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -495,7 +495,7 @@ export class Clock {
       }
 
       if (mins !== this.lastMinute || this.lastTick + 60_000 <= now) {
-        this.checkGps();
+        this.checkGps().finally();
         this.appService.updateTime(hour, mins, this.lastMinute < 0);
         this.lastMinute = mins;
         this.lastTick = now;
@@ -516,57 +516,53 @@ export class Clock {
   }
 
   private getLeapSecondInfo(): void {
-    setTimeout(() => {
+    setTimeout(async () => {
       this.firstLeapSecondPoll = false;
 
-      // noinspection JSIgnoredPromiseFromCall
-      $.ajax({
-        url: this.appService.getApiServer() + '/tai-utc',
-        dataType: 'json',
-        success: (data: CurrentDelta) => {
-          this.upcomingLeapSecond = data;
+      try {
+        const data = await getJson<CurrentDelta>(this.appService.getApiServer() + '/tai-utc');
 
-          if (data.delta === 0 || !data.dut1)
-            this.lastLeapSecondCheckDay = -1;
-        },
-        error: () => setTimeout(() => {
+        this.upcomingLeapSecond = data;
+
+        if (data.delta === 0 || !data.dut1)
+          this.lastLeapSecondCheckDay = -1;
+      }
+      catch {
+        setTimeout(() => {
           this.upcomingLeapSecond = undefined;
           this.lastLeapSecondCheckDay = -1;
-        }, LEAP_SECOND_RETRY_DELAY)
-      });
+        }, LEAP_SECOND_RETRY_DELAY);
+      }
       // Randomly delay polling so that multiple clock instances don't all poll at the same time every day.
     }, this.firstLeapSecondPoll ? 0 : irandom(MAX_RANDOM_LEAP_SECOND_POLL_DELAY));
   }
 
-  private checkGps(): void {
+  private async checkGps(): Promise<void> {
     if (this.checkingGps)
       return;
 
     this.checkingGps = true;
 
-    // noinspection JSIgnoredPromiseFromCall
-    $.ajax({
-      url: this.appService.getApiServer() + '/gps',
-      dataType: 'json',
-      success: (data: GpsData) => {
-        this.checkingGps = false;
+    try {
+      const data = await getJson<GpsData>(this.appService.getApiServer() + '/gps');
 
-        if (data.error === 'n/a')
-          this.gpsAvailable = false;
-        else {
-          this.gpsAvailable = true;
+      if (data.error === 'n/a')
+        this.gpsAvailable = false;
+      else {
+        this.gpsAvailable = true;
 
-          if (this.gpsActive !== !!data.pps) {
-            this.lastMinute = -1; // trigger quick update
-            this.gpsActive = !!data.pps;
-            this.appService.resetGpsState();
-          }
-
-          setSignalLevel($(this.gpsMeter), data.signalQuality > 0 ? data.signalQuality : -1);
-          this.gpsIcon.style.opacity = (data.pps && data.signalQuality > 0 ? '1' : '0.33');
+        if (this.gpsActive !== !!data.pps) {
+          this.lastMinute = -1; // trigger quick update
+          this.gpsActive = !!data.pps;
+          this.appService.resetGpsState();
         }
-      },
-      error: () => this.checkingGps = false
-    });
+
+        setSignalLevel($(this.gpsMeter), data.signalQuality > 0 ? data.signalQuality : -1);
+        this.gpsIcon.style.opacity = (data.pps && data.signalQuality > 0 ? '1' : '0.33');
+      }
+    }
+    finally {
+      this.checkingGps = false;
+    }
   }
 }

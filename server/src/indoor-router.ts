@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { average, jsonOrJsonp, noCache, stdDev, unref } from './awcs-util';
+import { average, jsonOrJsonp, noCache, stdDev, timeStamp, unref } from './awcs-util';
 import { DhtSensorData } from './shared-types';
 import { convertPinToGpio } from './rpi-pin-conversions';
 import { purgeCache, requestJson } from './request-cache';
@@ -113,7 +113,7 @@ router.get('/', async (req: Request, res: Response) => {
 
   if (indoorSensor) {
     if (consecutiveSensorErrors >= MAX_ERRORS || lastTemp === undefined || lastHumidity === undefined) {
-      console.error('Failed to read indoor temp/humidity sensor.');
+      console.error(timeStamp(), 'Failed to read indoor temp/humidity sensor.');
       result = { temperature: 0, humidity: -1, error: 'Sensor error' };
     }
     else

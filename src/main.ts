@@ -30,7 +30,7 @@ import { isBoolean, isEffectivelyFullScreen, isFirefox, isObject, setFullScreen 
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
-import { TimeInfo } from '../server/src/shared-types';
+import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
 import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
@@ -51,6 +51,10 @@ function parseTime(s: string): number {
 
 $(() => {
   new AwClockApp().start();
+});
+
+$.ajaxSetup({
+  timeout: 60000
 });
 
 class AwClockApp implements AppService {
@@ -325,8 +329,8 @@ class AwClockApp implements AppService {
         this.settingsChecked = true;
       else {
         const promises = [
-          getJson(`${apiServer}/defaults`),
-          getJson('http://ip-api.com/json/?callback=?')
+          getJson<AwcDefaults>(`${apiServer}/defaults`),
+          getJson<any>('http://ip-api.com/json/?callback=?')
         ];
 
         Promise.all(promises)
@@ -386,7 +390,7 @@ class AwClockApp implements AppService {
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {
       const doUpdate = () => {
-        getJson(`${apiServer}/defaults`).then(data => {
+        getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
           this.adminAllowed = data?.allowAdmin;
           const updateAvailable = (this.adminAllowed && data?.updateAvailable ? 'block' : 'none');
           this.updateAvailable.css('display', updateAvailable);
