@@ -18,7 +18,7 @@ router.get('/', async (req: Request, res: Response) => {
   const promises: Promise<ForecastData | Error>[] = [];
   let darkSkyIndex = 1;
   let weatherBitIndex = 1;
-  let sources = 'WB';
+  let sources = 'WU';
 
   noCache(res);
   res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));
