@@ -18,8 +18,8 @@ import { AppService } from './app.service';
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { Clock, TimeFormat } from './clock';
-import { CurrentTemperatureHumidity, CurrentTempManager } from './current-temp-manager';
+import { Clock } from './clock';
+import { CurrentTempManager } from './current-temp-manager';
 import { Ephemeris } from './ephemeris';
 import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
@@ -30,9 +30,10 @@ import { isBoolean, isEffectivelyFullScreen, isFirefox, isObject, setFullScreen 
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
-import { TimeInfo } from '../server/src/shared-types';
+import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
+import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
 
 pollForTimezoneUpdates(zonePollerBrowser);
 
@@ -50,6 +51,10 @@ function parseTime(s: string): number {
 
 $(() => {
   new AwClockApp().start();
+});
+
+$.ajaxSetup({
+  timeout: 60000
 });
 
 class AwClockApp implements AppService {
@@ -131,7 +136,6 @@ class AwClockApp implements AppService {
           this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
 
           const updateTestEphemeris = () => {
-            // TODO: Get parseISODateTime() from @tubular/time when updated.
             const time = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
 
             this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
@@ -171,11 +175,11 @@ class AwClockApp implements AppService {
         const fromRightEdge = window.screen.width - evt.targetTouches[0].pageX;
         const logoWidth = this.offsetWidth;
 
-        if (fromRightEdge > logoWidth * 2 / 3) {
+        if (fromRightEdge < logoWidth / 3) {
           evt.preventDefault();
           settingsButton.trigger('click');
         }
-        else if (fromRightEdge > logoWidth / 3)
+        else if (fromRightEdge < logoWidth / 2)
           evt.preventDefault();
         // ...else let the touch be a click on the weather logo
       }
@@ -325,8 +329,8 @@ class AwClockApp implements AppService {
         this.settingsChecked = true;
       else {
         const promises = [
-          getJson(`${apiServer}/defaults`),
-          getJson('http://ip-api.com/json/?callback=?')
+          getJson<AwcDefaults>(`${apiServer}/defaults`),
+          getJson<any>('http://ip-api.com/json/?callback=?')
         ];
 
         Promise.all(promises)
@@ -380,13 +384,16 @@ class AwClockApp implements AppService {
     if (this.isTimeAccelerated())
       interval *= debugTimeRate;
 
-    const runningLate = (this.lastForecast + interval * 60000 <= now);
+    const runningLate = (this.lastForecast + (interval + 2) * 60000 <= now);
     const minuteOffset = (this.frequent || !this.forecast.hasGoodData ? 0 : this.pollingMinute);
     const millisOffset = (this.frequent || forceRefresh || runningLate ? 0 : this.pollingMillis);
 
     if (forceRefresh || minute % interval === minuteOffset || runningLate) {
+      if (runningLate)
+        this.lastForecast = now; // Pretend we've got something now so runningLate isn't true again until the next delay or failure.
+
       const doUpdate = () => {
-        getJson(`${apiServer}/defaults`).then(data => {
+        getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
           this.adminAllowed = data?.allowAdmin;
           const updateAvailable = (this.adminAllowed && data?.updateAvailable ? 'block' : 'none');
           this.updateAvailable.css('display', updateAvailable);

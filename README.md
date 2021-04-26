@@ -109,11 +109,11 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 Wind speed is displayed using *wind barbs*. When using imperial units, the wind barbs represent wind speed in knots, rounded to the nearest multiple of 5 knots, up to a maximum of 100 knots. In metric mode the wind barbs represent wind speed in meters per second, in increments of 2.5 m/s (in the diagram above, divide the captions by 2 for m/s).
 
-| &nbsp; | Imperial | Metric |
-|--------|----------|--------|
-| Half barb | 5 knots | 2.5 m/s |
-| Full barb | 10 knots | 5 m/s |
-| Pennant | 50 knots | 25 m/s |
+| &nbsp;    | Imperial | Metric  |
+| --------- | -------- | ------- |
+| Half barb | 5 knots  | 2.5 m/s |
+| Full barb | 10 knots | 5 m/s   |
+| Pennant   | 50 knots | 25 m/s  |
 
 The barbed ends of the wind barbs point in the direction from which the wind is blowing, with north being upward. Wind gust speed is represented by a red wind barb drawn underneath the non-gust wind barb, such that only the excess gust speed is seen, peeking out from behind.
 
@@ -143,6 +143,7 @@ I’m reasonably happy with the results using this stand, but if I did it over a
 * Make the stand about 0.75" (19 cm) shorter, all of that taken from below the stand-offs for mounting the Raspberry Pi.
 * Move the wire pass-through hole for the temperature/humidity sensor forward, so that it was roughly below the hole for the GPS antenna connector — I hadn’t left as much room for the connectors at the ends of the jumpers as I would have liked.
 * Move the 433 MHz receiver clip outward, away from the surface of the side panel, to allow more room for the hex nut used to secure the temperature/humidity sensor.
+* Add an opening in the side panel for easier access to the SD card slot.
 
 <br>
 
@@ -234,6 +235,7 @@ I couldn’t find a right-angle USB-C cable for hooking up the touchscreen, but 
 * 433 MHz receiver module
 * [¼-wave 433 MHz antenna](https://www.digikey.com/en/products/detail/linx-technologies-inc/ANT-433-PW-RA/340122)
 * Miscellaneous jumper wires, cables, machine screws (some specifics listed above), etc.
+* Suggested: SD extension cable for easier access to SD card.
 
 <br>
 
@@ -250,23 +252,25 @@ To build and run this project you can use the following commands:
 
 To build the server along with the web client, use `npm run build`, possibly followed by `‑‑` and other options listed below:
 
-| &nbsp; | &nbsp; |
-| ------------------------------ | -------------------------------------------------------------- |
-| `‑‑acu` |     Install support for wireless temperature/humidity sensors using a 433 MHz receiver module. |
-| `‑‑acu‑` |     Clears saved `‑‑acu` setting when not using interactive mode. |
-| `‑‑admin` |     Enables the user actions “Update”, “Shut down”, “Reboot”, and “Quit” in the Settings dialog. |
-| `‑‑admin-` |     Clears the `--admin` setting. |
-| `‑‑ddev` |     This stands for “dedicated device”. This is for setting up a Raspberry Pi to primarily serve as an Astronomy/Weather Clock, automatically booting as a clock in full-screen mode. This implies the `‑‑sd` option. |
-| `‑‑dht` |     Install support for a wired DHT22/AM2302 temperature/humidity sensor. |
-| `‑‑dht‑` |     Clears saved `‑‑dht` setting when not using interactive mode. |
-| `‑‑help` |     Display brief help message. |
-| `‑i` |     Interactive mode. This prompts you to enter various configuration options, and implies the `‑‑ddev` option.
-| `‑‑launch` |     When installation is finished, launch the software. |
-| `‑‑pt` |     This stands for “plain text”. It defeats console colors and animation. |
-| `‑‑reboot` |     When installation is finished, reboot your system. |
-| `‑‑sd` |     This stands for “standard deployment”. It causes the generated code to be moved to the `~/weather` directory, first deleting whatever might have already been there first. |
-| `‑‑skip‑upgrade` |     This disables the `apt-get` update and upgrade normally performed as a standard part of the dedicated device set-up |
-| `‑‑tarp` |     This stands for “treat as Raspberry Pi”. This option can be used on a Linux Debian system, using the LXDE desktop, to simulate most Raspberry Pi functionality. |
+| &nbsp;           | &nbsp;                                                                                                                                                                                                            |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `‑‑acu`          | Install support for wireless temperature/humidity sensors using a 433 MHz receiver module.                                                                                                                        |
+| `‑‑acu‑`         | Clears saved `‑‑acu` setting when not using interactive mode.                                                                                                                                                     |
+| `‑‑admin`        | Enables the user actions “Update”, “Shut down”, “Reboot”, and “Quit” in the Settings dialog.                                                                                                                      |
+| `‑‑admin-`       | Clears the `--admin` setting.                                                                                                                                                                                     |
+| `‑‑ddev`         | This stands for “dedicated device”. This is for setting up a Raspberry Pi to primarily serve as an Astronomy/Weather Clock, automatically booting as a clock in full-screen mode. This implies the `‑‑sd` option. |
+| `‑‑dht`          | Install support for a wired DHT22/AM2302 temperature/humidity sensor.                                                                                                                                             |
+| `‑‑dht‑`         | Clears saved `‑‑dht` setting when not using interactive mode.                                                                                                                                                     |
+| `‑‑help`         | Display brief help message.                                                                                                                                                                                       |
+| `‑i`             | Interactive mode. This prompts you to enter various configuration options, and implies the `‑‑ddev` option.                                                                                                       |
+| `‑‑launch`       | When installation is finished, launch the software.                                                                                                                                                               |
+| `‑‑kiosk`        | Start web browser in kiosk mode (this is the default).                                                                                                                                                            |
+| `‑‑kiosk-`       | Do not start web  browser in kiosk mode.                                                                                                                                                                          |
+| `‑‑pt`           | This stands for “plain text”. It defeats console colors and animation.                                                                                                                                            |
+| `‑‑reboot`       | When installation is finished, reboot your system.                                                                                                                                                                |
+| `‑‑sd`           | This stands for “standard deployment”. It causes the generated code to be moved to the `~/weather` directory, first deleting whatever might have already been there first.                                        |
+| `‑‑skip‑upgrade` | This disables the `apt-get` update and upgrade normally performed as a standard part of the dedicated device set-up                                                                                               |
+| `‑‑tarp`         | This stands for “treat as Raspberry Pi”. This option can be used on a Linux Debian system, using the LXDE desktop, to simulate most Raspberry Pi functionality.                                                   |
 
 ### Server configuration
 
@@ -277,6 +281,8 @@ The following environment variables affect how the server part of this software 
 * `AWC_DARK_SKY_API_KEY`: If you want to use Dark Sky either as a primary or back-up weather data service, this must be set to a valid Dark Sky API key. (See <https://darksky.net/> for further details.). *Please note that new Dark Sky API keys are no longer available, and the API service will end at the end of 2021.*
 * `AWC_GIT_REPO_PATH`: The path to your aw-clock Git repository.
 * `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or in addition, you can set up `AWC_WEATHERBIT_API_KEY` for both geocoding and weather data.
+* `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not.
+* `AWC_LOG_CACHE_ACTIVITY`: As a debugging/development aid, set to `true` to enable additional logging of the server’s web cache behavior.
 * `AWC_NTP_SERVER`: NTP server used by this software. (See previous comments about selecting alternate servers.)
 * `AWC_PORT`: By default the deployed server runs on localhost port 8080, but you can use a different port if you prefer.
 * `AWC_PREFERRED_WS`: Your preferred weather service, `weatherbit`, `wunderground`, or `darksky`. `wunderground` is the default.

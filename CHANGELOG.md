@@ -1,3 +1,12 @@
+## 2.9.3
+
+* Moved settings button into lower right corner.
+* Improved retrieval and display of ΔTAI/ΔUT1.
+* Fix browser Reload button.
+* Provided option to disable kiosk mode for auto-start browser.
+* Server stability improvements.
+* Reduce calls to Google geocoding API.
+
 ## 2.9.2
 
 * Better identifies Raspberry Pi hardware.

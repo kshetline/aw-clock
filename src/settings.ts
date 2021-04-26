@@ -1,5 +1,4 @@
-import { TimeFormat } from './clock';
-import { HourlyForecast } from './forecast';
+import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import * as Cookies from 'js-cookie';
 import { isChromium, isRaspbian, toBoolean } from '@tubular/util';
@@ -13,6 +12,7 @@ const apiParam = new URLSearchParams(window.location.search).get('api');
 const apiPort = apiParam || (runningDev ? '4201' : document.location.port || '8080');
 const apiHost = ((document.location.hostname || '').startsWith('192.') ? document.location.hostname : 'localhost');
 
+// noinspection HttpUrlsUsage
 export const apiServer = new URL(window.location.href).searchParams.get('weather_server') ||
   (runningDev ? `http://${apiHost}:${apiPort}` : '');
 export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;

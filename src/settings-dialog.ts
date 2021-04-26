@@ -1,13 +1,13 @@
 import { AppService } from './app.service';
-import { TimeFormat } from './clock';
-import { HourlyForecast } from './forecast';
+import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import { isIE, isIOS, isSafari } from '@tubular/util';
 import { apiServer, localServer, raspbianChromium, Settings, toTimeFormat, updateTest } from './settings';
-import { AWC_VERSION } from '../server/src/shared-types';
+import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName, decrementDialogCounter, domAlert, domConfirm, htmlEncode, incrementDialogCounter, popKeydownListener, pushKeydownListener
+  adjustCityName, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode, incrementDialogCounter, popKeydownListener,
+  pushKeydownListener
 } from './awc-util';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -35,6 +35,13 @@ interface SearchResults {
   error?: string;
   info?: string;
   limitReached: boolean;
+}
+
+async function callSearchApi(query: string): Promise<SearchResults> {
+  // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations
+  // is subject to future change and access restrictions. Users of this code should strongly consider substituting
+  // a different API.
+  return getJson<SearchResults>('https://skyviewcafe.com/atlas', { jsonp: true, params: { q: query, client: 'web', pt: 'false' } });
 }
 
 function formatDegrees(angle, compassPointsPosNeg, degreeDigits) {
@@ -240,7 +247,7 @@ export class SettingsDialog {
       this.cityTable.html('');
       this.keyboard.hide();
 
-      this.callSearchApi(query).then(response => {
+      callSearchApi(query).then(response => {
         let rows = '<tr id="header"><th>&#x2605;</th><th>City</th><th>Latitude</th><th>Longitude</th><tr>\n';
 
         response.matches.forEach((city, index) => {
@@ -428,9 +435,7 @@ export class SettingsDialog {
       this.dialog.css('display', 'none');
     });
 
-    this.reloadButton.one('click', () => {
-      window.location.reload();
-    });
+    this.reloadButton.on('click', () => setTimeout(() => window.location.reload()));
   }
 
   private doOK = () => {
@@ -487,55 +492,21 @@ export class SettingsDialog {
     domAlert(message, callback);
   }
 
-  private callSearchApi(query: string): Promise<SearchResults> {
-    // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations
-    // is subject to future change and access restrictions. Users of this code should strongly consider substituting
-    // a different API.
-    const url = 'https://skyviewcafe.com/atlas';
-
-    return new Promise((resolve, reject) => {
-      // noinspection JSIgnoredPromiseFromCall
-      $.ajax({
-        url,
-        dataType: 'jsonp',
-        data: {
-          q: query,
-          client: 'web',
-          pt: 'false'
-        },
-        success: (data: SearchResults) => {
-          resolve(data);
-        },
-        error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-          reject(errorThrown);
-        }
-      });
-    });
-  }
-
   private getDefaults(): void {
-    const url = `${apiServer}/defaults`;
+    getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
+      this.updateButton.css('display', (data.allowAdmin && raspbianChromium) || updateTest ? 'inline' : 'none');
+      this.updateButton.prop('disabled', !data.updateAvailable && !updateTest);
+      this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
+      this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
+      this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
+      this.latestVersion = data.latestVersion;
 
-    $.ajax({
-      url,
-      dataType: 'json',
-      success: (data: any) => {
-        this.updateButton.css('display', (data.allowAdmin && raspbianChromium) || updateTest ? 'inline' : 'none');
-        this.updateButton.prop('disabled', !data.updateAvailable && !updateTest);
-        this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
-        this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
-        this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
-        this.latestVersion = data.latestVersion;
-
-        if (data?.latitude != null && data?.longitude != null) {
-          this.defaultLocation = data;
-          this.getGps.enable(true);
-        }
-      },
-      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-        console.error(errorThrown);
+      if (data?.latitude != null && data?.longitude != null) {
+        this.defaultLocation = data;
+        this.getGps.enable(true);
       }
-    });
+    })
+      .catch(err => console.error(err));
   }
 
   private fillInGpsLocation(): void {

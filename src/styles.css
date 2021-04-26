@@ -73,15 +73,18 @@ label {
   user-select: none; }
 
 #settings-btn {
-  margin: 0 8px 0 4px;
-  position: relative;
-  top: -8px; }
+  margin: 0 8px 0 8px;
+  padding: 9px 8px 9px 0;
+  position: relative; }
 
 .weather-logo {
+  align-items: center;
+  bottom: -6px;
+  display: flex;
   position: fixed;
-  right: 0;
-  bottom: -6px; }
+  right: 0; }
   .weather-logo > span {
+    align-items: center;
     display: none; }
 
 @media only screen and (max-height: 600px), only screen and (max-device-height: 600px) {

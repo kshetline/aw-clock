@@ -28,7 +28,8 @@ import express, { Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
-import { asLines, isString, toBoolean } from '@tubular/util';
+import os from 'os';
+import { asLines, isString, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
@@ -36,9 +37,9 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp } from './awcs-util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
-import { AWC_VERSION, ForecastData, GpsData } from './shared-types';
+import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -61,7 +62,7 @@ try {
   }
 }
 catch (err) {
-  console.log('Failed check for environment file.');
+  console.error('Failed check for environment file.');
 }
 
 let wbProxyForecast: (req: Request) => Promise<ForecastData | Error>;
@@ -86,11 +87,14 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
 
 // Poll for software updates
 const UPDATE_POLL_INTERVAL = 10800000; // 3 hours
+const UPDATE_POLL_RETRY_TIME = 60_000; // 10 minutes
 let updatePollTimer: any;
 let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
 
 async function checkForUpdate() {
   updatePollTimer = undefined;
+
+  let delay = UPDATE_POLL_INTERVAL;
 
   try {
     const repoInfo = await requestJson('https://api.github.com/repos/kshetline/aw-clock/releases/latest', {
@@ -108,10 +112,13 @@ async function checkForUpdate() {
       throw new Error('Could not parse tag_name');
   }
   catch (e) {
-    console.error('%s: Update info request failed: %s', timeStamp(), e.message ?? e.toString());
+    delay = UPDATE_POLL_RETRY_TIME;
+
+    if (os.uptime() > 90)
+      console.error('%s: Update info request failed: %s', timeStamp(), e.message ?? e.toString());
   }
 
-  updatePollTimer = setTimeout(checkForUpdate, UPDATE_POLL_INTERVAL);
+  updatePollTimer = unref(setTimeout(checkForUpdate, delay));
 }
 
 if (!process.env.AWC_FAKE_UPDATE_VERSION)
@@ -208,7 +215,7 @@ function canReleasePortAndRestart(): boolean {
 
         console.warn('%s -- Killing process: %s', timeStamp(), $[1]);
         execSync(`kill ${signal}${$[1]}`);
-        setTimeout(createAndStartServer, 3000);
+        unref(setTimeout(createAndStartServer, 3000));
 
         return true;
       }
@@ -230,7 +237,7 @@ function shutdown(signal?: string) {
 
   console.log(`\n*** ${signal ? signal + ': ' : ''}closing server at ${timeStamp()} ***`);
   // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
-  setTimeout(() => process.exit(0), 5000);
+  unref(setTimeout(() => process.exit(0), 5000));
   httpServer.close(() => process.exit(0));
   cleanUp();
 
@@ -243,7 +250,7 @@ function shutdown(signal?: string) {
 function getApp() {
   const theApp = express();
 
-  theApp.use(logger(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:http-version" :status :res[content-length] :response-time'));
+  theApp.use(logger('[:date[iso]] :remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] :response-time'));
   theApp.use(express.json());
   theApp.use(express.urlencoded({ extended: false }));
   theApp.use(cookieParser());
@@ -273,6 +280,9 @@ function getApp() {
 
   if (wbProxyForecast) {
     theApp.get('/wbproxy', async (req, res) => {
+      req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(5);
+      req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(5);
+
       const response = await wbProxyForecast(req);
 
       if (response instanceof Error)
@@ -298,7 +308,7 @@ function getApp() {
     noCache(res);
 
     const ip = requestIp.getClientIp(req);
-    const defaults: any = {
+    const defaults: AwcDefaults = {
       indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
       ip,
@@ -318,8 +328,8 @@ function getApp() {
       }
 
       if (gpsInfo.latitude != null && gpsInfo.longitude != null) {
-        defaults.latitude = Number(gpsInfo.latitude.toFixed(4));
-        defaults.longitude = Number(gpsInfo.longitude.toFixed(4));
+        defaults.latitude = Number(gpsInfo.latitude.toFixed(5));
+        defaults.longitude = Number(gpsInfo.longitude.toFixed(5));
         defaults.city = gpsInfo.city || '';
       }
     }

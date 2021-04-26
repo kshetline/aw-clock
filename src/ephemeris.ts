@@ -1,9 +1,9 @@
 import {
   AstroEvent,
   AVG_SUN_MOON_RADIUS, EventFinder, HALF_MINUTE, JUPITER, MARS, MERCURY, MINUTE, MOON, REFRACTION_AT_HORIZON, RISE_EVENT, SATURN,
-  SET_EVENT, SkyObserver, SolarSystem, SUN, UT_to_TDB, VENUS
+  SET_EVENT, SkyObserver, SolarSystem, SUN, VENUS
 } from '@tubular/astronomy';
-import { getDateFromDayNumber_SGC, DateTime, Timezone } from '@tubular/time';
+import { getDateFromDayNumber_SGC, DateTime, Timezone, utToTdt } from '@tubular/time';
 import $ from 'jquery';
 import { describeArc, formatTime, setSvgHref } from './awc-util';
 import { AppService } from './app.service';
@@ -117,7 +117,7 @@ export class Ephemeris {
     const dateTime = new DateTime(time, timezone);
     const wallTime = dateTime.wallTime;
     const time_JDU = DateTime.julianDay(time);
-    const time_JDE = UT_to_TDB(time_JDU);
+    const time_JDE = utToTdt(time_JDU);
     const observer = new SkyObserver(longitude, latitude);
     let sunDownAllDay = false;
     let sunUpAllDay = false;
@@ -301,7 +301,7 @@ export class Ephemeris {
       const date = getDateFromDayNumber_SGC(wallTime.n + dayIndex);
       const noon = new DateTime({ y: date.y, m: date.m, d: date.d, hrs: 12, min: 0, sec: 0 }, timezone);
       const noon_JDU = DateTime.julianDay(noon.utcTimeMillis);
-      const noon_JDE = UT_to_TDB(noon_JDU);
+      const noon_JDE = utToTdt(noon_JDU);
       const phase = solarSystem.getLunarPhase(noon_JDE);
       const lpEvent = eventFinder.getLunarPhaseEvent(date.y, date.m, date.d, timezone);
       const esEvent = eventFinder.getEquinoxSolsticeEvent(date.y, date.m, date.d, timezone);

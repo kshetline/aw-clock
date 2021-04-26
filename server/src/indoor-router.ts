@@ -1,8 +1,8 @@
 import { Request, Response, Router } from 'express';
-import request from 'request';
-import { average, jsonOrJsonp, noCache, stdDev } from './awcs-util';
+import { average, filterError, jsonOrJsonp, noCache, stdDev, timeStamp, unref } from './awcs-util';
 import { DhtSensorData } from './shared-types';
 import { convertPinToGpio } from './rpi-pin-conversions';
+import { purgeCache, requestJson } from './request-cache';
 
 export const router = Router();
 
@@ -70,15 +70,15 @@ function readSensor() {
         humidities = [];
       }
 
-      setTimeout(readSensor, POLLING_INTERVAL);
+      unref(setTimeout(readSensor, POLLING_INTERVAL));
     });
   }
   catch (err) {
     // I'm not sure if indoorSensor.read() can actually throw an error or not, but sometimes the indoor
     // sensor never reports a value without restarting the server. One possible explanation is that the
     // first read attempt fails, throws an error, and without the code below would never be polled again.
-    console.error('readSensor error: ' + err);
-    setTimeout(readSensor, POLLING_INTERVAL);
+    console.error('readSensor error: ' + filterError(err));
+    unref(setTimeout(readSensor, POLLING_INTERVAL));
   }
 }
 
@@ -106,30 +106,29 @@ if (indoorSensor)
 
 let warnIndoorNA = true;
 
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   noCache(res);
 
   let result: DhtSensorData;
 
   if (indoorSensor) {
     if (consecutiveSensorErrors >= MAX_ERRORS || lastTemp === undefined || lastHumidity === undefined) {
-      console.error('Failed to read indoor temp/humidity sensor.');
+      console.error(timeStamp(), 'Failed to read indoor temp/humidity sensor.');
       result = { temperature: 0, humidity: -1, error: 'Sensor error' };
     }
     else
       result = { temperature: lastTemp, humidity: lastHumidity };
   }
   else if (process.env.AWC_ALT_DEV_SERVER) {
-    req.pipe(request({
-      url: process.env.AWC_ALT_DEV_SERVER + '/indoor',
-      method: req.method
-    }))
-      .on('error', err => {
-        res.status(500).send('Error connecting to development server: ' + err);
-      })
-      .pipe(res);
+    const url = process.env.AWC_ALT_DEV_SERVER + '/indoor';
 
-    return;
+    try {
+      result = await requestJson(/\blocalhost\b/.test(process.env.AWC_ALT_DEV_SERVER) ? 30 : 600, url);
+    }
+    catch (err) {
+      purgeCache(url);
+      res.status(500).send('Error connecting to development server: ' + err);
+    }
   }
   else {
     if (warnIndoorNA) {

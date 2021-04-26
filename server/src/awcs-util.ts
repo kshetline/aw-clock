@@ -141,5 +141,18 @@ export function escapeForRegex(s: string): string {
 }
 
 export function timeStamp(): string {
-  return new Date().toISOString().replace('T', ' ');
+  return '[' + new Date().toISOString() + ']';
+}
+
+export function unref(timer: any): any {
+  if (timer?.unref)
+    timer.unref();
+
+  return timer;
+}
+
+export function filterError(error: any): string {
+  error = error?.message ?? error?.toString();
+
+  return error && error.replace(/^\s*Error:\s*/i, '');
 }

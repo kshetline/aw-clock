@@ -1,8 +1,8 @@
-import $ from 'jquery';
 import { NtpData } from '../server/src/ntp-data';
 import { localServer } from './settings';
 import { TimeInfo } from '../server/src/shared-types';
 import { TimePoller } from '../server/src/time-poller';
+import { getJson } from './awc-util';
 
 export class HttpTimePoller extends TimePoller {
   private fromGps = false;
@@ -11,26 +11,17 @@ export class HttpTimePoller extends TimePoller {
     super();
   }
 
-  protected getNtpData(/* requestTime: number */): Promise<NtpData> {
+  protected async getNtpData(_requestTime?: number): Promise<NtpData> {
     const url = `${this.weatherServer}/time`;
+    const data = await getJson<TimeInfo>(url);
 
-    return new Promise<NtpData>((resolve, reject) => {
-      // noinspection JSIgnoredPromiseFromCall
-      $.ajax({
-        url,
-        dataType: 'json',
-        success: (data: TimeInfo) => {
-          this.fromGps = data.fromGps && localServer;
+    this.fromGps = data.fromGps && localServer;
 
-          resolve({
-            li: [2, 0, 1][data.leapSecond + 1],
-            rxTm: data.time,
-            txTm: data.time,
-          } as NtpData);
-        },
-        error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(errorThrown)
-      });
-    });
+    return {
+      li: [2, 0, 1][data.leapSecond + 1],
+      rxTm: data.time,
+      txTm: data.time,
+    } as NtpData;
   }
 
   getTimeInfo(internalAdjustOrBias?: boolean | number): TimeInfo {
@@ -43,6 +34,6 @@ export class HttpTimePoller extends TimePoller {
 
   resetGpsState(): void {
     this.fromGps = false;
-    this.getNtpData().catch(); // No need to handle returned Promise
+    this.getNtpData().finally(); // No need to handle returned Promise
   }
 }

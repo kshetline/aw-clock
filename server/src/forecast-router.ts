@@ -1,10 +1,11 @@
 import { requestJson } from 'by-request';
 import { getForecast as getDsForecast, THE_END_OF_DAYS } from './darksky-forecast';
 import { Request, Response, Router } from 'express';
-import { jsonOrJsonp, noCache, timeStamp } from './awcs-util';
+import { filterError, jsonOrJsonp, noCache, timeStamp } from './awcs-util';
 import { ForecastData } from './shared-types';
 import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
+import { toBoolean, toNumber } from '@tubular/util';
 
 export const router = Router();
 
@@ -12,67 +13,62 @@ function forecastBad(forecast: Error | ForecastData): boolean {
   return forecast instanceof Error || forecast.unavailable;
 }
 
+const log = toBoolean(process.env.AWC_LOG_CACHE_ACTIVITY);
+
 router.get('/', async (req: Request, res: Response) => {
   const frequent = (process.env.AWC_FREQUENT_ID && req.query.id === process.env.AWC_FREQUENT_ID);
   const promises: Promise<ForecastData | Error>[] = [];
   let darkSkyIndex = 1;
   let weatherBitIndex = 1;
+  let sources = 'WU';
 
   noCache(res);
   res.setHeader('cache-control', 'max-age=' + (frequent ? '240' : '840'));
+  req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(4);
+  req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(4);
   promises.push(getWuForecast(req));
 
   if (process.env.AWC_WEATHERBIT_API_KEY) {
     promises.push(getWbForecast(req));
+    sources += ',WB';
     ++darkSkyIndex;
   }
   else
     weatherBitIndex = 0;
 
-  if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS)
+  if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS) {
+    sources += ',DS';
     promises.push(getDsForecast(req));
+  }
   else
     darkSkyIndex = 0;
 
-  // None of these promises *should* throw any errors. Errors should be returned as values, rather
-  // than thrown. It seems, however, that errors are possibly thrown on occasion anyway, and this
-  // might result in a failure to obtain weather data. So I'm going to try catching errors if any,
-  // and if any are caught, giving up on having all forecast queries done simultaneously, instead
-  // processing queries one at a time.
-
-  let forecasts: (Error | ForecastData)[];
-
-  try {
-    forecasts = await Promise.all(promises);
-  }
-  catch (err) {
-    console.error('%s: Unexpected forecast error:', timeStamp(), err);
-    forecasts = [];
-
-    for (let i = 0; i < promises.length; ++i) {
-      try {
-        forecasts[i] = await promises[i];
-      }
-      catch (err2) {
-        forecasts[i] = err2;
-        console.error('%s: Unexpected forecast error:', timeStamp(), err2);
-      }
-    }
-  }
-
-  let forecast = forecasts[
+  const forecasts = await Promise.all(promises);
+  let usedIndex: number;
+  let forecast = forecasts[usedIndex =
     ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
   const darkSkyForecast = !(forecasts[darkSkyIndex] instanceof Error) && forecasts[darkSkyIndex] as ForecastData;
 
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)
-    forecast = forecasts[replaceIndex];
+    forecast = forecasts[usedIndex = replaceIndex];
+
+  console.log(timeStamp(), sources, usedIndex, forecasts.map(f => forecastResultCode(f)).join(''));
+
+  if (log) {
+    for (const forecast of forecasts) {
+      if (forecast instanceof Error)
+        console.error('    ' + filterError(forecast));
+      else if (forecast.unavailable)
+        console.error('    unavailable');
+    }
+  }
 
   if (forecastBad(forecast) && !process.env.AWC_WEATHERBIT_API_KEY) {
-    const url = `http://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
-      (req.query.id ? `id=${req.query.id}` : '');
+    const url = `https://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
+      (req.query.id ? `&id=${req.query.id}` : '');
 
     try {
-      forecast = (await requestJson(url)) as ForecastData;
+      forecast = (await requestJson(url, { timeout: 60000 })) as ForecastData;
     }
     catch (e) {
       forecast = e;
@@ -91,3 +87,16 @@ router.get('/', async (req: Request, res: Response) => {
     jsonOrJsonp(req, res, forecast);
   }
 });
+
+function forecastResultCode(forecast: Error | ForecastData): string {
+  if (forecast instanceof Error) {
+    const msg = forecast.message ?? forecast.toString();
+
+    if (/\btimeout\b'/i.test(msg))
+      return 'T';
+    else
+      return 'X';
+  }
+
+  return forecast.unavailable ? '-' : '*';
+}

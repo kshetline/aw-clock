@@ -30,6 +30,8 @@ let clearAcu = false;
 let doAdmin: boolean;
 let doDht = false;
 let clearDht = false;
+let doKiosk = true;
+let clearKiosk = false;
 let doStdDeploy = false;
 let doDedicated = false;
 let doLaunch = false;
@@ -71,6 +73,8 @@ let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
   AWC_ALLOW_CORS: 'true',
+  AWC_KIOSK_MODE: 'true',
+  AWC_LOG_CACHE_ACTIVITY: 'false',
   AWC_NTP_SERVER: 'pool.ntp.org',
   AWC_PORT: '8080',
   AWC_PREFERRED_WS: 'wunderground',
@@ -123,7 +127,8 @@ if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
   process.env.DISPLAY = ':0.0';
 }
 
-const launchChromium = chromium + ' --kiosk http://localhost:8080/';
+let launchChromium = chromium + ' http://localhost:8080/';
+const launchChromiumPattern = new RegExp(`^@${chromium}\\b.*\\bhttp:\\/\\/localhost:\\d+\\/$`);
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
@@ -153,6 +158,8 @@ process.argv.forEach(arg => {
   }
 
   switch (arg) {
+    case '--':
+      break;
     case '--acu':
       doAcu = true;
       break;
@@ -186,6 +193,14 @@ process.argv.forEach(arg => {
       interactive = doStdDeploy = doDedicated = true;
       onlyOnRaspberryPi.push(arg);
       delete process.env.SHLVL;
+      break;
+    case '--kiosk':
+      doKiosk = true;
+      clearKiosk = false;
+      break;
+    case '--kiosk-':
+      doKiosk = false;
+      clearKiosk = true;
       break;
     case '--launch':
       doLaunch = true;
@@ -228,21 +243,23 @@ process.argv.forEach(arg => {
     case '--tarp':
       break; // ignore - already handled
     default:
-      if (arg !== '--help' && arg !== '-h') {
-        helpMsg =
-          'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
-          '                       [--launch] [-p] [--pt] [--reboot] [--sd] [--skip-upgrade]\n' +
-          '                       [--tarp]\n\n' +
-          'The options --acu, --admin, and --dht can be followed by an extra dash (e.g.\n' +
-          '--acu-) to clear a previously enabled option.';
+    {
+      helpMsg =
+        'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
+        '                       [--launch] [--kiosk] [-p] [--pt] [--reboot] [--sd]\n' +
+        '                       [--skip-upgrade] [--tarp]\n\n' +
+        'The options --acu, --admin, --dht, and --kiosk can be followed by an extra\n' +
+        'dash (e.g. --acu-) to clear a previously enabled option.';
 
-        if (!viaBash)
-          helpMsg = helpMsg.replace('sudo ./build.sh', 'npm run build').replace(/\n {2}/g, '\n');
+      if (!viaBash)
+        helpMsg = helpMsg.replace('sudo ./build.sh', 'npm run build').replace(/\n {2}/g, '\n');
 
+      if (arg !== '--help' && arg !== '-h')
         console.error('Unrecognized option "' + chalk.redBright(arg) + '"');
-        console.log(helpMsg);
-        process.exit(1);
-      }
+
+      console.log(helpMsg);
+      process.exit(1);
+    }
   }
 });
 
@@ -296,6 +313,13 @@ if (treatAsRaspberryPi) {
       delete settings.AWC_HAS_INDOOR_SENSOR;
       delete settings.AWC_TH_SENSOR_GPIO;
       delete settings.AWC_WIRELESS_TEMP;
+
+      if (clearKiosk)
+        doKiosk = false;
+      else
+        doKiosk = toBoolean(oldSettings.AWC_KIOSK_MODE, doKiosk);
+
+      settings.AWC_KIOSK_MODE = doKiosk.toString();
     }
   }
   catch (err) {
@@ -417,7 +441,7 @@ function getWebpackSummary(s: string): string {
   const summary: string[] = [];
 
   for (let line of lines) {
-    if (/^(hash|version|time|built at):/i.test(line)) {
+    if (/(^(hash|version|time|built at):)|by path assets\/ |runtime modules|javascript modules|compiled successfully in/i.test(line)) {
       line = line.trim();
       summary.push(line.substr(0, 72) + (line.length > 72 ? '...' : ''));
     }
@@ -636,6 +660,10 @@ function dhtValidate(s: string): boolean {
   return yesOrNo(s, isYes => doDht = isYes);
 }
 
+function kioskValidate(s: string): boolean {
+  return yesOrNo(s, isYes => doKiosk = isYes);
+}
+
 function pinValidate(s: string): boolean {
   if (convertPinToGpio(s) < 0) {
     console.log(chalk.redBright(s + ' is not a valid pin number'));
@@ -667,8 +695,8 @@ function finalActionValidate(s: string): boolean {
   return false;
 }
 
-const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : 'N');
-const finalOptions = '(l/r/n/)'.replace(finalAction.toLowerCase(), finalAction);
+const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : '#');
+const finalOptions = '(l/r/n)'.replace(finalAction.toLowerCase(), finalAction);
 
 let questions = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
@@ -705,12 +733,23 @@ let questions = [
   { name: 'AWC_WIRED_TH_GPIO', prompt: 'GPIO pin number for wired temp/humidity sensor', ask: () => doDht, validate: pinValidate },
   { prompt: 'Use wireless temperature/humidity sensors?', ask: true, yn: true, deflt: doAcu ? 'Y' : 'N', validate: acuValidate },
   { name: 'AWC_WIRELESS_TH_GPIO', prompt: 'GPIO pin number for wireless temp/humidity sensors', ask: () => doAcu, validate: pinValidate },
-  { prompt: `When finished, (l)aunch A/W clock, (r)eboot, or (n)o action ${finalOptions}?`, ask: true, deflt: finalAction, validate: finalActionValidate }
+  {
+    prompt: `When finished, (l)aunch A/W clock, (r)eboot, or (n)o action ${finalOptions}?`,
+    ask: true,
+    deflt: finalAction,
+    validate: finalActionValidate
+  }
 ];
 
 if (NO_MORE_DARK_SKY) {
   questions[5].prompt = 'preferred weather service, (w)underground, or weather(b)it';
   questions.splice(7, 1);
+}
+
+if (doDedicated) {
+  questions.splice(questions.length - 1, 0,
+    { prompt: 'Launch browser in kiosk mode?', ask: true, yn: true, deflt: doKiosk ? 'Y' : 'N', validate: kioskValidate }
+  );
 }
 
 if (noStop)
@@ -759,6 +798,10 @@ async function promptForConfiguration(): Promise<void> {
         else
           settings[q.name] = response;
       }
+    }
+    else if (!response && q.deflt === '#') {
+      --i;
+      console.log(chalk.redBright('Response required'));
     }
 
     if (q.after)
@@ -839,10 +882,12 @@ async function doClientBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
   const opts = { shell: true, env: process.env };
-  const output = await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin);
+  const output = getWebpackSummary(await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin));
 
   stepDone();
-  console.log(chalk.mediumGray(getWebpackSummary(output)));
+
+  if (output?.trim())
+    console.log(chalk.mediumGray(output));
 }
 
 async function doServerBuild(): Promise<void> {
@@ -860,10 +905,12 @@ async function doServerBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'server/dist']), spin);
 
   const opts = { shell: true, cwd: path.join(__dirname, 'server'), env: process.env };
-  const output = await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], opts), spin);
+  const output = getWebpackSummary(await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], opts), spin));
 
   stepDone();
-  console.log(chalk.mediumGray(getWebpackSummary(output)));
+
+  if (output?.trim())
+    console.log(chalk.mediumGray(output));
 
   if (doAcu) {
     showStep();
@@ -911,11 +958,12 @@ async function doServiceDeployment(): Promise<void> {
   await monitorProcess(spawn('cp', uid, [rpiSetupStuff + '/autostart_extra.sh', autostartDir]),
     spin, ErrorMode.ANY_ERROR);
 
+  if (doKiosk)
+    launchChromium = launchChromium.replace(/\s+/, ' --kiosk ');
+
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';
   const autostartLine2 = '@' + launchChromium.replace(/:8080\b/, ':' + settings.AWC_PORT);
-  const line2Matcher = new RegExp('^' + autostartLine2.replace(/:\d{1,5}\/?/, ':!!!')
-    .replace(/[^- /:!@0-9a-z]/g, '.').replace(/\//g, '\\/').replace(':!!!', ':\\d+\\b') + '\\/?$');
   let lines: string[] = [];
 
   try {
@@ -949,7 +997,7 @@ async function doServiceDeployment(): Promise<void> {
     }
     else if (lines[i] === autostartLine2)
       break;
-    else if (line2Matcher.test(lines[i])) {
+    else if (launchChromiumPattern.test(lines[i])) {
       lines[i] = autostartLine2;
       update = true;
       break;
@@ -999,6 +1047,8 @@ async function doServiceDeployment(): Promise<void> {
 
     if (interactive)
       await promptForConfiguration();
+
+    process.stdin.setRawMode(false);
 
     totalSteps += noStop ? 0 : 1;
     totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;

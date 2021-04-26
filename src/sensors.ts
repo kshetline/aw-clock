@@ -1,5 +1,5 @@
 import { AppService } from './app.service';
-import { CurrentTemperatureHumidity } from './current-temp-manager';
+import { CurrentTemperatureHumidity } from './shared-types';
 import $ from 'jquery';
 import { apiServer, localServer } from './settings';
 import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/shared-types';
@@ -61,8 +61,8 @@ export class Sensors {
 
     Promise.all(promises)
       .then(data => {
-        const wired: DhtSensorData = data[0];
-        const wireless: TempHumidityData = data[1];
+        const wired = data[0] as DhtSensorData;
+        const wireless = data[1] as TempHumidityData;
         const lowBatteries: string[] = [];
         let thd: TempHumidityItem;
         const cth: CurrentTemperatureHumidity = {

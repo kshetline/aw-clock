@@ -1,6 +1,5 @@
 import { AppService } from './app.service';
-import { CLOCK_CENTER, TimeFormat } from './clock';
-import { CurrentTemperatureHumidity } from './current-temp-manager';
+import { CLOCK_CENTER } from './clock';
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
@@ -11,10 +10,11 @@ import {
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, htmlEncode, localDateString,
-  setSvgHref
+  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
+  getJson, htmlEncode, JsonOptions, localDateString, setSvgHref
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
+import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -78,8 +78,6 @@ const UNKNOWN_ICON = 'assets/unknown.svg';
 const NO_DATA: CurrentTemperatureHumidity = { forecastFeelsLike: null, forecastHumidity: null, forecastStale: null, forecastTemp: null };
 
 const REVERT_TO_START_OF_WEEK_DELAY = 60_000; // 1 minute
-
-export enum HourlyForecast { NONE = 'N', CIRCULAR = 'C', VERTICAL = 'V' }
 
 function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
   const rect = elem.getBoundingClientRect();
@@ -457,7 +455,7 @@ export class Forecast {
     }
   }
 
-  public update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
+  update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
     this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
       this._hasGoodData = true;
       this.updateHourlyCache(forecastData);
@@ -470,11 +468,11 @@ export class Forecast {
       const wb = (forecastData.source === 'weatherbit');
       const wu = (forecastData.source === 'wunderground');
       const buttonWidth = this.settingsBtn.width();
-      const logoWidth = (ds ? 118 : (wb || wu ? 183 : 8)) + 14;
+      const logoWidth = (ds ? 118 : (wb || wu ? 183 : 8)) + 20;
 
-      this.darkskyLogo.css('display', ds ? 'inline-block' : 'none');
-      this.weatherbitLogo.css('display', wb ? 'inline-block' : 'none');
-      this.wundergroundLogo.css('display', wu ? 'inline-block' : 'none');
+      this.darkskyLogo.css('display', ds ? 'flex' : 'none');
+      this.weatherbitLogo.css('display', wb ? 'flex' : 'none');
+      this.wundergroundLogo.css('display', wu ? 'flex' : 'none');
       this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
       this.settingsBtn.css('margin-right', ds || wu || wb ? 0 : 8);
 
@@ -500,7 +498,7 @@ export class Forecast {
     });
   }
 
-  public refreshFromCache(): void {
+  refreshFromCache(): void {
     if (this.lastForecastData)
       this.displayForecast(this.lastForecastData);
   }
@@ -508,7 +506,7 @@ export class Forecast {
   // Note: This is just for a temporary, quick update. The full forecast needs to be requested to get
   // accurate temperature values, especially when only integer temperature values have been supplied,
   // which don't allow for very good Celsius/Fahrenheit conversions.
-  public swapUnits(toMetric: boolean): void {
+  swapUnits(toMetric: boolean): void {
     if (this.lastForecastData && this.lastForecastData.isMetric !== toMetric) {
       const forecast = this.lastForecastData;
       const convertT = (t: number) => convertTemp(t, toMetric);
@@ -548,7 +546,7 @@ export class Forecast {
     }
   }
 
-  public clearCache(): void {
+  clearCache(): void {
     this.lastForecastData = undefined;
     this.cachedHourly = [];
   }
@@ -608,7 +606,7 @@ export class Forecast {
     }
   }
 
-  public showUnknown(error?: string): void {
+  showUnknown(error?: string): void {
     this._hasGoodData = false;
     setSvgHref(this.currentIcon, UNKNOWN_ICON);
     this.appService.updateCurrentTemp(NO_DATA);
@@ -643,49 +641,39 @@ export class Forecast {
     this.updateMarqueeAnimation(error || '\u00A0');
   }
 
-  public getTimezone(): Timezone {
+  getTimezone(): Timezone {
     return this.timezone;
   }
 
-  public getFrequent(): boolean {
+  getFrequent(): boolean {
     return !!this.lastForecastData?.frequent;
   }
 
-  private getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {
+  private async getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {
     let url = `${this.weatherServer}/forecast/?lat=${latitude}&lon=${longitude}&du=${isMetric ? 'c' : 'f'}`;
 
     if (userId)
       url += '&id=' + encodeURI(userId);
 
-    return new Promise((resolve, reject) => {
-      // noinspection JSIgnoredPromiseFromCall
-      $.ajax({
-        url,
-        dataType: 'json',
-        success: (data: ForecastData, textStatus: string, jqXHR: JQueryXHR) => {
-          const cacheControl = jqXHR.getResponseHeader('cache-control');
+    const options: JsonOptions = {};
+    const data = await getJson<ForecastData>(url, options);
+    const cacheControl = options.xhr.getResponseHeader('cache-control');
 
-          if (cacheControl && isObject(data)) {
-            const match = /max-age=(\d+)/.exec(cacheControl);
+    if (cacheControl && isObject(data)) {
+      const match = /max-age=(\d+)/.exec(cacheControl);
 
-            if (match && Number(match[1]) <= FREQUENT_THRESHOLD)
-              data.frequent = true;
-          }
+      if (match && Number(match[1]) <= FREQUENT_THRESHOLD)
+        data.frequent = true;
+    }
 
-          if (!data || !isObject(data) || data.unavailable)
-            reject(new Error('Forecast unavailable'));
-          else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
-            reject(new Error('Incomplete data'));
-          else {
-            data.isMetric = isMetric;
-            resolve(data);
-          }
-        },
-        error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-          reject(errorThrown);
-        }
-      });
-    });
+    if (!data || !isObject(data) || data.unavailable)
+      throw new Error('Forecast unavailable');
+    else if (!data.currently || !data.daily || !data.daily.data || data.daily.data.length === 0)
+      throw new Error('Incomplete data');
+
+    data.isMetric = isMetric;
+
+    return data;
   }
 
   getIconSource(icon: string) {
@@ -928,7 +916,7 @@ export class Forecast {
       this.pressure.css('display', 'none');
   }
 
-  public refreshAlerts(forecastData = this.lastForecastData) {
+  refreshAlerts(forecastData = this.lastForecastData) {
     let newText;
     let maxSeverity = 0;
     const alerts: string[] = [];

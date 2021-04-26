@@ -1,5 +1,4 @@
-import { TimeFormat } from './clock';
-import { CurrentTemperatureHumidity } from './current-temp-manager';
+import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
 import { Settings } from './settings';
 import { TimeInfo } from '../server/src/shared-types';
 

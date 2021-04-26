@@ -92,17 +92,20 @@ label {
 }
 
 #settings-btn {
-  margin: 0 8px 0 4px;
+  margin: 0 8px 0 8px;
+  padding: 9px 8px 9px 0;
   position: relative;
-  top: -8px;
 }
 
 .weather-logo {
+  align-items: center;
+  bottom: -6px;
+  display: flex;
   position: fixed;
   right: 0;
-  bottom: -6px;
 
   > span {
+    align-items: center;
     display: none;
   }
 }
