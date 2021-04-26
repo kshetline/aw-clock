@@ -150,3 +150,9 @@ export function unref(timer: any): any {
 
   return timer;
 }
+
+export function filterError(error: any): string {
+  error = error?.message ?? error?.toString();
+
+  return error && error.replace(/^\s*Error:\s*/i, '');
+}

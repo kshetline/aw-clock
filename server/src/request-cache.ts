@@ -1,7 +1,7 @@
 import { ExtendedRequestOptions, requestJson as byRequestJson, requestText as byRequestText } from 'by-request';
 import { format } from 'url';
 import { isString, toBoolean } from '@tubular/util';
-import { timeStamp, unref } from './awcs-util';
+import { filterError, timeStamp, unref } from './awcs-util';
 
 interface CachedJson {
   content?: any;
@@ -13,7 +13,7 @@ const cache = new Map<string, CachedJson>();
 const pendingRequests = new Map<string, Promise<any>>();
 const log = toBoolean(process.env.AWC_LOG_CACHE_ACTIVITY);
 
-const REQUEST_TIMEOUT = 60000; // 1 minute
+const REQUEST_TIMEOUT = 55000; // 55 seconds
 const REQUEST_TIMEOUT_CHECK = 90; // seconds
 
 function filterUrl(url: string): string {
@@ -119,7 +119,7 @@ function requestContent(maxAgeInSeconds: number, asJson: boolean, encoding: stri
     cache.delete(key);
 
     if (log)
-      console.error(timeStamp(), 'request error: ' + err, filterUrl(key));
+      console.error(timeStamp(), 'request error: ' + filterError(err), filterUrl(key));
   });
 
   return promise;

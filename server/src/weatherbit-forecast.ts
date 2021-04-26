@@ -2,7 +2,7 @@ import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
 import { last, toBoolean, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { checkForecastIntegrity, escapeForRegex, fToC, hpaToInHg, inchesToCm, milesToKm } from './awcs-util';
+import { checkForecastIntegrity, escapeForRegex, filterError, fToC, hpaToInHg, inchesToCm, milesToKm } from './awcs-util';
 
 interface WeatherBitCurrent {
   data: {
@@ -185,7 +185,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   }
   catch (err) {
     purgeCache(pattern);
-    return new Error(`Error connecting to Weatherbit.io: ${url}, ${err}`);
+    return new Error(`Error connecting to Weatherbit.io: ${url}, ${filterError(err)}`);
   }
 }
 

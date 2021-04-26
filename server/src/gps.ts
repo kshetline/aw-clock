@@ -8,7 +8,7 @@ import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData, GpsData, TimeInfo } from './shared-types';
 import { TaiUtc } from './tai-utc';
 import { TimePoller } from './time-poller';
-import { roughDistanceBetweenLocationsInKm, timeStamp, unref } from './awcs-util';
+import { filterError, roughDistanceBetweenLocationsInKm, timeStamp, unref } from './awcs-util';
 import { getForecast } from './weatherbit-forecast';
 import { requestJson } from './request-cache';
 
@@ -166,7 +166,7 @@ export class Gps extends TimePoller {
     });
 
     this.gpspipe.on('exit', () => this.lastGpsInfo = -1);
-    this.gpspipe.on('error', err => console.error('%s -- gpspipe error:', timeStamp(), err));
+    this.gpspipe.on('error', err => console.error('%s -- gpspipe error:', timeStamp(), filterError(err)));
   }
 
   private async checkSystemTime(): Promise<void> {
@@ -262,7 +262,7 @@ export class Gps extends TimePoller {
         coords.city = data.results[0].formatted_address;
       else if (data?.errorMessage) {
         if (os.uptime() > 90)
-          console.error('%s -- Google location check: %s', timeStamp(), data.errorMessage);
+          console.error('%s -- Google location check: %s', timeStamp(), filterError(data.errorMessage));
 
         if (data.status === 'REQUEST_DENIED')
           this.googleAccessDenied = true;
@@ -274,7 +274,7 @@ export class Gps extends TimePoller {
     }
     catch (err) {
       if (os.uptime() > 90)
-        console.error('%s -- Google location check:', timeStamp(), err);
+        console.error('%s -- Google location check:', timeStamp(), filterError(err));
 
       this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
 
@@ -295,7 +295,7 @@ export class Gps extends TimePoller {
       if (data?.status === 'OK' && data.timeZoneId)
         coords.timezone = data.timeZoneId;
       else if (data?.errorMessage) {
-        console.error('%s -- Google timezone check: %s', timeStamp(), data.errorMessage);
+        console.error('%s -- Google timezone check: %s', timeStamp(), filterError(data.errorMessage));
 
         if (data.status === 'REQUEST_DENIED')
           this.googleAccessDenied = true;
@@ -307,7 +307,7 @@ export class Gps extends TimePoller {
     }
     catch (err) {
       if (os.uptime() > 90)
-        console.error('%s -- Google timezone check:', timeStamp(), err);
+        console.error('%s -- Google timezone check:', timeStamp(), filterError(err));
 
       this.checkLocationRetry = now + CHECK_LOCATION_RETRY_DELAY;
 

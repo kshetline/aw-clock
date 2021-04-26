@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { average, jsonOrJsonp, noCache, stdDev, timeStamp, unref } from './awcs-util';
+import { average, filterError, jsonOrJsonp, noCache, stdDev, timeStamp, unref } from './awcs-util';
 import { DhtSensorData } from './shared-types';
 import { convertPinToGpio } from './rpi-pin-conversions';
 import { purgeCache, requestJson } from './request-cache';
@@ -77,7 +77,7 @@ function readSensor() {
     // I'm not sure if indoorSensor.read() can actually throw an error or not, but sometimes the indoor
     // sensor never reports a value without restarting the server. One possible explanation is that the
     // first read attempt fails, throws an error, and without the code below would never be polled again.
-    console.error('readSensor error: ' + err);
+    console.error('readSensor error: ' + filterError(err));
     unref(setTimeout(readSensor, POLLING_INTERVAL));
   }
 }

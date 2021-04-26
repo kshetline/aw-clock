@@ -1,17 +1,19 @@
 import { requestJson } from 'by-request';
 import { getForecast as getDsForecast, THE_END_OF_DAYS } from './darksky-forecast';
 import { Request, Response, Router } from 'express';
-import { jsonOrJsonp, noCache, timeStamp } from './awcs-util';
+import { filterError, jsonOrJsonp, noCache, timeStamp } from './awcs-util';
 import { ForecastData } from './shared-types';
 import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
-import { toNumber } from '@tubular/util';
+import { toBoolean, toNumber } from '@tubular/util';
 
 export const router = Router();
 
 function forecastBad(forecast: Error | ForecastData): boolean {
   return forecast instanceof Error || forecast.unavailable;
 }
+
+const log = toBoolean(process.env.AWC_LOG_CACHE_ACTIVITY);
 
 router.get('/', async (req: Request, res: Response) => {
   const frequent = (process.env.AWC_FREQUENT_ID && req.query.id === process.env.AWC_FREQUENT_ID);
@@ -51,6 +53,15 @@ router.get('/', async (req: Request, res: Response) => {
     forecast = forecasts[usedIndex = replaceIndex];
 
   console.log(timeStamp(), sources, usedIndex, forecasts.map(f => forecastResultCode(f)).join(''));
+
+  if (log) {
+    for (const forecast of forecasts) {
+      if (forecast instanceof Error)
+        console.error('    ' + filterError(forecast));
+      else if (forecast.unavailable)
+        console.error('    unavailable');
+    }
+  }
 
   if (forecastBad(forecast) && !process.env.AWC_WEATHERBIT_API_KEY) {
     const url = `https://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +

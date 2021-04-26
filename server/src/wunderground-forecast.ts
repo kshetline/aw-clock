@@ -3,7 +3,7 @@ import { Request, Router } from 'express';
 import { max } from '@tubular/math';
 import { isObject, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { autoHpa, autoInHg, checkForecastIntegrity } from './awcs-util';
+import { autoHpa, autoInHg, checkForecastIntegrity, filterError } from './awcs-util';
 
 export const router = Router();
 
@@ -51,7 +51,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   }
   catch (err) {
     purgeCache(url);
-    return new Error('Error connecting to Weather Underground: ' + err);
+    return new Error('Error connecting to Weather Underground: ' + filterError(err));
   }
 }
 

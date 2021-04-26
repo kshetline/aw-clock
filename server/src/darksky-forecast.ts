@@ -1,15 +1,10 @@
 import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
 import {
-  Alert, AlertKeys,
-  CommonConditions,
-  CurrentConditions,
-  CurrentConditionsKeys,
-  DailyConditions, DailyConditionsKeys, DailySummaryConditions, DailySummaryConditionsKeys,
-  ForecastData,
-  ForecastDataKeys, HourlyConditions, PressureTrend
+  Alert, AlertKeys, CommonConditions, CurrentConditions, CurrentConditionsKeys, DailyConditions, DailyConditionsKeys,
+  DailySummaryConditions, DailySummaryConditionsKeys, ForecastData, ForecastDataKeys, HourlyConditions, PressureTrend
 } from './shared-types';
-import { checkForecastIntegrity, hpaToInHg } from './awcs-util';
+import { checkForecastIntegrity, filterError, hpaToInHg } from './awcs-util';
 
 // The time (with a month of padding) when the Dark Sky API will be shut down, presuming "end of 2021"
 // actually means all the way until 2021-12-31.
@@ -57,7 +52,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   }
   catch (err) {
     purgeCache(url);
-    return new Error('Error connecting to Dark Sky: ' + err);
+    return new Error('Error connecting to Dark Sky: ' + filterError(err));
   }
 }
 
