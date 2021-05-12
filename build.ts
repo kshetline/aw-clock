@@ -1068,6 +1068,14 @@ async function doServiceDeployment(): Promise<void> {
       totalSteps += 9 + (doUpdateUpgrade ? 1 : 0);
       console.log(chalk.cyan(sol + '- Dedicated device setup -'));
 
+      if (doUpdateUpgrade) {
+        showStep();
+        write('Updating/upgrading packages' + trailingSpace);
+        await monitorProcess(spawn('apt-get', ['update', '-y']), spin, ErrorMode.NO_ERRORS);
+        await monitorProcess(spawn('apt-get', ['upgrade', '-y']), spin, ErrorMode.NO_ERRORS);
+        stepDone();
+      }
+
       if (!noStop) {
         showStep();
         write('Stopping weatherService if currently running' + trailingSpace);
@@ -1093,14 +1101,6 @@ async function doServiceDeployment(): Promise<void> {
           // Might check /unrecognized service|not loaded/ to be more certain.
         }
 
-        stepDone();
-      }
-
-      if (doUpdateUpgrade) {
-        showStep();
-        write('Updating/upgrading packages' + trailingSpace);
-        await monitorProcess(spawn('apt-get', ['update', '-y']), spin, ErrorMode.NO_ERRORS);
-        await monitorProcess(spawn('apt-get', ['upgrade', '-y']), spin, ErrorMode.NO_ERRORS);
         stepDone();
       }
 
