@@ -5,101 +5,9 @@ const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const rxPaths = require('rxjs/_esm5/path-mapping');
-const autoprefixer = require('autoprefixer');
-const postcssUrl = require('postcss-url');
-const postcssImports = require('postcss-import');
 
 const entryPoints = ['inline', 'sw-register', 'styles', 'vendor', 'main'];
-const baseHref = '';
-const deployUrl = '';
 const projectRoot = process.cwd();
-const maximumInlineSize = 10;
-
-const postcssPlugins = function (loader) {
-  // noinspection JSValidateTypes
-  return [
-    postcssImports({
-      resolve: (url, context) => {
-        return new Promise((resolve, reject) => {
-          let hadTilde = false;
-          if (url && url.startsWith('~')) {
-            url = url.substr(1);
-            hadTilde = true;
-          }
-          loader.resolve(context, (hadTilde ? '' : './') + url, (err, result) => {
-            if (err) {
-              if (hadTilde) {
-                reject(err);
-                return;
-              }
-              loader.resolve(context, url, (err, result) => {
-                if (err) {
-                  reject(err);
-                }
-                else {
-                  resolve(result);
-                }
-              });
-            }
-            else {
-              resolve(result);
-            }
-          });
-        });
-      },
-      load: (filename) => {
-        return new Promise((resolve, reject) => {
-          // noinspection JSValidateTypes
-          loader.fs.readFile(filename, (err, data) => { // Complains about missing argument, but causes error if removed.
-            if (err) {
-              reject(err);
-              return;
-            }
-            const content = data.toString();
-            resolve(content);
-          });
-        });
-      }
-    }),
-    postcssUrl({
-      filter: ({ url }) => url.startsWith('~'),
-      url: ({ url }) => {
-        const fullPath = path.join(projectRoot, 'node_modules', url.substr(1));
-        return path.relative(loader.context, fullPath).replace(/\\/g, '/');
-      }
-    }),
-    postcssUrl([
-      {
-        // Only convert root relative URLs, which CSS-Loader won't process into require().
-        filter: ({ url }) => url.startsWith('/') && !url.startsWith('//'),
-        url: ({ url }) => {
-          if (deployUrl.match(/:\/\//) || deployUrl.startsWith('/')) {
-            // If deployUrl is absolute or root relative, ignore baseHref & use deployUrl as is.
-            return `${deployUrl.replace(/\/$/, '')}${url}`;
-          }
-          else if (baseHref.match(/:\/\//)) {
-            // If baseHref contains a scheme, include it as is.
-            return baseHref.replace(/\/$/, '') +
-              `/${deployUrl}/${url}`.replace(/\/\/+/g, '/');
-          }
-          else {
-            // Join together base-href, deploy-url and the original URL.
-            // Also dedupe multiple slashes into single ones.
-            return `/${baseHref}/${deployUrl}/${url}`.replace(/\/\/+/g, '/');
-          }
-        }
-      },
-      {
-        url: 'inline',
-        // NOTE: maxSize is in KB
-        maxSize: maximumInlineSize,
-        fallback: 'rebase',
-      },
-      { url: 'rebase' },
-    ]),
-    autoprefixer({ grid: true }),
-  ];
-};
 
 // noinspection JSUnusedGlobalSymbols
 module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -147,11 +55,11 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
     module: {
       rules: [
         {
-          test: /\.html$/,
+          test: /\.html$/i,
           loader: 'raw-loader'
         },
         {
-          test: /\.(eot|svg|cur)$/,
+          test: /\.(eot|svg|cur)$/i,
           loader: 'file-loader',
           options: {
             name: '[name].[hash:20].[ext]',
@@ -159,7 +67,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
           }
         },
         {
-          test: /\.(jpg|png|webp|gif|otf|ttf|woff|woff2|ani)$/,
+          test: /\.(jpg|png|webp|gif|otf|ttf|woff|woff2|ani)$/i,
           loader: 'url-loader',
           options: {
             name: '[name].[hash:20].[ext]',
@@ -170,24 +78,11 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
           include: [
             path.join(projectRoot, 'src/styles.css')
           ],
-          test: /\.css$/,
-          use: [
-            'style-loader',
-            {
-              loader: 'raw-loader'
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'embedded',
-                plugins: postcssPlugins,
-                sourceMap: true
-              }
-            }
-          ]
+          test: /\.css$/i,
+          use: ['style-loader', 'css-loader', 'postcss-loader']
         },
         {
-          test: /\.ts|\.tsx$/,
+          test: /\.ts|\.tsx$/i,
           use: 'ts-loader',
           exclude: [/\/node_modules\//, /\/server\/(?!src\/(ntp-data|shared-types|time-poller)\.ts$).*/]
         }
