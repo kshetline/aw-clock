@@ -1091,7 +1091,7 @@ async function doServiceDeployment(): Promise<void> {
             console.log(backspace + trailingSpace);
             console.error(err);
             console.log('\npolkit is requiring interactive authentication to stop weatherService.');
-            console.log('Please enter "sudo service stop weatherService" at the prompt below.');
+            console.log('Please enter "sudo service weatherService stop" at the prompt below.');
             console.log('\nWhen that is done, restart this installation with either: ');
             console.log('    sudo ./build.sh --nostop -i        (for interactive set-up)');
             console.log('    sudo ./build.sh --nostop -ddev     (for automated set-up)');
