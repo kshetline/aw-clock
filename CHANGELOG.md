@@ -1,3 +1,7 @@
+## 2.9.4
+
+* Added option to display wind speed in knots, in combination with either imperial or metric units.
+
 ## 2.9.3
 
 * Moved settings button into lower right corner.

@@ -97,6 +97,7 @@ export interface ForecastData {
   unavailable?: boolean;
   frequent?: boolean;
   isMetric?: boolean;
+  knots?: boolean;
   source?: string;
 }
 

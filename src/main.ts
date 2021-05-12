@@ -400,7 +400,8 @@ class AwClockApp implements AppService {
           this.updateCaption.css('display', updateAvailable);
         });
 
-        this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.userId);
+        this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.knots,
+          this.settings.userId);
       };
 
       if (millisOffset === 0)
@@ -442,11 +443,11 @@ class AwClockApp implements AppService {
       this.clock.triggerRefresh();
     }
     else {
-      let doRefresh = false;
+      let doRefresh = (this.settings.knots !== oldSettings.knots);
 
       if (this.settings.celsius !== oldSettings.celsius) {
         this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
-        this.forecast.swapUnits(this.settings.celsius);
+        this.forecast.swapUnits(this.settings.celsius, this.settings.knots);
         doRefresh = true;
       }
 

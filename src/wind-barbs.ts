@@ -1,5 +1,5 @@
 import { floor, min, round } from '@tubular/math';
-import { mphToKnots } from './awc-util';
+import { kphToKnots, mphToKnots } from './awc-util';
 
 interface Barbs {
   halves: number;
@@ -7,10 +7,12 @@ interface Barbs {
   pennants: number;
 }
 
-function speedToBarbs(speed: number, isMetric: boolean): Barbs {
+function speedToBarbs(speed: number, isMetric: boolean, knots: boolean): Barbs {
   let halves: number;
 
-  if (isMetric)
+  if (isMetric && knots)
+    halves = min(round(kphToKnots(speed) / 5), 20);
+  else if (isMetric)
     halves = min(round(speed * 1000 / 3600 / 2.5), 20);
   else
     halves = min(round(mphToKnots(speed) / 5), 20);
@@ -93,12 +95,12 @@ const compass = '<path class="compass" style="stroke-width: 5; fill: transparent
                 'd="M 50 0 L 61.5 22.3 L 85.4 14.6 L 77.7 38.5 L 100 50 L 77.7 61.5 L 85.4 85.4 L 61.5 77.7 ' +
                 'L 50 100 L 38.5 77.7 L 14.6 85.4 L 22.3 61.5 L 0 50 L 22.3 38.5 L 14.6 14.6 L 38.5 22.3 Z"/>';
 
-export function windBarbsSvg(speed: number, gust: number, isMetric: boolean, direction: number, blankIfLow = false): string {
+export function windBarbsSvg(speed: number, gust: number, isMetric: boolean, knots: boolean, direction: number, blankIfLow = false): string {
   if (speed == null || isNaN(speed) || speed < 0 || direction == null || isNaN(direction))
     return '';
 
-  const barbs = speedToBarbs(speed, isMetric);
-  const gustBarbs = gust && speedToBarbs(gust, isMetric);
+  const barbs = speedToBarbs(speed, isMetric, knots);
+  const gustBarbs = gust && speedToBarbs(gust, isMetric, knots);
   const windPath = barbPath(barbs, direction, blankIfLow);
   let path = '';
 

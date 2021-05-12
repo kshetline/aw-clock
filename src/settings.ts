@@ -36,6 +36,7 @@ export class Settings {
   dimmingStart = '23:00';
   dimmingEnd = '7:00';
   celsius = false;
+  knots = false;
   timeFormat = /[a-z]/i.test(new Date().toLocaleTimeString()) ? TimeFormat.AMPM : TimeFormat.UTC;
   hideSeconds = false;
   hidePlanets = false;
@@ -59,11 +60,11 @@ export class Settings {
     this.dimmingStart = Cookies.get('dimming_start') || defaultSettings.dimmingStart;
     this.dimmingEnd = Cookies.get('dimming_end') || defaultSettings.dimmingEnd;
     this.celsius = toBoolean(Cookies.get('celsius'), false);
+    this.knots = toBoolean(Cookies.get('knots'), false);
     this.timeFormat = toTimeFormat(Cookies.get('ampm'), defaultSettings.timeFormat);
     this.hideSeconds = toBoolean(Cookies.get('hides'), false);
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
-    this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) ||
-      defaultSettings.hourlyForecast;
+    this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) || defaultSettings.hourlyForecast;
     this.onscreenKB = toBoolean(Cookies.get('oskb'), false);
     this.background = Cookies.get('background') || defaultSettings.background;
     this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
@@ -87,6 +88,7 @@ export class Settings {
     Cookies.set('dimming_start', this.dimmingStart, expiration);
     Cookies.set('dimming_end', this.dimmingEnd, expiration);
     Cookies.set('celsius', this.celsius.toString(), expiration);
+    Cookies.set('knots', this.knots.toString(), expiration);
     Cookies.set('ampm', ['24', 'ampm', 'utc'][this.timeFormat] ?? '24', expiration);
     Cookies.set('hides', this.hideSeconds.toString(), expiration);
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);

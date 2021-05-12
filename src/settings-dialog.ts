@@ -371,7 +371,7 @@ export class SettingsDialog {
     this.clockFace.val(previousSettings.clockFace);
     this.outdoor.val(previousSettings.outdoorOption);
     this.userId.val(previousSettings.userId);
-    this.temperature.val(previousSettings.celsius ? 'C' : 'F');
+    this.temperature.val(previousSettings.knots ? (previousSettings.celsius ? 'CK' : 'FK') : (previousSettings.celsius ? 'C' : 'F'));
     this.format.val(['24', 'AMPM', 'UTC'][previousSettings.timeFormat] ?? '24');
     this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
     this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
@@ -450,7 +450,8 @@ export class SettingsDialog {
     newSettings.dimming = +this.dimming.val();
     newSettings.dimmingStart = this.dimmingStart.val() as string;
     newSettings.dimmingEnd = this.dimmingEnd.val() as string;
-    newSettings.celsius = (this.temperature.val() as string) === 'C';
+    newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
+    newSettings.knots = (this.temperature.val() as string || '').endsWith('K');
     newSettings.timeFormat = toTimeFormat(this.format.val() as string);
     newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
     newSettings.hidePlanets = (this.planets.val() as string) === 'H';
