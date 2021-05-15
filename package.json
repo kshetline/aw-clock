@@ -10,6 +10,7 @@
     "start-server-win": "cd server && npm run start-win",
     "build": "node build.js",
     "build:build": "webpack -c webpack-build.config.js",
+    "build:client": "webpack",
     "build:sass": "cd sass && npx node-sass ../src/styles.scss ../src/styles.css && cd ..",
     "build:prod": "node build.js -p",
     "test": "karma start ./karma.conf.js",

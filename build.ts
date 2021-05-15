@@ -887,7 +887,12 @@ async function doClientBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
   const opts = { shell: true, env: process.env };
-  const output = getWebpackSummary(await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin));
+  const args = ['run', 'build:client'];
+
+  if (prod)
+    args.push('--', '--env', 'mode=prod');
+
+  const output = getWebpackSummary(await monitorProcess(spawn('npm', uid, args, opts), spin));
 
   stepDone();
 
