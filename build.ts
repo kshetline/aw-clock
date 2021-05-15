@@ -1,6 +1,5 @@
 import * as Chalk from 'chalk';
 import { exec } from 'child_process';
-import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { Key } from 'readline';
@@ -9,6 +8,12 @@ import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
+
+// Deal with weird issue where 'copyfiles' gets imported in an inconsistent manner.
+let copyfiles: any = require('copyfiles');
+
+if (copyfiles.default)
+  copyfiles = copyfiles.default;
 
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);

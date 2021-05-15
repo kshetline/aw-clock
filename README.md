@@ -328,3 +328,5 @@ For reference, here’s a break down of the steps performed by a full installati
 To greatly improve the speed and reliability of automated installations and updates, the often troublesome node-sass has been moved into a separate `sass` directory. To set up node-sass, `cd` into the `sass` directory and enter `npm i`. This prepares you for translating the source file `styles.scss` into `styles.css`.
 
 Once this is set up, you can use `npm run build:sass` to make sure any changes you make to `styles.scss` are carried over into `styles.css`. `styles.css` is also automatically updated any time you use `npm start`.
+
+To update any changes made to `build.ts`, use `npm run build:build`

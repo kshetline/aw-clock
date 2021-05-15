@@ -1,6 +1,7 @@
 ## 2.9.4
 
 * Added option to display wind speed in knots, in combination with either imperial or metric units.
+* Fix build error possibly triggered by some unknown security update.
 
 ## 2.9.3
 
