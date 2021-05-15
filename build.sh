@@ -31,4 +31,4 @@ fi
 
 echo "Starting main installer..."
 # shellcheck disable=SC2090,SC2048,SC2086
-npm run build:prod -- $path --bash $*
+sudo -u "$SUDO_USER" npm run build:prod -- $path --bash $*
