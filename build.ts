@@ -926,19 +926,24 @@ async function doServerBuild(): Promise<void> {
   if (output?.trim())
     console.log(chalk.mediumGray(output));
 
-  if (doAcu) {
+  if (doAcu || doDht) {
     showStep();
-    write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
-    await npmInit();
-    await monitorProcess(spawn('npm', uid, ['i', 'rpi-acu-rite-temperature@2', '-S'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
-    stepDone();
-  }
 
-  if (doDht) {
-    showStep();
-    write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
+    const args = ['i', '-S', 'rpi-acu-rite-temperature@2', 'node-dht-sensor@0.4'];
+
+    if (doAcu && doDht)
+      write('Adding wireless and wired temp/humidity sensor support' + trailingSpace);
+    else if (doAcu) {
+      args.splice(3, 1);
+      write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
+    }
+    else {
+      args.splice(2, 1);
+      write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
+    }
+
     await npmInit();
-    await monitorProcess(spawn('npm', uid, ['i', 'node-dht-sensor@0.4', '-S'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
+    await monitorProcess(spawn('npm', uid, args, { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
 }
@@ -1067,8 +1072,7 @@ async function doServiceDeployment(): Promise<void> {
     totalSteps += noStop ? 0 : 1;
     totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
     totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
-    totalSteps += doAcu ? 1 : 0;
-    totalSteps += doDht ? 1 : 0;
+    totalSteps += doAcu || doDht ? 1 : 0;
     totalSteps += (doStdDeploy || doDedicated ? 1 : 0);
     totalSteps += (doLaunch || doReboot ? 1 : 0);
 
