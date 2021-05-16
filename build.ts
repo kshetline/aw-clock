@@ -937,7 +937,10 @@ async function doServerBuild(): Promise<void> {
   if (doDht) {
     showStep();
     write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
-    await npmInit();
+
+    if (!doAcu)
+      await npmInit();
+
     await monitorProcess(spawn('npm', uid, ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
