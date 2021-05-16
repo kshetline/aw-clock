@@ -5,7 +5,9 @@ const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const rxPaths = require('rxjs/_esm5/path-mapping');
+const os = require('os');
 
+const enoughRam = os.totalmem() / 0x40000000 > 1.5;
 const entryPoints = ['inline', 'sw-register', 'styles', 'vendor', 'main'];
 const projectRoot = process.cwd();
 
@@ -79,7 +81,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
             path.join(projectRoot, 'src/styles.css')
           ],
           test: /\.css$/i,
-          use: ['style-loader', 'css-loader', 'postcss-loader']
+          use: ['style-loader', 'css-loader']
         },
         {
           test: /\.ts|\.tsx$/i,
@@ -96,7 +98,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
         }
       })],
     },
-    devtool: 'source-map',
+    devtool: enoughRam ? 'source-map' : undefined,
     plugins: [
       new CopyWebpackPlugin({
         patterns: [

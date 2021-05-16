@@ -1,6 +1,7 @@
 import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as readline from 'readline';
 import { Key } from 'readline';
 import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
@@ -8,6 +9,8 @@ import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
+
+const enoughRam = os.totalmem() / 0x40000000 > 1.5;
 
 // Deal with weird issue where 'copyfiles' gets imported in an inconsistent manner.
 let copyfiles: any = require('copyfiles');
@@ -887,7 +890,7 @@ async function doClientBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
   const opts = { shell: true, env: process.env };
-  const args = ['run', 'build:client'];
+  const args = ['run', 'build:client' + (enoughRam ? '' : ':tiny')];
 
   if (prod)
     args.push('--', '--env', 'mode=prod');
@@ -915,7 +918,8 @@ async function doServerBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'server/dist']), spin);
 
   const opts = { shell: true, cwd: path.join(__dirname, 'server'), env: process.env };
-  const output = getWebpackSummary(await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], opts), spin));
+  const output = getWebpackSummary(await monitorProcess(spawn('npm', uid,
+    ['run', isWindows ? 'build-win' : 'build' + (enoughRam ? '' : ':tiny')], opts), spin));
 
   stepDone();
 
