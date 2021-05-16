@@ -2,6 +2,7 @@
 
 * Added option to display wind speed in knots, in combination with either imperial or metric units.
 * Fix build error possibly triggered by some unknown security update.
+* Fixed possible out-of-memory error during installation on Raspberry Pi with only 1 GB RAM.
 
 ## 2.9.3
 
