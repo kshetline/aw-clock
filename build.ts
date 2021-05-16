@@ -458,10 +458,9 @@ function getWebpackSummary(s: string): string {
   return '    ' + summary.join('\n    ');
 }
 
-function npmInit(): void {
+async function npmInit(): Promise<void> {
   if (!npmInitDone) {
-    // This used to be done with the "npm init" command, but when using npm version 7, the fact that the default
-    // init does not create a "dependencies" section causes problems for subsequent "npm install" operations.
+    const file = path.join(__dirname, 'server', 'dist', 'package.json');
     const packageJson = {
       name: 'aw-clock-server',
       version: '0.0.0',
@@ -471,7 +470,8 @@ function npmInit(): void {
       dependencies: {}
     };
 
-    fs.writeFileSync(path.join(__dirname, 'server', 'dist', 'package.json'), JSON.stringify(packageJson, null, 2));
+    fs.writeFileSync(file, JSON.stringify(packageJson, null, 2));
+    await monitorProcess(spawn('chown', [user, file]), spin, ErrorMode.ANY_ERROR);
     npmInitDone = true;
   }
 }
@@ -953,7 +953,7 @@ async function doServerBuild(): Promise<void> {
       write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
     }
 
-    npmInit();
+    await npmInit();
     await monitorProcess(spawn('npm', uid, args, { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
