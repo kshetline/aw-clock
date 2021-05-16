@@ -182,8 +182,8 @@ fi
 npm_version="$(current_npm_version)"
 
 if (( npm_version < 7 )); then
-  echo "Updating npm"
-  npm i -g "npm@>=7"
+  echo "Updating npm to at least version 7"
+  sudo npm i -g "npm@>=7"
 fi
 
 pattern='^(.*\/\.nvm\/[^:]*):'
