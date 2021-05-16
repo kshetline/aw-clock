@@ -44,7 +44,7 @@ function errorish(s: string): boolean {
   s = stripFormatting(s);
 
   return /\b(failed|exception|invalid|operation not permitted|isn't a valid|Cannot resolve|must be specified|must implement|need to install|doesn't exist|are required|should be strings?)\b/i.test(s) ||
-         /[_0-9a-z](Error|Exception|Invalid)\b/.test(s);
+         /[_0-9a-z](Error|Exception|Invalid)\b/.test(s) || /\[ERR_|code: 'ERR/.test(s);
 }
 
 export function spawn(command: string, args: string[], options?: any): ChildProcess;
@@ -134,7 +134,7 @@ export function monitorProcess(proc: ChildProcess, markTime: () => void = undefi
     proc.on('error', err => {
       clearInterval(slowSpin);
 
-      if (errorMode !== ErrorMode.NO_ERRORS)
+      if (errorMode === ErrorMode.NO_ERRORS)
         resolve(output);
       else
         reject(err);

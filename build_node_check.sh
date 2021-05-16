@@ -33,6 +33,24 @@ current_node_version() {
   printf %s "$version"
 }
 
+current_npm_version() {
+  local version=0
+
+  if [ "$(command -v npm)" ]; then
+    version=$(npm --version 2>&1)
+
+    if [[ $version =~ "No such file" ]]; then
+      version=-1
+    else
+      local pattern='([0-9]+)'
+      [[ $version =~ $pattern ]]
+      version="${BASH_REMATCH[1]}"
+    fi
+  fi
+
+  printf %s "$version"
+}
+
 # shellcheck disable=SC2155
 export NVM_DIR="$(nvm_install_dir)"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -159,6 +177,13 @@ if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ 
 
   npm i
   touch .first-time-install
+fi
+
+npm_version="$(current_npm_version)"
+
+if (( npm_version < 7 )); then
+  echo "Updating npm to at least version 7"
+  sudo npm i -g "npm@>=7"
 fi
 
 pattern='^(.*\/\.nvm\/[^:]*):'

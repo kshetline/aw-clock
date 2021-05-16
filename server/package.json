@@ -1,6 +1,6 @@
 {
   "name": "aw-clock-server",
-  "version": "2.9.4",
+  "version": "2.10.0",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
@@ -12,6 +12,7 @@
     "start-win": "nodemon --watch ./src/**/*.ts --ignore **/*.spec.ts -e js,mjs,json,ts --exec \"tsc && node ./tsc-out/app.js -d\"",
     "test": "mocha --require ts-node/register src/**/*.spec.ts --exit",
     "build": "webpack && chmod +x ./dist/app.js",
+    "build:tiny": "NODE_OPTIONS=--max-old-space-size=640 webpack && chmod +x ./dist/app.js",
     "build-win": "webpack"
   },
   "dependencies": {

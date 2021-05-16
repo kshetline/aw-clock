@@ -371,7 +371,7 @@ label {
   position: absolute;
   margin: auto;
   top: 0; left: 0; bottom: 0; right: 0;
-  width: 640px;
+  width: 660px;
   height: 480px;
   padding: 1em;
   background-color: white;
@@ -592,10 +592,11 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   & label, input {
     margin-right: 0.5em;
   }
+}
 
-  &.no-indoor-outdoor {
-    top: 13.5em;
-  }
+.center-color-options {
+  left: -250px;
+  position: relative;
 }
 
 #search-message {

@@ -1,7 +1,7 @@
 import * as Chalk from 'chalk';
 import { exec } from 'child_process';
-import * as copyfiles from 'copyfiles';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as readline from 'readline';
 import { Key } from 'readline';
 import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
@@ -9,6 +9,14 @@ import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
+
+const enoughRam = os.totalmem() / 0x40000000 > 1.5;
+
+// Deal with weird issue where 'copyfiles' gets imported in an inconsistent manner.
+let copyfiles: any = require('copyfiles');
+
+if (copyfiles.default)
+  copyfiles = copyfiles.default;
 
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
@@ -452,7 +460,18 @@ function getWebpackSummary(s: string): string {
 
 async function npmInit(): Promise<void> {
   if (!npmInitDone) {
-    await monitorProcess(spawn('npm', ['init', '--yes'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
+    const file = path.join(__dirname, 'server', 'dist', 'package.json');
+    const packageJson = {
+      name: 'aw-clock-server',
+      version: '0.0.0',
+      description: 'AW-Clock Server',
+      main: 'app.js',
+      license: 'MIT',
+      dependencies: {}
+    };
+
+    fs.writeFileSync(file, JSON.stringify(packageJson, null, 2));
+    await monitorProcess(spawn('chown', [user, file]), spin, ErrorMode.ANY_ERROR);
     npmInitDone = true;
   }
 }
@@ -882,7 +901,12 @@ async function doClientBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'dist']), spin);
 
   const opts = { shell: true, env: process.env };
-  const output = getWebpackSummary(await monitorProcess(spawn('webpack', uid, prod ? ['--env', 'mode=prod'] : [], opts), spin));
+  const args = ['run', 'build:client' + (enoughRam ? '' : ':tiny')];
+
+  if (prod)
+    args.push('--', '--env', 'mode=prod');
+
+  const output = getWebpackSummary(await monitorProcess(spawn('npm', uid, args, opts), spin));
 
   stepDone();
 
@@ -905,26 +929,32 @@ async function doServerBuild(): Promise<void> {
     await monitorProcess(spawn('rm', uid, ['-Rf', 'server/dist']), spin);
 
   const opts = { shell: true, cwd: path.join(__dirname, 'server'), env: process.env };
-  const output = getWebpackSummary(await monitorProcess(spawn('npm', uid, ['run', isWindows ? 'build-win' : 'build'], opts), spin));
+  const output = getWebpackSummary(await monitorProcess(spawn('npm', uid,
+    ['run', isWindows ? 'build-win' : 'build' + (enoughRam ? '' : ':tiny')], opts), spin));
 
   stepDone();
 
   if (output?.trim())
     console.log(chalk.mediumGray(output));
 
-  if (doAcu) {
+  if (doAcu || doDht) {
     showStep();
-    write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
-    await npmInit();
-    await monitorProcess(spawn('npm', uid, ['i', 'rpi-acu-rite-temperature@2.x'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
-    stepDone();
-  }
 
-  if (doDht) {
-    showStep();
-    write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
+    const args = ['i', '-P', 'rpi-acu-rite-temperature@2', 'node-dht-sensor@0.4'];
+
+    if (doAcu && doDht)
+      write('Adding wireless and wired temp/humidity sensor support' + trailingSpace);
+    else if (doAcu) {
+      args.splice(3, 1);
+      write('Adding Acu-Rite wireless temperature/humidity sensor support' + trailingSpace);
+    }
+    else {
+      args.splice(2, 1);
+      write('Adding DHT wired temperature/humidity sensor support' + trailingSpace);
+    }
+
     await npmInit();
-    await monitorProcess(spawn('npm', uid, ['i', 'node-dht-sensor@0.4.x'], { cwd: path.join(__dirname, 'server', 'dist') }), spin);
+    await monitorProcess(spawn('npm', uid, args, { cwd: path.join(__dirname, 'server', 'dist') }), spin);
     stepDone();
   }
 }
@@ -1053,8 +1083,7 @@ async function doServiceDeployment(): Promise<void> {
     totalSteps += noStop ? 0 : 1;
     totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
     totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
-    totalSteps += doAcu ? 1 : 0;
-    totalSteps += doDht ? 1 : 0;
+    totalSteps += doAcu || doDht ? 1 : 0;
     totalSteps += (doStdDeploy || doDedicated ? 1 : 0);
     totalSteps += (doLaunch || doReboot ? 1 : 0);
 
@@ -1067,6 +1096,14 @@ async function doServiceDeployment(): Promise<void> {
     if (doDedicated) {
       totalSteps += 9 + (doUpdateUpgrade ? 1 : 0);
       console.log(chalk.cyan(sol + '- Dedicated device setup -'));
+
+      if (doUpdateUpgrade) {
+        showStep();
+        write('Updating/upgrading packages' + trailingSpace);
+        await monitorProcess(spawn('apt-get', ['update', '-y']), spin, ErrorMode.NO_ERRORS);
+        await monitorProcess(spawn('apt-get', ['upgrade', '-y']), spin, ErrorMode.NO_ERRORS);
+        stepDone();
+      }
 
       if (!noStop) {
         showStep();
@@ -1083,7 +1120,7 @@ async function doServiceDeployment(): Promise<void> {
             console.log(backspace + trailingSpace);
             console.error(err);
             console.log('\npolkit is requiring interactive authentication to stop weatherService.');
-            console.log('Please enter "sudo service stop weatherService" at the prompt below.');
+            console.log('Please enter "sudo service weatherService stop" at the prompt below.');
             console.log('\nWhen that is done, restart this installation with either: ');
             console.log('    sudo ./build.sh --nostop -i        (for interactive set-up)');
             console.log('    sudo ./build.sh --nostop -ddev     (for automated set-up)');
@@ -1093,14 +1130,6 @@ async function doServiceDeployment(): Promise<void> {
           // Might check /unrecognized service|not loaded/ to be more certain.
         }
 
-        stepDone();
-      }
-
-      if (doUpdateUpgrade) {
-        showStep();
-        write('Updating/upgrading packages' + trailingSpace);
-        await monitorProcess(spawn('apt-get', ['update', '-y']), spin, ErrorMode.NO_ERRORS);
-        await monitorProcess(spawn('apt-get', ['upgrade', '-y']), spin, ErrorMode.NO_ERRORS);
         stepDone();
       }
 

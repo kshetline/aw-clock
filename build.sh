@@ -23,7 +23,6 @@ if [ -f "node_path.txt" ]; then
   if [ "$path" == "failed" ]; then
     exit;
   elif [ -n "$path" ]; then
-    echo "here"
     args=(--path \""$path"\")
     path="${args[*]}"
   fi
@@ -31,4 +30,4 @@ fi
 
 echo "Starting main installer..."
 # shellcheck disable=SC2090,SC2048,SC2086
-npm run build:prod -- $path --bash $*
+node build.js -p $path --bash $*

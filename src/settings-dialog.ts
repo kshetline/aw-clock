@@ -72,6 +72,7 @@ export class SettingsDialog {
   private indoor: JQuery;
   private outdoor: JQuery;
   private indoorOutdoorOptions: JQuery;
+  private colorOptions: JQuery;
   private background: JQuery;
   private clockFace: JQuery;
   private userId: JQuery;
@@ -82,7 +83,6 @@ export class SettingsDialog {
   private seconds: JQuery;
   private planets: JQuery;
   private hourlyForecast: JQuery;
-  private searchSection: JQuery;
   private readonly searchCity: JQuery;
   private submitSearch: JQuery;
   private getGps: JQuery;
@@ -119,6 +119,7 @@ export class SettingsDialog {
     this.indoor = $('#indoor-option');
     this.outdoor = $('#outdoor-option');
     this.indoorOutdoorOptions = $('.indoor-outdoor-options');
+    this.colorOptions = $('#color-options');
     this.background = $('#app-background');
     this.clockFace = $('#clock-background');
     this.userId = $('#user-id');
@@ -131,7 +132,6 @@ export class SettingsDialog {
     this.seconds = $('#seconds-option');
     this.planets = $('#planets-option');
     this.hourlyForecast = $('#hourly-forecast-option');
-    this.searchSection = $('.search-section');
     this.searchCity = $('#search-city');
     this.submitSearch = $('#submit-search');
     this.getGps = $('#get-gps');
@@ -211,13 +211,15 @@ export class SettingsDialog {
     if (!localServer) {
       // Hide indoor/outdoor options by default if this isn't a local server, but check if proxied data
       // is available, and if so, bring the options back.
-      this.indoorOutdoorOptions.css('display', 'none');
-      this.searchSection.addClass('no-indoor-outdoor');
+      this.indoorOutdoorOptions.css('opacity', '0');
+      this.indoorOutdoorOptions.css('pointer-events', 'none');
+      this.colorOptions.addClass('center-color-options');
 
       appService.proxySensorUpdate().then(available => {
         if (available) {
-          this.indoorOutdoorOptions.css('display', 'block');
-          this.searchSection.removeClass('no-indoor-outdoor');
+          this.indoorOutdoorOptions.css('opacity', '1');
+          this.indoorOutdoorOptions.css('pointer-events', 'auto');
+          this.colorOptions.removeClass('center-color-options');
         }
       });
     }
@@ -371,7 +373,7 @@ export class SettingsDialog {
     this.clockFace.val(previousSettings.clockFace);
     this.outdoor.val(previousSettings.outdoorOption);
     this.userId.val(previousSettings.userId);
-    this.temperature.val(previousSettings.celsius ? 'C' : 'F');
+    this.temperature.val(previousSettings.knots ? (previousSettings.celsius ? 'CK' : 'FK') : (previousSettings.celsius ? 'C' : 'F'));
     this.format.val(['24', 'AMPM', 'UTC'][previousSettings.timeFormat] ?? '24');
     this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
     this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
@@ -450,7 +452,8 @@ export class SettingsDialog {
     newSettings.dimming = +this.dimming.val();
     newSettings.dimmingStart = this.dimmingStart.val() as string;
     newSettings.dimmingEnd = this.dimmingEnd.val() as string;
-    newSettings.celsius = (this.temperature.val() as string) === 'C';
+    newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
+    newSettings.knots = (this.temperature.val() as string || '').endsWith('K');
     newSettings.timeFormat = toTimeFormat(this.format.val() as string);
     newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
     newSettings.hidePlanets = (this.planets.val() as string) === 'H';

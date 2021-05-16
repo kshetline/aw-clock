@@ -2,6 +2,9 @@ const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const path = require('path');
 const mode = process.env.NODE_ENV || 'production';
+const os = require('os');
+
+const enoughRam = os.totalmem() / 0x40000000 > 1.5;
 
 module.exports = {
   mode,
@@ -42,7 +45,7 @@ module.exports = {
       }
     })],
   },
-  devtool: 'source-map',
+  devtool: enoughRam ? 'source-map' : undefined,
   plugins: [
     new webpack.BannerPlugin({ banner: '#!/usr/bin/env node', raw: true })
   ]

@@ -107,7 +107,9 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 <img src="https://shetline.com/readme/aw-clock/2.8.0/wind_barbs.png" width=820 height=55 alt="wind barbs">
 
-Wind speed is displayed using *wind barbs*. When using imperial units, the wind barbs represent wind speed in knots, rounded to the nearest multiple of 5 knots, up to a maximum of 100 knots. In metric mode the wind barbs represent wind speed in meters per second, in increments of 2.5 m/s (in the diagram above, divide the captions by 2 for m/s).
+Wind speed is displayed using *wind barbs*. When using imperial units, the wind barbs represent wind speed in knots, rounded to the nearest multiple of 5 knots, up to a maximum of 100 knots. In metric mode the wind barbs, by default, represent wind speed in meters per second, in increments of 2.5 m/s (in the diagram above, divide the captions by 2 for m/s).
+
+In the Settings dialog, however, you can choose to display wind speed in knots while still using metric (°C, cm) for temperature and precipitation. When using imperial units (°F, in) wind speed (apart from wind barbs) is by default shown in mph, but you can optionally use knots for the textual display of wind speed as well.
 
 | &nbsp;    | Imperial | Metric  |
 | --------- | -------- | ------- |
@@ -326,3 +328,5 @@ For reference, here’s a break down of the steps performed by a full installati
 To greatly improve the speed and reliability of automated installations and updates, the often troublesome node-sass has been moved into a separate `sass` directory. To set up node-sass, `cd` into the `sass` directory and enter `npm i`. This prepares you for translating the source file `styles.scss` into `styles.css`.
 
 Once this is set up, you can use `npm run build:sass` to make sure any changes you make to `styles.scss` are carried over into `styles.css`. `styles.css` is also automatically updated any time you use `npm start`.
+
+To update any changes made to `build.ts`, use `npm run build:build`

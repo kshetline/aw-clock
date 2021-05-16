@@ -11,7 +11,7 @@ import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src
 import { reflow } from './svg-flow';
 import {
   compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
-  getJson, htmlEncode, JsonOptions, localDateString, setSvgHref
+  getJson, htmlEncode, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
@@ -455,8 +455,8 @@ export class Forecast {
     }
   }
 
-  update(latitude: number, longitude: number, isMetric: boolean, userId?: string): void {
-    this.getForecast(latitude, longitude, isMetric, userId).then((forecastData: ForecastData) => {
+  update(latitude: number, longitude: number, isMetric: boolean, knots: boolean, userId?: string): void {
+    this.getForecast(latitude, longitude, isMetric, knots, userId).then((forecastData: ForecastData) => {
       this._hasGoodData = true;
       this.updateHourlyCache(forecastData);
       this.lastForecastData = forecastData;
@@ -506,12 +506,12 @@ export class Forecast {
   // Note: This is just for a temporary, quick update. The full forecast needs to be requested to get
   // accurate temperature values, especially when only integer temperature values have been supplied,
   // which don't allow for very good Celsius/Fahrenheit conversions.
-  swapUnits(toMetric: boolean): void {
+  swapUnits(toMetric: boolean, knots: boolean): void {
     if (this.lastForecastData && this.lastForecastData.isMetric !== toMetric) {
       const forecast = this.lastForecastData;
       const convertT = (t: number) => convertTemp(t, toMetric);
       const convertS = (s: number) => s == null ? s : convertSpeed(s, toMetric);
-      const convertP = (p: number) => convertPressure(p, toMetric);
+      const convertP = (p: number) => p == null ? p : convertPressure(p, toMetric);
 
       if (forecast.currently) {
         forecast.currently.feelsLikeTemperature = convertT(forecast.currently.feelsLikeTemperature);
@@ -537,11 +537,12 @@ export class Forecast {
           day.temperatureLow = convertT(day.temperatureLow);
           day.temperatureHigh = convertT(day.temperatureHigh);
           day.windSpeed = convertS(day.windSpeed);
-          day.windGust = convertT(day.windGust);
+          day.windGust = convertS(day.windGust);
           day.pressure = convertP(day.pressure);
         });
 
       forecast.isMetric = toMetric;
+      forecast.knots = knots;
       this.displayForecast(forecast);
     }
   }
@@ -649,7 +650,7 @@ export class Forecast {
     return !!this.lastForecastData?.frequent;
   }
 
-  private async getForecast(latitude: number, longitude: number, isMetric: boolean, userId?: string): Promise<ForecastData> {
+  private async getForecast(latitude: number, longitude: number, isMetric: boolean, knots: boolean, userId?: string): Promise<ForecastData> {
     let url = `${this.weatherServer}/forecast/?lat=${latitude}&lon=${longitude}&du=${isMetric ? 'c' : 'f'}`;
 
     if (userId)
@@ -672,6 +673,7 @@ export class Forecast {
       throw new Error('Incomplete data');
 
     data.isMetric = isMetric;
+    data.knots = knots;
 
     return data;
   }
@@ -742,7 +744,7 @@ export class Forecast {
           const gust = hourInfo.windGust ?? forecastData.currently.windGust;
           const direction = hourInfo.windDirection ?? forecastData.currently.windDirection;
 
-          this.hourWinds[index].innerHTML = windBarbsSvg(speed, gust, isMetric, direction);
+          this.hourWinds[index].innerHTML = windBarbsSvg(speed, gust, isMetric, forecastData.knots, direction);
         }
         else
           this.hourWinds[index].innerHTML = '';
@@ -780,7 +782,7 @@ export class Forecast {
         forecastTemp: forecastData.currently.temperature,
       });
 
-      this.displayCurrentWind(forecastData.currently, isMetric);
+      this.displayCurrentWind(forecastData.currently, isMetric, forecastData.knots);
       this.displayCurrentPressure(forecastData.currently, isMetric);
       setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
@@ -791,7 +793,7 @@ export class Forecast {
           const daily = forecastData.daily.data[this.todayIndex + index];
           const textElem = this.dayPrecipAccums[index];
 
-          wind.html(windBarbsSvg(daily.windSpeed, daily.windGust, isMetric, daily.windDirection, true));
+          wind.html(windBarbsSvg(daily.windSpeed, daily.windGust, isMetric, forecastData.knots, daily.windDirection, true));
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
           const low = Math.round(daily.temperatureLow);
@@ -850,15 +852,18 @@ export class Forecast {
     return 10 + floor(min(speed * 80 / 117, 80));
   }
 
-  private displayCurrentWind(current: CurrentConditions, isMetric: boolean): void {
+  private displayCurrentWind(current: CurrentConditions, isMetric: boolean, knots: boolean): void {
     function rotate(elem: HTMLElement, deg: number) {
       elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
 
     if ((current.windSpeed ?? -1) >= 0 && current.windDirection != null) {
-      $('#wind-dir').text('Wind: ' + (current.windSpeed >= 0.5 ? compassPoint(current.windDirection) : ''));
-      $('#wind-speed').text(current.windSpeed.toFixed(0) + (isMetric ? ' km/h' : ' mph'));
-      $('#wind-gust').text((current.windGust ?? 0) > current.windSpeed ? 'Gust: ' + current.windGust.toFixed(0) : '');
+      const speed = knots ? (isMetric ? kphToKnots(current.windSpeed) : mphToKnots(current.windSpeed)) : current.windSpeed;
+      const gust = knots ? (isMetric ? kphToKnots(current.windGust) : mphToKnots(current.windGust)) : current.windGust;
+
+      $('#wind-dir').text('Wind: ' + (speed >= 0.5 ? compassPoint(current.windDirection) : ''));
+      $('#wind-speed').text(speed.toFixed(0) + (knots ? ' kts' : (isMetric ? ' km/h' : ' mph')));
+      $('#wind-gust').text((gust ?? 0) > speed ? 'Gust: ' + gust.toFixed(0) : '');
       this.wind.css('display', 'block');
     }
     else

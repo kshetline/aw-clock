@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "declaration": false,
+    "module": "commonjs",
+    "outDir": "./tsc-out",
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ]
+  },
+  "include": ["./build.ts"],
+  "exclude": ["node_modules", "src", "sass", "server", "dist", "tsc-out", "**/*.spec.ts"]
+}
