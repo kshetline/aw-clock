@@ -1,17 +1,18 @@
 ## 2.10.0
 
 * Added option to display wind speed in knots, in combination with either imperial or metric units.
-* Fix build error possibly triggered by some unknown security update.
+* Fixed build error possibly triggered by some unknown security update.
 * Fixed possible out-of-memory error during installation on Raspberry Pi with only 1 GB RAM.
+* Fixed Settings dialog layout when indoor/outdoor temperature options are disabled.
 
 ## 2.9.3
 
 * Moved settings button into lower right corner.
 * Improved retrieval and display of ΔTAI/ΔUT1.
-* Fix browser Reload button.
+* Fixed browser Reload button.
 * Provided option to disable kiosk mode for auto-start browser.
 * Server stability improvements.
-* Reduce calls to Google geocoding API.
+* Reduced calls to Google geocoding API.
 
 ## 2.9.2
 
@@ -36,9 +37,9 @@
 
 ## 2.8.2
 
-* Update timezones to 2020d.
-* Fix and improve ephemeris rise/set tracks.
-* Fix Raspbian detection.
+* Updated timezones to 2020d.
+* Fixed and improve ephemeris rise/set tracks.
+* Fixed Raspbian detection.
 
 ## 2.8.0
 
