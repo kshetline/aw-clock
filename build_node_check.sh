@@ -179,6 +179,13 @@ if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ 
   touch .first-time-install
 fi
 
+npm_version="$(current_npm_version)"
+
+if (( npm_version < 7 )); then
+  echo "Updating npm"
+  npm i -g "npm@>=7"
+fi
+
 pattern='^(.*\/\.nvm\/[^:]*):'
 [[ $PATH =~ $pattern ]]
 echo "${BASH_REMATCH[1]}" > node_path.txt
