@@ -24,12 +24,12 @@ import { execSync } from 'child_process';
 import compareVersions from 'compare-versions';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
-import express, { Request, Router } from 'express';
+import express, { Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
 import os from 'os';
-import { asLines, isString, toBoolean, toNumber } from '@tubular/util';
+import { asLines, isString, toBoolean } from '@tubular/util';
 import logger from 'morgan';
 import { DEFAULT_NTP_SERVER } from './ntp';
 import { NtpPoller } from './ntp-poller';
@@ -39,7 +39,7 @@ import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
-import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
+import { AWC_VERSION, AwcDefaults, GpsData } from './shared-types';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -64,13 +64,6 @@ try {
 catch (err) {
   console.error('Failed check for environment file.');
 }
-
-let wbProxyForecast: (req: Request) => Promise<ForecastData | Error>;
-
-try {
-  wbProxyForecast = require('./aw-clock-private/weatherbit-proxy').getForecast;
-}
-catch {}
 
 // Convert deprecated environment variables
 if (!process.env.AWC_WIRED_TH_GPIO &&
@@ -278,19 +271,6 @@ function getApp() {
   if (allowAdmin)
     theApp.use('/admin', adminRouter);
 
-  if (wbProxyForecast) {
-    theApp.get('/wbproxy', async (req, res) => {
-      req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(5);
-      req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(5);
-
-      const response = await wbProxyForecast(req);
-
-      if (response instanceof Error)
-        res.status(response.message.startsWith('Maximum API calls') ? 400 : 500).send(response.message);
-      else
-        jsonOrJsonp(req, res, response);
-    });
-  }
 
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
