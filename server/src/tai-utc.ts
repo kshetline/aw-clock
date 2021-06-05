@@ -1,3 +1,5 @@
+import  Bluebird = require('bluebird');
+import toBluebird = require("to-bluebird");
 import { requestText } from 'by-request';
 import ttime, { getDateFromDayNumber_SGC, getDayNumber_SGC, getISOFormatDate, parseISODate, Timezone } from '@tubular/time';
 import { interpolate, irandom } from '@tubular/math';
@@ -131,13 +133,13 @@ export class TaiUtc {
         console.error(err);
     }
 
-    const promises: Promise<string | Error>[] = [];
+    const promises: Bluebird<string | Error>[] = [];
 
     this.urls.forEach(url => {
       if (new URL(url).protocol === 'ftp:')
         promises.push(TaiUtc.getFtpText(url, false));
       else
-        promises.push(requestText(url, { timeout: HTTP_TIMEOUT }).catch(err => makeError(err)));
+        promises.push(toBluebird(requestText(url, { timeout: HTTP_TIMEOUT }).catch(err => makeError(err))));
     });
 
     const docs = await Promise.all(promises);
@@ -247,7 +249,7 @@ export class TaiUtc {
     }
   }
 
-  private static getFtpText(url: string, throwError = false): Promise<string | Error> {
+  private static getFtpText(url: string, throwError = false): Bluebird<string | Error> {
     console.log(timeStamp(), url);
 
     const parsed = new URL(url);
