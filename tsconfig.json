@@ -7,8 +7,12 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "ES2015",
-    "allowSyntheticDefaultImports": true
+    "target": "ES2018",
+    "allowSyntheticDefaultImports": true,
+    "lib": [
+      "es2020",
+      "dom"
+    ]
   },
   "include": ["./src/**/*"],
   "exclude": ["node_modules", "server", "**/*.spec.ts"]
