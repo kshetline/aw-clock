@@ -27,12 +27,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
         './node_modules'
       ],
       alias: rxPaths(),
-      mainFields: [
-        'es2015',
-        'module',
-        'main',
-        'browser'
-      ]
+      mainFields: ['fesm2015', 'module', 'main']
     },
     resolveLoader: {
       modules: [
