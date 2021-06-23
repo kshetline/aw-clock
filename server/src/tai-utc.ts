@@ -280,6 +280,9 @@ export class TaiUtc {
         ftp.end();
         return text;
       })
-      .catch(err => throwError ? Promise.reject(err) : makeError(err));
+      // TODO: Why this error, required type cast to fix?
+      //    TS2741: Property '[Symbol.toStringTag]' is missing in type 'Bluebird<string | Error>'
+      //    but required in type 'Promise<string | Error>'.
+      .catch(err => throwError ? Promise.reject(err) : makeError(err)) as unknown as Promise<string>;
   }
 }

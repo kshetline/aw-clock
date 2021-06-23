@@ -177,8 +177,8 @@ export class Gps extends TimePoller {
     for (const line of ntpInfo) {
       const $ = /^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s(-?[.\d]+)\s+[.\d]+\s*$/.exec(line);
 
-      if ($ && Number($[1]) < 0.25) {
-        gpsFound = ntpFallback = true;
+      if ($ && Number($[1]) <= 1) {
+        gpsFound = true;
         break;
       }
       else if (line.startsWith('*'))
