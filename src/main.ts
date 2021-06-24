@@ -118,7 +118,7 @@ class AwClockApp implements AppService {
 
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
-    this.updateAvailable.on('click', () => {
+    this.updateAvailable.add(this.updateCaption).on('click', () => {
       if (raspbianChromium && this.adminAllowed)
         this.settingsDialog.openSettings(this.settings, true);
     });
