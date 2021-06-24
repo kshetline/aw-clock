@@ -50,6 +50,7 @@ export class Clock {
   private yearCaption: HTMLElement;
   private utcDate: HTMLElement;
   private timeCaption: HTMLElement;
+  private ntpIcon: HTMLElement;
   private gpsIcon: HTMLElement;
   private dut1Label: HTMLElement;
   private dut1Caption: HTMLElement;
@@ -99,6 +100,7 @@ export class Clock {
     this.yearCaption = document.getElementById('year');
     this.utcDate = document.getElementById('utc-date');
     this.timeCaption = document.getElementById('time');
+    this.ntpIcon = document.getElementById('ntp-icon');
     this.gpsIcon = document.getElementById('gps-icon');
     this.gpsMeter = document.getElementById('gps-meter');
     this.dut1Label = document.getElementById('dut1-label');
@@ -292,6 +294,7 @@ export class Clock {
     this.dtaiLabel.setAttribute('x', labelX.toString());
     this.dut1Caption.setAttribute('x', captionX.toString());
     this.dtaiCaption.setAttribute('x', captionX.toString());
+    this.ntpIcon.setAttribute('x', (iconX - 3).toString()); // Presumes NTP icon should always be 3 pixels to the left of GPS icon
     this.gpsIcon.setAttribute('x', iconX.toString());
     this.gpsMeter.setAttribute('x', meterX.toString());
   }
@@ -557,8 +560,11 @@ export class Clock {
           this.appService.resetGpsState();
         }
 
+        const gpsGood = data.pps && data.signalQuality > 0;
+
         setSignalLevel($(this.gpsMeter), data.signalQuality > 0 ? data.signalQuality : -1);
-        this.gpsIcon.style.opacity = (data.pps && data.signalQuality > 0 ? '1' : '0.33');
+        this.ntpIcon.style.display = (this.gpsAvailable && !gpsGood && data.ntpFallback ? 'block' : 'none');
+        this.gpsIcon.style.opacity = (gpsGood ? '1' : '0.33');
       }
     }
     finally {

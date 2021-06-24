@@ -3,7 +3,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   mode: 'production',
-  target: 'node',
+  target: ['es2018', 'web'],
   entry: './build.ts',
   output: {
     path: __dirname,
@@ -15,7 +15,7 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
-    mainFields: ['es2015', 'module', 'main', 'browser']
+    mainFields: ['fesm2015', 'module', 'main']
   },
   module: {
     rules: [

@@ -685,7 +685,7 @@ input, button, select, textarea, optgroup, option {
 .equisolstice {
   fill: #FA0; }
 
-#gps-icon {
+#gps-icon, #ntp-icon {
   display: none; }
 
 .keyboard {

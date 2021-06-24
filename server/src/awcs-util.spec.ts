@@ -14,17 +14,16 @@ describe('util', () => {
     expect(ip).to.equal('7.8.9.0');
     expect(port).to.equal(123);
 
-    // noinspection SpellCheckingInspection
+    /* cspell:disable-next-line */ // noinspection SpellCheckingInspection
     [ip, port] = splitIpAndPort('[2001:0:ce49:7601:e866:efff:62c3:fffe]:8080');
-
-    // noinspection SpellCheckingInspection
+    /* cspell:disable-next-line */ // noinspection SpellCheckingInspection
     expect(ip).to.equal('2001:0:ce49:7601:e866:efff:62c3:fffe');
     expect(port).to.equal(8080);
 
-    // noinspection SpellCheckingInspection
+    /* cspell:disable-next-line */ // noinspection SpellCheckingInspection
     [ip, port] = splitIpAndPort('2001:0:ce49:7601:e866:efff:62c3:1234');
 
-    // noinspection SpellCheckingInspection
+    /* cspell:disable-next-line */ // noinspection SpellCheckingInspection
     expect(ip).to.equal('2001:0:ce49:7601:e866:efff:62c3:1234');
     expect(port).to.equal(undefined);
 

@@ -1099,7 +1099,7 @@ async function doServiceDeployment(): Promise<void> {
 
       if (doUpdateUpgrade) {
         showStep();
-        write('Updating/upgrading packages' + trailingSpace);
+        write('Updating/upgrading packages (can take a long time!)' + trailingSpace);
         await monitorProcess(spawn('apt-get', ['update', '-y']), spin, ErrorMode.NO_ERRORS);
         await monitorProcess(spawn('apt-get', ['upgrade', '-y']), spin, ErrorMode.NO_ERRORS);
         stepDone();

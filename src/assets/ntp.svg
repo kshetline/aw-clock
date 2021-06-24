@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg id="svg1" viewBox="0.247 0.157 53.434 59.074" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path id="path-1" style="stroke-linejoin: round; fill-rule: evenodd; stroke-width: 3.2048; fill: rgb(179, 179, 179); stroke: rgb(255, 255, 255);" d="M 49.932 25 C 49.932 42.679 30.793 53.727 15.483 44.889 C 8.377 40.786 4 33.204 4 25 C 4 7.32 23.138 -3.729 38.449 5.111 C 45.555 9.212 49.932 16.794 49.932 25 Z"/>
+  <line style="stroke: rgb(255, 255, 255); stroke-linecap: round; stroke-width: 6px;" x1="3.5" y1="54.3" x2="50.5" y2="54.5"/>
+  <path id="path-2" style="fill-rule: evenodd; stroke-width: 1pt; fill: rgb(51, 51, 51); stroke: rgb(255, 255, 255);" d="M 31 53.857 C 31 57.282 27.291 59.423 24.325 57.711 C 22.948 56.915 22.1 55.446 22.1 53.857 C 22.1 50.431 25.809 48.29 28.775 50.003 C 30.152 50.798 31 52.266 31 53.857 Z"/>
+  <path id="path1098" style="stroke-linejoin:round;stroke:#333333;stroke-width:3.125;stroke-linecap:round;fill:none" d="M 26.466 45.337 L 26.466 54.243 M 3.563 54.498 L 50.387 54.498"/>
+  <path id="path1099" style="fill-rule:evenodd;stroke:#333333;stroke-width:1pt;fill:#333333" d="M 30.026 53.863 C 30.026 56.507 27.163 58.16 24.873 56.838 C 23.81 56.224 23.155 55.09 23.155 53.863 C 23.155 51.218 26.018 49.565 28.308 50.887 C 29.371 51.501 30.026 52.635 30.026 53.863 Z"/>
+  <path id="path741" style="stroke-linejoin: round; fill-rule: evenodd; stroke-width: 3.2048; fill: rgb(179, 179, 179); stroke: rgb(51, 51, 51);" d="M 48.168 25.087 C 48.168 41.512 30.388 51.778 16.163 43.565 C 9.562 39.754 5.495 32.71 5.495 25.087 C 5.495 8.662 23.276 -1.604 37.5 6.609 C 44.102 10.42 48.168 17.464 48.168 25.087 Z"/>
+  <path id="path743" style="stroke-linejoin:round;stroke:#4c4c4c;stroke-width:5;stroke-linecap:round;fill:none" d="M 26.722 24.863 L 26.722 9.103"/>
+  <path id="path744" style="stroke-linejoin:round;stroke:#4c4c4c;stroke-width:5;stroke-linecap:round;fill:none" d="M 27.65 25.161 L 38.196 31.25"/>
+  <path id="path742" style="stroke-linejoin:round;fill-rule:evenodd;stroke:#333333;stroke-linecap:round;stroke-width:3.0256;fill:#333333" d="M 28.765 25.087 C 28.765 26.574 27.154 27.504 25.866 26.76 C 25.268 26.415 24.899 25.777 24.899 25.087 C 24.899 23.599 26.51 22.669 27.799 23.413 C 28.397 23.758 28.765 24.396 28.765 25.087 Z"/>
+</svg>
