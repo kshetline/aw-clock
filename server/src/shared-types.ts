@@ -1,4 +1,4 @@
-const { version } = { version: '1.0.0' }; // require('../package.json');
+const { version } = require('../package.json');
 
 // It's annoying that TypeScript doesn't itself provide a way to create a runtime list of
 // the allowed keys for an interface, so for now, I'll have to settle for repeating things.

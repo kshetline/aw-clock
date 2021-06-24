@@ -1,3 +1,10 @@
+## 2.10.1
+
+* Fixed a build error caused by an npm library update.
+* Fixed missing Update button in Settings dialog when an update is available.
+* Made GPS time-sync indicator less strict.
+* Added NTP-sync indicator to show if your system clock is NTP-synced when GPS sync is gone.
+
 ## 2.10.0
 
 * Added option to display wind speed in knots, in combination with either imperial or metric units.
