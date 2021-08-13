@@ -135,7 +135,7 @@ class AwClockApp implements AppService {
           this.showTestTime = !this.showTestTime;
           this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
 
-          const updateTestEphemeris = () => {
+          const updateTestEphemeris = (): void => {
             const time = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
 
             this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
@@ -290,7 +290,7 @@ class AwClockApp implements AppService {
     return (!!debugTime && debugTimeRate > 1);
   }
 
-  start() {
+  start(): void {
     this.clock.start();
 
     setTimeout(() => {
@@ -392,7 +392,7 @@ class AwClockApp implements AppService {
       if (runningLate)
         this.lastForecast = now; // Pretend we've got something now so runningLate isn't true again until the next delay or failure.
 
-      const doUpdate = () => {
+      const doUpdate = (): void => {
         getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
           this.adminAllowed = data?.allowAdmin;
           const updateAvailable = (this.adminAllowed && data?.updateAvailable ? 'block' : 'none');
@@ -478,7 +478,7 @@ class AwClockApp implements AppService {
     this.updateDimming(this.getCurrentTime(), rise, set);
   }
 
-  updateMarqueeState(isScrolling: boolean) {
+  updateMarqueeState(isScrolling: boolean): void {
     this.clock.hasCompletingAnimation = isScrolling;
   }
 

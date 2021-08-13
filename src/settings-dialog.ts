@@ -44,7 +44,7 @@ async function callSearchApi(query: string): Promise<SearchResults> {
   return getJson<SearchResults>('https://skyviewcafe.com/atlas', { jsonp: true, params: { q: query, client: 'web', pt: 'false' } });
 }
 
-function formatDegrees(angle, compassPointsPosNeg, degreeDigits) {
+function formatDegrees(angle, compassPointsPosNeg, degreeDigits): string {
   const compass = compassPointsPosNeg.charAt(angle < 0 ? 1 : 0);
   angle = Math.abs(angle);
   const degrees = angle.toFixed(3);
@@ -174,7 +174,7 @@ export class SettingsDialog {
       this.doSearch();
     });
 
-    const adminAction = (btn: JQuery, msg: string, cmd: string, optionalHtml?: string) => {
+    const adminAction = (btn: JQuery, msg: string, cmd: string, optionalHtml?: string): void => {
       btn.on('click', () => {
         const message = msg.replace(/%v/g, this.latestVersion);
 
@@ -353,10 +353,10 @@ export class SettingsDialog {
     }
   }
 
-  public openSettings(previousSettings: Settings, emphasizeUpdate = false) {
+  public openSettings(previousSettings: Settings, emphasizeUpdate = false): void {
     this.previousSettings = previousSettings;
 
-    const checkUiSizing = () => {
+    const checkUiSizing = (): void => {
       if (this.currentCity[0].offsetHeight === 0)
         setTimeout(checkUiSizing, 10);
       else if (this.currentCity[0].offsetHeight >= 22.5)
@@ -440,7 +440,7 @@ export class SettingsDialog {
     this.reloadButton.on('click', () => setTimeout(() => window.location.reload()));
   }
 
-  private doOK = () => {
+  private doOK = (): void => {
     const newSettings = new Settings();
 
     newSettings.city = (this.currentCity.val() as string).trim();
@@ -481,7 +481,7 @@ export class SettingsDialog {
     }
   };
 
-  private doReturnAction = () => {
+  private doReturnAction = (): void => {
     if (this.updateFocused)
       this.updateButton.trigger('click');
     else if (this.searchFieldFocused)

@@ -22,7 +22,7 @@
     "jasmine",
     "chai-friendly"
   ],
-  "ignorePatterns": ["dist/**/*"],
+  "ignorePatterns": ["dist/**/*", "build.js"],
   "rules": {
     "brace-style": [
       "error",
@@ -43,6 +43,7 @@
       }
     ],
     "curly": "off",
+    "@typescript-eslint/explicit-function-return-type":  "error",
     "indent": "off",
     "@typescript-eslint/indent": [
       "error",
@@ -114,5 +115,13 @@
         "exceptRange": true
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.js", "*.cjs"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "off"
+      }
+    }
+  ]
 }

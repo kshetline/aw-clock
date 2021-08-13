@@ -14,7 +14,7 @@ let addSensorDataListener: (pin: number | string, callback: (data: any) => void)
 let removeSensorDataListener: (id: number) => void;
 let lastDeadAir = -1;
 
-function removeOldData() {
+function removeOldData(): void {
   const oldestAllowed = Date.now() - MAX_DATA_AGE;
 
   Object.keys(readings).forEach(key => {
@@ -95,7 +95,7 @@ router.get('/', async (req: Request, res: Response) => {
   jsonOrJsonp(req, res, result);
 });
 
-export function cleanUp() {
+export function cleanUp(): void {
   if (removeSensorDataListener && callbackId >= 0)
     removeSensorDataListener(callbackId);
 }

@@ -238,7 +238,7 @@ export class Forecast {
       });
     }
 
-    const mouseDown = (x: number) => {
+    const mouseDown = (x: number): void => {
       dragging = true;
       lastX = downX = x;
       minMove = 0;
@@ -248,7 +248,7 @@ export class Forecast {
       mouseDown(event.touches[0].pageX) : null
     );
 
-    const doSwipe = (dx: number) => {
+    const doSwipe = (dx: number): void => {
       if (revertToStart) {
         clearTimeout(revertToStart);
         revertToStart = undefined;
@@ -282,7 +282,7 @@ export class Forecast {
       }
     };
 
-    const restorePosition = () => {
+    const restorePosition = (): void => {
       if (dragAnimating) {
         setTimeout(() => restorePosition(), 1);
         return;
@@ -308,9 +308,9 @@ export class Forecast {
         doSwipe(1);
     });
 
-    const canMoveDirection = (dx: number) => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
+    const canMoveDirection = (dx: number): boolean => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
 
-    const mouseMove = (x: number) => {
+    const mouseMove = (x: number): void => {
       if (!dragging || x === lastX)
         return;
 
@@ -341,7 +341,7 @@ export class Forecast {
     window.addEventListener('mousemove', event => mouseMove(event.pageX));
     window.addEventListener('touchmove', event => mouseMove(event.touches[0]?.pageX ?? lastX));
 
-    const mouseUp = (x: number) => {
+    const mouseUp = (x: number): void => {
       if (dragging && minMove >= 0) {
         const dx = (x ?? downX) - downX;
 
@@ -388,7 +388,7 @@ export class Forecast {
         y = CLOCK_CENTER + r * sin_deg(deg - 90);
       }
 
-      const setVerticalOrCircular = (elem: SVGElement) => {
+      const setVerticalOrCircular = (elem: SVGElement): void => {
         elem.classList.add(vertical ? 'vertical' : 'circular');
         elem.classList.remove(vertical ? 'circular' : 'vertical');
       };
@@ -509,9 +509,9 @@ export class Forecast {
   swapUnits(toMetric: boolean, knots: boolean): void {
     if (this.lastForecastData && this.lastForecastData.isMetric !== toMetric) {
       const forecast = this.lastForecastData;
-      const convertT = (t: number) => convertTemp(t, toMetric);
-      const convertS = (s: number) => s == null ? s : convertSpeed(s, toMetric);
-      const convertP = (p: number) => p == null ? p : convertPressure(p, toMetric);
+      const convertT = (t: number): number => convertTemp(t, toMetric);
+      const convertS = (s: number): number => s == null ? s : convertSpeed(s, toMetric);
+      const convertP = (p: number): number => p == null ? p : convertPressure(p, toMetric);
 
       if (forecast.currently) {
         forecast.currently.feelsLikeTemperature = convertT(forecast.currently.feelsLikeTemperature);
@@ -678,14 +678,14 @@ export class Forecast {
     return data;
   }
 
-  getIconSource(icon: string) {
+  getIconSource(icon: string): string {
     if (/^\d\d\w*$/.test(icon))
       return `assets/indexed-weather/${icon}.svg`;
     else
       return `assets/${icon}.svg`;
   }
 
-  private displayForecast(forecastData: ForecastData) {
+  private displayForecast(forecastData: ForecastData): void {
     this.timezone = Timezone.getTimezone(forecastData.timezone);
 
     const now = this.appService.getCurrentTime();
@@ -853,7 +853,7 @@ export class Forecast {
   }
 
   private displayCurrentWind(current: CurrentConditions, isMetric: boolean, knots: boolean): void {
-    function rotate(elem: HTMLElement, deg: number) {
+    function rotate(elem: HTMLElement, deg: number): void {
       elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
 
@@ -921,7 +921,7 @@ export class Forecast {
       this.pressure.css('display', 'none');
   }
 
-  refreshAlerts(forecastData = this.lastForecastData) {
+  refreshAlerts(forecastData = this.lastForecastData): void {
     let newText;
     let maxSeverity = 0;
     const alerts: string[] = [];
@@ -1078,7 +1078,7 @@ export class Forecast {
     displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25));
   }
 
-  private showDayForecast(dayIndex: number) {
+  private showDayForecast(dayIndex: number): void {
     const day = this.todayIndex >= 0 && this.lastForecastData?.daily?.data[this.todayIndex + dayIndex];
     const narrativeDay = day?.narrativeDay;
     const narrativeEvening = day?.narrativeEvening;

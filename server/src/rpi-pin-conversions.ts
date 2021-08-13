@@ -266,7 +266,7 @@ export function convertPin(pin: number | string, pinSystem0: PinSystem, pinSyste
   return convertPinImpl(pinNumber, pinSystemFrom, pinSystemTo);
 }
 
-export function convertPinToGpio(pinNumber: number | string, pinSys = PinSystem.GPIO) {
+export function convertPinToGpio(pinNumber: number | string, pinSys = PinSystem.GPIO): number {
   if (isString(pinNumber))
     return convertPin(pinNumber as string, PinSystem.GPIO);
 

@@ -4,7 +4,7 @@ import { afterEach, describe, it } from 'mocha';
 
 async function waitForSecondsToChange(poller: NtpPoller, from: string): Promise<string> {
   return new Promise<string>(resolve => {
-    const getSeconds = () => {
+    const getSeconds = (): void => {
       const text = poller.getTimeInfo().text;
       const secs = text.substr(17, 2);
 

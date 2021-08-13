@@ -42,7 +42,7 @@ function barbPath(barbs: Barbs, direction: number, blankIfLow: boolean, qlass = 
   let x = 54;
   let y = 98;
   let path = `<g${rotation}><path${qlass} style="stroke-width: 2.5" d="M ${x} ${y}`;
-  const addPoint = () => path += ` L ${x} ${y}`;
+  const addPoint = (): string => path += ` L ${x} ${y}`;
 
   x -= 8;
   addPoint();

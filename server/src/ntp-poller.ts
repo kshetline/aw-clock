@@ -42,7 +42,7 @@ export class NtpPoller extends TimePoller {
     return this.ntp.getTime(requestTime);
   }
 
-  protected canPoll() {
+  protected canPoll(): boolean {
     return !!this.ntp;
   }
 

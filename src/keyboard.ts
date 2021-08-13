@@ -15,7 +15,7 @@ export class Keyboard {
   private capsOn = false;
   private enabled = true;
   private enterListeners = new Set<() => void>();
-  private focusHandler = () => this.gotFocus();
+  private focusHandler = (): void => this.gotFocus();
   private input: HTMLInputElement;
   private readonly keyboard: SimpleKeyboard;
   private readonly keyboardElem: HTMLElement;
@@ -58,11 +58,11 @@ export class Keyboard {
         caps: defaultKeys.map(row => row.replace(/\b[a-z]\b/g, m => m[0].toUpperCase())),
         shiftCaps: shiftKeys.map(row => row.replace(/\b[A-Z]\b/g, m => m[0].toLowerCase()))
       },
-      onChange: input => {
+      onChange: (input): void => {
         if (this.input)
           this.input.value = input;
       },
-      onKeyPress: button => {
+      onKeyPress: (button): void => {
         if (!this.enabled)
           return;
 
@@ -220,11 +220,11 @@ export class Keyboard {
     });
   }
 
-  addEnterListener(listener: () => void) {
+  addEnterListener(listener: () => void): void {
     this.enterListeners.add(listener);
   }
 
-  removeEnterListener(listener: () => void) {
+  removeEnterListener(listener: () => void): void {
     this.enterListeners.delete(listener);
   }
 
@@ -305,7 +305,7 @@ export class Keyboard {
     this.enable(false);
   }
 
-  private gotFocus() {
+  private gotFocus(): void {
     const offset = this.lastFocus && $(this.lastFocus).offset();
 
     if (!offset)
