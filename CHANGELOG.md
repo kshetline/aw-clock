@@ -1,3 +1,7 @@
+## 2.11.0
+
+* Updated design of 3-D printed stand.
+
 ## 2.10.1
 
 * Fixed a build error caused by an npm library update.
@@ -215,7 +219,7 @@
 
 ## 1.0.1
 
-* Fixed gear.svg image so it's compatible with IE. Added MIT license to individual files.
+* Fixed gear.svg image, so it's compatible with IE. Added MIT license to individual files.
 
 ## 1.0.0
 
