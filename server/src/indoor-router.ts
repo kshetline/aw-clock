@@ -44,7 +44,7 @@ export function hasWiredIndoorSensor(): boolean {
 
 // The DHT-22 temperature/humidity sensor appears to be prone to spurious bad readings, so we'll attempt to
 // screen out the noise.
-function readSensor() {
+function readSensor(): void {
   try {
     indoorSensor.read(DHT22_OR_AM2302, sensorGpio, (err: any, temperature: number, humidity: number) => {
       if (err || temperature < -10 || temperature > 50 || humidity < 0 || humidity > 100)

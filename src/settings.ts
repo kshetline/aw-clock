@@ -103,7 +103,7 @@ export class Settings {
     body.css('--clock-face-color', this.clockFace);
   }
 
-  public requiresWeatherReload(oldSettings: Settings) {
+  public requiresWeatherReload(oldSettings: Settings): boolean {
     return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude;
   }
 }

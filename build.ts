@@ -51,7 +51,7 @@ let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 
-let spin = () => {
+let spin = (): void => {
   const now = processMillis();
 
   if (lastSpin < now - SPIN_DELAY) {
@@ -342,9 +342,9 @@ async function readUserInput(): Promise<string> {
   return new Promise<string>(resolve => {
     let buffer = '';
     let length = 0;
-    const clearLine = () => write('\x08 \x08'.repeat(length));
+    const clearLine = (): void => write('\x08 \x08'.repeat(length));
 
-    const callback = (ch: string, key: Key) => {
+    const callback = (ch: string, key: Key): void => {
       if (ch === '\x03') { // ctrl-C
         write('^C\n');
         process.exit(130);
@@ -501,7 +501,7 @@ function showStep(): void {
   write(`Step ${++currentStep} of ${totalSteps}: `);
 }
 
-function chalkUp(s: string, currentStyle = (s: string) => s): string {
+function chalkUp(s: string, currentStyle = (s: string): string => s): string {
   const closed = /(.*?)(\[([a-z]+)])(.*?)(\[\/\3])(.*)/.exec(s);
   const open = /(.*?)(\[([a-z]+)])(.*)/.exec(s);
 
@@ -749,9 +749,9 @@ let questions = [
     ask: true
   },
   { prompt: 'Use wired DHT temperature/humidity sensor?', ask: true, yn: true, deflt: doDht ? 'Y' : 'N', validate: dhtValidate },
-  { name: 'AWC_WIRED_TH_GPIO', prompt: 'GPIO pin number for wired temp/humidity sensor', ask: () => doDht, validate: pinValidate },
+  { name: 'AWC_WIRED_TH_GPIO', prompt: 'GPIO pin number for wired temp/humidity sensor', ask: (): boolean => doDht, validate: pinValidate },
   { prompt: 'Use wireless temperature/humidity sensors?', ask: true, yn: true, deflt: doAcu ? 'Y' : 'N', validate: acuValidate },
-  { name: 'AWC_WIRELESS_TH_GPIO', prompt: 'GPIO pin number for wireless temp/humidity sensors', ask: () => doAcu, validate: pinValidate },
+  { name: 'AWC_WIRELESS_TH_GPIO', prompt: 'GPIO pin number for wireless temp/humidity sensors', ask: (): boolean => doAcu, validate: pinValidate },
   {
     prompt: `When finished, (l)aunch A/W clock, (r)eboot, or (n)o action ${finalOptions}?`,
     ask: true,
@@ -1050,7 +1050,7 @@ async function doServiceDeployment(): Promise<void> {
   stepDone();
 }
 
-(async () => {
+(async (): Promise<void> => {
   try {
     uid = Number((await monitorProcess(spawn('id', ['-u', user]))).trim() || '1000');
 

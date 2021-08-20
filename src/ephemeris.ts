@@ -17,7 +17,7 @@ const planetIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn
 
 const REVERT_TO_SUN_INFO_DELAY = 60_000; // 1 minute
 
-function getMoonPhaseIcon(phase: number) {
+function getMoonPhaseIcon(phase: number): string {
   return `assets/moon/phase-${padLeft(Math.round(phase / 360 * 28) % 28, 2, '0')}.svg`;
 }
 
@@ -73,7 +73,7 @@ export class Ephemeris {
   }
 
   // noinspection JSUnusedGlobalSymbols
-  get hidePlanets() { return this._hidePlanets; }
+  get hidePlanets(): boolean { return this._hidePlanets; }
   set hidePlanets(newValue: boolean) {
     if (this._hidePlanets !== newValue) {
       this._hidePlanets = newValue;
@@ -108,7 +108,7 @@ export class Ephemeris {
   }
 
   update(latitude: number, longitude: number, time: number, timezone: Timezone, amPm: boolean): void {
-    function rotate(elem: JQuery, deg: number) {
+    function rotate(elem: JQuery, deg: number): void {
       elem.attr('transform', 'rotate(' + deg + ' 50 50)');
     }
 

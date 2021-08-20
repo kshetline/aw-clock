@@ -43,10 +43,10 @@ export class Sensors {
     }
   }
 
-  get available() { return this.wiredAvailable || this.wirelessAvailable; }
+  get available(): boolean { return this.wiredAvailable || this.wirelessAvailable; }
 
-  public update(celsius: boolean) {
-    const adjustTemp = (temp: number) => (celsius || temp == null ? temp : temp * 1.8 + 32);
+  update(celsius: boolean): void {
+    const adjustTemp = (temp: number): number => (celsius || temp == null ? temp : temp * 1.8 + 32);
     const wiredUrl = `${apiServer}/indoor`;
     const wirelessUrl = `${apiServer}/wireless-th`;
     const indoorOption = this.appService.getIndoorOption();

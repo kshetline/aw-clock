@@ -300,11 +300,11 @@ export class Clock {
   }
 
   private tick(): void {
-    function rotate(elem: HTMLElement, deg: number) {
+    function rotate(elem: HTMLElement, deg: number): void {
       elem.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
     }
 
-    const rotanimate = (elem: SVGAnimationElement, start: number, end: number, duration?: number) => {
+    const rotanimate = (elem: SVGAnimationElement, start: number, end: number, duration?: number): void => {
       const isSec = elem === this.secTurn;
 
       if (isSec && end < start)

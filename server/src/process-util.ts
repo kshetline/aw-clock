@@ -34,7 +34,7 @@ export function getSudoUser(): string {
 export enum ErrorMode { DEFAULT, ANY_ERROR, NO_ERRORS }
 
 const MAX_MARK_TIME_DELAY = 100;
-const NO_OP = () => {};
+const NO_OP = (): void => {};
 
 export function stripFormatting(s: string): string {
   return s?.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');

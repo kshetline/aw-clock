@@ -50,7 +50,7 @@ export class CurrentTempManager {
 
   public swapTemperatureUnits(makeCelsius: boolean): void {
     if (this.cth.celsius !== makeCelsius) {
-      const convert = (t: number) => convertTemp(t, makeCelsius);
+      const convert = (t: number): number => convertTemp(t, makeCelsius);
 
       if (this.cth.forecastFeelsLike != null)
         this.cth.forecastFeelsLike = convert(this.cth.forecastFeelsLike);

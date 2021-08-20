@@ -149,7 +149,7 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
     }
   });
 
-  const doCallback = (isOk: boolean) => {
+  const doCallback = (isOk: boolean): void => {
     popKeydownListener();
     confirmDialog.hide();
     callback(isOk);
@@ -169,7 +169,7 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   confirmDialog.show();
 }
 
-export function setSvgHref(elem: JQuery, href: string) {
+export function setSvgHref(elem: JQuery, href: string): void {
   elem.attr('href', href);
 
   if (isSafari() || isEdge()) {
@@ -197,7 +197,7 @@ export function describeArc(cx: number, cy: number, radius: number, startAngle: 
   ].join(' ');
 }
 
-export function formatHour(hours: number, amPm: boolean, withH = false) {
+export function formatHour(hours: number, amPm: boolean, withH = false): string {
   let hour = hours;
   let suffix = '';
 
@@ -215,7 +215,7 @@ export function formatHour(hours: number, amPm: boolean, withH = false) {
   return padLeft(hour, 2, '0') + suffix;
 }
 
-export function formatTime(date: DateTime, amPm: boolean) {
+export function formatTime(date: DateTime, amPm: boolean): string {
   const hours = formatHour(date.wallTime.hrs, amPm);
 
   return hours.substr(0, 2) + ':' + padLeft(date.wallTime.min, 2, '0') + hours.substr(2);
@@ -286,15 +286,15 @@ export function anyDialogOpen(): boolean {
   return dialogStack.length > 0 || otherDialogCount > 0;
 }
 
-export function incrementDialogCounter() {
+export function incrementDialogCounter(): void {
   ++otherDialogCount;
 }
 
-export function decrementDialogCounter() {
+export function decrementDialogCounter(): void {
   otherDialogCount = Math.max(otherDialogCount - 1, 0);
 }
 
-function checkFont() {
+function checkFont(): void {
   const dialogInfo = last(dialogStack);
   const textArea = dialogInfo?.textArea;
   const pageLines = toNumber(textArea?.parent().css('--page-lines'));
@@ -348,7 +348,7 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
   dialogStack.push({ textArea });
   checkFont();
 
-  const hide = (evt?: any) => {
+  const hide = (evt?: any): void => {
     if (evt?.preventDefault)
       evt.preventDefault();
 
@@ -371,7 +371,7 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     let scrollY: number;
     let gotTouch = false;
 
-    const mouseDown = (target: HTMLElement, offsetX: number, y: number) => {
+    const mouseDown = (target: HTMLElement, offsetX: number, y: number): void => {
       // Ignore clicks inside the scrollbar (if present)
       if (offsetX > target.clientWidth)
         return;
@@ -385,7 +385,7 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     textArea.on('touchstart', event => event.touches[0] &&
       mouseDown(event.target, event.touches[0].pageX - event.target.getBoundingClientRect().left, event.touches[0].pageY));
 
-    const mouseMove = (y: number) => {
+    const mouseMove = (y: number): void => {
       if (!gotTouch || !dragging || y === lastY)
         return;
 
@@ -405,7 +405,7 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
       mouseMove(event.touches[0]?.pageY ?? lastY);
     });
 
-    const mouseUp = () => {
+    const mouseUp = (): void => {
       dragging = false;
       lastY = downY = undefined;
     };

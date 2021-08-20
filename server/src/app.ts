@@ -24,7 +24,7 @@ import { execSync } from 'child_process';
 import compareVersions from 'compare-versions';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
-import express, { Request, Router } from 'express';
+import express, { Express, Request, Router } from 'express';
 import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
@@ -91,7 +91,7 @@ const UPDATE_POLL_RETRY_TIME = 60_000; // 10 minutes
 let updatePollTimer: any;
 let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
 
-async function checkForUpdate() {
+async function checkForUpdate(): Promise<void> {
   updatePollTimer = undefined;
 
   let delay = UPDATE_POLL_INTERVAL;
@@ -147,15 +147,15 @@ const ntpServer = process.env.AWC_NTP_SERVER || DEFAULT_NTP_SERVER;
 const ntpPoller = new NtpPoller(ntpServer);
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
-const leapSecondsUrl = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
-let taiUtc = new TaiUtc(leapSecondsUrl);
+const leapSecondsUrls = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
+let taiUtc = new TaiUtc(leapSecondsUrls);
 let gps: Gps;
 
 if (process.env.AWC_DEBUG_TIME) {
   const parts = process.env.AWC_DEBUG_TIME.split(';'); // UTC-time [;optional-leap-second]
   ntpPoller.setDebugTime(new Date(parts[0]), Number(parts[1] || 0));
   const debugDelta = Date.now() - new Date(parts[0]).getTime();
-  taiUtc = new TaiUtc(leapSecondsUrl, () => Date.now() - debugDelta);
+  taiUtc = new TaiUtc(leapSecondsUrls, () => Date.now() - debugDelta);
 }
 // GPS time disabled when using AWC_DEBUG_TIME
 else
@@ -169,7 +169,7 @@ function createAndStartServer(): void {
   httpServer.listen(httpPort);
 }
 
-function onError(error: any) {
+function onError(error: any): void {
   if (error.syscall !== 'listen')
     throw error;
 
@@ -193,7 +193,7 @@ function onError(error: any) {
   }
 }
 
-function onListening() {
+function onListening(): void {
   const addr = httpServer.address();
   const bind = isString(addr) ? 'pipe ' + addr : 'port ' + addr.port;
 
@@ -228,7 +228,7 @@ function canReleasePortAndRestart(): boolean {
   return false;
 }
 
-function shutdown(signal?: string) {
+function shutdown(signal?: string): void {
   if (devMode && signal === 'SIGTERM')
     return;
 
@@ -247,7 +247,7 @@ function shutdown(signal?: string) {
   NtpPoller.closeAll();
 }
 
-function getApp() {
+function getApp(): Express {
   const theApp = express();
 
   theApp.use(logger('[:date[iso]] :remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] :response-time'));

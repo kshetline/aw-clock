@@ -58,7 +58,7 @@ export class Ntp {
     this.debugLeap = leap;
   }
 
-  poll(timeCallback: TimeCallback, errorCallback: ErrorCallback, pollTime = Date.now(), retry = 0) {
+  poll(timeCallback: TimeCallback, errorCallback: ErrorCallback, pollTime = Date.now(), retry = 0): void {
     if (!this.socket) {
       this.timeCallback({ li: 0, rxTm: Date.now(), txTm: Date.now() } as NtpData);
       return;
