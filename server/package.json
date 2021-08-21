@@ -1,6 +1,6 @@
 {
   "name": "aw-clock-server",
-  "version": "2.11.0",
+  "version": "2.11.1",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@tubular/math": "^3.1.0",
-    "@tubular/time": "^3.3.2",
+    "@tubular/time": "^3.4.0",
     "@tubular/util": "^4.3.1",
     "by-request": "^1.2.7",
     "compare-versions": "^3.6.0",
