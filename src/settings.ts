@@ -1,6 +1,6 @@
 import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
-import * as Cookies from 'js-cookie';
+import Cookies from 'js-cookie';
 import { isChromium, isRaspbian, toBoolean } from '@tubular/util';
 
 export const runningDev = (document.location.port === '4200');
