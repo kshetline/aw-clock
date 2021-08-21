@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -76,7 +76,7 @@
     "url-loader": "^4.1.1",
     "webpack": "^5.47.1",
     "webpack-cli": "^4.7.2",
-    "webpack-dev-server": "^3.11.2",
+    "webpack-dev-server": "^4.0.0",
     "webpack-node-externals": "^3.0.0"
   }
 }
