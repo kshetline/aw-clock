@@ -31,8 +31,6 @@ import * as http from 'http';
 import os from 'os';
 import { asLines, isString, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
-import { DEFAULT_NTP_SERVER } from './ntp';
-import { NtpPoller } from './ntp-poller';
 import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
@@ -40,6 +38,7 @@ import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
+import { NtpPoolPoller } from './ntp-pool-poller';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -143,8 +142,8 @@ process.on('unhandledRejection', err => console.error(`${timeStamp()} -- Unhandl
 
 createAndStartServer();
 
-const ntpServer = process.env.AWC_NTP_SERVER || DEFAULT_NTP_SERVER;
-const ntpPoller = new NtpPoller(ntpServer);
+const ntpServer = process.env.AWC_NTP_SERVERS || process.env.AWC_NTP_SERVER;
+const ntpPoller = ntpServer ? new NtpPoolPoller(ntpServer.split(',').map(p => p.trim())) : new NtpPoolPoller();
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
 const leapSecondsUrls = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
@@ -244,7 +243,7 @@ function shutdown(signal?: string): void {
   if (gps)
     gps.close();
 
-  NtpPoller.closeAll();
+  NtpPoolPoller.closeAll();
 }
 
 function getApp(): Express {

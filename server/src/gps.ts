@@ -78,7 +78,7 @@ export class Gps extends TimePoller {
     return ti;
   }
 
-  protected getNtpData(): NtpData {
+  getNtpData(): NtpData {
     const now = Date.now() + round(this.deltaGps || 0);
 
     return {

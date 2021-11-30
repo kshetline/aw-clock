@@ -1,6 +1,6 @@
 import { isNumber, processMillis } from '@tubular/util';
 import { NtpData } from './ntp-data';
-import { TimeInfo } from './shared-types';
+import { BACK_IN_TIME_THRESHOLD, TimeInfo } from './shared-types';
 
 const MILLIS_PER_DAY = 86_400_000;
 const MAX_ERRORS = 5;
@@ -11,7 +11,6 @@ const EARLY_POLLING_RATE = 150_000; // 2.5 minutes
 const NORMAL_POLLING_RATE = 1_800_000; // 30 minutes
 const RESYNC_POLLING_RATE = 500;
 const RETRY_POLLING_DELAY = 5000;
-const BACK_IN_TIME_THRESHOLD = 2000;
 const CLOCK_SPEED_WINDOW = 10_800_000; // 3 hours
 const MIDNIGHT_POLLING_AVOIDANCE = 5000;
 
@@ -38,7 +37,7 @@ export abstract class TimePoller {
   private lastReportedTime: number;
   private normalPollingRate = NORMAL_POLLING_RATE;
   private pollingAdjustmentTime: number;
-  private pendingLeapSecond: number;
+  private _pendingLeapSecond = 0;
   private pollCount: number;
   private pollTimer: any;
   private timeAcquired: boolean;
@@ -50,7 +49,7 @@ export abstract class TimePoller {
     this.reset();
   }
 
-  protected reset(baseTime = Date.now()): void {
+  protected reset(baseTime = Date.now(), pendingLeap = 0): void {
     this.lastPolledTime = this.lastReportedTime = this.pollingAdjustmentTime = baseTime;
     this.timeAdjustmentReceivedProcTime = this.lastPollReceivedProcTime = processMillis();
     this.clockReferencePoints = [];
@@ -58,15 +57,17 @@ export abstract class TimePoller {
     this.clockSpeed = 1;
     this.consecutiveGoodPolls = 0;
     this.timeAcquired = false;
-    this.pendingLeapSecond = 0;
+    this._pendingLeapSecond = pendingLeap;
     this.pollCount = -1;
     this.clearPollTimer();
     this.pollTimer = setTimeout(() => this.pollCurrentTime());
   }
 
-  protected abstract getNtpData(requestTime: number): Promise<NtpData> | NtpData;
+  abstract getNtpData(requestTime: number): Promise<NtpData> | NtpData;
 
-  protected canPoll(): boolean {
+  get pendingLeapSecond(): number { return this._pendingLeapSecond; }
+
+  canPoll(): boolean {
     return true;
   }
 
@@ -150,7 +151,7 @@ export abstract class TimePoller {
         syncDelta = expectedPolledTime - this.getTimeInfo().time;
         this.lastPolledTime = this.pollingAdjustmentTime;
         this.lastPollReceivedProcTime = this.timeAdjustmentReceivedProcTime;
-        this.pendingLeapSecond = [0, 1, -1][ntpData.li] || 0; // No leap second, positive leap, negative leap
+        this._pendingLeapSecond = ntpData.leapExcess ? 1 : [0, 1, -1][ntpData.li] ?? 0; // No leap second, positive leap, negative leap
 
         const newReferencePt = { t: this.getTimeInfo().time, pt: processMillis() };
 
@@ -228,33 +229,35 @@ export abstract class TimePoller {
     if (this.timeAcquired) {
       timeInfo = {
         time: time + bias,
-        leapSecond: this.pendingLeapSecond,
+        leapSecond: this._pendingLeapSecond,
         leapExcess: 0
       } as TimeInfo;
 
-      if (!internalAdjust && this.pendingLeapSecond) {
-        const date = new Date(timeInfo.time + (this.pendingLeapSecond < 0 ? 1000 : 0));
+      if (!internalAdjust && this._pendingLeapSecond) {
+        const date = new Date(timeInfo.time + (this._pendingLeapSecond < 0 ? 1000 : 0));
         const day = date.getUTCDate();
         const millisIntoDay = timeInfo.time % MILLIS_PER_DAY;
 
         if (day === 1) {
-          if (this.pendingLeapSecond > 0) {
+          if (this._pendingLeapSecond > 0) {
             if (millisIntoDay < 1000) {
               timeInfo.leapExcess = millisIntoDay + 1;
               timeInfo.time -= timeInfo.leapExcess; // Hold at 23:59:59.999 of previous day
             }
             else {
               timeInfo.time -= 1000;
-              timeInfo.leapSecond = this.pendingLeapSecond = 0;
-              this.lastPollReceivedProcTime += 1000;
+              timeInfo.leapSecond = this._pendingLeapSecond = 0;
               this.timeAdjustmentReceivedProcTime += 1000;
+              this.lastPollReceivedProcTime += 1000;
+              this.lastReportedTime -= 1000;
             }
           }
-          else { // Handle (very unlikely!) negative leap second
+          else { // Handle (unlikely) negative leap second
             timeInfo.time += 1000;
-            timeInfo.leapSecond = this.pendingLeapSecond = 0;
-            this.lastPollReceivedProcTime -= 1000;
+            timeInfo.leapSecond = this._pendingLeapSecond = 0;
             this.timeAdjustmentReceivedProcTime -= 1000;
+            this.lastPollReceivedProcTime -= 1000;
+            this.lastReportedTime += 1000;
           }
         }
       }
@@ -267,11 +270,17 @@ export abstract class TimePoller {
       } as TimeInfo;
     }
 
-    timeInfo.text = new Date(timeInfo.time).toISOString().replace('T', ' ');
-
-    if (timeInfo.leapExcess > 0)
-      timeInfo.text = timeInfo.text.substr(0, 17) + ((59_999 + timeInfo.leapExcess) / 1000).toFixed(3) + 'Z';
+    timeInfo.text = this.formatTime(timeInfo.time, timeInfo.leapExcess);
 
     return timeInfo;
+  }
+
+  formatTime(time: number, leapExcess = 0): string {
+    let text = new Date(time).toISOString().replace('T', ' ');
+
+    if (leapExcess > 0)
+      text = text.substr(0, 17) + ((59_999 + leapExcess) / 1000).toFixed(3) + 'Z';
+
+    return text;
   }
 }
