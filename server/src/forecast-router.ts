@@ -1,5 +1,5 @@
 import { requestJson } from 'by-request';
-import { getForecast as getDsForecast, THE_END_OF_DAYS } from './darksky-forecast';
+import { getForecast as getVcForecast } from './visual-crossing-forecast';
 import { Request, Response, Router } from 'express';
 import { filterError, jsonOrJsonp, noCache, timeStamp } from './awcs-util';
 import { ForecastData } from './shared-types';
@@ -18,7 +18,7 @@ const log = toBoolean(process.env.AWC_LOG_CACHE_ACTIVITY);
 router.get('/', async (req: Request, res: Response) => {
   const frequent = (process.env.AWC_FREQUENT_ID && req.query.id === process.env.AWC_FREQUENT_ID);
   const promises: Promise<ForecastData | Error>[] = [];
-  let darkSkyIndex = 1;
+  let visualCrossingIndex = 1;
   let weatherBitIndex = 1;
   let sources = 'WU';
 
@@ -31,23 +31,23 @@ router.get('/', async (req: Request, res: Response) => {
   if (process.env.AWC_WEATHERBIT_API_KEY) {
     promises.push(getWbForecast(req));
     sources += ',WB';
-    ++darkSkyIndex;
+    ++visualCrossingIndex;
   }
   else
     weatherBitIndex = 0;
 
-  if (process.env.AWC_DARK_SKY_API_KEY && Date.now() < THE_END_OF_DAYS) {
-    sources += ',DS';
-    promises.push(getDsForecast(req));
+  if (process.env.AWC_VISUAL_CROSSING_API_KEY) {
+    sources += ',VC';
+    promises.push(getVcForecast(req));
   }
   else
-    darkSkyIndex = 0;
+    visualCrossingIndex = 0;
 
   const forecasts = await Promise.all(promises);
   let usedIndex: number;
   let forecast = forecasts[usedIndex =
-    ({ darksky: darkSkyIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
-  const darkSkyForecast = !(forecasts[darkSkyIndex] instanceof Error) && forecasts[darkSkyIndex] as ForecastData;
+    ({ darksky: visualCrossingIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
+  const darkSkyForecast = !(forecasts[visualCrossingIndex] instanceof Error) && forecasts[visualCrossingIndex] as ForecastData;
 
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)
     forecast = forecasts[usedIndex = replaceIndex];

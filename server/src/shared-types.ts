@@ -4,7 +4,7 @@ const { version } = require('../package.json');
 // the allowed keys for an interface, so for now, I'll have to settle for repeating things.
 
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
-                                     'precipProbability', 'precipType', 'pressure', 'pressureTrend',
+                                     'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
                                      'windDirection', 'windGust', 'windPhrase', 'windSpeed'];
 
 export const AWC_VERSION = version;
@@ -28,15 +28,15 @@ export interface CommonConditions {
   pressure?: number;              // inHg or Hectopascals (millibars), at sea level
   pressureTrend?: PressureTrend,
   windDirection?: number;         // 0-360 degrees, N = 0. E = 90, S = 180, W = 270
+  temperature?: number;           // °C or °F
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
 }
 
-export const CurrentConditionsKeys = [...CommonConditionsKeys, 'temperature', 'feelsLikeTemperature'];
+export const CurrentConditionsKeys = [...CommonConditionsKeys, 'feelsLikeTemperature'];
 
 export interface CurrentConditions extends CommonConditions {
-  temperature: number;          // °C or °F
   feelsLikeTemperature: number; // °C or °F
 }
 
