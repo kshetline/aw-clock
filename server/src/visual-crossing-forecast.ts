@@ -3,13 +3,19 @@
 import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
 import {
-  /* Alert, AlertKeys, */ CommonConditions, CommonConditionsKeys, CurrentConditions, CurrentConditionsKeys, DailyConditions, DailyConditionsKeys,
+  Alert, CommonConditions, CommonConditionsKeys, CurrentConditions, CurrentConditionsKeys, DailyConditions, DailyConditionsKeys,
   DailySummaryConditions, ForecastData, ForecastDataKeys, HourlyConditions, PressureTrend
 } from './shared-types';
-import { checkForecastIntegrity, filterError } from './awcs-util';
-import { clone, push } from '@tubular/util';
+import { alertCleanUp, checkForecastIntegrity, filterError, hpaToInHg } from './awcs-util';
+import { clone, isNumber, push } from '@tubular/util';
+import { floor } from '@tubular/math';
 
-interface VCAlerts {
+interface VCAlert {
+  event: string;
+  headline: string;
+  description: string;
+  onset: string;
+  ends: string;
 }
 
 interface VCCommonConditions {
@@ -23,7 +29,7 @@ interface VCCommonConditions {
   precip: number;
   precipcover: number;
   precipprob: number;
-  preciptype: string;
+  preciptype: string[];
   pressure: number;
   snow: number;
   snowdepth: number;
@@ -49,7 +55,7 @@ interface VCDailyConditions extends VCCommonConditions {
 }
 
 interface VisualCrossingForecast {
-  alerts: VCAlerts[];
+  alerts: VCAlert[];
   currentConditions: VCCurrentConditions;
   days: VCDailyConditions[];
   description: string;
@@ -67,7 +73,7 @@ const conditionNames: Record<string, string> = {
   precipProbability: 'precipcover', // ?
   precipType: 'preciptype',
   pressureTrend: '', // ?
-  windDirection: 'windir',
+  windDirection: 'winddir',
   windGust: 'windgust',
   windPhrase: '-',
   windSpeed: 'windspeed',
@@ -79,10 +85,17 @@ const conditionNames: Record<string, string> = {
   precipAccumulation: 'precip'
 };
 
+function nullIfError(time: number): number | null {
+  if (isNaN(time) || time == null)
+    return null;
+  else
+    return time;
+}
+
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
   const url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline' +
-    `/${req.query.lat}%2C${req.query.lon}?unitGroup=${isMetric ? 'metric' : 'us'}&lang=en` +
+    `/${req.query.lat}%2C${req.query.lon}?unitGroup=${isMetric ? 'metric' : 'us'}&lang=en&iconSet=icons2` +
     /* cspell:disable-next-line */ // noinspection SpellCheckingInspection
     `&key=${process.env.AWC_VISUAL_CROSSING_API_KEY}&include=fcst%2Cstats%2Chours%2Calerts%2Ccurrent`;
 
@@ -102,59 +115,45 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   }
 }
 
-// const iconNames = ['clear-day', 'clear-night', 'wind', 'fog', 'partly-cloudy-day', 'partly-cloudy-night',
-//                    'cloudy', 'rain', 'sleet', 'snow'];
-// const iconCodes = ['32', '31', '19', 'fog', '28', '27',
-//                    '26', '12', '05', '13'];
+/* eslint-disable quote-props */
+const iconMap: Record<string, string> = {
+  'clear-day': '32',
+  'clear-night': '31',
+  'cloudy': '26',
+  'fog': 'fog',
+  'partly-cloudy-day': '28',
+  'partly-cloudy-night': '27',
+  'rain': '12',
+  'showers-day': '45d',
+  'showers-night': '45',
+  'snow': '13',
+  'snow-showers-day': '41',
+  'snow-showers-night': '46',
+  'thunder-rain': '03',
+  'thunder-showers-day': '37',
+  'thunder-showers-night': '47',
+  'wind': '19'
+};
+/* eslint-enable quote-props */
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// function getIcon(conditions: CommonConditions, isMetric: boolean, ignorePrecipProbability = false): string {
-//   const iconIndex = iconNames.indexOf(conditions.icon);
-//   let icon = (iconIndex >= 0 ? iconCodes[iconIndex] : '');
-//   const summary = conditions.summary ? conditions.summary.toLowerCase() : '';
-//   let precipIntensity = conditions.precipIntensity ?? 0;
-//   let precipAccumulation = (conditions as DailyConditions).precipAccumulation || 0;
-//
-//   // Metric precipitation rate is in mm/hr, and needs to be converted to inches/hr.
-//   // Accumulated precipitation is in cm, and needs to be converted to inches.
-//   if (isMetric) {
-//     precipIntensity /= 25.4;
-//     precipAccumulation /= 2.54;
-//   }
-//
-//   // Sometimes the icon says "cloudy" or the like, but the numbers look more like rain or snow.
-//   // Change the icon if conditions look less favorable.
-//   if (!ignorePrecipProbability && iconIndex >= 0 && iconIndex <= 6 &&
-//       conditions.precipProbability >= 0.25 &&
-//       (precipIntensity >= 0.01 || (conditions.precipProbability >= 0.5 && precipIntensity > 0.0025) || precipAccumulation >= 0.25)) {
-//     if (conditions.precipType === 'snow')
-//       icon = '13';
-//     else if (conditions.precipType === 'sleet')
-//       icon = '05';
-//     else
-//       icon = '12';
-//   }
-//
-//   // Visual Crossing currently doesn't report thunderstorms as a condition by icon value. We'll try to make
-//   // up for that by looking at the summary.
-//   if (icon === '12' && (summary.indexOf('thunder') >= 0 || summary.indexOf('lightning') >= 0)) {
-//     icon = '38';
-//
-//     if (summary.indexOf('scattered') >= 0 || summary.indexOf('isolated') >= 0)
-//       icon = '37';
-//   }
-//   else if (icon === '12' && precipIntensity < 0.01)
-//     icon = '09';
-//
-//   if (conditions.cloudCover < 0.333) {
-//     if (icon === '28')
-//       icon = '30';
-//     else if (icon === '27')
-//       icon = '27';
-//   }
-//
-//   return icon;
-// }
+function getIcon(conditions: VCCommonConditions): string {
+  let icon = iconMap[conditions.icon] || '';
+  const precip = conditions.preciptype?.sort().join();
+
+  if (conditions.cloudcover < 33) {
+    if (icon === '28')
+      icon = '30';
+    else if (icon === '27')
+      icon = '27';
+  }
+
+  if (precip === 'rain,snow' && (icon === '12' || icon === '13'))
+    icon = '05';
+  else if (icon === '19' && precip === 'snow')
+    icon = '15';
+
+  return icon;
+}
 
 function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean): ForecastData {
   const forecast: ForecastData = { source: 'visual_x', isMetric };
@@ -164,8 +163,8 @@ function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean):
       forecast.currently = convertConditions(vcForecast.currentConditions, CurrentConditionsKeys, isMetric) as CurrentConditions;
     else if (key === 'days')
       forecast.daily = convertDaily(vcForecast.days, isMetric, forecast);
-    // else if (key === 'alerts')
-    //   forecast.alerts = convertAlerts(vcForecast.alerts);
+    else if (key === 'alerts')
+      forecast.alerts = convertAlerts(vcForecast.alerts);
     else if (ForecastDataKeys.includes(key))
       (forecast as any)[key] = (vcForecast as any)[key];
   });
@@ -193,8 +192,10 @@ function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean):
     }
   }
 
-  if (!forecast.currently || !forecast.daily) // TODO: Unavailable flags?
-    forecast.unavailable = true;
+  forecast.daily.summary = vcForecast.description;
+
+  // if (!forecast.currently || !forecast.daily) // TODO: Unavailable flags?
+  //   forecast.unavailable = true;
 
   return forecast;
 }
@@ -208,15 +209,26 @@ function convertConditions(vcConditions: VCCommonConditions | VCCurrentCondition
 
     if (key === 'hours' && root && root.hourly && root.hourly.length < 48)
       root.hourly.push(...convertHourly((vcConditions as VCDailyConditions).hours, isMetric));
-    // else if (key === 'icon')
-    //   conditions.icon = getIcon(vcConditions, isMetric);
-    else if (vcKey !== '-')
-      (conditions as any)[key] = (vcConditions as any)[vcKey];
+    // eslint-disable-next-line no-prototype-builtins
+    else if (vcKey !== '-' && vcConditions.hasOwnProperty(vcKey)) {
+      if (key === 'precipType')
+        conditions.precipType = vcConditions.preciptype?.sort().join();
+      else if (key === 'icon')
+        conditions.icon = getIcon(vcConditions);
+      else {
+        const value = (vcConditions as any)[vcKey];
+
+        (conditions as any)[key] = value;
+
+        if (isNumber(value) && /\b(cloudCover|humidity|precipProbability)\b/.test(key))
+          (conditions as any)[key] = value / 100;
+      }
+    }
   }
 
-  // if (!isMetric && conditions.pressure != null)
-  //   conditions.pressure = hpaToInHg(conditions.pressure);
-  //
+  if (!isMetric && conditions.pressure != null)
+    conditions.pressure = hpaToInHg(conditions.pressure);
+
   // if (isMetric && conditions.windSpeed != null) // Convert m/s to km/hour
   //   conditions.windSpeed *= 3.6;
 
@@ -224,7 +236,7 @@ function convertConditions(vcConditions: VCCommonConditions | VCCurrentCondition
 }
 
 function convertHourly(vcHourly: VCHourlyConditions[], isMetric: boolean): HourlyConditions[] {
-  let hourly: HourlyConditions[] = [];
+  const hourly: HourlyConditions[] = [];
   const now = Date.now() / 1000;
 
   for (const hour of vcHourly) {
@@ -234,9 +246,7 @@ function convertHourly(vcHourly: VCHourlyConditions[], isMetric: boolean): Hourl
       break;
   }
 
-  hourly = hourly.filter(hour => hour.time > now - 3600);
-
-  return hourly;
+  return hourly.filter(hour => hour.time > now - 3600);
 }
 
 function convertDaily(vcDaily: VCDailyConditions[], isMetric: boolean, root: ForecastData): DailySummaryConditions {
@@ -251,19 +261,23 @@ function convertDaily(vcDaily: VCDailyConditions[], isMetric: boolean, root: For
   return daily;
 }
 
-// function convertAlerts(vcAlerts: Alert[]): Alert[] {
-//   return vcAlerts.map(vcAlert => {
-//     const alert: Alert = {} as Alert;
-//
-//     Object.keys(vcAlert).forEach(key => {
-//       if (AlertKeys.includes(key))
-//         (alert as any)[key] = (vcAlert as any)[key];
-//
-//       if (key === 'description')
-//         alert.description = alert.description.replace(/ ((\* )?(WHAT|WHERE|WHEN|IMPACTS|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./g,
-//           '\n\n$1...').replace(/^\.{3,}/g, '');
-//     });
-//
-//     return alert;
-//   });
-// }
+function convertAlerts(vcAlerts: VCAlert[]): Alert[] {
+  return vcAlerts.map(vcAlert => {
+    const alert: Alert = {} as Alert;
+    const event = vcAlert.event + ',' + vcAlert.headline;
+
+    if (/\bwarning\b/i.test(event))
+      alert.severity = 'warning';
+    else if (/\bwatch\b/i.test(event))
+      alert.severity = 'watch';
+    else
+      alert.severity = 'advisory';
+
+    alert.title = vcAlert.headline;
+    alert.description = alertCleanUp(vcAlert.description);
+    alert.time = nullIfError(floor(new Date(vcAlert.onset).getTime() / 1000));
+    alert.expires = nullIfError(floor(new Date(vcAlert.ends).getTime() / 1000));
+
+    return alert;
+  });
+}

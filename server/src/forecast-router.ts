@@ -46,8 +46,8 @@ router.get('/', async (req: Request, res: Response) => {
   const forecasts = await Promise.all(promises);
   let usedIndex: number;
   let forecast = forecasts[usedIndex =
-    ({ darksky: visualCrossingIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
-  const darkSkyForecast = !(forecasts[visualCrossingIndex] instanceof Error) && forecasts[visualCrossingIndex] as ForecastData;
+    ({ vc: visualCrossingIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
+  const vcForecast = !(forecasts[visualCrossingIndex] instanceof Error) && forecasts[visualCrossingIndex] as ForecastData;
 
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)
     forecast = forecasts[usedIndex = replaceIndex];
@@ -80,9 +80,9 @@ router.get('/', async (req: Request, res: Response) => {
   else if (forecast.unavailable)
     res.status(500).send('Forecast unavailable');
   else {
-    // Even if Weather Underground is preferred, if Dark Sky is available, use its better summary.
-    if (forecast === forecasts[0] && forecasts.length > 1 && darkSkyForecast?.daily?.summary)
-      forecast.daily.summary = darkSkyForecast.daily.summary;
+    // Even if Weather Underground is preferred, if Visual Crossing is available use its better summary.
+    if (forecast === forecasts[0] && forecasts.length > 1 && vcForecast?.daily?.summary)
+      forecast.daily.summary = vcForecast.daily.summary;
 
     jsonOrJsonp(req, res, forecast);
   }
