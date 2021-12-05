@@ -149,7 +149,8 @@ process.on('unhandledRejection', err => console.error(`${timeStamp()} -- Unhandl
 
 createAndStartServer();
 
-const ntpServer = process.env.AWC_NTP_SERVERS || process.env.AWC_NTP_SERVER;
+// Convert old default (pool.ntp.org) to new default, otherwise use old AWC_NTP_SERVER if specified and if AWC_NTP_SERVERS is undefined.
+const ntpServer = process.env.AWC_NTP_SERVERS || (process.env.AWC_NTP_SERVER === 'pool.ntp.org' ? '' : process.env.AWC_NTP_SERVER);
 const ntpPoller = ntpServer ? new NtpPoolPoller(ntpServer.split(',').map(p => p.trim())) : new NtpPoolPoller();
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);

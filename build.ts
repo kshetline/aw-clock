@@ -83,7 +83,7 @@ const settings: Record<string, string> = {
   AWC_ALLOW_CORS: 'true',
   AWC_KIOSK_MODE: 'true',
   AWC_LOG_CACHE_ACTIVITY: 'false',
-  AWC_NTP_SERVER: 'pool.ntp.org',
+  AWC_NTP_SERVERS: '',
   AWC_PORT: '8080',
   AWC_PREFERRED_WS: 'wunderground',
   AWC_WIRED_TH_GPIO: '17',
@@ -318,9 +318,17 @@ if (treatAsRaspberryPi) {
       if (!clearAcu && oldSettings.AWC_WIRELESS_TH_GPIO)
         doAcu = true;
 
+      if (!settings.AWC_NTP_SERVERS) {
+        if (oldSettings.AWC_NTP_SERVER === 'pool.ntp.org')
+          settings.AWC_NTP_SERVERS = '';
+        else if (oldSettings.AWC_NTP_SERVER)
+          settings.AWC_NTP_SERVERS = oldSettings.AWC_NTP_SERVER;
+      }
+
       delete settings.AWC_HAS_INDOOR_SENSOR;
       delete settings.AWC_TH_SENSOR_GPIO;
       delete settings.AWC_WIRELESS_TEMP;
+      delete settings.AWC_NTP_SERVER;
 
       if (clearKiosk)
         doKiosk = false;
@@ -605,11 +613,16 @@ function portValidate(s: string): boolean {
   return true;
 }
 
+const DOMAIN_PATTERN =
+  /^(((?!-))(xn--|_)?[-a-z0-9]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i;
+
 function ntpValidate(s: string): boolean {
-  if (/^(((?!-))(xn--|_)?[-a-z0-9]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i.test(s))
+  const domains = s.split(',').map(d => d.trim());
+
+  if (s.trim() === '' || (domains.length > 0 && domains.findIndex(d => !DOMAIN_PATTERN.test(d)) < 0))
     return true;
 
-  console.log(chalk.redBright('NTP server must be a valid domain name (with optional port number)'));
+  console.log(chalk.redBright('NTP servers must be a valid domain names (with optional port numbers)'));
   return false;
 }
 
@@ -717,7 +730,7 @@ let questions = [
   { prompt: 'Perform npm install? (N option for debug only)', ask: true, yn: true, deflt: doNpmI ? 'Y' : 'N', validate: npmIValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port.', ask: true, validate: portValidate },
   { prompt: 'Allow user to reboot, shutdown, update, etc.?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
-  { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
+  { name: 'AWC_NTP_SERVERS', prompt: 'time servers (comma-separated domains, blank for defaults)', ask: true, validate: ntpValidate },
   {
     name: 'AWC_GOOGLE_API_KEY',
     prompt: 'Optional Google geocoding API key (for city names from\n      GPS coordinates).' +
