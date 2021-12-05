@@ -613,9 +613,7 @@ function ntpValidate(s: string): boolean {
   return false;
 }
 
-const NO_MORE_DARK_SKY = (Date.now() > Date.parse('2021-11-30'));
-
-if (NO_MORE_DARK_SKY && process.env.AWC_PREFERRED_WS === 'darksky')
+if (process.env.AWC_PREFERRED_WS === 'darksky')
   process.env.AWC_PREFERRED_WS = 'wunderground';
 
 function wsValidate(s: string): boolean | string {
@@ -623,28 +621,25 @@ function wsValidate(s: string): boolean | string {
     return 'wunderground';
   else if (/b/i.test(s))
     return 'weatherbit';
-  else if (!NO_MORE_DARK_SKY && /^d/i.test(s))
-    return 'darksky';
+  else if (/^v/i.test(s))
+    return 'visual_x';
 
-  if (NO_MORE_DARK_SKY)
-    console.log(chalk.redBright('Weather service must be either (w)underground, weather(b)it, or (d)arksky'));
-  else
-    console.log(chalk.redBright('Weather service must be either (w)underground, or weather(b)it'));
+  console.log(chalk.redBright('Weather service must be either (w)underground, weather(b)it, or (v)isual crossing'));
 
   return false;
 }
 
 function wsAfter(s: string): void {
   if (/^w[-b]*$/i.test(s)) {
-    console.log(chalk.paleBlue(`    Weather Underground chosen, but Weatherbit.io${NO_MORE_DARK_SKY ? '' : 'or Dark Sky'} can be used`));
+    console.log(chalk.paleBlue('    Weather Underground chosen, but Weatherbit.io or Visual Crossing can be used'));
     console.log(chalk.paleBlue('    as fallback weather services.'));
   }
   else if (/b/i.test(s)) {
     console.log(chalk.paleBlue('    Weatherbit.io chosen, but Weather Underground will be used'));
     console.log(chalk.paleBlue('    as a fallback weather service.'));
   }
-  else if (/^d/i.test(s)) {
-    console.log(chalk.paleBlue('    Dark Sky chosen, but Weather Underground will be used'));
+  else if (/^v/i.test(s)) {
+    console.log(chalk.paleBlue('    Visual Crossing chosen, but Weather Underground will be used'));
     console.log(chalk.paleBlue('    as a fallback weather service.'));
   }
 }
@@ -743,9 +738,9 @@ let questions = [
     ask: true
   },
   { // #7
-    name: 'AWC_DARK_SKY_API_KEY',
-    prompt: 'Optional Dark Sky weather API key.' +
-      (settings.AWC_DARK_SKY_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
+    name: 'AWC_VISUAL_CROSSING_API_KEY',
+    prompt: 'Optional Visual Crossing weather API key.' +
+      (settings.AWC_VISUAL_CROSSING_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
   { prompt: 'Use wired DHT temperature/humidity sensor?', ask: true, yn: true, deflt: doDht ? 'Y' : 'N', validate: dhtValidate },
@@ -759,11 +754,6 @@ let questions = [
     validate: finalActionValidate
   }
 ];
-
-if (NO_MORE_DARK_SKY) {
-  questions[5].prompt = 'preferred weather service, (w)underground, or weather(b)it';
-  questions.splice(7, 1);
-}
 
 if (doDedicated) {
   questions.splice(questions.length - 1, 0,

@@ -1,3 +1,9 @@
+## 2.12.0
+
+* Added optional Visual Crossing weather service.
+* Removed soon-to-be-discontinued Dark Sky weather service.
+* Added ability to use a pool of multiple NTP servers.
+
 ## 2.11.0
 
 * Updated design of 3-D printed stand.

@@ -4,7 +4,7 @@ import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
 import {
-  blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isIE, isObject,
+  blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isObject,
   last, processMillis, toNumber
 } from '@tubular/util';
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
@@ -89,11 +89,11 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
 
 export class Forecast {
   private readonly currentIcon: JQuery;
-  private readonly darkskyLogo: JQuery;
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
   private readonly settingsBtn: JQuery;
+  private readonly visualXLogo: JQuery;
   private readonly weatherbitLogo: JQuery;
   private readonly wundergroundLogo: JQuery;
   private readonly windPointer: JQuery;
@@ -148,7 +148,7 @@ export class Forecast {
       this.dayPrecipAccums[i] = $('#day' + i + '-precip-accum');
     }
 
-    this.darkskyLogo = $('#darksky-logo');
+    this.visualXLogo = $('#visual-x-logo');
     this.settingsBtn = $('#settings-btn');
     this.weatherbitLogo = $('#weatherbit-logo');
     this.wundergroundLogo = $('#wunderground-logo');
@@ -166,7 +166,7 @@ export class Forecast {
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
-    if (!isIE() && !isEdge())
+    if (!isEdge())
       this.weatherServer = appService.getApiServer();
     else
       this.weatherServer = '';
@@ -464,17 +464,17 @@ export class Forecast {
       this.appService.updateCurrentTemp({ forecastStale: false });
       this.displayForecast(forecastData);
 
-      const ds = (forecastData.source === 'darksky');
+      const vc = (forecastData.source === 'visual_x');
       const wb = (forecastData.source === 'weatherbit');
       const wu = (forecastData.source === 'wunderground');
       const buttonWidth = this.settingsBtn.width();
-      const logoWidth = (ds ? 118 : (wb || wu ? 183 : 8)) + 20;
+      const logoWidth = (vc ? 206 : (wb || wu ? 183 : 8)) + 20;
 
-      this.darkskyLogo.css('display', ds ? 'flex' : 'none');
+      this.visualXLogo.css('display', vc ? 'flex' : 'none');
       this.weatherbitLogo.css('display', wb ? 'flex' : 'none');
       this.wundergroundLogo.css('display', wu ? 'flex' : 'none');
       this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
-      this.settingsBtn.css('margin-right', ds || wu || wb ? 0 : 8);
+      this.settingsBtn.css('margin-right', vc || wu || wb ? 0 : 8);
 
       this.appService.forecastHasBeenUpdated();
     }).catch(error => {

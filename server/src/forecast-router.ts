@@ -94,7 +94,7 @@ router.get('/', async (req: Request, res: Response) => {
 
       if (conditions) {
         forecast.currently.icon = conditions.icon;
-        forecast.currently.precipType = '';
+        forecast.currently.precipType = conditions.precipType;
         delete forecast.currently.precipTypeFromHour;
       }
     }
