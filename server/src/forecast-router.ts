@@ -1,11 +1,11 @@
-import { requestJson } from 'by-request';
 import { getForecast as getVcForecast } from './visual-crossing-forecast';
 import { Request, Response, Router } from 'express';
 import { filterError, jsonOrJsonp, noCache, timeStamp } from './awcs-util';
-import { ForecastData } from './shared-types';
+import { CurrentConditions, ForecastData } from './shared-types';
 import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
 import { toBoolean, toNumber } from '@tubular/util';
+import { requestJson } from './request-cache';
 
 export const router = Router();
 
@@ -64,11 +64,12 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   if (forecastBad(forecast) && !process.env.AWC_WEATHERBIT_API_KEY) {
-    const url = `https://weather.shetline.com/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
+    const host = process.env.AWC_PROXY_HOST || 'https://weather.shetline.com';
+    const url = `${host}/wbproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
       (req.query.id ? `&id=${req.query.id}` : '');
 
     try {
-      forecast = (await requestJson(url, { timeout: 60000 })) as ForecastData;
+      forecast = (await requestJson(240, url, { timeout: 60000 })) as ForecastData;
     }
     catch (e) {
       forecast = e;
@@ -80,6 +81,24 @@ router.get('/', async (req: Request, res: Response) => {
   else if (forecast.unavailable)
     res.status(500).send('Forecast unavailable');
   else {
+    if (forecast.currently.precipTypeFromHour) {
+      const host = process.env.AWC_PROXY_HOST || 'https://weather.shetline.com';
+      const url = `${host}/owmproxy?lat=${req.query.lat}&lon=${req.query.lon}&du=${req.query.du || 'f'}` +
+        (req.query.id ? `&id=${req.query.id}` : '');
+      let conditions: CurrentConditions;
+
+      try {
+        conditions = await requestJson(240, url, { timeout: 60000 });
+      }
+      catch {}
+
+      if (conditions) {
+        forecast.currently.icon = conditions.icon;
+        forecast.currently.precipType = '';
+        delete forecast.currently.precipTypeFromHour;
+      }
+    }
+
     // Even if Weather Underground is preferred, if Visual Crossing is available use its better summary.
     if (forecast === forecasts[0] && forecasts.length > 1 && vcForecast?.daily?.summary)
       forecast.daily.summary = vcForecast.daily.summary;

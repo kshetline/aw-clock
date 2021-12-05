@@ -71,6 +71,13 @@ try {
 }
 catch {}
 
+let owmProxyForecast: (req: Request) => Promise<ForecastData | Error>;
+
+try {
+  owmProxyForecast = require('./aw-clock-private/open-weather-map-proxy').getCurrentConditions;
+}
+catch {}
+
 // Convert deprecated environment variables
 if (!process.env.AWC_WIRED_TH_GPIO &&
     toBoolean(process.env.AWC_HAS_INDOOR_SENSOR) && process.env.AWC_TH_SENSOR_GPIO)
@@ -283,6 +290,20 @@ function getApp(): Express {
       req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(5);
 
       const response = await wbProxyForecast(req);
+
+      if (response instanceof Error)
+        res.status(response.message.startsWith('Maximum API calls') ? 400 : 500).send(response.message);
+      else
+        jsonOrJsonp(req, res, response);
+    });
+  }
+
+  if (owmProxyForecast) {
+    theApp.get('/owmproxy', async (req, res) => {
+      req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(5);
+      req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(5);
+
+      const response = await owmProxyForecast(req);
 
       if (response instanceof Error)
         res.status(response.message.startsWith('Maximum API calls') ? 400 : 500).send(response.message);

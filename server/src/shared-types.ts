@@ -25,6 +25,7 @@ export interface CommonConditions {
   precipIntensityMax?: number;    // In inch/hour or cm/hour
   precipProbability?: number;     // 0-1
   precipType?: string;            // 'mixed', 'rain', 'sleet', 'snow'
+  precipTypeFromHour?: boolean;
   pressure?: number;              // inHg or Hectopascals (millibars), at sea level
   pressureTrend?: PressureTrend,
   windDirection?: number;         // 0-360 degrees, N = 0. E = 90, S = 180, W = 270
