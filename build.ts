@@ -626,6 +626,7 @@ function ntpValidate(s: string): boolean {
   return false;
 }
 
+// Change out-of-date preference to default.
 if (process.env.AWC_PREFERRED_WS === 'darksky')
   process.env.AWC_PREFERRED_WS = 'wunderground';
 
@@ -739,7 +740,7 @@ let questions = [
   },
   { // #5
     name: 'AWC_PREFERRED_WS',
-    prompt: 'preferred weather service, (w)underground, weather(b)it,\n      or (d)arksky).',
+    prompt: 'preferred weather service, (w)underground, weather(b)it,\n      or (v)isual crossing).',
     ask: true,
     validate: wsValidate,
     after: wsAfter
