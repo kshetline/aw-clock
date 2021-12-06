@@ -1,6 +1,6 @@
 ## Astronomy/Weather Clock
 
-![raspberry pi logo](https://shetline.com/readme/aw-clock/2.11.0/rpi_logo.svg)
+![raspberry pi logo](https://shetline.com/readme/aw-clock/2.12.0/rpi_logo.svg)
 
 This project is designed to create a desktop clock which provides weather and astronomical information. While primarily designed to run on a Raspberry Pi, the code generates a Node.js server and client web app which can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors. GPS support is also primarily aimed at the Raspberry Pi, but might work on other Linux variants if similarly configured.
 
@@ -12,11 +12,11 @@ On a display which is narrower than a 16-by-9 aspect ratio, four forecast days c
 
 *&#42;A touchscreen or mouse is required to display the last two or three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, or to switch from hourly temperatures to hourly probability-of-precipitation.*
 
-![finished project](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-12.jpg)
+![finished project](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-12.jpg)
 
-![app screenshot](https://shetline.com/readme/aw-clock/2.11.0/awc_screenshot.png)
+![app screenshot](https://shetline.com/readme/aw-clock/2.12.0/awc_screenshot.png)
 
-![app dst animation](https://shetline.com/readme/aw-clock/2.11.0/spring-forward-480.gif)
+![app dst animation](https://shetline.com/readme/aw-clock/2.12.0/spring-forward-480.gif)
 
 <br/><br/>
 
@@ -54,11 +54,13 @@ Having a back-up weather data source is still, therefore, a good idea. For that 
 
 3. There’s a limited capability in this software to fall back on using my personal RapidAPI/Weatherbit.io account, but depending on how much traffic I get, there’s no guarantee that this back-up will always be there.
 
+_Note: The Dark Sky weather API has been discontinued. Support for Dark Sky in this application has been removed._
+
 ### Time keeping
 
 By default, this application uses GPS-synced system time, if available, or `pool.ntp.org` as an NTP time server (keeping its own time via NTP, rather than using the system clock). You can configure the use of a different time server, however, you should not choose a Google or Facebook time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
 
-![Hypothetical leap second](https://shetline.com/readme/aw-clock/2.11.0/moment_of_leap_second.jpg)
+![Hypothetical leap second](https://shetline.com/readme/aw-clock/2.12.0/moment_of_leap_second.jpg)
 
 _This image is hypothetical — the pictured moment in time is not guaranteed to be an actual leap second. Video here: <https://shetline.com/video/leap_second_display.mp4>_
 
@@ -68,7 +70,7 @@ As soon as you’ve got the Astronomy/Weather Clock up and running the first tim
 
 Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you’re using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
 
-![app screenshot](https://shetline.com/readme/aw-clock/2.11.0/awc_dlog.png)
+![app screenshot](https://shetline.com/readme/aw-clock/2.12.0/awc_dlog.png)
 
 To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
 
@@ -80,7 +82,7 @@ With your Raspberry Pi shut down and disconnected from power, connect the DHT22/
 
 *&#42;This default was GPIO 4 (physical pin 7) before version 2.4.0, but the Adafruit GPS HAT is pre-wired to use that pin, hence the new default.*
 
-![Picture of wiring to GPS HAT](https://shetline.com/readme/aw-clock/2.11.0/rpi_with_gps_hat.jpg)
+![Picture of wiring to GPS HAT](https://shetline.com/readme/aw-clock/2.12.0/rpi_with_gps_hat.jpg)
 
 Also for the Raspberry Pi you have the option to provide wireless indoor conditions and outdoor weather data using [433 MHz Acu Rite 06002M wireless temperature and humidity sensors](https://www.amazon.com/gp/product/B00T0K8NXC/) paired with a [433 MHz receiver module](https://www.amazon.com/gp/product/B00HEDRHG6/).
 
@@ -105,7 +107,7 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 ### Wind speed
 
-<img src="https://shetline.com/readme/aw-clock/2.11.0/wind_barbs.png" width=820 height=55 alt="wind barbs">
+<img src="https://shetline.com/readme/aw-clock/2.12.0/wind_barbs.png" width=820 height=55 alt="wind barbs">
 
 Wind speed is displayed using *wind barbs*. When using imperial units, the wind barbs represent wind speed in knots, rounded to the nearest multiple of 5 knots, up to a maximum of 100 knots. In metric mode the wind barbs, by default, represent wind speed in meters per second, in increments of 2.5 m/s (in the diagram above, divide the captions by 2 for m/s).
 
@@ -138,7 +140,7 @@ If an arc becomes a full circle, that means the corresponding planet on that tra
 
 The 3D model for this stand is provided by the project file `raspberry_pi_setup/monitor_stand.stl`. Below is how that model came out when printed using black ABS, 20% infill, at a cost of about $28 USD.
 
-![3D stand rear view](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-01.jpg)
+![3D stand rear view](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-01.jpg)
 
 This is my second design of this stand, after making a few improvements from my first design. I made this version shorter, improved wire routing, and added an access hole where (using tweezers) it’s possible to access the SD card slot without disassembling the clock.
 
@@ -146,7 +148,7 @@ This is my second design of this stand, after making a few improvements from my 
 
 #### Front view
 
-![3D stand front view](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-02.jpg)
+![3D stand front view](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-02.jpg)
 
 <br>
 
@@ -154,7 +156,7 @@ This is my second design of this stand, after making a few improvements from my 
 
 The side panel has a place to attach a quarter-wave 433 MHz antenna, a clip to hold a 433 MHz receiving module, a hole for a female SMA coaxial connector for GPS, and (on the reverse side) a mounting position for a DHT22/AM2302 temperature/humidity sensor.
 
-![3D stand side panel](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-03.jpg)
+![3D stand side panel](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-03.jpg)
 
 <br>
 
@@ -162,7 +164,7 @@ The side panel has a place to attach a quarter-wave 433 MHz antenna, a clip to h
 
 This is the original stand that came with the 2560x1600 ELECROW 10.1" touchscreen monitor. It’s not a bad stand in general, but, with the Raspberry Pi attached to the back of the monitor, the cables and wires were an awkward fit. The stand had to be skewed off-center quite a bit for it to work at all.
 
-![Original monitor stand](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-04.jpg)
+![Original monitor stand](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-04.jpg)
 
 <br>
 
@@ -170,13 +172,13 @@ This is the original stand that came with the 2560x1600 ELECROW 10.1" touchscree
 
 The stand is attached using 4 M3 x 10 mm wafer-head machine screws. Please note that M4 is the typical size screw for a VESA mount of this size (75 mm square spacing), so it’s a little unusual M3s were needed instead.
 
-![Stand attached to monitor](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-05.jpg)
+![Stand attached to monitor](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-05.jpg)
 
 <br>
 
 #### Stand attached to monitor, side view
 
-![Stand attached to monitor, side view](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-06.jpg)
+![Stand attached to monitor, side view](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-06.jpg)
 
 <br>
 
@@ -186,8 +188,8 @@ The long arm that reaches out from the side panel is designed so the temperature
 
 A small piece of non-conductive foam wedged behind the RF module helps keep the module in place.
 
-![Side panel with components attached](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-07.jpg)<br>
-![Side panel with components attached, temp/humidity sensor](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-07b.jpg)
+![Side panel with components attached](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-07.jpg)<br>
+![Side panel with components attached, temp/humidity sensor](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-07b.jpg)
 
 <br>
 
@@ -195,13 +197,13 @@ A small piece of non-conductive foam wedged behind the RF module helps keep the 
 
 I was a bit uncertain how well machine screws would work with the stand-offs that I’d designed, since I wanted them to function like self-tapping screws. As it turned out, the four M2.5 x 6 mm pan-head machine screws fit quite nicely and snugly, without being difficult to turn. If the Pi were to be repeatedly removed and reattached, however, this design might not be durable enough. For my current purposes, it’s just fine.
 
-![Raspberry Pi Model 4 attached to stand-offs](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-08.jpg)
+![Raspberry Pi Model 4 attached to stand-offs](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-08.jpg)
 
 <br>
 
 #### GPS HAT added, and components wired together
 
-![GPS HAT added, and components wired together](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-09.jpg)
+![GPS HAT added, and components wired together](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-09.jpg)
 
 <br>
 
@@ -209,19 +211,19 @@ I was a bit uncertain how well machine screws would work with the stand-offs tha
 
 I was able to find a [single, short HDMI cable](https://www.amazon.com/gp/product/B07BLX88H4/) with a 90°-down micro HDMI connector on one end. This is great for use with the Pi 4, replacing the two separate cables plugged together I started out with when I got the 4: a short dual HDMI male cable combined with an HDMI-to-micro-HDMI adapter cable. I added a full-sized HDMI right-angle adapter as well to improve cable management.
 
-I couldn’t find a right-angle USB-C cable for hooking up the touchscreen, but I did find a [right-angle adapter](https://www.amazon.com/gp/product/B07JK1G6W2/) and a short [male USB C to male USB A 2.0 cable](https://www.amazon.com/gp/product/B012V56D2A/).
+I couldn’t find a right-angle USB-C cable for hooking up the touchscreen, but I did find a [right-angle adapter](https://www.amazon.com/gp/product/B07JK1G6W2/) and a short [male USB-C to male USB A 2.0 cable](https://www.amazon.com/gp/product/B012V56D2A/).
 
 The odd reddish-brown object at the end of the USB cable is an adapter that blocks power flow, so the USB connection is a data-only connection. This was needed to because the monitor otherwise supplies power to the Raspberry PI over the USB connector.
 
 While this would actually be a good thing if it meant I could hook up the clock with only one power cable, not two, the power from the monitor only keeps the Raspberry Pi running *after* the Pi has been separately powered up using its own power supply. The result is no simplification of the power connections, but merely making it harder to shut the clock down without adding this power isolating adapter.
 
-![Monitor connections for HDMI video and USB touchscreen](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-10.jpg)
+![Monitor connections for HDMI video and USB touchscreen](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-10.jpg)
 
 <br>
 
 #### Rearview of completed clock project
 
-![finished project](https://shetline.com/readme/aw-clock/2.11.0/aw-clock-w-stand-11.jpg)
+![finished project](https://shetline.com/readme/aw-clock/2.12.0/aw-clock-w-stand-11.jpg)
 
 <br>
 
