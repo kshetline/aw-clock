@@ -44,9 +44,9 @@ router.get('/', async (req: Request, res: Response) => {
     visualCrossingIndex = 0;
 
   const forecasts = await Promise.all(promises);
+  const pref = (req.query.pws || process.env.AWC_PREFERRED_WS || '').toString().substr(0, 2);
   let usedIndex: number;
-  let forecast = forecasts[usedIndex =
-    ({ vc: visualCrossingIndex, weatherbit: weatherBitIndex } as any)[process.env.AWC_PREFERRED_WS] ?? 0];
+  let forecast = forecasts[usedIndex = ({ vc: visualCrossingIndex, we: weatherBitIndex } as any)[pref] ?? 0];
   const vcForecast = !(forecasts[visualCrossingIndex] instanceof Error) && forecasts[visualCrossingIndex] as ForecastData;
 
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)

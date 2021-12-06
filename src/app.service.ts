@@ -4,12 +4,13 @@ import { TimeInfo } from '../server/src/shared-types';
 
 export interface AppService {
   forecastHasBeenUpdated(): void;
+  getApiServer(): string;
   getTimeFormat(): TimeFormat;
   getCurrentTime(bias?: number): number;
   getIndoorOption(): string;
   getOutdoorOption(): string;
   getTimeInfo(bias?: number): TimeInfo;
-  getApiServer(): string;
+  getWeatherOption(): string;
   isTimeAccelerated(): boolean;
   proxySensorUpdate(): Promise<boolean>;
   resetGpsState(): void;

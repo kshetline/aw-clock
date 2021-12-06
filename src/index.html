@@ -398,7 +398,6 @@
             <option value="AC">Wireless channels A &amp; C</option>
             <option value="BC">Wireless channels B &amp; C</option>
           </select>
-          <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
           <label for="dimming">Dimming:</label>
           <span class="colspan">
             <select id="dimming">
@@ -448,6 +447,12 @@
               <option value="V">Hourly forecast vertical</option>
               <option value="N">No hourly forecast</option>
             </select>
+          </span>
+          <span class="colspan-full">
+            <select id="weather-service-option" disabled>
+              <option value="">Default weather service</option>
+            </select>
+            <label for="user-id">User ID:</label><input id="user-id" type="text" size="12"><span>(optional)</span>
           </span>
         </div>
         <div class="search-section">

@@ -656,6 +656,9 @@ export class Forecast {
     if (userId)
       url += '&id=' + encodeURI(userId);
 
+    if (this.appService.getWeatherOption())
+      url += '&pws=' + this.appService.getWeatherOption();
+
     const options: JsonOptions = {};
     const data = await getJson<ForecastData>(url, options);
     const cacheControl = options.xhr.getResponseHeader('cache-control');

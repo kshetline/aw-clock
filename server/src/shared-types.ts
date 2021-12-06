@@ -168,4 +168,5 @@ export interface AwcDefaults {
   latitude?: number;
   longitude?: number;
   city?: string;
+  services?: string;
 }

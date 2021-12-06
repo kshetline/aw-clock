@@ -335,8 +335,8 @@ function getApp(): Express {
       ip,
       allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
       latestVersion,
-      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) &&
-        compareVersions.compare(latestVersion, AWC_VERSION, '>')
+      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && compareVersions.compare(latestVersion, AWC_VERSION, '>'),
+      services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : '')
     };
 
     if (gps) {
