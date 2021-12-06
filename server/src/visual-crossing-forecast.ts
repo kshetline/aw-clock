@@ -9,7 +9,6 @@ import {
 import { alertCleanUp, checkForecastIntegrity, filterError, hpaToInHg } from './awcs-util';
 import { clone, isNumber, push } from '@tubular/util';
 import { floor } from '@tubular/math';
-import { getCurrentConditions } from './aw-clock-private/open-weather-map-proxy';
 
 interface VCAlert {
   event: string;
@@ -93,8 +92,6 @@ function nullIfError(time: number): number | null {
 }
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
-  await getCurrentConditions(req);
-
   const isMetric = (req.query.du === 'c');
   const url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline' +
     `/${req.query.lat}%2C${req.query.lon}?unitGroup=${isMetric ? 'metric' : 'us'}&lang=en&iconSet=icons2` +
