@@ -44,6 +44,7 @@ export class Settings {
   onscreenKB = false;
   background = '#191970';
   clockFace = '#000000';
+  service = '';
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
@@ -68,6 +69,7 @@ export class Settings {
     this.onscreenKB = toBoolean(Cookies.get('oskb'), false);
     this.background = Cookies.get('background') || defaultSettings.background;
     this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
+    this.service = Cookies.get('service') || defaultSettings.service;
 
     const body = $('body');
 
@@ -96,6 +98,7 @@ export class Settings {
     Cookies.set('oskb', this.onscreenKB.toString(), expiration);
     Cookies.set('background', this.background, expiration);
     Cookies.set('clock_face', this.clockFace, expiration);
+    Cookies.set('service', this.service, expiration);
 
     const body = $('body');
 
@@ -104,7 +107,8 @@ export class Settings {
   }
 
   public requiresWeatherReload(oldSettings: Settings): boolean {
-    return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude;
+    return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude ||
+      this.service !== oldSettings.service;
   }
 }
 

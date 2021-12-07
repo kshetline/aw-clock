@@ -24,4 +24,5 @@ export interface NtpData {
   address?: string; // from socket
   roundTripTime?: number; // derived
   sendDelay?: number; // derived
+  leapExcess?: number; // extra data to track progress of leap second while txTm holds at ...:59.999 seconds
 }

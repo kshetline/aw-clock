@@ -247,6 +247,10 @@ class AwClockApp implements AppService {
       return ntpPoller.getTimeInfo(bias);
   }
 
+  getWeatherOption(): string {
+    return this.settings.service;
+  }
+
   proxySensorUpdate(): Promise<boolean> {
     if (this.proxyStatus instanceof Promise)
       return this.proxyStatus;

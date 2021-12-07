@@ -199,9 +199,25 @@ export class Ntp {
     response.roundTripTime = processMillis() - this.pollProcTime;
     response.sendDelay = response.rxTm - this.pollTime;
 
-    if (this.debugLeap && new Date(response.txTm).getUTCDate() === 1 && response.txTm % 86_400_000 >= 1000) {
-      this.debugOffset -= this.debugLeap * 1000;
+    if (this.debugLeap > 0 && new Date(response.txTm).getUTCDate() === 1) {
+      const millis = response.txTm % 86_400_000;
+
+      if (millis >= 1000) {
+        this.debugOffset -= 1000;
+        this.debugLeap = response.li = 0;
+      }
+      else {
+        response.li = 0;
+        response.leapExcess = millis + 1;
+        response.rxTm -= response.leapExcess;
+        response.txTm -= response.leapExcess;
+      }
+    }
+    else if (this.debugLeap < 0 && new Date(response.txTm + 1000).getUTCDate() === 1) {
+      this.debugOffset += 1000;
       this.debugLeap = response.li = 0;
+      response.rxTm += 1000;
+      response.txTm += 1000;
     }
 
     if (this.timeCallback)

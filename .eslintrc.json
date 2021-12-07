@@ -14,7 +14,7 @@
   },
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2018,
+    "ecmaVersion": 2020,
     "sourceType": "module"
   },
   "plugins": [
@@ -56,21 +56,31 @@
         "ignoreComments": true,
         "ignoredNodes": [
           "ClassProperty[value]",
-          "NewExpression[arguments] :expression *"
+          "NewExpression[arguments] :expression *",
+          "TSUnionType"
         ],
         "ObjectExpression": "first",
         "SwitchCase": 1
       }
     ],
+    "guard-for-in": "error",
     "key-spacing": "off",
     "multiline-ternary": "off",
+    "node/no-callback-literal": "off",
     "no-control-regex": "off",
     "no-empty": "off",
     "no-labels": "off",
     "no-mixed-operators": "off",
-    "no-multi-spaces": "off",
+    "no-multi-spaces": ["error", {
+      "ignoreEOLComments": true,
+      "exceptions": {
+        "Property": true,
+        "VariableDeclarator": true
+      }
+    }],
     "no-new": "off",
     "no-return-assign": "off",
+    "no-unexpected-multiline": "off",
     "no-unused-expressions": "off",
     "no-useless-constructor": "off",
     "@typescript-eslint/no-useless-constructor": "error",
@@ -85,6 +95,8 @@
         "vars": "all"
       }
     ],
+    "object-curly-newline": "off",
+    "object-property-newline": "off",
     "one-var": "off",
     "operator-linebreak": "off",
     "semi": [

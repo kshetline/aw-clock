@@ -31,8 +31,6 @@ import * as http from 'http';
 import os from 'os';
 import { asLines, isString, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
-import { DEFAULT_NTP_SERVER } from './ntp';
-import { NtpPoller } from './ntp-poller';
 import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
@@ -40,6 +38,7 @@ import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
 import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
+import { NtpPoolPoller } from './ntp-pool-poller';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -69,6 +68,13 @@ let wbProxyForecast: (req: Request) => Promise<ForecastData | Error>;
 
 try {
   wbProxyForecast = require('./aw-clock-private/weatherbit-proxy').getForecast;
+}
+catch {}
+
+let owmProxyForecast: (req: Request) => Promise<ForecastData | Error>;
+
+try {
+  owmProxyForecast = require('./aw-clock-private/open-weather-map-proxy').getCurrentConditions;
 }
 catch {}
 
@@ -143,8 +149,9 @@ process.on('unhandledRejection', err => console.error(`${timeStamp()} -- Unhandl
 
 createAndStartServer();
 
-const ntpServer = process.env.AWC_NTP_SERVER || DEFAULT_NTP_SERVER;
-const ntpPoller = new NtpPoller(ntpServer);
+// Convert old default (pool.ntp.org) to new default, otherwise use old AWC_NTP_SERVER if specified and if AWC_NTP_SERVERS is undefined.
+const ntpServer = process.env.AWC_NTP_SERVERS || (process.env.AWC_NTP_SERVER === 'pool.ntp.org' ? '' : process.env.AWC_NTP_SERVER);
+const ntpPoller = ntpServer ? new NtpPoolPoller(ntpServer.split(',').map(p => p.trim())) : new NtpPoolPoller();
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
 const leapSecondsUrls = process.env.AWC_LEAP_SECONDS_URL || DEFAULT_LEAP_SECOND_URLS;
@@ -244,7 +251,7 @@ function shutdown(signal?: string): void {
   if (gps)
     gps.close();
 
-  NtpPoller.closeAll();
+  NtpPoolPoller.closeAll();
 }
 
 function getApp(): Express {
@@ -292,6 +299,20 @@ function getApp(): Express {
     });
   }
 
+  if (owmProxyForecast) {
+    theApp.get('/owmproxy', async (req, res) => {
+      req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(5);
+      req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(5);
+
+      const response = await owmProxyForecast(req);
+
+      if (response instanceof Error)
+        res.status(response.message.startsWith('Maximum API calls') ? 400 : 500).send(response.message);
+      else
+        jsonOrJsonp(req, res, response);
+    });
+  }
+
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
 
@@ -314,8 +335,8 @@ function getApp(): Express {
       ip,
       allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
       latestVersion,
-      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) &&
-        compareVersions.compare(latestVersion, AWC_VERSION, '>')
+      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && compareVersions.compare(latestVersion, AWC_VERSION, '>'),
+      services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : '')
     };
 
     if (gps) {

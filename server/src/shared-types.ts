@@ -4,10 +4,11 @@ const { version } = require('../package.json');
 // the allowed keys for an interface, so for now, I'll have to settle for repeating things.
 
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
-                                     'precipProbability', 'precipType', 'pressure', 'pressureTrend',
+                                     'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
                                      'windDirection', 'windGust', 'windPhrase', 'windSpeed'];
 
 export const AWC_VERSION = version;
+export const BACK_IN_TIME_THRESHOLD = 4000;
 
 // The following interfaces represent common interfaces to which all weather services will be
 // translated, but most closely coincides with Weather Underground data, especially the icon code.
@@ -24,18 +25,19 @@ export interface CommonConditions {
   precipIntensityMax?: number;    // In inch/hour or cm/hour
   precipProbability?: number;     // 0-1
   precipType?: string;            // 'mixed', 'rain', 'sleet', 'snow'
+  precipTypeFromHour?: boolean;
   pressure?: number;              // inHg or Hectopascals (millibars), at sea level
   pressureTrend?: PressureTrend,
   windDirection?: number;         // 0-360 degrees, N = 0. E = 90, S = 180, W = 270
+  temperature?: number;           // °C or °F
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
 }
 
-export const CurrentConditionsKeys = [...CommonConditionsKeys, 'temperature', 'feelsLikeTemperature'];
+export const CurrentConditionsKeys = [...CommonConditionsKeys, 'feelsLikeTemperature'];
 
 export interface CurrentConditions extends CommonConditions {
-  temperature: number;          // °C or °F
   feelsLikeTemperature: number; // °C or °F
 }
 
@@ -166,4 +168,5 @@ export interface AwcDefaults {
   latitude?: number;
   longitude?: number;
   city?: string;
+  services?: string;
 }

@@ -21,6 +21,7 @@ export class NtpPoller extends TimePoller {
 
     [this.server, this.port] = splitIpAndPort(server, port);
     this.ntp = new Ntp(this.server, this.port);
+    NtpPoller.allOpenPollers.add(this);
     this.reset();
   }
 
@@ -35,14 +36,14 @@ export class NtpPoller extends TimePoller {
     if (this.ntp)
       this.ntp.setDebugTime(baseTime, leap);
 
-    this.reset(isNumber(baseTime) ? baseTime : baseTime.getTime());
+    this.reset(isNumber(baseTime) ? baseTime : baseTime.getTime(), leap);
   }
 
-  protected getNtpData(requestTime: number): Promise<NtpData> {
+  getNtpData(requestTime: number): Promise<NtpData> {
     return this.ntp.getTime(requestTime);
   }
 
-  protected canPoll(): boolean {
+  canPoll(): boolean {
     return !!this.ntp;
   }
 

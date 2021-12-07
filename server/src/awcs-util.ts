@@ -156,3 +156,8 @@ export function filterError(error: any): string {
 
   return error && error.replace(/^\s*Error:\s*/i, '');
 }
+
+export function alertCleanUp(alertText: string): string {
+  return alertText.replace(/ ((\* )?(WHAT|WHERE|WHEN|IMPACTS|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./g,
+      '\n\n$1...').replace(/^\.{3,}/g, '');
+}

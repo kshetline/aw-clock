@@ -1,6 +1,6 @@
 {
   "name": "aw-clock-sass",
-  "version": "2.11.2",
+  "version": "2.12.0",
   "description": "SASS builder for aw-clock",
   "keywords": [
     "sass"

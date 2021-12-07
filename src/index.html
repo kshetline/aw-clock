@@ -341,10 +341,10 @@
     <div id="marquee-outer-wrapper"><div
       id="marquee-wrapper"><div class="marquee-spacer">&nbsp;</div><div id="marquee"></div></div></div>
     <div class="weather-logo">
-      <span id="darksky-logo" style="display: none">
-        <a href="https://darksky.net/poweredby/" target="_blank">
+      <span id="visual-x-logo" style="display: none">
+        <a href="https://www.visualcrossing.com/" target="_blank">
         <!--suppress CheckImageSize -->
-        <img src="assets/dark-sky-logo.png" width="125" height="50" alt="Powered by Dark Sky"></a>
+        <img src="assets/visual-x-logo.png" width="213" height="50" alt="Powered by Visual Crossing"></a>
       </span>
 
       <span id="wunderground-logo">
@@ -398,7 +398,6 @@
             <option value="AC">Wireless channels A &amp; C</option>
             <option value="BC">Wireless channels B &amp; C</option>
           </select>
-          <label for="user-id">User ID:</label><input id="user-id" type="text" size="38"><span>(optional)</span>
           <label for="dimming">Dimming:</label>
           <span class="colspan">
             <select id="dimming">
@@ -448,6 +447,12 @@
               <option value="V">Hourly forecast vertical</option>
               <option value="N">No hourly forecast</option>
             </select>
+          </span>
+          <span class="colspan-full">
+            <select id="weather-service-option" disabled>
+              <option value="">Default weather service</option>
+            </select>
+            <label for="user-id">User ID:</label><input id="user-id" type="text" size="12"><span>(optional)</span>
           </span>
         </div>
         <div class="search-section">
