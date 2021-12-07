@@ -468,7 +468,7 @@ export class Forecast {
       const wb = (forecastData.source === 'weatherbit');
       const wu = (forecastData.source === 'wunderground');
       const buttonWidth = this.settingsBtn.width();
-      const logoWidth = (vc ? 206 : (wb || wu ? 183 : 8)) + 20;
+      const logoWidth = (vc ? 212 : (wb || wu ? 183 : 8)) + 20;
 
       this.visualXLogo.css('display', vc ? 'flex' : 'none');
       this.weatherbitLogo.css('display', wb ? 'flex' : 'none');
