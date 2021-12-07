@@ -300,7 +300,7 @@ Don’t forget to run `sudo update-rc.d weatherService defaults` after editing t
 
 ### Installation details
 
-For reference, here’s a break down of the steps performed by a full installation:
+For reference, here’s a breakdown of the steps performed by a full installation:
 
 1. Node.js is installed if not present, or updated if earlier than version 14. Switch to Node 14 using nvm (Node Version Manager) may occur if nvm is installed.
 1. If Node.js is greater than version 14, nvm will be used to step down to version 14, installing nvm if necessary to do so.
