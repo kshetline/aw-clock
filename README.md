@@ -58,11 +58,11 @@ _Note: The Dark Sky weather API has been discontinued. Support for Dark Sky in t
 
 ### Time keeping
 
-By default, this application uses GPS-synced system time, if available, or `pool.ntp.org` as an NTP time server (keeping its own time via NTP, rather than using the system clock). You can configure the use of a different time server, however, you should not choose a Google or Facebook time server, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
+By default, this application uses GPS-synced system time, if available, or uses a default pool of NTP time servers (keeping its own time via NTP, rather than using the system clock). You can configure the use of different time servers, however, you should not choose Google or Facebook time servers, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
 
 ![Hypothetical leap second](https://shetline.com/readme/aw-clock/2.12.0/moment_of_leap_second.jpg)
 
-_This image is hypothetical — the pictured moment in time is not guaranteed to be an actual leap second. Video here: <https://shetline.com/video/leap_second_display.mp4>_
+_This image is hypothetical — the pictured moment in time not an actual leap second. Video here: <https://shetline.com/video/leap_second_display.mp4>_
 
 ### Web browser client options
 
@@ -102,7 +102,7 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
 * Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation and wind speed. Tap/click again to toggle back to weather icons and temperatures. *After one minute, the display reverts to weather icons and hourly temperatures.*
-* Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for them to scroll by.
+* Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for it to scroll by.
 * Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
 
 ### Wind speed
@@ -121,7 +121,7 @@ In the Settings dialog, however, you can choose to display wind speed in knots w
 
 The barbed ends of the wind barbs point in the direction from which the wind is blowing, with north being upward. Wind gust speed is represented by a red wind barb drawn underneath the non-gust wind barb, such that only the excess gust speed is seen, peeking out from behind.
 
-Current wind speed is also shown as an arc along the edge of the clock face, changing in size and color (from cyan to green, to yellow, to orange, and to red) as wind speed increases. If there is a gust speed, that will show as a second thinner but wider arc. These arcs are centered on the direction from which the wind is coming, with an inward pointer pointing in the direction toward which the wind is blowing. There are no arcs drawn for wind below 2.5 knots (or 1.25 m/s).
+Current wind speed is also shown as an arc along the edge of the clock face, changing in size and color (from cyan to green, to yellow, to orange, and to red) as wind speed increases. If there is a gust speed, which will show as a second thinner but wider arc. These arcs are centered on the direction from which the wind is coming, with an inward pointer pointing in the direction toward which the wind is blowing. There are no arcs drawn for wind below 2.5 knots (or below 1.25 m/s).
 
 ### How the planet display works
 
@@ -231,7 +231,7 @@ While this would actually be a good thing if it meant I could hook up the clock 
 
 * Raspberry Pi 4 with 2 GB RAM
 * [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324) (connected using a stacking header, so it was still easy to attach the leads for the temperature/humidity sensor and the RF receiver)
-* [Active GPS antenna](https://www.amazon.com/gp/product/B07NY16GH5/)
+* [Active GPS antenna](https://www.amazon.com/Antenna-Active-Aerial-Connector-Stereos/dp/B07RRT615K/)
 * 2560x1600 ELECROW 10.1" touchscreen (in pixel doubling mode)
 * Custom-printed 3D stand
 * Wired DHT22/AM2302 sensor
@@ -240,7 +240,7 @@ While this would actually be a good thing if it meant I could hook up the clock 
 * [¼-wave 433 MHz antenna](https://www.digikey.com/en/products/detail/linx-technologies-inc/ANT-433-PW-RA/340122)
 * [Right-angle HDMI adapter](https://www.amazon.com/gp/product/B00Y7UT6EK/)
 * [12-inch 90°-down micro HDMI male to HDMI male cable](https://www.amazon.com/gp/product/B07BLX88H4/)
-* [USB power blocker](https://www.amazon.com/gp/product/B08VHDKCX3/)
+* [USB power blocker](https://www.amazon.com/gp/product/B08VHDKCX3/) _(Data blockers are easy to find &mdash; power blockers, not!)_
 * Miscellaneous other jumper wires, cables, machine screws (some specifics listed above), etc.
 
 <br>
@@ -249,9 +249,9 @@ While this would actually be a good thing if it meant I could hook up the clock 
 
 To build and run this project you can use the following commands:
 
-* “`sudo ./build.sh` &#x5B; _various-options_ &#x5D;” to run the installer.
+* “`sudo ./build.sh`” &#x5B; _various-options_ &#x5D;” to run the installer.
 * “`npm run first-install`” to install all npm packages needed for both the client and the server (a separate, inner project) with one command.
-* “`npm run build` &#x5B;‑‑ _various-options_ &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
+* “`npm run build`” &#x5B;‑‑ _various-options_ &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
 * “`npm run start-server`” to start the data server for this project (except on Windows) on `localhost:4201`. (You may need to make this precede this command with `sudo`.) The server will be automatically restarted whenever you edit the code.
 * “`npm run start-server-win`” to start the data server for this project (on Windows) on `localhost:4201`.
 * “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code. _(Note that for development and testing, two different ports are used (4200, 4201), but that when the server is deployed, all content and data is served on a single port, by default 8080.)_
@@ -288,7 +288,7 @@ The following environment variables affect how the server part of this software 
 * `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or in addition, you can set up `AWC_WEATHERBIT_API_KEY` for both geocoding and weather data.
 * `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not.
 * `AWC_LOG_CACHE_ACTIVITY`: As a debugging/development aid, set to `true` to enable additional logging of the server’s web cache behavior.
-* `AWC_NTP_SERVER`: NTP server used by this software. (See previous comments about selecting alternate servers.)
+* `AWC_NTP_SERVERS`: Optional alternate NTP servers used by this software, as a comma-separated list of domain names. (See previous comments about selecting alternate servers.)
 * `AWC_PORT`: By default the deployed server runs on localhost port 8080, but you can use a different port if you prefer.
 * `AWC_PREFERRED_WS`: Your preferred weather service, `weatherbit`, `wunderground`, or `visual_x`. `wunderground` is the default.
 * `AWC_VISUAL_CROSSING_API_KEY`: If you want to use Visual Crossing either as a primary or back-up weather data service, this must be set to a valid Visual Crossing API key. (See <https://www.visualcrossing.com/weather-api/> for further details.).
@@ -302,7 +302,7 @@ Don’t forget to run `sudo update-rc.d weatherService defaults` after editing t
 
 For reference, here’s a breakdown of the steps performed by a full installation:
 
-1. Node.js is installed if not present, or updated if earlier than version 14. Switch to Node 14 using nvm (Node Version Manager) may occur if nvm is installed.
+1. Node.js is installed if not present, or updated if earlier than version 14. A switch to Node 14 using nvm (Node Version Manager) may occur if nvm is installed.
 1. If Node.js is greater than version 14, nvm will be used to step down to version 14, installing nvm if necessary to do so.
 1. For Node.js version 14, substitute version 12 in the descriptions above for a Raspberry Pi with less than 2 GB RAM.
 1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time.
@@ -319,13 +319,14 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 1. A combined client/server distribution directory is created.
 1. If any of the options `‑‑ddev`, `‑i`, or `‑‑sd` are used, the distribution is copied to the `~/weather` directory (typically `/home/pi/weather`), deleting anything which might have previously been present in that directory.
 
-    _No further steps listed below are performed except as part of dedicated device set-up (options `‑‑ddev` or `‑i`)_.
-1. The file `weatherService` (located in the `raspberry_pi_setup` folder) is copied to `/etc/init.d/`, and changed to root ownership.
+<br>_No further steps listed below are performed except as part of dedicated device set-up (options `‑‑ddev` or `‑i`)_.<br>
+
+17. The file `weatherService` (located in the `raspberry_pi_setup` folder) is copied to `/etc/init.d/`, and changed to root ownership.
 1. Server set-up options are saved to `/etc/defaults/weatherService`, which is also owned by root. Rather than re-running the installer to change the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
 1. The commands `sudo update-rc.d weatherService defaults` and `sudo systemctl enable weatherService` are performed to establish and enable the service.
 1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `-pi` on the end for Debian), or the existing `autostart` file is modified, to launch the Chromium web browser in kiosk mode, displaying the Astronomy/Weather Clock.
 1. The included file `autostart_extra.sh` is also copied to the above directory. This adds code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up.
-1. The options `‑‑launch` or `‑‑reboot` are performed if specified.
+. The options `‑‑launch` or `‑‑reboot` are performed if specified.
 
 ### Developer notes
 

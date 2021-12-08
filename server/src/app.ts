@@ -108,12 +108,10 @@ async function checkForUpdate(): Promise<void> {
         'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION
       }
     });
-    const currentVersion = repoInfo?.tag_name?.replace(/^\D+/, '');
+    const currentVersion = repoInfo?.tag_name?.replace(/^\D+/, '').replace(/_nu_.*$/i, '');
 
-    if (currentVersion) {
-      if (!currentVersion.endsWith('_nu'))
-        latestVersion = currentVersion;
-    }
+    if (currentVersion)
+      latestVersion = currentVersion;
     else // noinspection ExceptionCaughtLocallyJS
       throw new Error('Could not parse tag_name');
   }

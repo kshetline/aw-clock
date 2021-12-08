@@ -1,3 +1,8 @@
+## 2.12.1
+
+* Documentation corrections.
+* Small update in how new automatic updates are detected.
+
 ## 2.12.0
 
 * Added optional Visual Crossing weather service.
