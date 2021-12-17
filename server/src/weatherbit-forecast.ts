@@ -18,6 +18,7 @@ interface WeatherBitCurrent {
     clouds: number;
     precip: number;
     slp: number;
+    snow: number;
     wind_spd: number;
     wind_dir: number;
     weather: {
@@ -44,6 +45,7 @@ interface WeatherBitHourly {
     },
     precip: number;
     slp: number;
+    snow: number;
     wind_spd: number;
     wind_dir: number;
     wind_gust_spd: number;
@@ -68,7 +70,7 @@ interface WeatherBitDaily {
     min_temp: number;
     app_temp: number;
     rh: number;
-    snow_depth: number;
+    snow: number;
     pop: number;
     clouds: number;
     slp: number;
@@ -230,13 +232,16 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
 
   forecast.city = `${current.data[0].city_name}, ${current.data[0].state_code}, ${current.data[0].country_code}`;
 
+  const precipType = getPrecipType(currentData.weather.code);
+  const isSnow = (precipType === 'snow');
+
   forecast.currently = {
     cloudCover: currentData.clouds / 100,
     feelsLikeTemperature: conditionalCelsius(currentData.app_temp, isMetric),
     humidity: currentData.rh / 100,
     icon: convertIcon(currentData.weather?.icon, currentData.clouds),
-    precipIntensity: conditionalCm(currentData.precip, isMetric),
-    precipType: getPrecipType(currentData.weather.code),
+    precipIntensity: conditionalCm(isSnow ? currentData.snow : currentData.precip, isMetric),
+    precipType,
     pressure: isMetric ? currentData.slp : hpaToInHg(currentData.slp),
     pressureTrend: null,
     windSpeed: conditionalKph(currentData.wind_spd, isMetric),
@@ -283,23 +288,28 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
   forecast.daily = { data: [] };
 
   if (daily) {
-    daily.data.forEach(day => forecast.daily.data.push({
-      cloudCover: day.clouds / 100,
-      humidity: day.rh / 100,
-      icon: convertIcon(day.weather?.icon, day.clouds),
-      narrativeDay: day.weather?.description,
-      precipAccumulation: conditionalCm(day.precip, isMetric),
-      precipProbability: day.pop / 100,
-      precipType: getPrecipType(day.weather?.code),
-      pressure: isMetric ? day.slp : hpaToInHg(day.slp),
-      windSpeed: conditionalKph(day.wind_spd, isMetric),
-      windDirection: day.wind_dir,
-      windGust: conditionalKph(day.wind_gust_spd, isMetric),
-      summary: day.weather?.description,
-      temperatureHigh: conditionalCelsius(day.high_temp, isMetric),
-      temperatureLow: conditionalCelsius(day.low_temp, isMetric),
-      time: day.ts
-    }));
+    daily.data.forEach(day => {
+      const precipType = getPrecipType(day.weather.code);
+      const isSnow = (precipType === 'snow');
+
+      forecast.daily.data.push({
+        cloudCover: day.clouds / 100,
+        humidity: day.rh / 100,
+        icon: convertIcon(day.weather?.icon, day.clouds),
+        narrativeDay: day.weather?.description,
+        precipAccumulation: conditionalCm(isSnow ? day.snow : day.precip, isMetric),
+        precipProbability: day.pop / 100,
+        precipType,
+        pressure: isMetric ? day.slp : hpaToInHg(day.slp),
+        windSpeed: conditionalKph(day.wind_spd, isMetric),
+        windDirection: day.wind_dir,
+        windGust: conditionalKph(day.wind_gust_spd, isMetric),
+        summary: day.weather?.description,
+        temperatureHigh: conditionalCelsius(day.high_temp, isMetric),
+        temperatureLow: conditionalCelsius(day.low_temp, isMetric),
+        time: day.ts
+      });
+    });
   }
 
   forecast.alerts = [];

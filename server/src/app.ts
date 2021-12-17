@@ -71,6 +71,13 @@ try {
 }
 catch {}
 
+let owmProxyForecast: (req: Request) => Promise<ForecastData | Error>;
+
+try {
+  owmProxyForecast = require('./aw-clock-private/open-weather-map-proxy').getCurrentConditions;
+}
+catch {}
+
 // Convert deprecated environment variables
 if (!process.env.AWC_WIRED_TH_GPIO &&
     toBoolean(process.env.AWC_HAS_INDOOR_SENSOR) && process.env.AWC_TH_SENSOR_GPIO)
@@ -101,12 +108,10 @@ async function checkForUpdate(): Promise<void> {
         'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION
       }
     });
-    const currentVersion = repoInfo?.tag_name?.replace(/^\D+/, '');
+    const currentVersion = repoInfo?.tag_name?.replace(/^\D+/, '').replace(/_nu_.*$/i, '');
 
-    if (currentVersion) {
-      if (!currentVersion.endsWith('_nu'))
-        latestVersion = currentVersion;
-    }
+    if (currentVersion)
+      latestVersion = currentVersion;
     else // noinspection ExceptionCaughtLocallyJS
       throw new Error('Could not parse tag_name');
   }
@@ -142,7 +147,8 @@ process.on('unhandledRejection', err => console.error(`${timeStamp()} -- Unhandl
 
 createAndStartServer();
 
-const ntpServer = process.env.AWC_NTP_SERVERS || process.env.AWC_NTP_SERVER;
+// Convert old default (pool.ntp.org) to new default, otherwise use old AWC_NTP_SERVER if specified and if AWC_NTP_SERVERS is undefined.
+const ntpServer = process.env.AWC_NTP_SERVERS || (process.env.AWC_NTP_SERVER === 'pool.ntp.org' ? '' : process.env.AWC_NTP_SERVER);
 const ntpPoller = ntpServer ? new NtpPoolPoller(ntpServer.split(',').map(p => p.trim())) : new NtpPoolPoller();
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
 const daytime = new Daytime(daytimeServer);
@@ -291,6 +297,20 @@ function getApp(): Express {
     });
   }
 
+  if (owmProxyForecast) {
+    theApp.get('/owmproxy', async (req, res) => {
+      req.query.lat = req.query.lat && toNumber(req.query.lat).toFixed(5);
+      req.query.lon = req.query.lon && toNumber(req.query.lon).toFixed(5);
+
+      const response = await owmProxyForecast(req);
+
+      if (response instanceof Error)
+        res.status(response.message.startsWith('Maximum API calls') ? 400 : 500).send(response.message);
+      else
+        jsonOrJsonp(req, res, response);
+    });
+  }
+
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
 
@@ -313,8 +333,8 @@ function getApp(): Express {
       ip,
       allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
       latestVersion,
-      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) &&
-        compareVersions.compare(latestVersion, AWC_VERSION, '>')
+      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && compareVersions.compare(latestVersion, AWC_VERSION, '>'),
+      services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : '')
     };
 
     if (gps) {

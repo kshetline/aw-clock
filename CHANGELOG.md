@@ -1,3 +1,20 @@
+## 2.12.2
+
+* Fix for Weatherbit.io snowfall amounts.
+* Time library updates.
+
+## 2.12.1
+
+* Documentation corrections.
+* Small update in how new automatic updates are detected.
+
+## 2.12.0
+
+* Added optional Visual Crossing weather service.
+* Removed soon-to-be-discontinued Dark Sky weather service.
+* Added ability to use a pool of multiple NTP servers.
+* Added client option for choosing from among available weather services (if API keys have been provided to make more than one service available).
+
 ## 2.11.0
 
 * Updated design of 3-D printed stand.

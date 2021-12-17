@@ -2,7 +2,7 @@ import { AppService } from './app.service';
 import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
-import { isIE, isIOS, isSafari } from '@tubular/util';
+import { isIOS, isSafari } from '@tubular/util';
 import { apiServer, localServer, raspbianChromium, Settings, toTimeFormat, updateTest } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
@@ -83,6 +83,7 @@ export class SettingsDialog {
   private seconds: JQuery;
   private planets: JQuery;
   private hourlyForecast: JQuery;
+  private weatherService: JQuery;
   private readonly searchCity: JQuery;
   private submitSearch: JQuery;
   private getGps: JQuery;
@@ -106,6 +107,8 @@ export class SettingsDialog {
   private searchFieldFocused = false;
   private searchButtonFocused = false;
   private updateFocused = false;
+  private weatherServices = '';
+  private serviceSetting = '';
 
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
@@ -132,6 +135,7 @@ export class SettingsDialog {
     this.seconds = $('#seconds-option');
     this.planets = $('#planets-option');
     this.hourlyForecast = $('#hourly-forecast-option');
+    this.weatherService = $('#weather-service-option');
     this.searchCity = $('#search-city');
     this.submitSearch = $('#submit-search');
     this.getGps = $('#get-gps');
@@ -224,12 +228,7 @@ export class SettingsDialog {
       });
     }
 
-    if (isIE()) {
-      $('.user-options').children().each(function () {
-        $(this).css('margin', '0 4px 4px 0');
-      });
-    }
-    else if (isSafari()) {
+    if (isSafari()) {
       $('.user-options').addClass(isIOS() ? 'squeeze-user-options-more' : 'squeeze-user-options');
     }
   }
@@ -380,8 +379,9 @@ export class SettingsDialog {
     this.hourlyForecast.val(previousSettings.hourlyForecast);
     this.onscreenKB.prop('checked', previousSettings.onscreenKB);
     this.keyboard.enable(previousSettings.onscreenKB);
-
     this.enableAutocomplete(!previousSettings.onscreenKB);
+    this.serviceSetting = previousSettings.service;
+    this.updateWeatherServiceSelection();
 
     this.submitSearch.enable(true);
     this.getGps.enable(false);
@@ -440,6 +440,15 @@ export class SettingsDialog {
     this.reloadButton.on('click', () => setTimeout(() => window.location.reload()));
   }
 
+  private updateWeatherServiceSelection(): void {
+    let service = this.serviceSetting;
+
+    if (service && this.weatherServices.indexOf(service) < 0)
+      service = '';
+
+    setTimeout(() => this.weatherService.val(service));
+  }
+
   private doOK = (): void => {
     const newSettings = new Settings();
 
@@ -461,6 +470,7 @@ export class SettingsDialog {
     newSettings.onscreenKB = this.onscreenKB.is(':checked');
     newSettings.background = this.background.val() as string;
     newSettings.clockFace = this.clockFace.val() as string;
+    newSettings.service = this.weatherService.val() as string;
 
     if (!newSettings.city)
       this.alert('Current city must be specified.', () => this.currentCity.trigger('focus'));
@@ -503,6 +513,26 @@ export class SettingsDialog {
       this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
       this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
       this.latestVersion = data.latestVersion;
+      this.weatherServices = data.services;
+
+      let weatherOptions = '<option value="">Default weather service</option>\n';
+
+      if (data.services && data.services.length > 2) {
+        this.weatherService.removeAttr('disabled');
+        weatherOptions += '<option value="wu">Weather Underground</option>\n';
+
+        if (data.services?.includes('vc'))
+          weatherOptions += '<option value="vc">Visual Crossing</option>\n';
+
+        if (data.services?.includes('we'))
+          weatherOptions += '<option value="we">Weatherbit.io</option>\n';
+
+        this.updateWeatherServiceSelection();
+      }
+      else
+        this.weatherService.attr('disabled', 'disabled');
+
+      this.weatherService.html(weatherOptions);
 
       if (data?.latitude != null && data?.longitude != null) {
         this.defaultLocation = data;

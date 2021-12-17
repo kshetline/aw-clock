@@ -28,7 +28,6 @@ interface VCCommonConditions {
   icon: string;
   precip: number;
   precipcover: number;
-  precipprob: number;
   preciptype: string[];
   pressure: number;
   snow: number;
@@ -68,11 +67,11 @@ const conditionNames: Record<string, string> = {
   time: 'datetimeEpoch',
   summary: 'description',
   cloudCover: 'cloudcover',
-  precipIntensity: '', // ?
-  precipIntensityMax: '', // ?
-  precipProbability: 'precipcover', // ?
+  precipIntensity: '',
+  precipIntensityMax: '',
+  precipProbability: 'precipprob',
   precipType: 'preciptype',
-  pressureTrend: '', // ?
+  pressureTrend: '',
   windDirection: 'winddir',
   windGust: 'windgust',
   windPhrase: '-',
@@ -97,7 +96,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline' +
     `/${req.query.lat}%2C${req.query.lon}?unitGroup=${isMetric ? 'metric' : 'us'}&lang=en&iconSet=icons2` +
     /* cspell:disable-next-line */ // noinspection SpellCheckingInspection
-    `&key=${process.env.AWC_VISUAL_CROSSING_API_KEY}&include=fcst%2Cstats%2Chours%2Calerts%2Ccurrent`;
+    `&key=${process.env.AWC_VISUAL_CROSSING_API_KEY}&include=fcst%2Chours%2Calerts%2Ccurrent`;
 
   try {
     const origForecast = (await requestJson(240, url)) as VisualCrossingForecast;
@@ -146,6 +145,24 @@ function getIcon(conditions: VCCommonConditions): string {
     else if (icon === '27')
       icon = '27';
   }
+  else if (conditions.cloudcover > 80) {
+    switch (icon) {
+      case '45d':
+      case '45':
+        icon = '12';
+        break;
+
+      case '41':
+      case '46':
+        icon = '13';
+        break;
+
+      case '37':
+      case '47':
+        icon = '03';
+        break;
+    }
+  }
 
   if (precip === 'rain,snow' && (icon === '12' || icon === '13'))
     icon = '05';
@@ -160,7 +177,7 @@ function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean):
 
   Object.keys(vcForecast).forEach(key => {
     if (key === 'currentConditions')
-      forecast.currently = convertConditions(vcForecast.currentConditions, CurrentConditionsKeys, isMetric) as CurrentConditions;
+      forecast.currently = convertConditions(vcForecast.currentConditions, CurrentConditionsKeys, 0, isMetric) as CurrentConditions;
     else if (key === 'days')
       forecast.daily = convertDaily(vcForecast.days, isMetric, forecast);
     else if (key === 'alerts')
@@ -194,14 +211,21 @@ function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean):
 
   forecast.daily.summary = vcForecast.description;
 
-  // if (!forecast.currently || !forecast.daily) // TODO: Unavailable flags?
-  //   forecast.unavailable = true;
+  if (forecast.currently.precipType == null) {
+    const hour = forecast.hourly[1];
+
+    if (hour?.precipType != null) {
+      forecast.currently.icon = hour.icon;
+      forecast.currently.precipType = hour.precipType;
+      forecast.currently.precipTypeFromHour = true;
+    }
+  }
 
   return forecast;
 }
 
 function convertConditions(vcConditions: VCCommonConditions | VCCurrentConditions | VCDailyConditions | VCHourlyConditions,
-                           keys: string[], isMetric: boolean, root?: ForecastData): CommonConditions {
+                           keys: string[], timeSpan: number, isMetric: boolean, root?: ForecastData): CommonConditions {
   const conditions: CommonConditions = {} as CommonConditions;
 
   for (const key of keys) {
@@ -211,8 +235,12 @@ function convertConditions(vcConditions: VCCommonConditions | VCCurrentCondition
       root.hourly.push(...convertHourly((vcConditions as VCDailyConditions).hours, isMetric));
     // eslint-disable-next-line no-prototype-builtins
     else if (vcKey !== '-' && vcConditions.hasOwnProperty(vcKey)) {
-      if (key === 'precipType')
+      if (key === 'precipType') {
         conditions.precipType = vcConditions.preciptype?.sort().join();
+
+        if (conditions.precipType && vcConditions.precip && timeSpan)
+          conditions.precipIntensity = conditions.precipIntensityMax = vcConditions.precip / timeSpan;
+      }
       else if (key === 'icon')
         conditions.icon = getIcon(vcConditions);
       else {
@@ -229,9 +257,6 @@ function convertConditions(vcConditions: VCCommonConditions | VCCurrentCondition
   if (!isMetric && conditions.pressure != null)
     conditions.pressure = hpaToInHg(conditions.pressure);
 
-  // if (isMetric && conditions.windSpeed != null) // Convert m/s to km/hour
-  //   conditions.windSpeed *= 3.6;
-
   return conditions;
 }
 
@@ -240,7 +265,7 @@ function convertHourly(vcHourly: VCHourlyConditions[], isMetric: boolean): Hourl
   const now = Date.now() / 1000;
 
   for (const hour of vcHourly) {
-    hourly.push(convertConditions(hour, CommonConditionsKeys, isMetric) as HourlyConditions);
+    hourly.push(convertConditions(hour, CommonConditionsKeys, 1, isMetric) as HourlyConditions);
 
     if (hourly.length >= 36)
       break;
@@ -256,7 +281,7 @@ function convertDaily(vcDaily: VCDailyConditions[], isMetric: boolean, root: For
     root.hourly = [];
 
   for (const day of vcDaily)
-    daily.data.push(convertConditions(day, VCDailyConditionsKeys, isMetric, root) as DailyConditions);
+    daily.data.push(convertConditions(day, VCDailyConditionsKeys, 24, isMetric, root) as DailyConditions);
 
   return daily;
 }

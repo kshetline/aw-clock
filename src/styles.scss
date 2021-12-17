@@ -421,6 +421,14 @@ label {
 
   &>.colspan-full {
     grid-column: 1 / span 3;
+
+    > input, label, span {
+      margin-right: 4px;
+    }
+
+    #weather-service-option {
+      margin-right: 2em;
+    }
   }
 
   &>.rowspan {

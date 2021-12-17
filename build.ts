@@ -83,7 +83,7 @@ const settings: Record<string, string> = {
   AWC_ALLOW_CORS: 'true',
   AWC_KIOSK_MODE: 'true',
   AWC_LOG_CACHE_ACTIVITY: 'false',
-  AWC_NTP_SERVER: 'pool.ntp.org',
+  AWC_NTP_SERVERS: '',
   AWC_PORT: '8080',
   AWC_PREFERRED_WS: 'wunderground',
   AWC_WIRED_TH_GPIO: '17',
@@ -318,9 +318,17 @@ if (treatAsRaspberryPi) {
       if (!clearAcu && oldSettings.AWC_WIRELESS_TH_GPIO)
         doAcu = true;
 
+      if (!settings.AWC_NTP_SERVERS) {
+        if (oldSettings.AWC_NTP_SERVER === 'pool.ntp.org')
+          settings.AWC_NTP_SERVERS = '';
+        else if (oldSettings.AWC_NTP_SERVER)
+          settings.AWC_NTP_SERVERS = oldSettings.AWC_NTP_SERVER;
+      }
+
       delete settings.AWC_HAS_INDOOR_SENSOR;
       delete settings.AWC_TH_SENSOR_GPIO;
       delete settings.AWC_WIRELESS_TEMP;
+      delete settings.AWC_NTP_SERVER;
 
       if (clearKiosk)
         doKiosk = false;
@@ -605,17 +613,21 @@ function portValidate(s: string): boolean {
   return true;
 }
 
+const DOMAIN_PATTERN =
+  /^(((?!-))(xn--|_)?[-a-z0-9]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i;
+
 function ntpValidate(s: string): boolean {
-  if (/^(((?!-))(xn--|_)?[-a-z0-9]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i.test(s))
+  const domains = s.split(',').map(d => d.trim());
+
+  if (s.trim() === '' || (domains.length > 0 && domains.findIndex(d => !DOMAIN_PATTERN.test(d)) < 0))
     return true;
 
-  console.log(chalk.redBright('NTP server must be a valid domain name (with optional port number)'));
+  console.log(chalk.redBright('NTP servers must be a valid domain names (with optional port numbers)'));
   return false;
 }
 
-const NO_MORE_DARK_SKY = (Date.now() > Date.parse('2021-11-30'));
-
-if (NO_MORE_DARK_SKY && process.env.AWC_PREFERRED_WS === 'darksky')
+// Change out-of-date preference to default.
+if (process.env.AWC_PREFERRED_WS === 'darksky')
   process.env.AWC_PREFERRED_WS = 'wunderground';
 
 function wsValidate(s: string): boolean | string {
@@ -623,28 +635,25 @@ function wsValidate(s: string): boolean | string {
     return 'wunderground';
   else if (/b/i.test(s))
     return 'weatherbit';
-  else if (!NO_MORE_DARK_SKY && /^d/i.test(s))
-    return 'darksky';
+  else if (/^v/i.test(s))
+    return 'visual_x';
 
-  if (NO_MORE_DARK_SKY)
-    console.log(chalk.redBright('Weather service must be either (w)underground, weather(b)it, or (d)arksky'));
-  else
-    console.log(chalk.redBright('Weather service must be either (w)underground, or weather(b)it'));
+  console.log(chalk.redBright('Weather service must be either (w)underground, weather(b)it, or (v)isual crossing'));
 
   return false;
 }
 
 function wsAfter(s: string): void {
   if (/^w[-b]*$/i.test(s)) {
-    console.log(chalk.paleBlue(`    Weather Underground chosen, but Weatherbit.io${NO_MORE_DARK_SKY ? '' : 'or Dark Sky'} can be used`));
+    console.log(chalk.paleBlue('    Weather Underground chosen, but Weatherbit.io or Visual Crossing can be used'));
     console.log(chalk.paleBlue('    as fallback weather services.'));
   }
   else if (/b/i.test(s)) {
     console.log(chalk.paleBlue('    Weatherbit.io chosen, but Weather Underground will be used'));
     console.log(chalk.paleBlue('    as a fallback weather service.'));
   }
-  else if (/^d/i.test(s)) {
-    console.log(chalk.paleBlue('    Dark Sky chosen, but Weather Underground will be used'));
+  else if (/^v/i.test(s)) {
+    console.log(chalk.paleBlue('    Visual Crossing chosen, but Weather Underground will be used'));
     console.log(chalk.paleBlue('    as a fallback weather service.'));
   }
 }
@@ -722,7 +731,7 @@ let questions = [
   { prompt: 'Perform npm install? (N option for debug only)', ask: true, yn: true, deflt: doNpmI ? 'Y' : 'N', validate: npmIValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port.', ask: true, validate: portValidate },
   { prompt: 'Allow user to reboot, shutdown, update, etc.?', ask: true, yn: true, deflt: doAdmin ? 'Y' : 'N', validate: adminValidate },
-  { name: 'AWC_NTP_SERVER', prompt: 'time server', ask: true, validate: ntpValidate },
+  { name: 'AWC_NTP_SERVERS', prompt: 'time servers (comma-separated domains, blank for defaults)', ask: true, validate: ntpValidate },
   {
     name: 'AWC_GOOGLE_API_KEY',
     prompt: 'Optional Google geocoding API key (for city names from\n      GPS coordinates).' +
@@ -731,7 +740,7 @@ let questions = [
   },
   { // #5
     name: 'AWC_PREFERRED_WS',
-    prompt: 'preferred weather service, (w)underground, weather(b)it,\n      or (d)arksky).',
+    prompt: 'preferred weather service, (w)underground, weather(b)it,\n      or (v)isual crossing).',
     ask: true,
     validate: wsValidate,
     after: wsAfter
@@ -743,9 +752,9 @@ let questions = [
     ask: true
   },
   { // #7
-    name: 'AWC_DARK_SKY_API_KEY',
-    prompt: 'Optional Dark Sky weather API key.' +
-      (settings.AWC_DARK_SKY_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
+    name: 'AWC_VISUAL_CROSSING_API_KEY',
+    prompt: 'Optional Visual Crossing weather API key.' +
+      (settings.AWC_VISUAL_CROSSING_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
   { prompt: 'Use wired DHT temperature/humidity sensor?', ask: true, yn: true, deflt: doDht ? 'Y' : 'N', validate: dhtValidate },
@@ -759,11 +768,6 @@ let questions = [
     validate: finalActionValidate
   }
 ];
-
-if (NO_MORE_DARK_SKY) {
-  questions[5].prompt = 'preferred weather service, (w)underground, or weather(b)it';
-  questions.splice(7, 1);
-}
 
 if (doDedicated) {
   questions.splice(questions.length - 1, 0,
