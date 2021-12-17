@@ -1,3 +1,8 @@
+## 2.12.2
+
+* Fix for Weatherbit.io snowfall amounts.
+* Time library updates.
+
 ## 2.12.1
 
 * Documentation corrections.

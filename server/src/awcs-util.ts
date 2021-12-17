@@ -158,6 +158,10 @@ export function filterError(error: any): string {
 }
 
 export function alertCleanUp(alertText: string): string {
-  return alertText.replace(/ ((\* )?(WHAT|WHERE|WHEN|IMPACTS|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./g,
-      '\n\n$1...').replace(/^\.{3,}/g, '');
+  return alertText
+    .replace(/(?<=an?)\n\* /g, ' ')
+    .replace(/\bfor\.\.\.\n/g, 'for:\n\n• ')
+    .replace(/\.\.\.\n/, '\n• ')
+    .replace(/ ((\* )?(WHAT|WHERE|WHEN|IMPACTS?|HAZARD|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./g, '\n\n$1...')
+    .replace(/^\.{3,}/g, '');
 }
