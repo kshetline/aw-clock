@@ -158,10 +158,44 @@ export function filterError(error: any): string {
 }
 
 export function alertCleanUp(alertText: string): string {
-  return alertText
+  let alert = alertText.trim()
+    .replace(/(?<=issued an?)\n\n?\* /g, ' ')
+    .replace(/\bfor\.\.\.\n.*?\n\n?\* /s, match => {
+      let goodLines = true;
+      const lines = match.split('\n').filter(line => !!line).slice(1, -1).map(line => {
+        if (line.endsWith('...'))
+          return '• ' + line.trim().slice(0, -3);
+
+        goodLines = false;
+        return line;
+      });
+
+      if (goodLines)
+        return 'for:\n\n' + lines.join('\n') + '\n\n* ';
+      else
+        return match;
+    })
     .replace(/\.\.\.\n\*\s+([A-Z]{3,})\.\.\./g, '.\n\n• $1: ')
-    .replace(/^((\* )?(WHAT|WHERE|WHEN|IMPACTS?|HAZARD|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./mg, '• $3: ')
+    .replace(/^((\* )?(WHAT|WHERE|WHEN|IMPACTS?|HAZARD|SOURCE))\.\.\./mg, '\n• $3: ')
     .replace(/^- (?=\w)/mg, '\xA0\xA0◦ ').replace(/([12]?\d)([0-5]\d) ([AP]M)/g, '$1:$2 $3')
+    .replace(/^(.*)\.\.\.\s{3,}(.*?)(\.\.\.)?\n/mg, (match, $1, $2, $3) => {
+      if (match.substring(0, 35).endsWith('   '))
+        return $3 ? `${$1}, ${$2}, ` : `${$1}, ${$2} `;
+      else
+        return match;
+    })
     .replace(/^(?<!.*\.\.\.\s{3,}.*)\.\.\.\n/mg, ':\n')
-    .replace(/^\.{3,}/g, '');
+    .replace(/(?<!\.)\.\n\.\.\./g, '.\n\n')
+    .replace(/\.\.\.\n/g, ':\n\n')
+    .replace(/^\.(?=\w)/mg, '')
+    .replace(/^[ \t]*\.{3,}/mg, '')
+    .replace(/&&\s*$/, '')
+    .replace(/&&/g, '⚠︎')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  if (alert.startsWith('•'))
+    alert = '\n\n' + alert;
+
+  return alert;
 }
