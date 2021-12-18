@@ -1,6 +1,6 @@
 ## 2.12.2
 
-* Fix for Weatherbit.io snowfall amounts.
+* Fix for Visual Crossing and Weatherbit.io snowfall amounts.
 * Time library updates.
 * Improved weather alert formatting.
 
