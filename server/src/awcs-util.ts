@@ -159,9 +159,9 @@ export function filterError(error: any): string {
 
 export function alertCleanUp(alertText: string): string {
   return alertText
-    .replace(/(?<=an?)\n\* /g, ' ')
-    .replace(/\bfor\.\.\.\n/g, 'for:\n\n• ')
-    .replace(/\.\.\.\n/, '\n• ')
-    .replace(/ ((\* )?(WHAT|WHERE|WHEN|IMPACTS?|HAZARD|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./g, '\n\n$1...')
+    .replace(/\.\.\.\n\*\s+([A-Z]{3,})\.\.\./g, '.\n\n• $1: ')
+    .replace(/^((\* )?(WHAT|WHERE|WHEN|IMPACTS?|HAZARD|([A-Z][A-Z ]{2,}[A-Z])))\.\.\./mg, '• $3: ')
+    .replace(/^- (?=\w)/mg, '\xA0\xA0◦ ').replace(/([12]?\d)([0-5]\d) ([AP]M)/g, '$1:$2 $3')
+    .replace(/^(?<!.*\.\.\.\s{3,}.*)\.\.\.\n/mg, ':\n')
     .replace(/^\.{3,}/g, '');
 }
