@@ -3,7 +3,7 @@ import { Request, Router } from 'express';
 import { max } from '@tubular/math';
 import { isObject, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { autoHpa, autoInHg, checkForecastIntegrity, filterError } from './awcs-util';
+import { alertCleanUp, autoHpa, autoInHg, checkForecastIntegrity, filterError } from './awcs-util';
 
 export const router = Router();
 
@@ -301,7 +301,7 @@ function convertAlerts(forecast: ForecastData, wa: any): void {
     if (wuAlert.texts && wuAlert.texts[0]) {
       const text = wuAlert.texts[0];
 
-      alert.description = ((text.overview ?? '') + ' ' + (text.description ?? '')).trim();
+      alert.description = alertCleanUp((text.overview ?? '') + ' ' + (text.description ?? ''));
     }
 
     if (!/advisory/i.test(wuAlert.headlineText)) {

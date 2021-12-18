@@ -502,6 +502,9 @@ input, button, select, textarea, optgroup, option {
 .rowguide {
   background-color: #F2F8FF; }
 
+.city-highlight, .rowguide.city-highlight {
+  background-color: #BBDDFF; }
+
 .searching {
   position: relative;
   top: 5px;

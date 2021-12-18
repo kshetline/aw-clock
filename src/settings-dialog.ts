@@ -91,6 +91,7 @@ export class SettingsDialog {
   private searchMessage: JQuery;
   private cityTableWrapper: JQuery;
   private cityTable: JQuery;
+  private lastCityClick: JQuery;
   private okButton: JQuery;
   private cancelButton: JQuery;
   private reloadButton: JQuery;
@@ -252,17 +253,18 @@ export class SettingsDialog {
         let rows = '<tr id="header"><th>&#x2605;</th><th>City</th><th>Latitude</th><th>Longitude</th><tr>\n';
 
         response.matches.forEach((city, index) => {
-          rows += '<tr data-lat="' + city.latitude +
-             '" data-lon="' + city.longitude + '"' +
-            (response.matches.length > 6 && Math.floor(index / 3) % 2 === 0 ? ' class=rowguide' : '') +
-            '><td>' + city.rank +
-            '</td><td class="name">' + htmlEncode(city.displayName) +
-            '</td><td class="coordinates">' + formatDegrees(city.latitude, 'NS', 2) +
-            '</td><td class="coordinates">' + formatDegrees(city.longitude, 'EW', 3) +
-            '</td></tr>\n';
+          rows +=
+`<tr data-lat="${city.latitude}"
+    data-lon="${city.longitude}"${response.matches.length > 6 && Math.floor(index / 3) % 2 === 0 ? '\n    class=rowguide' : ''}>
+  <td>${city.rank}</td>
+  <td class="name">${htmlEncode(city.displayName)}</td>
+  <td class="coordinates">${formatDegrees(city.latitude, 'NS', 2)}</td>
+  <td class="coordinates">${formatDegrees(city.longitude, 'EW', 3)}</td>
+</tr>\n`;
         });
 
         this.cityTable.html(rows);
+        this.lastCityClick = undefined;
         setTimeout(() => this.cityTableWrapper.scrollTop(0));
         this.cityTableWrapper.show();
         this.submitSearch.enable(true);
@@ -292,6 +294,12 @@ export class SettingsDialog {
               self.currentCity.val($this.find('td.name').text().replace(/ \([^)]+\)/g, ''));
               self.latitude.val($this.data('lat'));
               self.longitude.val($this.data('lon'));
+
+              if (self.lastCityClick)
+                self.lastCityClick.removeClass('city-highlight');
+
+              $this.addClass('city-highlight');
+              self.lastCityClick = $this;
             });
 
             $this.on('dblclick', () => {

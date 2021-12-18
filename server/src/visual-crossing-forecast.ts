@@ -257,6 +257,9 @@ function convertConditions(vcConditions: VCCommonConditions | VCCurrentCondition
   if (!isMetric && conditions.pressure != null)
     conditions.pressure = hpaToInHg(conditions.pressure);
 
+  if (vcConditions.snow ?? conditions.precipType === 'snow')
+    (conditions as DailyConditions).precipAccumulation = vcConditions.snow;
+
   return conditions;
 }
 
