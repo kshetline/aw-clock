@@ -280,10 +280,10 @@ To build the server along with the web client, use `npm run build`, possibly fol
 
 ### Server configuration
 
-The following environment variables affect how the server part of this software runs. They are defined in the file `etc/defaults/weatherService` for the purposes of the dedicated device set-up.
+The following environment variables affect how the server part of this software runs. They are defined in the file `/etc/defaults/weatherService` for the purposes of the dedicated device set-up.
 
 * `AWC_ALLOW_ADMIN`: If `true`, an app user on localhost will be able to perform update, shut down, reboot, and quit operations via the Settings dialog.
-* `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `etc/defaults/weatherService` file, or by setting it to `false`.
+* `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `/etc/defaults/weatherService` file, or by setting it to `false`.
 * `AWC_GIT_REPO_PATH`: The path to your aw-clock Git repository.
 * `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or in addition, you can set up `AWC_WEATHERBIT_API_KEY` for both geocoding and weather data.
 * `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not.
