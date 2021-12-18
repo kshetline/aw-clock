@@ -328,14 +328,23 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
         alertsByTitle.set(title, alert);
     });
 
-    alertsByTitle.forEach(alert => forecast.alerts.push({
-      description: alertCleanUp(alert.description),
-      expires: Date.parse(alert.expires_utc) / 1000,
-      severity: alert.severity.toLowerCase() as Alert['severity'],
-      time: Date.parse(alert.effective_utc) / 1000,
-      title: alert.title,
-      url: alert.uri
-    }));
+    alertsByTitle.forEach(alert => {
+      if (/\bwarning\b/i.test(alert.title))
+        alert.severity = 'warning';
+      else if (/\bwatch\b/i.test(alert.title))
+        alert.severity = 'watch';
+      else if (/\badvisory\b/i.test(alert.title))
+        alert.severity = 'advisory';
+
+      forecast.alerts.push({
+        description: alertCleanUp(alert.description),
+        expires: Date.parse(alert.expires_utc) / 1000,
+        severity: alert.severity.toLowerCase() as Alert['severity'],
+        time: Date.parse(alert.effective_utc) / 1000,
+        title: alert.title,
+        url: alert.uri
+      });
+    });
   }
 
   if (forecast.daily?.data?.length > 0) {

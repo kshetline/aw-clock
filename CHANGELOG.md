@@ -2,6 +2,7 @@
 
 * Fix for Weatherbit.io snowfall amounts.
 * Time library updates.
+* Improved weather alert formatting.
 
 ## 2.12.1
 
