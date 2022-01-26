@@ -1,3 +1,7 @@
+## 2.12.3
+
+* Get default forecast if automatic location check fails.
+
 ## 2.12.2
 
 * Fix for Visual Crossing and Weatherbit.io snowfall amounts.

@@ -334,11 +334,12 @@ class AwClockApp implements AppService {
       else {
         const promises = [
           getJson<AwcDefaults>(`${apiServer}/defaults`),
-          getJson<any>('http://ip-api.com/json/?callback=?')
+          getJson<any>('http://ip-api.com/json/')
         ];
 
-        Promise.all(promises)
-          .then(data => {
+        Promise.allSettled(promises)
+          .then(dataPairs => {
+            const data = dataPairs.map(item => item.status === 'rejected' ? null : item.value);
             const localInstallation = raspbianChromium && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
