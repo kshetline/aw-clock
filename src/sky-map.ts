@@ -16,7 +16,6 @@ interface DrawingContext {
   starBrightestLevel: number;
   starDimmestLevel: number;
   starLevelRange: number;
-  maxStarRadius: number;
   skyObserver: ISkyObserver;
   jdu: number;
   jde: number;
@@ -78,33 +77,40 @@ export class SkyMap {
     }
 
     const jdu = julianDay(this.appService.getCurrentTime());
-    const radius = floor(min(canvas.width, canvas.height) / 2 * 0.95);
+    const width = parseFloat(canvas.style.width);
+    const height = parseFloat(canvas.style.height);
+    const radius = floor(min(width, height) / 2 * 0.95);
+    const canvasScaling = canvas.width / width;
     const dc = {
       context: canvas.getContext('2d'),
       radius,
       size: radius * 2,
-      pixelsPerArcSec: radius / 90.0 / 3600.0,
-      xctr: round(canvas.width / 2),
-      yctr: round(canvas.height / 2),
-      maxStarRadius: 2 * (window.devicePixelRatio || 1),
+      pixelsPerArcSec: radius * 0.95 / 90.0 / 3600.0,
+      xctr: round(width / 2),
+      yctr: round(height / 2),
       skyObserver: new SkyObserver(longitude, latitude),
       jdu,
-      jde: ttime.utToTdt(jdu)
-    } as unknown as DrawingContext;
-
-    dc.scaleBoost = pow(dc.pixelsPerArcSec / SCALE_WHERE_BRIGHTEST_STAR_IS_3x3, 0.521);
+      jde: ttime.utToTdt(jdu),
+      scaleBoost: 0,
+      starBrightestLevel: 0,
+      starDimmestLevel: 0,
+      starLevelRange: 0
+    } as DrawingContext;
+    console.log(parseFloat(canvas.style.width), parseFloat(canvas.style.width) * 0.95, dc.pixelsPerArcSec);
+    dc.scaleBoost = pow(dc.pixelsPerArcSec * 1.5 / SCALE_WHERE_BRIGHTEST_STAR_IS_3x3, 0.521);
     dc.starBrightestLevel = min(round(dc.scaleBoost * BRIGHTEST_3x3_STAR_IMAGE_INDEX), 1999);
     dc.starDimmestLevel = min(max(min(round(dc.scaleBoost * DIMMEST_AT_SCALE_1x1_STAR_IMAGE_INDEX), 1999),
                               DIMMEST_ALLOWED_1x1_STAR_IMAGE_INDEX), BRIGHTEST_1x1_STAR_IMAGE_INDEX);
     dc.starLevelRange = dc.starBrightestLevel - dc.starDimmestLevel;
 
+    dc.context.setTransform(canvasScaling, 0, 0, canvasScaling, 0, 0);
     this.drawSky(dc);
     this.drawStars(dc);
   }
 
   private drawSky(dc: DrawingContext): void {
     dc.context.fillStyle = 'black';
-    dc.context.arc(dc.xctr, dc.yctr, dc.radius, 0, TWO_PI);
+    dc.context.arc(dc.xctr, dc.yctr, dc.radius / 0.95, 0, TWO_PI);
     dc.context.fill();
   }
 
@@ -132,7 +138,7 @@ export class SkyMap {
     const maxRange = (colorForPlanetDrawnAsStar ? 2000 - dc.starDimmestLevel - 1 : dc.starLevelRange);
     const brightness = min(max(dc.starLevelRange - round((vmag + 1.0) / 7.0 *
           dc.starLevelRange * 1.2), 0), maxRange) + dc.starDimmestLevel;
-    const radius = brightness / 360;
+    const radius = brightness / 500;
 
     if (radius < 0.564 && !colorForPlanetDrawnAsStar) { // 0.564 is the radius of circle with an area of 1.
       const shade = round(radius * 452.13); // 0->0.564 transformed to a 0-255 range.
@@ -142,7 +148,7 @@ export class SkyMap {
     }
     else {
       dc.context.beginPath();
-      dc.context.arc(x + 0.5, y + 0.5, min(radius, dc.maxStarRadius), 0, TWO_PI);
+      dc.context.arc(x + 0.5, y + 0.5, min(radius, 2), 0, TWO_PI);
       dc.context.fillStyle = colorForPlanetDrawnAsStar || 'white';
       dc.context.fill();
     }

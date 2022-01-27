@@ -120,7 +120,7 @@ label {
   }
 }
 
-#clock-container {
+#clock-container, #clock-overlay {
   display: inline-block;
   position: absolute;
   left: 0;
@@ -130,11 +130,20 @@ label {
   padding: 1em;
   vertical-align: middle;
   overflow: visible;
-  background: var(--background-color);
 
   &.display16x9 {
     width: calc(1.675 * (100vh - 2em));
   }
+}
+
+#clock-container {
+  background: var(--background-color);
+}
+
+#clock-overlay {
+  background-color: transparent;
+  pointer-events: none;
+  z-index: 20;
 }
 
 .clock-container-ie-fix {
@@ -755,7 +764,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   bottom: 0;
   pointer-events: none;
   transition: opacity 5s ease-in;
-  z-index: 20;
+  z-index: 30;
 }
 
 .moving-dot {

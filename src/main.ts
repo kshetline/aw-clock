@@ -322,6 +322,9 @@ class AwClockApp implements AppService {
       this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone,
         this.settings.timeFormat === TimeFormat.AMPM);
 
+    if (this.settings.showSkyMap && this.skyCanvas)
+      this.skyMap.draw(this.skyCanvas, this.settings.longitude, this.settings.latitude);
+
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
     if (hour < this.lastHour || (hour === 0 && minute === 0))
@@ -560,21 +563,23 @@ class AwClockApp implements AppService {
         if (this.skyCanvas)
           this.skyCanvas.remove();
 
-        const canvasScaling = window.devicePixelRatio || 1;
-        const canvas = (this.skyCanvas = document.createElement('canvas'));
-        const width = ceil(skyRect.w * canvasScaling);
-        const height = ceil(skyRect.w * canvasScaling);
+        if (this.settings.showSkyMap) {
+          const canvasScaling = window.devicePixelRatio || 1;
+          const canvas = (this.skyCanvas = document.createElement('canvas'));
+          const width = ceil(skyRect.w * canvasScaling);
+          const height = ceil(skyRect.w * canvasScaling);
 
-        canvas.classList.add('sky-map');
-        canvas.width = ceil(width);
-        canvas.height = ceil(height);
-        canvas.style.top = skyRect.y + 'px';
-        canvas.style.left = skyRect.x + 'px';
-        canvas.style.width = skyRect.w + 'px';
-        canvas.style.height = skyRect.w + 'px';
+          canvas.classList.add('sky-map');
+          canvas.width = ceil(width);
+          canvas.height = ceil(height);
+          canvas.style.top = skyRect.y + 'px';
+          canvas.style.left = skyRect.x + 'px';
+          canvas.style.width = skyRect.w + 'px';
+          canvas.style.height = skyRect.w + 'px';
 
-        document.body.append(canvas);
-        this.skyMap.draw(canvas, this.settings.longitude, this.settings.latitude);
+          document.body.append(canvas);
+          this.skyMap.draw(canvas, this.settings.longitude, this.settings.latitude);
+        }
       }
     }
   }

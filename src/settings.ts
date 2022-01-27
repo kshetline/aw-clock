@@ -45,6 +45,7 @@ export class Settings {
   background = '#191970';
   clockFace = '#000000';
   service = '';
+  showSkyMap = true;
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
