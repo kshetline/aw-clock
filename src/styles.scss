@@ -319,6 +319,7 @@ label {
   font-family: $dialog-font;
   font-size: 14px;
   cursor: auto;
+  z-index: 200;
 }
 
 .dialog-buttons {
@@ -1029,6 +1030,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   padding: 1em 1.5em 1em 1em;
   background-color: white;
   color: black;
+  z-index: 100;
 
   .dialog-text {
     max-height: calc(var(--page-lines, 1) * 3.6vh);
@@ -1113,4 +1115,10 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 #test-time {
   display: none;
   position: absolute;
+}
+
+.sky-map {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10;
 }

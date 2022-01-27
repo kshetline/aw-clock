@@ -1,6 +1,6 @@
 ## Astronomy/Weather Clock
 
-Copyright © 2018-2021 Kerry Shetline, kerry@shetline.com
+Copyright © 2018-2022 Kerry Shetline, kerry@shetline.com
 
 ### MIT
 

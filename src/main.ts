@@ -1,6 +1,6 @@
 import { AppService } from './app.service';
 /*
-  Copyright © 2018-2021 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2022 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -25,15 +25,15 @@ import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
 import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
-import { irandom } from '@tubular/math';
-import { isBoolean, isEffectivelyFullScreen, isFirefox, isObject, setFullScreen } from '@tubular/util';
+import { ceil, floor, irandom } from '@tubular/math';
+import { isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
-import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
+import { CurrentTemperatureHumidity, Rect, TimeFormat } from './shared-types';
 
 pollForTimezoneUpdates(zonePollerBrowser);
 
@@ -85,6 +85,8 @@ class AwClockApp implements AppService {
   private proxyStatus: boolean | Promise<boolean> = undefined;
   private adminAllowed = false;
   private showTestTime = false;
+  private skyCanvas: HTMLCanvasElement;
+  private skyRect: Rect;
   private testTimeValue = '';
 
   private settings = new Settings();
@@ -225,6 +227,8 @@ class AwClockApp implements AppService {
         }
       });
     }
+
+    window.addEventListener('resize', this.findSkyMapArea);
   }
 
   getTimeFormat(): TimeFormat {
@@ -296,6 +300,7 @@ class AwClockApp implements AppService {
 
   start(): void {
     this.clock.start();
+    this.findSkyMapArea();
 
     setTimeout(() => {
       updateSvgFlowItems();
@@ -536,6 +541,44 @@ class AwClockApp implements AppService {
 
   toggleSunMoon(): void {
     this.ephemeris.toggleSunMoon();
+  }
+
+  findSkyMapArea = (): void => {
+    const mapArea = document.getElementById('face') as unknown as SVGElement;
+    const rect = mapArea?.getBoundingClientRect();
+
+    if (rect) {
+      const offset = $(mapArea).offset();
+      const skyRect = { x: floor(offset.left), y: floor(offset.top), h: ceil(rect.height), w: ceil(rect.width) };
+
+      if (!isEqual(this.skyRect, skyRect)) {
+        this.skyRect = skyRect;
+
+        if (this.skyCanvas)
+          this.skyCanvas.remove();
+
+        const canvasScaling = window.devicePixelRatio || 1;
+        const canvas = (this.skyCanvas = document.createElement('canvas'));
+        const context = canvas.getContext('2d');
+        const width = ceil(skyRect.w * canvasScaling);
+        const height = ceil(skyRect.w * canvasScaling);
+        const radius = width / 2 * 0.95;
+
+        canvas.classList.add('sky-map');
+        canvas.width = ceil(width);
+        canvas.height = ceil(height);
+        canvas.style.top = skyRect.y + 'px';
+        canvas.style.left = skyRect.x + 'px';
+        canvas.style.width = skyRect.w + 'px';
+        canvas.style.height = skyRect.w + 'px';
+
+        context.fillStyle = 'black';
+        context.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
+        context.fill();
+
+        document.body.append(canvas);
+      }
+    }
   }
 
   private static removeDefShadowRoots(): void {

@@ -14,3 +14,10 @@ export interface CurrentTemperatureHumidity {
   sensorTempDetail?: string;
   celsius?: boolean;
 }
+
+export interface Rect {
+  x: number;
+  y: number;
+  h: number;
+  w: number;
+}
