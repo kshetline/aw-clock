@@ -576,7 +576,8 @@ input, button, select, textarea, optgroup, option {
   top: 0;
   bottom: 0;
   pointer-events: none;
-  transition: opacity 5s ease-in; }
+  transition: opacity 5s ease-in;
+  z-index: 20; }
 
 .moving-dot {
   transition-property: cx, cy, fill, opacity;

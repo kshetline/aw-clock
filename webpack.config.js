@@ -115,6 +115,10 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
             context: 'src',
             to: '',
             from: 'favicon.ico'
+          },
+          {
+            to: 'assets/',
+            from: 'node_modules/@tubular/astronomy/dist/resources/stars.dat'
           }
         ]
       }),
@@ -154,6 +158,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
     },
     devServer: {
       historyApiFallback: true
-    }
+    },
+    ignoreWarnings: [{ message: /require function is used in a way/ }]
   };
 };

@@ -20,7 +20,7 @@
   },
   "private": true,
   "dependencies": {
-    "@tubular/astronomy": "^3.0.13",
+    "@tubular/astronomy": "^3.1.0",
     "@tubular/math": "^3.1.0",
     "@tubular/time": "^3.8.0",
     "@tubular/util": "^4.6.0",

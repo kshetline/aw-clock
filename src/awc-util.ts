@@ -57,9 +57,6 @@ $.fn.extend({
 
 export function getJson<T>(url: string, options?: JsonOptions): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    // `$.ajax()` returns a Promise, but if I try to use that Promise directly, I can't find a way to get
-    //   around "Uncaught (in promise)" errors, when what I want is a Promise resolved with an Error value.
-    // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url,
       data: options?.params || undefined,
@@ -73,6 +70,23 @@ export function getJson<T>(url: string, options?: JsonOptions): Promise<T> {
       },
       error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
     });
+  });
+}
+
+export function getBinary(url: string): Promise<ArrayBuffer> {
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+
+    request.open('GET', url, true);
+    request.responseType = 'arraybuffer';
+    request.onload = (): void => {
+      if (request.status === 200)
+        resolve(request.response);
+      else
+        reject(new Error(`${request.status}: ${request.statusText}`));
+    };
+    request.onerror = (err: any): void => reject(err);
+    request.send();
   });
 }
 

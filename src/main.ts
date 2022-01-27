@@ -34,6 +34,7 @@ import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
 import { CurrentTemperatureHumidity, Rect, TimeFormat } from './shared-types';
+import { SkyMap } from './sky-map';
 
 pollForTimezoneUpdates(zonePollerBrowser);
 
@@ -64,6 +65,7 @@ class AwClockApp implements AppService {
   private ephemeris: Ephemeris;
   private sensors: Sensors;
   private settingsDialog: SettingsDialog;
+  private skyMap: SkyMap;
 
   private body: JQuery;
   private cityLabel: JQuery;
@@ -110,6 +112,7 @@ class AwClockApp implements AppService {
     this.ephemeris.hidePlanets = this.settings.hidePlanets;
 
     this.sensors = new Sensors(this);
+    this.skyMap = new SkyMap(this);
 
     this.settingsDialog = new SettingsDialog(this);
 
@@ -559,10 +562,8 @@ class AwClockApp implements AppService {
 
         const canvasScaling = window.devicePixelRatio || 1;
         const canvas = (this.skyCanvas = document.createElement('canvas'));
-        const context = canvas.getContext('2d');
         const width = ceil(skyRect.w * canvasScaling);
         const height = ceil(skyRect.w * canvasScaling);
-        const radius = width / 2 * 0.95;
 
         canvas.classList.add('sky-map');
         canvas.width = ceil(width);
@@ -572,11 +573,8 @@ class AwClockApp implements AppService {
         canvas.style.width = skyRect.w + 'px';
         canvas.style.height = skyRect.w + 'px';
 
-        context.fillStyle = 'black';
-        context.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
-        context.fill();
-
         document.body.append(canvas);
+        this.skyMap.draw(canvas, this.settings.longitude, this.settings.latitude);
       }
     }
   }

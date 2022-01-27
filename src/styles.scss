@@ -755,6 +755,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   bottom: 0;
   pointer-events: none;
   transition: opacity 5s ease-in;
+  z-index: 20;
 }
 
 .moving-dot {
