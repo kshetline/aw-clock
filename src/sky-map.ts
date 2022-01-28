@@ -1,7 +1,24 @@
 import { AppService } from './app.service';
 import {
-  AsteroidCometInfo, Ecliptic, getSkyColor, ISkyObserver, JUPITER, MARS, MERCURY, MOON, NUTATION, REFRACTION, SATURN,
-  SkyObserver, SolarSystem, StarCatalog, SUN, TOPOCENTRIC, VENUS
+  AsteroidCometInfo,
+  Ecliptic,
+  getSkyColor,
+  ISkyObserver,
+  JUPITER,
+  LABEL_ANCHOR,
+  LINE_BREAK,
+  MARS,
+  MERCURY,
+  MOON,
+  NUTATION,
+  REFRACTION,
+  SATURN,
+  SkyObserver,
+  SolarSystem,
+  StarCatalog,
+  SUN,
+  TOPOCENTRIC,
+  VENUS
 } from '@tubular/astronomy';
 import { getBinary } from './awc-util';
 import ttime from '@tubular/time';
@@ -10,7 +27,7 @@ import {
   abs, Angle, atan2_deg, cos_deg, floor, max, min, mod, mod2, Point, pow, round, sin_deg, SphericalPosition,
   SphericalPosition3D, sqrt, TWO_PI, Unit
 } from '@tubular/math';
-import { colorFromRGB } from '@tubular/util';
+import { colorFromRGB, strokeLine } from '@tubular/util';
 
 interface DrawingContext {
   context: CanvasRenderingContext2D;
@@ -58,6 +75,8 @@ const planetColors = [
 const SHADED_MOON            = 'rgba(102,153,204,';
 const INTERMEDIATE_MOON      = 'rgba(178,204,229,';
 const ILLUMINATED_MOON       = 'rgba(255,255,255,';
+
+const CONSTELLATION_LINE_COLOR = '#0000FF';
 
 const planetsToDraw = [SUN, MERCURY, VENUS, MARS, JUPITER, SATURN];
 
@@ -125,7 +144,7 @@ export class SkyMap {
       jde: ttime.utToTdt(jdu),
       planetFlags: NUTATION | REFRACTION
     } as DrawingContext;
-    console.log(parseFloat(canvas.style.width), parseFloat(canvas.style.width) * 0.95, dc.pixelsPerArcSec);
+
     dc.scaleBoost = pow(dc.pixelsPerArcSec * 1.5 / SCALE_WHERE_BRIGHTEST_STAR_IS_3x3, 0.521);
     dc.starBrightestLevel = min(round(dc.scaleBoost * BRIGHTEST_3x3_STAR_IMAGE_INDEX), 1999);
     dc.starDimmestLevel = min(max(min(round(dc.scaleBoost * DIMMEST_AT_SCALE_1x1_STAR_IMAGE_INDEX), 1999),
@@ -134,8 +153,9 @@ export class SkyMap {
 
     dc.context.setTransform(canvasScaling, 0, 0, canvasScaling, 0, 0);
     this.drawSky(dc);
-    this.drawPlanets(dc);
+    this.drawConstellations(dc);
     this.drawStars(dc);
+    this.drawPlanets(dc);
   }
 
   private drawSky(dc: DrawingContext): void {
@@ -336,8 +356,60 @@ export class SkyMap {
     }
   }
 
+  private drawConstellations(dc: DrawingContext): void {
+    this.starCatalog.forEachConstellation(cInfo => {
+      const starList = cInfo.starList;
+      let starCount = 0;
+      let breakLine = true;
+      let minX = Number.MAX_SAFE_INTEGER, minY = Number.MAX_SAFE_INTEGER;
+      let maxX = Number.MIN_SAFE_INTEGER, maxY = Number.MIN_SAFE_INTEGER;
+      let hasAnchor = false;
+      let nextIsAnchor = false;
+      let lastPt;
+
+      dc.context.strokeStyle = CONSTELLATION_LINE_COLOR;
+      dc.context.lineWidth = 1;
+
+      for (const starIndex of starList) {
+        if (starIndex === LINE_BREAK) {
+          breakLine = true;
+          continue;
+        }
+        else if (starIndex === LABEL_ANCHOR) {
+          nextIsAnchor = true;
+          continue;
+        }
+
+        const pt = this.sphericalToScreenXY(this.getSphericalPosition(-starIndex - 1, dc), dc);
+
+        if (!pt)
+          break;
+
+        if (!breakLine) // noinspection JSUnusedAssignment
+          strokeLine(dc.context, pt.x, pt.y, lastPt.x, lastPt.y);
+
+        if (nextIsAnchor) {
+          minX = maxX = pt.x;
+          minY = maxY = pt.y;
+          nextIsAnchor = false;
+          hasAnchor = true;
+        }
+        else if (!hasAnchor) {
+          minX = min(minX, pt.x);
+          maxX = max(maxX, pt.x);
+          minY = min(minY, pt.y);
+          maxY = max(maxY, pt.y);
+        }
+
+        ++starCount;
+        lastPt = pt;
+        breakLine = false;
+      }
+    });
+  }
+
   private sphericalToScreenXY(pos: SphericalPosition, dc: DrawingContext): Point {
-    return this.horizontalToScreenXY(pos.altitude.degrees, pos.azimuth.degrees, dc);
+    return pos && this.horizontalToScreenXY(pos.altitude.degrees, pos.azimuth.degrees, dc);
   }
 
   private horizontalToScreenXY(alt: number, az: number, dc: DrawingContext): Point {
@@ -388,6 +460,9 @@ export class SkyMap {
   }
 
   private getSphericalPosition(bodyIndex: number, dc: DrawingContext): SphericalPosition {
+    if (bodyIndex < 0)
+      return this.starCatalog.getHorizontalPosition(-bodyIndex - 1, dc.jdu, dc.skyObserver, 365.25, REFRACTION);
+
     let flags = dc.planetFlags;
 
     if (bodyIndex === MOON)
