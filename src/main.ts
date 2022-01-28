@@ -91,25 +91,25 @@ class AwClockApp implements AppService {
   private skyRect: Rect;
   private testTimeValue = '';
 
-  private settings = new Settings();
+  private _settings = new Settings();
   private settingsChecked = false;
 
   constructor() {
-    this.settings.load();
+    this._settings.load();
     AwClockApp.removeDefShadowRoots();
 
     this.clock = new Clock(this);
-    this.clock.timeFormat = this.settings.timeFormat;
-    this.clock.hideSeconds = this.settings.hideSeconds;
+    this.clock.timeFormat = this._settings.timeFormat;
+    this.clock.hideSeconds = this._settings.hideSeconds;
     this.lastTimezone = this.clock.timezone;
 
     this.currentTempManager = new CurrentTempManager(this);
 
     this.forecast = new Forecast(this);
-    this.forecast.hourlyForecast = this.settings.hourlyForecast;
+    this.forecast.hourlyForecast = this._settings.hourlyForecast;
 
     this.ephemeris = new Ephemeris(this);
-    this.ephemeris.hidePlanets = this.settings.hidePlanets;
+    this.ephemeris.hidePlanets = this._settings.hidePlanets;
 
     this.sensors = new Sensors(this);
     this.skyMap = new SkyMap(this);
@@ -125,10 +125,10 @@ class AwClockApp implements AppService {
     this.updateCaption = $('#update-caption');
     this.updateAvailable.add(this.updateCaption).on('click', () => {
       if (raspbianChromium && this.adminAllowed)
-        this.settingsDialog.openSettings(this.settings, true);
+        this.settingsDialog.openSettings(this._settings, true);
     });
 
-    this.cityLabel.text(this.settings.city);
+    this.cityLabel.text(this._settings.city);
 
     document.addEventListener('keypress', event => {
       if (!event.repeat && event.target === document.body) {
@@ -143,8 +143,8 @@ class AwClockApp implements AppService {
           const updateTestEphemeris = (): void => {
             const time = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
 
-            this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
-              this.settings.timeFormat === TimeFormat.AMPM);
+            this.ephemeris.update(this._settings.latitude, this._settings.longitude, time, this.lastTimezone,
+              this._settings.timeFormat === TimeFormat.AMPM);
           };
 
           if (this.showTestTime && !this.testTimeValue) {
@@ -170,7 +170,7 @@ class AwClockApp implements AppService {
 
     const settingsButton = $('#settings-btn');
 
-    settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
+    settingsButton.on('click', () => this.settingsDialog.openSettings(this._settings));
 
     const weatherLogo = $('.weather-logo a');
 
@@ -234,8 +234,10 @@ class AwClockApp implements AppService {
     window.addEventListener('resize', this.findSkyMapArea);
   }
 
+  get settings(): Settings { return this._settings; }
+
   getTimeFormat(): TimeFormat {
-    return this.settings.timeFormat;
+    return this._settings.timeFormat;
   }
 
   getCurrentTime(bias = 0): number {
@@ -255,7 +257,7 @@ class AwClockApp implements AppService {
   }
 
   getWeatherOption(): string {
-    return this.settings.service;
+    return this._settings.service;
   }
 
   proxySensorUpdate(): Promise<boolean> {
@@ -319,11 +321,10 @@ class AwClockApp implements AppService {
       this.body.css('cursor', 'none');
 
     if (!this.showTestTime)
-      this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone,
-        this.settings.timeFormat === TimeFormat.AMPM);
+      this.ephemeris.update(this._settings.latitude, this._settings.longitude, now, this.lastTimezone,
+        this._settings.timeFormat === TimeFormat.AMPM);
 
-    if (this.settings.showSkyMap && this.skyCanvas)
-      this.skyMap.draw(this.skyCanvas, this.settings.longitude, this.settings.latitude);
+    this.updateSkyMap();
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
@@ -334,13 +335,18 @@ class AwClockApp implements AppService {
     this.updateWeather(minute, now, forceRefresh);
   }
 
+  private updateSkyMap(): void {
+    if (this._settings.showSkyMap && this.skyCanvas)
+      this.skyMap.draw(this.skyCanvas, this._settings.longitude, this._settings.latitude);
+  }
+
   resetGpsState(): void {
     ntpPoller.resetGpsState();
   }
 
   private updateWeather(minute: number, now: number, forceRefresh: boolean): void {
     if (!this.settingsChecked) {
-      if (this.settings.defaultsSet())
+      if (this._settings.defaultsSet())
         this.settingsChecked = true;
       else {
         const promises = [
@@ -361,31 +367,31 @@ class AwClockApp implements AppService {
             this.updateCaption.css('display', showUpdate);
 
             if (data[0]?.indoorOption && data[0].outdoorOption) {
-              this.settings.indoorOption = data[0].indoorOption;
-              this.settings.outdoorOption = data[0].outdoorOption;
+              this._settings.indoorOption = data[0].indoorOption;
+              this._settings.outdoorOption = data[0].outdoorOption;
 
               if (data[0].latitude != null) {
-                this.settings.latitude = data[0].latitude;
-                this.settings.longitude = data[0].longitude;
-                this.settings.city = data[0].city;
-                citySet = !!this.settings.city;
-                countryCode = (/,\s+([A-Z]{2,3})$/.exec(this.settings.city) || [])[1];
+                this._settings.latitude = data[0].latitude;
+                this._settings.longitude = data[0].longitude;
+                this._settings.city = data[0].city;
+                citySet = !!this._settings.city;
+                countryCode = (/,\s+([A-Z]{2,3})$/.exec(this._settings.city) || [])[1];
               }
             }
 
             if (data[1]?.status === 'success' && !citySet) {
-              this.settings.latitude = data[1].lat;
-              this.settings.longitude = data[1].lon;
-              this.settings.city = [data[1].city, data[1].region, data[1].countryCode].join(', ');
+              this._settings.latitude = data[1].lat;
+              this._settings.longitude = data[1].lon;
+              this._settings.city = [data[1].city, data[1].region, data[1].countryCode].join(', ');
               countryCode = data[1].countryCode;
             }
 
             if (countryCode)
-              this.settings.celsius = !/^(ASM?|BH?S|BL?Z|FS?M|GUM?|MHL?|PL?W|USA?|VIR?)$/i.test(data[1].countryCode);
+              this._settings.celsius = !/^(ASM?|BH?S|BL?Z|FS?M|GUM?|MHL?|PL?W|USA?|VIR?)$/i.test(data[1].countryCode);
 
-            this.settings.city = adjustCityName(this.settings.city);
+            this._settings.city = adjustCityName(this._settings.city);
             this.settingsChecked = true;
-            this.updateSettings(this.settings);
+            this.updateSettings(this._settings);
           });
 
         return;
@@ -393,7 +399,7 @@ class AwClockApp implements AppService {
     }
 
     if (this.sensors.available)
-      this.sensors.update(this.settings.celsius);
+      this.sensors.update(this._settings.celsius);
 
     let interval = (this.forecast.hasGoodData ? (this.frequent ? 5 : 15) : 1);
 
@@ -416,8 +422,8 @@ class AwClockApp implements AppService {
           this.updateCaption.css('display', updateAvailable);
         });
 
-        this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.knots,
-          this.settings.userId);
+        this.forecast.update(this._settings.latitude, this._settings.longitude, this._settings.celsius, this._settings.knots,
+          this._settings.userId);
       };
 
       if (millisOffset === 0)
@@ -441,9 +447,9 @@ class AwClockApp implements AppService {
   }
 
   updateSettings(newSettings: Settings): void {
-    const oldSettings = this.settings;
+    const oldSettings = this._settings;
 
-    this.settings = newSettings;
+    this._settings = newSettings;
     newSettings.save();
 
     this.cityLabel.text(newSettings.city);
@@ -452,28 +458,28 @@ class AwClockApp implements AppService {
     this.clock.hideSeconds = newSettings.hideSeconds;
     this.ephemeris.hidePlanets = newSettings.hidePlanets;
 
-    if (this.settings.requiresWeatherReload(oldSettings)) {
-      this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
+    if (this._settings.requiresWeatherReload(oldSettings)) {
+      this.currentTempManager.swapTemperatureUnits(this._settings.celsius);
       this.forecast.clearCache();
       this.forecast.showUnknown();
       this.clock.triggerRefresh();
     }
     else {
-      let doRefresh = (this.settings.knots !== oldSettings.knots);
+      let doRefresh = (this._settings.knots !== oldSettings.knots);
 
-      if (this.settings.celsius !== oldSettings.celsius) {
-        this.currentTempManager.swapTemperatureUnits(this.settings.celsius);
-        this.forecast.swapUnits(this.settings.celsius, this.settings.knots);
+      if (this._settings.celsius !== oldSettings.celsius) {
+        this.currentTempManager.swapTemperatureUnits(this._settings.celsius);
+        this.forecast.swapUnits(this._settings.celsius, this._settings.knots);
         doRefresh = true;
       }
 
       if (this.sensors.available &&
-          (this.settings.indoorOption !== oldSettings.indoorOption || this.settings.outdoorOption !== oldSettings.outdoorOption)) {
-        this.sensors.update(this.settings.celsius);
+          (this._settings.indoorOption !== oldSettings.indoorOption || this._settings.outdoorOption !== oldSettings.outdoorOption)) {
+        this.sensors.update(this._settings.celsius);
         doRefresh = true;
       }
 
-      if (this.settings.background !== oldSettings.background)
+      if (this._settings.background !== oldSettings.background)
         this.forecast.refreshAlerts();
 
       if (doRefresh)
@@ -483,11 +489,14 @@ class AwClockApp implements AppService {
         this.updateEphemeris();
       }
     }
+
+    if (!isEqual(this._settings.clockFace, oldSettings.clockFace))
+      this.updateSkyMap();
   }
 
   private updateEphemeris(): void {
-    this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.getCurrentTime(), this.lastTimezone,
-      this.settings.timeFormat === TimeFormat.AMPM);
+    this.ephemeris.update(this._settings.latitude, this._settings.longitude, this.getCurrentTime(), this.lastTimezone,
+      this._settings.timeFormat === TimeFormat.AMPM);
   }
 
   updateSunriseAndSunset(rise: string, set: string): void {
@@ -499,21 +508,21 @@ class AwClockApp implements AppService {
   }
 
   getIndoorOption(): string {
-    return this.settings.indoorOption;
+    return this._settings.indoorOption;
   }
 
   getOutdoorOption(): string {
-    return this.settings.outdoorOption;
+    return this._settings.outdoorOption;
   }
 
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void {
-    this.currentTempManager.updateCurrentTempAndHumidity(cth, this.settings.celsius);
+    this.currentTempManager.updateCurrentTempAndHumidity(cth, this._settings.celsius);
   }
 
   private updateDimming(now: number, todayRise: string, todaySet: string): void {
-    if (this.settings.dimming) {
-      let start = this.settings.dimmingStart;
-      let end = this.settings.dimmingEnd;
+    if (this._settings.dimming) {
+      let start = this._settings.dimmingStart;
+      let end = this._settings.dimmingEnd;
 
       if (start === 'SR')
         start = todayRise;
@@ -535,7 +544,7 @@ class AwClockApp implements AppService {
 
           if ((startMinute > endMinute && (startMinute <= currentMinute || currentMinute < endMinute)) ||
               (startMinute < endMinute && startMinute <= currentMinute && currentMinute < endMinute)) {
-            this.dimmer.css('opacity', (this.settings.dimming / 100).toString());
+            this.dimmer.css('opacity', (this._settings.dimming / 100).toString());
             return;
           }
         }
@@ -563,7 +572,7 @@ class AwClockApp implements AppService {
         if (this.skyCanvas)
           this.skyCanvas.remove();
 
-        if (this.settings.showSkyMap) {
+        if (this._settings.showSkyMap) {
           const canvasScaling = window.devicePixelRatio || 1;
           const canvas = (this.skyCanvas = document.createElement('canvas'));
           const width = ceil(skyRect.w * canvasScaling);
@@ -578,7 +587,7 @@ class AwClockApp implements AppService {
           canvas.style.height = skyRect.w + 'px';
 
           document.body.append(canvas);
-          this.skyMap.draw(canvas, this.settings.longitude, this.settings.latitude);
+          this.skyMap.draw(canvas, this._settings.longitude, this._settings.latitude);
         }
       }
     }

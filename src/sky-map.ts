@@ -1,9 +1,20 @@
 import { AppService } from './app.service';
-import { AsteroidCometInfo, ISkyObserver, REFRACTION, SkyObserver, StarCatalog } from '@tubular/astronomy';
+import {
+  AsteroidCometInfo,
+  getSkyColor,
+  ISkyObserver,
+  NUTATION,
+  REFRACTION,
+  SkyObserver,
+  SolarSystem,
+  StarCatalog,
+  SUN
+} from '@tubular/astronomy';
 import { getBinary } from './awc-util';
 import ttime from '@tubular/time';
 import julianDay = ttime.julianDay;
-import { cos_deg, floor, max, min, pow, round, sin_deg, TWO_PI } from '@tubular/math';
+import { atan2_deg, cos_deg, floor, max, min, mod, pow, round, sin_deg, SphericalPosition, sqrt, TWO_PI, Unit } from '@tubular/math';
+import { colorFromRGB } from '@tubular/util';
 
 interface DrawingContext {
   context: CanvasRenderingContext2D;
@@ -12,10 +23,11 @@ interface DrawingContext {
   xctr: number;
   yctr: number;
   pixelsPerArcSec: number;
-  scaleBoost: number;
-  starBrightestLevel: number;
-  starDimmestLevel: number;
-  starLevelRange: number;
+  minStarBrightness?: number;
+  scaleBoost?: number;
+  starBrightestLevel?: number;
+  starDimmestLevel?: number;
+  starLevelRange?: number;
   skyObserver: ISkyObserver;
   jdu: number;
   jde: number;
@@ -32,6 +44,7 @@ const DIMMEST_ALLOWED_1x1_STAR_IMAGE_INDEX  = 33;
 const DIMMEST_AT_SCALE_1x1_STAR_IMAGE_INDEX = 100;
 const BRIGHTEST_1x1_STAR_IMAGE_INDEX        = 500;
 const BRIGHTEST_3x3_STAR_IMAGE_INDEX        = 1500;
+const DEFAULT_SKY_RESOLUTION = 5;
 
 export class SkyMap {
   private static starData: ArrayBuffer;
@@ -39,6 +52,9 @@ export class SkyMap {
 
   private facing = 0;
   private firstMag5 = 0;
+  private minAlt = -0.00833;
+  private multiColor = true;
+  private solarSystem = new SolarSystem();
   private starCatalog: StarCatalog;
 
   constructor(private appService: AppService) {
@@ -90,11 +106,7 @@ export class SkyMap {
       yctr: round(height / 2),
       skyObserver: new SkyObserver(longitude, latitude),
       jdu,
-      jde: ttime.utToTdt(jdu),
-      scaleBoost: 0,
-      starBrightestLevel: 0,
-      starDimmestLevel: 0,
-      starLevelRange: 0
+      jde: ttime.utToTdt(jdu)
     } as DrawingContext;
     console.log(parseFloat(canvas.style.width), parseFloat(canvas.style.width) * 0.95, dc.pixelsPerArcSec);
     dc.scaleBoost = pow(dc.pixelsPerArcSec * 1.5 / SCALE_WHERE_BRIGHTEST_STAR_IS_3x3, 0.521);
@@ -109,9 +121,55 @@ export class SkyMap {
   }
 
   private drawSky(dc: DrawingContext): void {
-    dc.context.fillStyle = 'black';
-    dc.context.arc(dc.xctr, dc.yctr, dc.radius / 0.95, 0, TWO_PI);
-    dc.context.fill();
+    const sunPos = this.solarSystem.getHorizontalPosition(SUN, dc.jdu, dc.skyObserver, NUTATION | REFRACTION);
+    const alt = sunPos.altitude.degrees;
+    const totality = this.solarSystem.getLocalSolarEclipseTotality(dc.jde, dc.skyObserver);
+    let skyColor: string;
+
+    if (alt < -18)
+      skyColor = 'black';
+    else if (alt < 0) {
+      const shade = (18 + alt) / 18;
+
+      dc.minStarBrightness = round(shade * 153);
+      skyColor = colorFromRGB(shade * 51, shade * 51, dc.minStarBrightness);
+    }
+    else {
+      dc.minStarBrightness = 153;
+      skyColor = '#333399';
+    }
+
+    if (this.multiColor && alt >= -18) {
+      const skyResolution = DEFAULT_SKY_RESOLUTION;
+
+      // dc.heavyLabels = true;
+
+      const minAlt2 = this.minAlt - skyResolution / dc.pixelsPerArcSec / 3600.0;
+
+      for (let y = dc.yctr - dc.radius - skyResolution; y <= dc.yctr + dc.radius + skyResolution; y += skyResolution) {
+        for (let x = dc.xctr - dc.radius - skyResolution; x <= dc.xctr + dc.radius + skyResolution; x += skyResolution) {
+          const pos = this.screenXYToHorizontal(x, y, dc);
+          const skyAlt = pos.altitude.degrees;
+
+          if (skyAlt >= minAlt2) {
+            dc.context.fillStyle = getSkyColor(sunPos, pos, totality);
+            dc.context.fillRect(x - floor(skyResolution / 2), y - floor(skyResolution / 2), skyResolution + 1, skyResolution + 1);
+          }
+        }
+      }
+    }
+    else {
+      dc.context.beginPath();
+      dc.context.fillStyle = skyColor;
+      dc.context.arc(dc.xctr, dc.yctr, dc.radius / 0.95, 0, TWO_PI);
+      dc.context.fill();
+    }
+
+    dc.context.beginPath();
+    dc.context.strokeStyle = this.appService.settings.clockFace;
+    dc.context.lineWidth = dc.radius * 0.055;
+    dc.context.arc(dc.xctr, dc.yctr, dc.radius / 0.975, 0, TWO_PI);
+    dc.context.stroke();
   }
 
   private drawStars(dc: DrawingContext): void {
@@ -152,5 +210,15 @@ export class SkyMap {
       dc.context.fillStyle = colorForPlanetDrawnAsStar || 'white';
       dc.context.fill();
     }
+  }
+
+  private screenXYToHorizontal(x: number, y: number, dc: DrawingContext): SphericalPosition {
+    const dx = x - dc.xctr;
+    const dy = y - dc.yctr;
+    const r = sqrt(dx * dx + dy * dy);
+    const az = mod(90.0 - atan2_deg(dy, dx) + this.facing, 360.0);
+    const alt = 90.0 - r / dc.size * 180.0;
+
+    return new SphericalPosition(az, alt, Unit.DEGREES, Unit.DEGREES);
   }
 }
