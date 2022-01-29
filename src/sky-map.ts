@@ -1,24 +1,7 @@
 import { AppService } from './app.service';
 import {
-  AsteroidCometInfo,
-  Ecliptic,
-  getSkyColor,
-  ISkyObserver,
-  JUPITER,
-  LABEL_ANCHOR,
-  LINE_BREAK,
-  MARS,
-  MERCURY,
-  MOON,
-  NUTATION,
-  REFRACTION,
-  SATURN,
-  SkyObserver,
-  SolarSystem,
-  StarCatalog,
-  SUN,
-  TOPOCENTRIC,
-  VENUS
+  AsteroidCometInfo, AVG_SUN_MOON_RADIUS, Ecliptic, getSkyColor, ISkyObserver, JUPITER, LABEL_ANCHOR, LINE_BREAK, MARS, MERCURY,
+  MOON, NUTATION, REFRACTION, SATURN, SkyObserver, SolarSystem, StarCatalog, SUN, TOPOCENTRIC, VENUS
 } from '@tubular/astronomy';
 import { getBinary } from './awc-util';
 import ttime from '@tubular/time';
@@ -156,6 +139,7 @@ export class SkyMap {
     this.drawConstellations(dc);
     this.drawStars(dc);
     this.drawPlanets(dc);
+    this.drawEdgeFix(dc);
   }
 
   private drawSky(dc: DrawingContext): void {
@@ -202,7 +186,9 @@ export class SkyMap {
       dc.context.arc(dc.xctr, dc.yctr, dc.radius / 0.95, 0, TWO_PI);
       dc.context.fill();
     }
+  }
 
+  private drawEdgeFix(dc: DrawingContext): void {
     dc.context.beginPath();
     dc.context.strokeStyle = this.appService.settings.clockFace;
     dc.context.lineWidth = dc.radius * 0.055;
@@ -365,7 +351,7 @@ export class SkyMap {
       let maxX = Number.MIN_SAFE_INTEGER, maxY = Number.MIN_SAFE_INTEGER;
       let hasAnchor = false;
       let nextIsAnchor = false;
-      let lastPt;
+      let lastPt = null;
 
       dc.context.strokeStyle = CONSTELLATION_LINE_COLOR;
       dc.context.lineWidth = 1;
@@ -380,13 +366,13 @@ export class SkyMap {
           continue;
         }
 
-        const pt = this.sphericalToScreenXY(this.getSphericalPosition(-starIndex - 1, dc), dc);
+        const pt = this.sphericalToScreenXY(this.getSphericalPosition(-starIndex - 1, dc), dc, true);
 
         if (!pt)
           break;
 
-        if (!breakLine) // noinspection JSUnusedAssignment
-          strokeLine(dc.context, pt.x, pt.y, lastPt.x, lastPt.y);
+        if (!breakLine)
+          SkyMap.strokeLine(pt, lastPt, dc);
 
         if (nextIsAnchor) {
           minX = maxX = pt.x;
@@ -408,12 +394,27 @@ export class SkyMap {
     });
   }
 
-  private sphericalToScreenXY(pos: SphericalPosition, dc: DrawingContext): Point {
-    return pos && this.horizontalToScreenXY(pos.altitude.degrees, pos.azimuth.degrees, dc);
+  private static strokeLine(pt1: Point, pt2: Point, dc: DrawingContext): void {
+    const r1 = sqrt((pt1.x - dc.xctr) ** 2 + (pt1.y - dc.yctr) ** 2);
+    const r2 = pt2 ? sqrt((pt2.x - dc.xctr) ** 2 + (pt2.y - dc.yctr) ** 2) : 0;
+    const r = dc.radius + 3;
+
+    if (r1 > r && r2 > r)
+      return;
+    else if (r1 > r)
+      pt1 = { x: dc.xctr + (pt1.x - dc.xctr) * r / r1, y: dc.yctr + (pt1.y - dc.yctr) * r / r1 };
+    else if (r2 > r)
+      pt2 = { x: dc.xctr + (pt2.x - dc.xctr) * r / r2, y: dc.yctr + (pt2.y - dc.yctr) * r / r2 };
+
+    strokeLine(dc.context, pt1.x, pt1.y, pt2?.x, pt2?.y);
   }
 
-  private horizontalToScreenXY(alt: number, az: number, dc: DrawingContext): Point {
-    if (alt >= 0) {
+  private sphericalToScreenXY(pos: SphericalPosition, dc: DrawingContext, forConstellation = false): Point {
+    return pos && this.horizontalToScreenXY(pos.altitude.degrees, pos.azimuth.degrees, dc, forConstellation);
+  }
+
+  private horizontalToScreenXY(alt: number, az: number, dc: DrawingContext, forConstellation = false): Point {
+    if (alt >= -AVG_SUN_MOON_RADIUS || forConstellation && alt >= -75) {
       const r = (90.0 - alt) * dc.size / 180.0 * 0.995;
       const x = dc.xctr + cos_deg(-az + this.facing + 90.0) * r;
       const y = dc.yctr + sin_deg(-az + this.facing + 90.0) * r;
