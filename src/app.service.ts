@@ -15,7 +15,6 @@ export interface AppService {
   proxySensorUpdate(): Promise<boolean>;
   resetGpsState(): void;
   sensorDeadAir(isDead?: boolean): boolean;
-  settings: Settings;
   toggleSunMoon(): void;
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
