@@ -139,7 +139,7 @@ export class SkyMap {
     this.drawConstellations(dc);
     this.drawStars(dc);
     this.drawPlanets(dc);
-    this.drawEdgeFix(dc);
+    SkyMap.cleanUpEdges(dc);
   }
 
   private drawSky(dc: DrawingContext): void {
@@ -188,12 +188,13 @@ export class SkyMap {
     }
   }
 
-  private drawEdgeFix(dc: DrawingContext): void {
+  private static cleanUpEdges(dc: DrawingContext): void {
     dc.context.beginPath();
-    dc.context.strokeStyle = this.appService.settings.clockFace;
-    dc.context.lineWidth = dc.radius * 0.055;
-    dc.context.arc(dc.xctr, dc.yctr, dc.radius / 0.975, 0, TWO_PI);
-    dc.context.stroke();
+    dc.context.globalCompositeOperation = 'destination-in';
+    dc.context.fillStyle = 'black';
+    dc.context.arc(dc.xctr, dc.yctr, dc.radius, 0, TWO_PI);
+    dc.context.fill();
+    dc.context.globalCompositeOperation = 'source-over';
   }
 
   private drawStars(dc: DrawingContext): void {
@@ -397,7 +398,7 @@ export class SkyMap {
   private static strokeLine(pt1: Point, pt2: Point, dc: DrawingContext): void {
     const r1 = sqrt((pt1.x - dc.xctr) ** 2 + (pt1.y - dc.yctr) ** 2);
     const r2 = pt2 ? sqrt((pt2.x - dc.xctr) ** 2 + (pt2.y - dc.yctr) ** 2) : 0;
-    const r = dc.radius + 3;
+    const r = dc.radius + 5;
 
     if (r1 > r && r2 > r)
       return;
