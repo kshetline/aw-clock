@@ -1,3 +1,7 @@
+## 3.0.0
+
+* Added optional sky maps, allowing the clock face to be replaced with a map of the stars, constellations, and planets as they appear in your local sky.
+
 ## 2.12.3
 
 * Get default forecast if automatic location check fails.
