@@ -18,6 +18,7 @@ interface DrawingContext {
   size: number;
   xctr: number;
   yctr: number;
+  facing: number;
   pixelsPerArcSec: number;
   planetFlags?: number;
   minStarBrightness?: number;
@@ -68,10 +69,8 @@ export class SkyMap {
   private static starDataPromise: Promise<ArrayBuffer>;
 
   private ecliptic = new Ecliptic();
-  private facing = 0;
   private firstMag5 = 0;
   private minAlt = -0.00833;
-  private multiColor = true;
   private solarSystem = new SolarSystem();
   private starCatalog: StarCatalog;
 
@@ -119,6 +118,7 @@ export class SkyMap {
       context: canvas.getContext('2d'),
       radius,
       size: radius * 2,
+      facing: this.appService.skyFacing,
       pixelsPerArcSec: radius * 0.95 / 90.0 / 3600.0,
       xctr: round(width / 2),
       yctr: round(height / 2),
@@ -161,7 +161,7 @@ export class SkyMap {
       skyColor = '#333399';
     }
 
-    if (this.multiColor && alt >= -18) {
+    if (this.appService.showSkyColors && alt >= -18) {
       const skyResolution = DEFAULT_SKY_RESOLUTION;
 
       // dc.heavyLabels = true;
@@ -170,7 +170,7 @@ export class SkyMap {
 
       for (let y = dc.yctr - dc.radius - skyResolution; y <= dc.yctr + dc.radius + skyResolution; y += skyResolution) {
         for (let x = dc.xctr - dc.radius - skyResolution; x <= dc.xctr + dc.radius + skyResolution; x += skyResolution) {
-          const pos = this.screenXYToHorizontal(x, y, dc);
+          const pos = SkyMap.screenXYToHorizontal(x, y, dc);
           const skyAlt = pos.altitude.degrees;
 
           if (skyAlt >= minAlt2) {
@@ -204,7 +204,7 @@ export class SkyMap {
 
       const star = this.starCatalog.getStarInfo(i);
       const pos = this.starCatalog.getHorizontalPosition(i, dc.jdu, dc.skyObserver, 365.25, REFRACTION);
-      const pt = this.sphericalToScreenXY(pos, dc);
+      const pt = SkyMap.sphericalToScreenXY(pos, dc);
 
       if (pt)
         SkyMap.drawStar(pt.x, pt.y, star.vmag, dc);
@@ -242,7 +242,7 @@ export class SkyMap {
 
     for (const planet of planets) {
       const p = planet.planet;
-      const pt = this.sphericalToScreenXY(planet.pos, dc);
+      const pt = SkyMap.sphericalToScreenXY(planet.pos, dc);
 
       if (pt)
         this.drawPlanet(p, pt, dc);
@@ -344,6 +344,9 @@ export class SkyMap {
   }
 
   private drawConstellations(dc: DrawingContext): void {
+    if (!this.appService.showConstellations)
+      return;
+
     this.starCatalog.forEachConstellation(cInfo => {
       const starList = cInfo.starList;
       let starCount = 0;
@@ -367,7 +370,7 @@ export class SkyMap {
           continue;
         }
 
-        const pt = this.sphericalToScreenXY(this.getSphericalPosition(-starIndex - 1, dc), dc, true);
+        const pt = SkyMap.sphericalToScreenXY(this.getSphericalPosition(-starIndex - 1, dc), dc, true);
 
         if (!pt)
           break;
@@ -410,15 +413,15 @@ export class SkyMap {
     strokeLine(dc.context, pt1.x, pt1.y, pt2?.x, pt2?.y);
   }
 
-  private sphericalToScreenXY(pos: SphericalPosition, dc: DrawingContext, forConstellation = false): Point {
-    return pos && this.horizontalToScreenXY(pos.altitude.degrees, pos.azimuth.degrees, dc, forConstellation);
+  private static sphericalToScreenXY(pos: SphericalPosition, dc: DrawingContext, forConstellation = false): Point {
+    return pos && SkyMap.horizontalToScreenXY(pos.altitude.degrees, pos.azimuth.degrees, dc, forConstellation);
   }
 
-  private horizontalToScreenXY(alt: number, az: number, dc: DrawingContext, forConstellation = false): Point {
+  private static horizontalToScreenXY(alt: number, az: number, dc: DrawingContext, forConstellation = false): Point {
     if (alt >= -AVG_SUN_MOON_RADIUS || forConstellation && alt >= -75) {
       const r = (90.0 - alt) * dc.size / 180.0 * 0.995;
-      const x = dc.xctr + cos_deg(-az + this.facing + 90.0) * r;
-      const y = dc.yctr + sin_deg(-az + this.facing + 90.0) * r;
+      const x = dc.xctr + cos_deg(-az + dc.facing + 90.0) * r;
+      const y = dc.yctr + sin_deg(-az + dc.facing + 90.0) * r;
 
       return { x, y };
     }
@@ -426,11 +429,11 @@ export class SkyMap {
     return null;
   }
 
-  private screenXYToHorizontal(x: number, y: number, dc: DrawingContext): SphericalPosition {
+  private static screenXYToHorizontal(x: number, y: number, dc: DrawingContext): SphericalPosition {
     const dx = x - dc.xctr;
     const dy = y - dc.yctr;
     const r = sqrt(dx * dx + dy * dy);
-    const az = mod(90.0 - atan2_deg(dy, dx) + this.facing, 360.0);
+    const az = mod(90.0 - atan2_deg(dy, dx) + dc.facing, 360.0);
     const alt = 90.0 - r / dc.size * 180.0;
 
     return new SphericalPosition(az, alt, Unit.DEGREES, Unit.DEGREES);
@@ -456,7 +459,7 @@ export class SkyMap {
     let angle = moonPara.degrees;
     const az = horizontalPos.azimuth.degrees;
 
-    angle += this.facing - az;
+    angle += dc.facing - az;
 
     return angle;
   }

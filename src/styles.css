@@ -95,33 +95,29 @@ label {
 
 #clock-container, #clock-overlay {
   display: inline-block;
-  position: absolute;
   left: 0;
-  right: 0;
   margin: auto;
-  width: calc(1.556 * (100vh - 2em));
-  padding: 1em;
-  vertical-align: middle;
-  overflow: visible; }
+  overflow: visible;
+  padding: 1rem;
+  position: absolute;
+  right: 0;
+  width: calc(1.556 * (100vh - 2rem)); }
   #clock-container.display16x9, #clock-overlay.display16x9 {
-    width: calc(1.675 * (100vh - 2em)); }
+    width: calc(1.675 * (100vh - 2rem)); }
 
 #clock-container {
-  background: var(--background-color); }
+  background-color: var(--background-color); }
 
 #clock-overlay {
   background-color: transparent;
   pointer-events: none;
   z-index: 20; }
 
-.clock-container-ie-fix {
-  height: 100%; }
-
 @media only screen and (max-aspect-ratio: 43 / 27) {
-  #clock-container {
-    width: calc(100vw - 4em); } }
+  #clock-container, #clock-overlay {
+    width: calc(100vw - 4rem); } }
 
-#clock {
+#clock, #clock-overlay-svg {
   font-family: Verdana, "DejaVu Sans", sans-serif;
   fill: white;
   overflow: visible; }
@@ -890,5 +886,15 @@ input, button, select, textarea, optgroup, option {
 
 .sky-map {
   position: fixed;
-  pointer-events: none;
+  transition: opacity 1s;
   z-index: 10; }
+
+#clock-overlay-svg {
+  opacity: 1;
+  pointer-events: none; }
+  #clock-overlay-svg.float #hands {
+    opacity: 0.4; }
+  #clock-overlay-svg.float .dot {
+    opacity: 0; }
+    #clock-overlay-svg.float .dot.big-dot {
+      opacity: 0.25; }

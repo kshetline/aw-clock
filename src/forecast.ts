@@ -1007,9 +1007,8 @@ export class Forecast {
       const width = this.forecastDaysVisible * FORECAST_DAY_WIDTH;
       const extraWidth = (this.forecastDaysVisible - 4) * FORECAST_DAY_WIDTH;
 
-      $('#clock-container').toggleClass('display16x9', this.forecastDaysVisible > 4);
-      $('#clock-overlay').toggleClass('display16x9', this.forecastDaysVisible > 4);
-      $('#clock').attr('viewBox', `0 0 ${172 + extraWidth} 108`);
+      $('#clock-container, #clock-overlay').toggleClass('display16x9', this.forecastDaysVisible > 4);
+      $('#clock, #clock-overlay-svg').attr('viewBox', `0 0 ${172 + extraWidth} 108`);
       $('#current-forecast').attr('transform', `translate(${extraWidth / 2})`);
       $('#forecast-rect').attr('width', width.toString());
       $('#forecast-clip').attr('width', width.toString());

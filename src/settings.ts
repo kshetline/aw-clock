@@ -46,6 +46,10 @@ export class Settings {
   clockFace = '#000000';
   service = '';
   showSkyMap = true;
+  showConstellations = true;
+  showSkyColors = true;
+  skyFacing = 0;
+  overlaySkyWithClockHands = true;
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));

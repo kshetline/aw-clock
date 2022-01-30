@@ -69,6 +69,7 @@ class AwClockApp implements AppService {
 
   private body: JQuery;
   private cityLabel: JQuery;
+  private clockOverlaySvg: JQuery;
   private dimmer: JQuery;
   private testTime: JQuery;
   private updateAvailable: JQuery;
@@ -79,6 +80,8 @@ class AwClockApp implements AppService {
   private readonly pollingMinute = irandom(0, 14);
   private readonly pollingMillis = irandom(0, 59_999);
 
+  private hideSkyMap = false;
+  private hideSkyMapTimer: any;
   private lastCursorMove = 0;
   private lastForecast = 0;
   private lastTimezone: Timezone;
@@ -119,6 +122,7 @@ class AwClockApp implements AppService {
     this.body = $('body');
     this.cityLabel = $('#city');
     this.dimmer = $('#dimmer');
+    this.clockOverlaySvg = $('#clock-overlay-svg');
     this.testTime = $('#test-time');
 
     this.updateAvailable = $('#update-available');
@@ -258,6 +262,12 @@ class AwClockApp implements AppService {
     return this.settings.service;
   }
 
+  get showConstellations(): boolean { return this.settings.showConstellations; }
+
+  get showSkyColors(): boolean { return this.settings.showSkyColors; }
+
+  get skyFacing(): number { return this.settings.skyFacing; }
+
   proxySensorUpdate(): Promise<boolean> {
     if (this.proxyStatus instanceof Promise)
       return this.proxyStatus;
@@ -334,8 +344,10 @@ class AwClockApp implements AppService {
   }
 
   private updateSkyMap(): void {
-    if (this.settings.showSkyMap && this.skyCanvas)
+    if (this.settings.showSkyMap && this.skyCanvas) {
+      this.adjustHandsDisplay();
       this.skyMap.draw(this.skyCanvas, this.settings.longitude, this.settings.latitude);
+    }
   }
 
   resetGpsState(): void {
@@ -585,10 +597,31 @@ class AwClockApp implements AppService {
           canvas.style.height = skyRect.w + 'px';
 
           document.body.append(canvas);
+          canvas.addEventListener('click', this.skyClick);
+          this.adjustHandsDisplay();
           this.skyMap.draw(canvas, this.settings.longitude, this.settings.latitude);
         }
       }
     }
+  }
+
+  private skyClick = (_event: MouseEvent) => {
+    this.hideSkyMap = true;
+    this.skyCanvas.style.pointerEvents = 'none';
+    this.skyCanvas.style.opacity = '0';
+
+    this.hideSkyMapTimer = setTimeout(() => {
+      this.hideSkyMap = false;
+      this.skyCanvas.style.pointerEvents = 'all';
+      this.skyCanvas.style.opacity = '1';
+    }, 6000);
+  }
+
+  private adjustHandsDisplay(): void {
+    if (this.settings.overlaySkyWithClockHands)
+      this.clockOverlaySvg.addClass('float');
+    else
+      this.clockOverlaySvg.removeClass('float');
   }
 
   private static removeDefShadowRoots(): void {
