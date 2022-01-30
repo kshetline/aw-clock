@@ -620,30 +620,25 @@ class AwClockApp implements AppService {
 
   private toggleSkyMap(): void {
     if (this.toggleSkyMapTimer) {
-      console.log('clear timer');
       clearTimeout(this.toggleSkyMapTimer);
       this.toggleSkyMapTimer = undefined;
     }
 
     if (this.showSkyMap) {
-      console.log('toggle off');
       this.showSkyMap = false;
       this.skyCanvas.style.pointerEvents = 'none';
       this.skyCanvas.style.opacity = '0';
       this.adjustHandsDisplay();
     }
     else {
-      console.log('toggle on');
       this.showSkyMap = true;
       this.skyCanvas.style.pointerEvents = 'all';
       this.skyCanvas.style.opacity = '1';
       this.updateSkyMap();
     }
 
-    if (this.showSkyMap !== this.settings.showSkyMap) {
-      console.log('start timer');
-      this.toggleSkyMapTimer = setTimeout(() => this.toggleSkyMap(), 8000);
-    }
+    if (this.showSkyMap !== this.settings.showSkyMap)
+      this.toggleSkyMapTimer = setTimeout(() => this.toggleSkyMap(), 60000);
   }
 
   private adjustHandsDisplay(): void {
