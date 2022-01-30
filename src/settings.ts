@@ -45,7 +45,7 @@ export class Settings {
   background = '#191970';
   clockFace = '#000000';
   service = '';
-  showSkyMap = true;
+  showSkyMap = false;
   showConstellations = true;
   showSkyColors = true;
   skyFacing = 0;

@@ -25,7 +25,7 @@ import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
 import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
-import { ceil, floor, irandom } from '@tubular/math';
+import { ceil, floor, irandom, sqrt } from '@tubular/math';
 import { isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
@@ -80,8 +80,6 @@ class AwClockApp implements AppService {
   private readonly pollingMinute = irandom(0, 14);
   private readonly pollingMillis = irandom(0, 59_999);
 
-  private hideSkyMap = false;
-  private hideSkyMapTimer: any;
   private lastCursorMove = 0;
   private lastForecast = 0;
   private lastTimezone: Timezone;
@@ -89,10 +87,12 @@ class AwClockApp implements AppService {
   private frequent = false;
   private proxyStatus: boolean | Promise<boolean> = undefined;
   private adminAllowed = false;
+  private showSkyMap = false;
   private showTestTime = false;
   private skyCanvas: HTMLCanvasElement;
   private skyRect: Rect;
   private testTimeValue = '';
+  private toggleSkyMapTimer: any;
 
   private settings = new Settings();
   private settingsChecked = false;
@@ -116,6 +116,7 @@ class AwClockApp implements AppService {
 
     this.sensors = new Sensors(this);
     this.skyMap = new SkyMap(this);
+    this.showSkyMap = this.settings.showSkyMap;
 
     this.settingsDialog = new SettingsDialog(this);
 
@@ -124,6 +125,8 @@ class AwClockApp implements AppService {
     this.dimmer = $('#dimmer');
     this.clockOverlaySvg = $('#clock-overlay-svg');
     this.testTime = $('#test-time');
+
+    $('#clock').on('click' as any, this.clockClick);
 
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
@@ -344,10 +347,10 @@ class AwClockApp implements AppService {
   }
 
   private updateSkyMap(): void {
-    if (this.settings.showSkyMap && this.skyCanvas) {
-      this.adjustHandsDisplay();
+    this.adjustHandsDisplay();
+
+    if (this.showSkyMap && this.skyCanvas)
       this.skyMap.draw(this.skyCanvas, this.settings.longitude, this.settings.latitude);
-    }
   }
 
   resetGpsState(): void {
@@ -582,43 +585,69 @@ class AwClockApp implements AppService {
         if (this.skyCanvas)
           this.skyCanvas.remove();
 
-        if (this.settings.showSkyMap) {
-          const canvasScaling = window.devicePixelRatio || 1;
-          const canvas = (this.skyCanvas = document.createElement('canvas'));
-          const width = ceil(skyRect.w * canvasScaling);
-          const height = ceil(skyRect.w * canvasScaling);
+        const canvasScaling = window.devicePixelRatio || 1;
+        const canvas = (this.skyCanvas = document.createElement('canvas'));
+        const width = ceil(skyRect.w * canvasScaling);
+        const height = ceil(skyRect.w * canvasScaling);
 
-          canvas.classList.add('sky-map');
-          canvas.width = ceil(width);
-          canvas.height = ceil(height);
-          canvas.style.top = skyRect.y + 'px';
-          canvas.style.left = skyRect.x + 'px';
-          canvas.style.width = skyRect.w + 'px';
-          canvas.style.height = skyRect.w + 'px';
+        canvas.classList.add('sky-map');
+        canvas.width = ceil(width);
+        canvas.height = ceil(height);
+        canvas.style.top = skyRect.y + 'px';
+        canvas.style.left = skyRect.x + 'px';
+        canvas.style.width = skyRect.w + 'px';
+        canvas.style.height = skyRect.w + 'px';
 
-          document.body.append(canvas);
-          canvas.addEventListener('click', this.skyClick);
-          this.adjustHandsDisplay();
-          this.skyMap.draw(canvas, this.settings.longitude, this.settings.latitude);
-        }
+        document.body.append(canvas);
+        canvas.addEventListener('click', this.skyClick);
+        this.updateSkyMap();
       }
     }
   }
 
-  private skyClick = (_event: MouseEvent) => {
-    this.hideSkyMap = true;
-    this.skyCanvas.style.pointerEvents = 'none';
-    this.skyCanvas.style.opacity = '0';
+  private skyClick = () => {
+    this.toggleSkyMap();
+  }
 
-    this.hideSkyMapTimer = setTimeout(() => {
-      this.hideSkyMap = false;
+  private clockClick = (evt: MouseEvent) => {
+    const r = (evt.target as Element).getBoundingClientRect();
+    const x = evt.pageX - r.left - r.width / 2;
+    const y = evt.pageY - r.top - r.height / 2;
+
+    if (sqrt(x ** 2 + y ** 2) < r.width / 4)
+      this.toggleSkyMap();
+  }
+
+  private toggleSkyMap(): void {
+    if (this.toggleSkyMapTimer) {
+      console.log('clear timer');
+      clearTimeout(this.toggleSkyMapTimer);
+      this.toggleSkyMapTimer = undefined;
+    }
+
+    if (this.showSkyMap) {
+      console.log('toggle off');
+      this.showSkyMap = false;
+      this.skyCanvas.style.pointerEvents = 'none';
+      this.skyCanvas.style.opacity = '0';
+      this.adjustHandsDisplay();
+    }
+    else {
+      console.log('toggle on');
+      this.showSkyMap = true;
       this.skyCanvas.style.pointerEvents = 'all';
       this.skyCanvas.style.opacity = '1';
-    }, 6000);
+      this.updateSkyMap();
+    }
+
+    if (this.showSkyMap !== this.settings.showSkyMap) {
+      console.log('start timer');
+      this.toggleSkyMapTimer = setTimeout(() => this.toggleSkyMap(), 8000);
+    }
   }
 
   private adjustHandsDisplay(): void {
-    if (this.settings.overlaySkyWithClockHands)
+    if (this.settings.overlaySkyWithClockHands && this.showSkyMap)
       this.clockOverlaySvg.addClass('float');
     else
       this.clockOverlaySvg.removeClass('float');

@@ -1131,10 +1131,15 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 #clock-overlay-svg {
   opacity: 1;
   pointer-events: none;
+  transition: opacity 1s;
 
   &.float {
     #hands {
       opacity: 0.4;
+    }
+
+    #hub, #subhub {
+      opacity: 0;
     }
 
     .dot {

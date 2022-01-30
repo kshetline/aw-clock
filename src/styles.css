@@ -891,9 +891,12 @@ input, button, select, textarea, optgroup, option {
 
 #clock-overlay-svg {
   opacity: 1;
-  pointer-events: none; }
+  pointer-events: none;
+  transition: opacity 1s; }
   #clock-overlay-svg.float #hands {
     opacity: 0.4; }
+  #clock-overlay-svg.float #hub, #clock-overlay-svg.float #subhub {
+    opacity: 0; }
   #clock-overlay-svg.float .dot {
     opacity: 0; }
     #clock-overlay-svg.float .dot.big-dot {
