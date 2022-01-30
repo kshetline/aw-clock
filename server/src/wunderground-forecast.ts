@@ -1,11 +1,9 @@
 import { purgeCache, requestJson, requestText } from './request-cache';
-import { Request, Router } from 'express';
+import { Request } from 'express';
 import { max } from '@tubular/math';
 import { isObject, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
 import { alertCleanUp, autoHpa, autoInHg, checkForecastIntegrity, filterError } from './awcs-util';
-
-export const router = Router();
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const url = `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`;
@@ -78,7 +76,7 @@ function decodeWeirdJson(s: string): string {
   // What would otherwise be normal JSON data is weirdly encoded using something like HTML entities, but all
   // single letter codes, for ampersands, double quotes, '>', and '<'. The quotes in particular make the content
   // unreadable as JSON without first being decoded.
-  return s.split(/(&\w;)/g).map((s, i) => {
+  let result = s.split(/(&\w;)/g).map((s, i) => {
     if (i % 2 === 0)
       return s;
 
@@ -91,6 +89,17 @@ function decodeWeirdJson(s: string): string {
       default: return s;
     }
   }).join('');
+
+  // Check for UTF-8 wrongly decoded as Latin-1
+  if (/[\x80-\xC5]/.test(result)) {
+    const bytes = Buffer.from(result, 'latin1');
+    const altText = bytes.toString('utf8');
+
+    if (altText.length < result.length)
+      result = altText;
+  }
+
+  return result;
 }
 
 async function adjustUnits(forecast: any, item: any, category: string, celsius: boolean): Promise<void> {
