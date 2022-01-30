@@ -152,6 +152,7 @@ class AwClockApp implements AppService {
 
             this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
               this.settings.timeFormat === TimeFormat.AMPM);
+            this.updateSkyMap(time);
           };
 
           if (this.showTestTime && !this.testTimeValue) {
@@ -163,8 +164,10 @@ class AwClockApp implements AppService {
             this.testTime.val(this.testTimeValue);
             updateTestEphemeris();
           }
-          else
+          else {
             this.updateEphemeris();
+            this.updateSkyMap();
+          }
         }
       }
     });
@@ -331,11 +334,11 @@ class AwClockApp implements AppService {
     if (performance.now() > this.lastCursorMove + 120000)
       this.body.css('cursor', 'none');
 
-    if (!this.showTestTime)
+    if (!this.showTestTime) {
       this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone,
         this.settings.timeFormat === TimeFormat.AMPM);
-
-    this.updateSkyMap();
+      this.updateSkyMap();
+    }
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
@@ -346,11 +349,11 @@ class AwClockApp implements AppService {
     this.updateWeather(minute, now, forceRefresh);
   }
 
-  private updateSkyMap(): void {
+  private updateSkyMap(time?: number): void {
     this.adjustHandsDisplay();
 
     if (this.showSkyMap && this.skyCanvas)
-      this.skyMap.draw(this.skyCanvas, this.settings.longitude, this.settings.latitude);
+      this.skyMap.draw(this.skyCanvas, this.settings.longitude, this.settings.latitude, time);
   }
 
   resetGpsState(): void {

@@ -74,7 +74,7 @@ const ILLUMINATED_MOON       = 'rgba(255,255,255,';
 
 const CONSTELLATION_LINE_COLOR = '#0000FF';
 
-const planetsToDraw = [SUN, MERCURY, VENUS, MARS, JUPITER, SATURN];
+const planetsToDraw = [SUN, MERCURY, VENUS, MOON, MARS, JUPITER, SATURN];
 
 const labelFont = '12px Arial, Helvetica, sans-serif';
 const labelMetrics = getFontMetrics(labelFont);
@@ -118,7 +118,7 @@ export class SkyMap {
     });
   }
 
-  draw(canvas: HTMLCanvasElement, longitude: number, latitude: number): void {
+  draw(canvas: HTMLCanvasElement, longitude: number, latitude: number, time?: number): void {
     if (!this.starCatalog)
       return;
     else if (this.firstMag5 === 0) {
@@ -126,7 +126,7 @@ export class SkyMap {
       return;
     }
 
-    const jdu = julianDay(this.appService.getCurrentTime());
+    const jdu = julianDay(time ?? this.appService.getCurrentTime());
     const width = parseFloat(canvas.style.width);
     const height = parseFloat(canvas.style.height);
     const radius = floor(min(width, height) / 2 * 0.95);
@@ -182,12 +182,10 @@ export class SkyMap {
       skyColor = '#333399';
     }
 
-    dc.heavyLabels = (alt > -12 && this.appService.showSkyColors);
+    dc.heavyLabels = (alt > -15 && this.appService.showSkyColors);
 
     if (this.appService.showSkyColors && alt >= -18) {
       const skyResolution = DEFAULT_SKY_RESOLUTION;
-
-      // dc.heavyLabels = true;
 
       const minAlt2 = this.minAlt - skyResolution / dc.pixelsPerArcSec / 3600.0;
 
