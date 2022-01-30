@@ -597,6 +597,7 @@ class AwClockApp implements AppService {
         canvas.style.left = skyRect.x + 'px';
         canvas.style.width = skyRect.w + 'px';
         canvas.style.height = skyRect.w + 'px';
+        canvas.style.opacity = this.showSkyMap ? '1' : '0';
 
         document.body.append(canvas);
         canvas.addEventListener('click', this.skyClick);
@@ -605,20 +606,24 @@ class AwClockApp implements AppService {
     }
   }
 
-  private skyClick = () => {
-    this.toggleSkyMap();
+  private skyClick = (evt: MouseEvent) => {
+    this.toggleSkyMap(evt, 2);
   }
 
   private clockClick = (evt: MouseEvent) => {
-    const r = (evt.target as Element).getBoundingClientRect();
-    const x = evt.pageX - r.left - r.width / 2;
-    const y = evt.pageY - r.top - r.height / 2;
-
-    if (sqrt(x ** 2 + y ** 2) < r.width / 4)
-      this.toggleSkyMap();
+    this.toggleSkyMap(evt, 4);
   }
 
-  private toggleSkyMap(): void {
+  private toggleSkyMap(evt?: MouseEvent, radiusProportion = 0): void {
+    if (evt && radiusProportion > 0) {
+      const r = (evt.target as Element).getBoundingClientRect();
+      const x = evt.pageX - r.left - r.width / 2;
+      const y = evt.pageY - r.top - r.height / 2;
+
+      if (sqrt(x ** 2 + y ** 2) > r.width / radiusProportion)
+        return;
+    }
+
     if (this.toggleSkyMapTimer) {
       clearTimeout(this.toggleSkyMapTimer);
       this.toggleSkyMapTimer = undefined;
