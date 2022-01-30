@@ -7,28 +7,40 @@ import { getBinary } from './awc-util';
 import ttime from '@tubular/time';
 import julianDay = ttime.julianDay;
 import {
-  abs, Angle, atan2_deg, cos_deg, floor, max, min, mod, mod2, Point, pow, round, sin_deg, SphericalPosition,
+  abs, Angle, atan2_deg, cos_deg, floor, intersects, max, min, mod, mod2, Point, pow, Rectangle, round, sin_deg, SphericalPosition,
   SphericalPosition3D, sqrt, TWO_PI, Unit
 } from '@tubular/math';
-import { colorFromRGB, strokeLine } from '@tubular/util';
+import { colorFromRGB, getFontMetrics, getTextWidth, strokeLine } from '@tubular/util';
+
+export interface LabelInfo {
+  bodyIndex: number;
+  labelBounds?: Rectangle;
+  name: string;
+  offsetX: number;
+  overlapped?: boolean;
+  pt: Point;
+  textPt?: Point;
+}
 
 interface DrawingContext {
   context: CanvasRenderingContext2D;
-  radius: number;
-  size: number;
-  xctr: number;
-  yctr: number;
   facing: number;
+  heavyLabels?: boolean;
+  jde: number;
+  jdu: number;
+  labels: LabelInfo[];
+  minStarBrightness?: number;
   pixelsPerArcSec: number;
   planetFlags?: number;
-  minStarBrightness?: number;
+  radius: number;
   scaleBoost?: number;
+  size: number;
+  skyObserver: ISkyObserver;
   starBrightestLevel?: number;
   starDimmestLevel?: number;
   starLevelRange?: number;
-  skyObserver: ISkyObserver;
-  jdu: number;
-  jde: number;
+  xctr: number;
+  yctr: number;
 }
 
 export interface SortablePlanet {
@@ -50,9 +62,9 @@ const BRIGHTEST_3x3_STAR_IMAGE_INDEX        = 1500;
 const DEFAULT_SKY_RESOLUTION = 5;
 
 const planetColors = [
-  'yellow',  '#C0C0C0', '#EEEEFF', // Sun, Mercury, Venus
-  '#00CCCC', 'red',     'orange',  // Earth, Mars, Jupiter
-  'yellow', '', '', '', '#EEEEFF'  // Saturn, Moon
+  'yellow',  '#C0C0C0', '#EEEEFF', /* eslint-disable-line no-multi-spaces */ // Sun, Mercury, Venus */
+  '#00CCCC', 'red',     'orange',  /* eslint-disable-line no-multi-spaces */ // Earth, Mars, Jupiter
+  'yellow', '', '', '', '#EEEEFF'  /* eslint-disable-line no-multi-spaces */ // Saturn, Moon
 ];
 
 // These color specifications are left incomplete so that the alpha value can be varied.
@@ -63,6 +75,11 @@ const ILLUMINATED_MOON       = 'rgba(255,255,255,';
 const CONSTELLATION_LINE_COLOR = '#0000FF';
 
 const planetsToDraw = [SUN, MERCURY, VENUS, MARS, JUPITER, SATURN];
+
+const labelFont = '12px Arial, Helvetica, sans-serif';
+const labelMetrics = getFontMetrics(labelFont);
+const LABEL_X_OFFSET = 5;
+const LABEL_Y_OFFSET = 4;
 
 export class SkyMap {
   private static starData: ArrayBuffer;
@@ -116,16 +133,17 @@ export class SkyMap {
     const canvasScaling = canvas.width / width;
     const dc = {
       context: canvas.getContext('2d'),
+      facing: this.appService.skyFacing,
+      labels: [],
+      jde: ttime.utToTdt(jdu),
+      jdu,
+      pixelsPerArcSec: radius * 0.95 / 90.0 / 3600.0,
+      planetFlags: NUTATION | REFRACTION,
       radius,
       size: radius * 2,
-      facing: this.appService.skyFacing,
-      pixelsPerArcSec: radius * 0.95 / 90.0 / 3600.0,
-      xctr: round(width / 2),
-      yctr: round(height / 2),
       skyObserver: new SkyObserver(longitude, latitude),
-      jdu,
-      jde: ttime.utToTdt(jdu),
-      planetFlags: NUTATION | REFRACTION
+      xctr: round(width / 2),
+      yctr: round(height / 2)
     } as DrawingContext;
 
     dc.scaleBoost = pow(dc.pixelsPerArcSec * 1.5 / SCALE_WHERE_BRIGHTEST_STAR_IS_3x3, 0.521);
@@ -135,11 +153,14 @@ export class SkyMap {
     dc.starLevelRange = dc.starBrightestLevel - dc.starDimmestLevel;
 
     dc.context.setTransform(canvasScaling, 0, 0, canvasScaling, 0, 0);
+    dc.context.font = labelFont;
+
     this.drawSky(dc);
     this.drawConstellations(dc);
     this.drawStars(dc);
     this.drawPlanets(dc);
     SkyMap.cleanUpEdges(dc);
+    SkyMap.drawLabels(dc);
   }
 
   private drawSky(dc: DrawingContext): void {
@@ -160,6 +181,8 @@ export class SkyMap {
       dc.minStarBrightness = 153;
       skyColor = '#333399';
     }
+
+    dc.heavyLabels = (alt > -12 && this.appService.showSkyColors);
 
     if (this.appService.showSkyColors && alt >= -18) {
       const skyResolution = DEFAULT_SKY_RESOLUTION;
@@ -253,9 +276,17 @@ export class SkyMap {
   }
 
   private drawPlanet(planet: number, pt: Point, dc: DrawingContext): void {
+    const label = {
+      bodyIndex: planet,
+      name: this.solarSystem.getPlanetName(planet),
+      offsetX: LABEL_X_OFFSET,
+      pt,
+    };
     const { x, y } = pt;
     let size = 3;
     let color = planetColors[planet];
+
+    SkyMap.addLabel(label, dc);
 
     if (planet === SUN || planet === MOON) {
       if (dc.pixelsPerArcSec > 0.0) {
@@ -265,6 +296,8 @@ export class SkyMap {
 
       if (size < 6)
         size = 6;
+
+      label.offsetX += max(0, size - LABEL_X_OFFSET);
     }
 
     const r0 = floor(size / 2);
@@ -306,7 +339,7 @@ export class SkyMap {
                 leftSpan = lineWidth - shadowWidth - 0.5;
 
               if ((phase <= 180.0 && inset < leftSpan + 0.25) ||
-                  (phase  > 180.0 && inset > leftSpan + 0.25))
+                  (phase > 180.0 && inset > leftSpan + 0.25))
                 color = SHADED_MOON;
               else if (abs(inset - leftSpan) <= 0.5) {
                 color = INTERMEDIATE_MOON;
@@ -349,7 +382,6 @@ export class SkyMap {
 
     this.starCatalog.forEachConstellation(cInfo => {
       const starList = cInfo.starList;
-      let starCount = 0;
       let breakLine = true;
       let minX = Number.MAX_SAFE_INTEGER, minY = Number.MAX_SAFE_INTEGER;
       let maxX = Number.MIN_SAFE_INTEGER, maxY = Number.MIN_SAFE_INTEGER;
@@ -391,11 +423,41 @@ export class SkyMap {
           maxY = max(maxY, pt.y);
         }
 
-        ++starCount;
         lastPt = pt;
         breakLine = false;
       }
     });
+  }
+
+  private static drawLabels(dc: DrawingContext): void {
+    SkyMap.adjustLabelsToAvoidOverlap(dc);
+
+    for (const li of dc.labels)
+      SkyMap.drawLabel(li, dc);
+  }
+
+  private static drawLabel(li: LabelInfo, dc: DrawingContext): void {
+    dc.context.fillStyle = 'black';
+    dc.context.strokeStyle = 'black';
+
+    if (dc.heavyLabels) { // Make labels clearer against a possibly bright background.
+      dc.context.save();
+      dc.context.lineWidth = 4;
+
+      if (li.labelBounds) {
+        dc.context.rect(li.labelBounds.x - 1, li.labelBounds.y - 1, li.labelBounds.w + 2, li.labelBounds.h + 2);
+        dc.context.clip();
+      }
+
+      dc.context.lineJoin = 'round';
+      dc.context.strokeText(li.name, li.textPt.x, li.textPt.y);
+      dc.context.restore();
+    }
+    else
+      dc.context.fillText(li.name, li.textPt.x + 1, li.textPt.y + 1); // Simple drop shadow.
+
+    dc.context.fillStyle = planetColors[li.bodyIndex];
+    dc.context.fillText(li.name, li.textPt.x, li.textPt.y);
   }
 
   private static strokeLine(pt1: Point, pt2: Point, dc: DrawingContext): void {
@@ -474,5 +536,59 @@ export class SkyMap {
       flags |= TOPOCENTRIC;
 
     return this.solarSystem.getHorizontalPosition(bodyIndex, dc.jdu, dc.skyObserver, flags);
+  }
+
+  private static addLabel(li: LabelInfo, dc: DrawingContext): void {
+    const textWidth = getTextWidth(li.name, labelFont);
+
+    li.textPt = { x: li.pt.x + li.offsetX, y: li.pt.y + LABEL_Y_OFFSET };
+    li.labelBounds = { x: li.textPt.x, y: li.textPt.y - labelMetrics.ascent, w: textWidth, h: labelMetrics.lineHeight };
+
+    dc.labels.push(li);
+  }
+
+  private static adjustLabelsToAvoidOverlap(dc: DrawingContext): void {
+    for (const li of dc.labels) {
+      let delta = SkyMap.checkForOverlap(li, -1, false, dc);
+
+      if (delta !== 0) {
+        li.labelBounds.y += delta;
+        li.textPt.y += delta;
+
+        if (SkyMap.checkForOverlap(li, -1, false, dc) !== 0) {
+          li.labelBounds.y -= delta;
+          li.textPt.y -= delta;
+          delta = SkyMap.checkForOverlap(li, 1, false, dc);
+          li.labelBounds.y += delta;
+          li.textPt.y += delta;
+
+          if (SkyMap.checkForOverlap(li, 1, true, dc) !== 0) {
+            li.labelBounds.y -= delta;
+            li.textPt.y -= delta;
+          }
+        }
+      }
+    }
+  }
+
+  private static checkForOverlap(li: LabelInfo, bias: number, markOverlaps: boolean, dc: DrawingContext): number {
+    for (const li2 of dc.labels) {
+      if (intersects(li.labelBounds, li2.labelBounds)) {
+        const r = li2.labelBounds;
+        const h = li.labelBounds.h;
+
+        if (markOverlaps) {
+          li.overlapped = true;
+          li2.overlapped = true;
+        }
+
+        if ((bias <= 0 && li.pt.y < li2.pt.y) || (bias > 0 && li.pt.y >= li2.pt.y))
+          return max(r.y - li.labelBounds.y - h, -h);
+        else
+          return min(r.y + r.h - li.labelBounds.y, h);
+      }
+    }
+
+    return 0;
   }
 }

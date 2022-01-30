@@ -606,12 +606,12 @@ class AwClockApp implements AppService {
     }
   }
 
-  private skyClick = (evt: MouseEvent) => {
+  private skyClick = (evt: MouseEvent): void => {
     this.toggleSkyMap(evt, 2);
   }
 
-  private clockClick = (evt: MouseEvent) => {
-    this.toggleSkyMap(evt, 4);
+  private clockClick = (evt: MouseEvent): void => {
+    this.toggleSkyMap(evt, 2.5);
   }
 
   private toggleSkyMap(evt?: MouseEvent, radiusProportion = 0): void {
