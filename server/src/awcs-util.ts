@@ -158,6 +158,16 @@ export function filterError(error: any): string {
 }
 
 export function alertCleanUp(alertText: string): string {
+  // Check for UTF-8 wrongly decoded as Latin-1
+  if (!/[\u0100-\uFFFF]/.test(alertText) &&
+      /[\u00C0-\u00DF][\u0080-\u00BF]|([\u00E0-\u00EF][\u0080-\u00BF]{2})|([\u00F0-\u00F7][\u0080-\u00BF]{3})/.test(alertText)) {
+    const bytes = Buffer.from(alertText, 'latin1');
+    const altText = bytes.toString('utf8');
+
+    if (altText.length < alertText.length)
+      alertText = altText;
+  }
+
   let alert = alertText.trim()
     .replace(/(?<=issued an?)\n\n?\* /g, ' ')
     .replace(/\bfor\.\.\.\n.*?\n\n?\* /s, match => {
