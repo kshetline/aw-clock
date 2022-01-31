@@ -5,9 +5,9 @@ import {
   asLines, htmlEscape, isEdge, isFunction, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
 } from '@tubular/util';
-import ClickEvent = JQuery.ClickEvent;
 
 export type KeyListener = (event: KeyboardEvent) => void;
+export type ClickishEvent = JQuery.ClickEvent | MouseEvent
 
 export interface JsonOptions {
   jsonp?: boolean;
@@ -26,7 +26,7 @@ export function popKeydownListener(): void {
   keydownListeners.pop();
 }
 
-export const stopPropagation = (evt: ClickEvent, callback: (evt?: ClickEvent) => void): void => {
+export const stopPropagation = (evt: ClickishEvent, callback: (evt?: ClickishEvent) => void): void => {
   callback(evt);
   evt.stopPropagation();
 };
