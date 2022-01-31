@@ -2,14 +2,16 @@ import { AppService } from './app.service';
 import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
-import { apiServer, localServer, raspbianChromium, Settings, toTimeFormat, updateTest } from './settings';
+import {
+  apiServer, localServer, MAX_RECENT_LOCATIONS, raspbianChromium, RecentLocation, Settings, toTimeFormat, updateTest
+} from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
   adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode, incrementDialogCounter,
   popKeydownListener, pushKeydownListener
 } from './awc-util';
 import { abs } from '@tubular/math';
-import { toBoolean, toNumber } from '@tubular/util';
+import { clone, isEqual, toBoolean, toNumber } from '@tubular/util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -143,6 +145,7 @@ export class SettingsDialog {
   private previousSettings: Settings;
   private latestVersion = AWC_VERSION;
   private defaultLocation: any;
+  private recentLocations: RecentLocation[] = [];
   private searchFieldFocused = false;
   private searchButtonFocused = false;
   private updateFocused = false;
@@ -277,7 +280,7 @@ export class SettingsDialog {
   }
 
   private doSearch(): void {
-    const query = $.trim(this.searchCity.val() as string);
+    const query = (this.searchCity.val() as string).trim();
 
     if (query.length === 0)
       this.alert('Please enter a city or partial city name.');
@@ -427,30 +430,31 @@ export class SettingsDialog {
 
     checkUiSizing();
 
+    this.background.val(previousSettings.background);
+    this.temperature.val(previousSettings.knots ? (previousSettings.celsius ? 'CK' : 'FK') : (previousSettings.celsius ? 'C' : 'F'));
     this.currentCity.val(previousSettings.city);
+    this.clockFace.val(previousSettings.clockFace);
+    this.drawConstellations.prop('checked', previousSettings.drawConstellations);
+    this.floatHands.prop('checked', previousSettings.floatHands);
+    this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
+    this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
+    this.hourlyForecast.val(previousSettings.hourlyForecast);
+    this.indoor.val(previousSettings.indoorOption);
     this.latitude.val(previousSettings.latitude);
     this.longitude.val(previousSettings.longitude);
-    this.indoor.val(previousSettings.indoorOption);
-    this.background.val(previousSettings.background);
-    this.clockFace.val(previousSettings.clockFace);
-    this.outdoor.val(previousSettings.outdoorOption);
-    this.userId.val(previousSettings.userId);
-    this.temperature.val(previousSettings.knots ? (previousSettings.celsius ? 'CK' : 'FK') : (previousSettings.celsius ? 'C' : 'F'));
-    this.format.val(['24', 'AMPM', 'UTC'][previousSettings.timeFormat] ?? '24');
-    this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
-    this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
-    this.hourlyForecast.val(previousSettings.hourlyForecast);
     this.onscreenKB.prop('checked', previousSettings.onscreenKB);
+    this.outdoor.val(previousSettings.outdoorOption);
+    this.recentLocations = clone(previousSettings.recentLocations);
+    this.serviceSetting = previousSettings.service;
+    this.skyColors.val(previousSettings.showSkyColors.toString());
+    this.showSkyMap.prop('checked', previousSettings.showSkyMap);
+    this.skyFacing.val(previousSettings.skyFacing);
+    this.format.val(['24', 'AMPM', 'UTC'][previousSettings.timeFormat] ?? '24');
+    this.userId.val(previousSettings.userId);
+
     this.keyboard.enable(previousSettings.onscreenKB);
     this.enableAutocomplete(!previousSettings.onscreenKB);
-    this.serviceSetting = previousSettings.service;
     this.updateWeatherServiceSelection();
-    this.showSkyMap.prop('checked', previousSettings.showSkyMap)
-    this.floatHands.prop('checked', previousSettings.floatHands)
-    this.drawConstellations.prop('checked', previousSettings.drawConstellations)
-    this.skyColors.val(previousSettings.showSkyColors.toString());
-    this.skyFacing.val(previousSettings.skyFacing);
-
     this.submitSearch.enable(true);
     this.getGps.enable(false);
     this.defaultLocation = undefined;
@@ -506,6 +510,14 @@ export class SettingsDialog {
     });
 
     this.reloadButton.on('click', () => setTimeout(() => window.location.reload()));
+
+    let recentHtml = '';
+
+    this.recentLocations.forEach((loc, index) => {
+      recentHtml += `<div class="recent-location" data-i="${index}">${htmlEncode(loc.city)}<span>✕</span></div>`;
+    });
+
+    $('.recent-locations').html(recentHtml);
   }
 
   private updateWeatherServiceSelection(): void {
@@ -520,56 +532,74 @@ export class SettingsDialog {
   private doOK = (): void => {
     const newSettings = new Settings();
 
-    newSettings.city = (this.currentCity.val() as string).trim();
-    newSettings.latitude = Number(this.latitude.val());
-    newSettings.longitude = Number(this.longitude.val());
-    newSettings.indoorOption = this.indoor.val() as string;
-    newSettings.outdoorOption = this.outdoor.val() as string;
-    newSettings.userId = this.userId.val() as string;
-    newSettings.dimming = +this.dimming.val();
-    newSettings.dimmingStart = this.dimmingStart.val() as string;
-    newSettings.dimmingEnd = this.dimmingEnd.val() as string;
-    newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
-    newSettings.knots = (this.temperature.val() as string || '').endsWith('K');
-    newSettings.timeFormat = toTimeFormat(this.format.val() as string);
-    newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
-    newSettings.hidePlanets = (this.planets.val() as string) === 'H';
-    newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
-    newSettings.onscreenKB = this.onscreenKB.is(':checked');
     newSettings.background = this.background.val() as string;
+    newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
+    newSettings.city = (this.currentCity.val() as string).trim();
     newSettings.clockFace = this.clockFace.val() as string;
-    newSettings.service = this.weatherService.val() as string;
-    newSettings.showSkyMap = this.showSkyMap.is(':checked');
-    newSettings.floatHands = this.floatHands.is(':checked');
+    newSettings.dimming = +this.dimming.val();
+    newSettings.dimmingEnd = this.dimmingEnd.val() as string;
+    newSettings.dimmingStart = this.dimmingStart.val() as string;
     newSettings.drawConstellations = this.drawConstellations.is(':checked');
+    newSettings.floatHands = this.floatHands.is(':checked');
+    newSettings.hidePlanets = (this.planets.val() as string) === 'H';
+    newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
+    newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
+    newSettings.indoorOption = this.indoor.val() as string;
+    newSettings.knots = (this.temperature.val() as string || '').endsWith('K');
+    newSettings.latitude = toNumber(this.latitude.val());
+    newSettings.longitude = toNumber(this.longitude.val());
+    newSettings.onscreenKB = this.onscreenKB.is(':checked');
+    newSettings.outdoorOption = this.outdoor.val() as string;
+    newSettings.service = this.weatherService.val() as string;
     newSettings.showSkyColors = toBoolean(this.skyColors.val() as string);
+    newSettings.showSkyMap = this.showSkyMap.is(':checked');
     newSettings.skyFacing = toNumber(this.skyFacing.val() as string);
+    newSettings.timeFormat = toTimeFormat(this.format.val() as string);
+    newSettings.userId = this.userId.val() as string;
 
     if (newSettings.hourlyForecast === HourlyForecast.CIRCULAR && newSettings.showSkyMap)
       newSettings.hourlyForecast = HourlyForecast.VERTICAL;
 
-    if (!newSettings.city)
+    if (!newSettings.city) {
       this.alert('Current city must be specified.', () => {
         this.selectTab(0);
         this.currentCity.trigger('focus');
       });
+
+      return;
+    }
     else if (isNaN(newSettings.latitude) || newSettings.latitude < -90 || newSettings.latitude > 90) {
       this.selectTab(0);
       this.alert('A valid latitude must be provided from -90 to 90 degrees.', () =>
         this.latitude.trigger('focus'));
+
+      return;
     }
     else if (isNaN(newSettings.longitude) || newSettings.longitude < -180 || newSettings.longitude > 180) {
       this.selectTab(0);
       this.alert('A valid longitude must be provided from -180 to 180 degrees.', () =>
         this.longitude.trigger('focus'));
+
+      return;
     }
-    else {
-      decrementDialogCounter();
-      popKeydownListener();
-      this.okButton.off('click', this.doOK);
-      this.dialog.css('display', 'none');
-      this.appService.updateSettings(newSettings);
-    }
+
+    const newLocation = { city: newSettings.city, latitude: newSettings.latitude, longitude: newSettings.longitude };
+    const match = this.recentLocations.findIndex(loc => isEqual(loc, newLocation));
+
+    if (match >= 0)
+      this.recentLocations.splice(match, 1);
+
+    this.recentLocations.splice(0, 0, newLocation);
+
+    if (this.recentLocations.length > MAX_RECENT_LOCATIONS)
+      this.recentLocations.splice(-1, 1);
+
+    newSettings.recentLocations = this.recentLocations;
+    decrementDialogCounter();
+    popKeydownListener();
+    this.okButton.off('click', this.doOK);
+    this.dialog.css('display', 'none');
+    this.appService.updateSettings(newSettings);
   };
 
   private doReturnAction = (): void => {

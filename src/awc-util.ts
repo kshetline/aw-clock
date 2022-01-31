@@ -31,6 +31,15 @@ export const stopPropagation = (evt: ClickishEvent, callback: (evt?: ClickishEve
   evt.stopPropagation();
 };
 
+export function parseJson(json: string): any {
+  try {
+    return JSON.parse(json);
+  }
+  catch {}
+
+  return undefined;
+}
+
 window.addEventListener('keydown', (event: KeyboardEvent) => {
   if (keydownListeners.length > 0)
     last(keydownListeners)(event);
