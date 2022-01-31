@@ -303,6 +303,10 @@ label {
   background-color: white;
   color: black; }
 
+.dialog-tab-row {
+  display: flex;
+  justify-content: space-between; }
+
 .compact-ui input[type='text'], .compact-ui select, .compact-ui input[type='button'], .compact-ui input[type='submit'], .compact-ui button {
   -webkit-appearance: none;
   appearance: none;
@@ -322,16 +326,15 @@ label {
   background-position: right .2em top 50%, 0 0; }
 
 .user-options {
-  display: -ms-grid;
+  align-content: start;
   display: grid;
-  -ms-grid-columns: max-content auto auto;
   grid-template-columns: max-content auto auto;
-  grid-column-gap: 4px;
-  grid-row-gap: 3px; }
+  grid-template-rows: auto;
+  grid-column-gap: 6px;
+  grid-row-gap: 4px; }
   .user-options > * {
     -ms-grid-row-align: center;
-    align-self: center;
-    display: block; }
+    align-self: center; }
   .user-options > .colspan {
     grid-column: 2 / span 2; }
   .user-options > .colspan-full {
@@ -425,14 +428,6 @@ label {
     -ms-grid-row: 6;
     grid-column: 1;
     -ms-grid-column: 1; }
-
-.squeeze-user-options {
-  grid-row-gap: 0; }
-
-.squeeze-user-options-more {
-  grid-row-gap: 0; }
-  .squeeze-user-options-more input, .squeeze-user-options-more select {
-    margin: 1px 2px; }
 
 @supports (-moz-appearance: none) {
   .user-options {
@@ -901,3 +896,58 @@ input, button, select, textarea, optgroup, option {
     opacity: 0; }
     #clock-overlay-svg.float .dot.big-dot {
       opacity: 0.25; }
+
+ul.my-tabs {
+  list-style-type: none;
+  margin: 0 0 0 0.5em;
+  padding: 0;
+  overflow: visible; }
+
+ul.my-tabs > li {
+  background-color: #D7DDEE;
+  border: 1px solid #CCCCD6;
+  border-bottom: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  color: #555555;
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 0.1em;
+  padding: 0.5em 1em;
+  user-select: none; }
+
+ul.my-tabs > li:hover {
+  background-color: #E8EEFF; }
+
+ul.my-tabs > li.tab-active {
+  background-color: white;
+  cursor: default;
+  position: relative; }
+  ul.my-tabs > li.tab-active::after {
+    background-color: white;
+    display: block;
+    content: ' ';
+    height: 10px;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    z-index: 1; }
+
+.tab-wrapper {
+  border: 1px solid #CCC;
+  box-sizing: border-box;
+  height: 415px;
+  position: relative; }
+
+.tab-panel {
+  background-color: white;
+  box-sizing: border-box;
+  height: 100%;
+  left: 0;
+  padding: 1em;
+  position: absolute;
+  top: 0;
+  visibility: hidden;
+  width: 100%; }
+  .tab-panel.tab-active {
+    display: block; }

@@ -383,6 +383,11 @@ label {
   color: black;
 }
 
+.dialog-tab-row {
+  display: flex;
+  justify-content: space-between;
+}
+
 .compact-ui {
   input[type='text'], select, input[type='button'], input[type='submit'], button {
     -webkit-appearance: none;
@@ -407,17 +412,16 @@ label {
 }
 
 .user-options {
-  display: -ms-grid;
+  align-content: start;
   display: grid;
-  -ms-grid-columns: max-content auto auto;
   grid-template-columns: max-content auto auto;
-  grid-column-gap: 4px;
-  grid-row-gap: 3px;
+  grid-template-rows: auto;
+  grid-column-gap: 6px;
+  grid-row-gap: 4px;
 
   &>* {
     -ms-grid-row-align: center;
     align-self: center;
-    display: block; // Needed to make IE grid layout work
   }
 
   &>.colspan {
@@ -556,18 +560,6 @@ label {
     -ms-grid-row: 6;
     grid-column: 1;
     -ms-grid-column: 1;
-  }
-}
-
-.squeeze-user-options {
-  grid-row-gap: 0;
-}
-
-.squeeze-user-options-more {
-  grid-row-gap: 0;
-
-  input, select {
-    margin: 1px 2px;
   }
 }
 
@@ -1149,5 +1141,70 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
         opacity: 0.25;
       }
     }
+  }
+}
+
+ul.my-tabs {
+  list-style-type: none;
+  margin: 0 0 0 0.5em;
+  padding: 0;
+  overflow: visible;
+}
+
+ul.my-tabs > li {
+  background-color: #D7DDEE;
+  border: 1px solid #CCCCD6;
+  border-bottom: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  color: #555555;
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 0.1em;
+  padding: 0.5em 1em;
+  user-select: none;
+}
+
+ul.my-tabs > li:hover {
+  background-color: #E8EEFF;
+}
+
+ul.my-tabs > li.tab-active {
+  background-color: white;
+  cursor: default;
+  position: relative;
+
+  &::after {
+    background-color: white;
+    display: block;
+    content: ' ';
+    height: 10px;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    z-index: 1;
+  }
+}
+
+.tab-wrapper {
+  border: 1px solid #CCC;
+  box-sizing: border-box;
+  height: 415px;
+  position: relative;
+}
+
+.tab-panel {
+  background-color: white;
+  box-sizing: border-box;
+  height: 100%;
+  left: 0;
+  padding: 1em;
+  position: absolute;
+  top: 0;
+  visibility: hidden;
+  width: 100%;
+
+  &.tab-active {
+    display: block;
   }
 }

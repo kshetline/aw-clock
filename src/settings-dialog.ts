@@ -2,11 +2,18 @@ import { AppService } from './app.service';
 import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
-import { isIOS, isSafari } from '@tubular/util';
 import { apiServer, localServer, raspbianChromium, Settings, toTimeFormat, updateTest } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode, incrementDialogCounter, popKeydownListener,
+  adjustCityName,
+  ClickishEvent,
+  decrementDialogCounter,
+  domAlert,
+  domConfirm,
+  getJson,
+  htmlEncode,
+  incrementDialogCounter,
+  popKeydownListener,
   pushKeydownListener
 } from './awc-util';
 
@@ -65,6 +72,8 @@ export class SettingsDialog {
   private readonly dimmingEnd: JQuery;
 
   private readonly dialog: JQuery;
+  private readonly tabs: JQuery;
+  private readonly tabPanels: JQuery;
   private currentCity: JQuery;
   private onscreenKB: JQuery;
   private latitude: JQuery;
@@ -102,6 +111,7 @@ export class SettingsDialog {
   private readonly updateBtnBackdrop: JQuery;
   private keyboard: Keyboard;
 
+  private activeTab = 0;
   private previousSettings: Settings;
   private latestVersion = AWC_VERSION;
   private defaultLocation: any;
@@ -114,7 +124,9 @@ export class SettingsDialog {
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
 
-    this.dialog = $('#settings-dialog');
+    this.dialog = $('#settings-dialog ');
+    this.tabs = $('#settings-dialog .my-tabs li');
+    this.tabPanels = $('#settings-dialog .tab-wrapper .tab-panel');
     this.keyboard.setTopElement(this.dialog[0]);
     this.currentCity = $('#current-city');
     this.onscreenKB = $('#onscreen-kb');
@@ -160,6 +172,7 @@ export class SettingsDialog {
     this.updateButton.on('focus', () => this.updateFocused = true);
     this.updateButton.on('blur', () => this.updateFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
+    this.tabs.on('click', (evt) => this.tabClicked(evt));
 
     $('.version-number').text(AWC_VERSION);
 
@@ -227,10 +240,6 @@ export class SettingsDialog {
           this.colorOptions.removeClass('center-color-options');
         }
       });
-    }
-
-    if (isSafari()) {
-      $('.user-options').addClass(isIOS() ? 'squeeze-user-options-more' : 'squeeze-user-options');
     }
   }
 
@@ -360,8 +369,21 @@ export class SettingsDialog {
     }
   }
 
+  private tabClicked(evt: ClickishEvent): void {
+    this.selectTab(this.tabs.index(evt.target));
+  }
+
+  private selectTab(tabIndex: number): void {
+    this.activeTab = tabIndex;
+    this.tabs.removeClass('tab-active');
+    this.tabs.eq(tabIndex).addClass('tab-active');
+    this.tabPanels.css('visibility', 'hidden');
+    this.tabPanels.eq(tabIndex).css('visibility', 'visible');
+  }
+
   public openSettings(previousSettings: Settings, emphasizeUpdate = false): void {
     this.previousSettings = previousSettings;
+    this.selectTab(0);
 
     const checkUiSizing = (): void => {
       if (this.currentCity[0].offsetHeight === 0)

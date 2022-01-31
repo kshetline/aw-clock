@@ -28,6 +28,10 @@ module.exports = {
 
       // LOADERS
       {
+        test: /\.(css|html)$/i,
+        loader: 'raw-loader'
+      },
+      {
         test: /\.ts$/,
         exclude: [/node_modules/, SERVER],
         use: {
@@ -41,5 +45,7 @@ module.exports = {
   },
 
   devtool: 'cheap-module-source-map',
-  devServer: {}
+  devServer: {
+    watchedFiles: ['src/**/*.ts', 'src/index.html']
+  }
 };
