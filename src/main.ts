@@ -181,7 +181,6 @@ class AwClockApp implements AppService {
     const settingsButton = $('#settings-btn');
 
     settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
-    // setTimeout(() => settingsButton.trigger('click'), 500); // TODO: remove after setting up dialog
 
     const weatherLogo = $('.weather-logo a');
 

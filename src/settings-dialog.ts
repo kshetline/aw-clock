@@ -511,13 +511,28 @@ export class SettingsDialog {
 
     this.reloadButton.on('click', () => setTimeout(() => window.location.reload()));
 
-    let recentHtml = '';
+    let recentHtml = '<label>Recent locations:</label>';
 
-    this.recentLocations.forEach((loc, index) => {
-      recentHtml += `<div class="recent-location" data-i="${index}">${htmlEncode(loc.city)}<span>✕</span></div>`;
+    this.recentLocations.forEach(loc => {
+      recentHtml += `<div class="recent-location">${htmlEncode(loc.city)}<span>✕</span></div>`;
     });
 
-    $('.recent-locations').html(recentHtml);
+    $('.recent-locations').html(recentHtml).find('.recent-location').each((index, elem) => {
+      elem.addEventListener('click', evt => {
+        if ((evt.target as HTMLElement).localName === 'span') {
+          this.recentLocations.splice(index, 1);
+          (evt.target as HTMLElement).parentElement.remove();
+        }
+        else {
+          const loc = this.recentLocations[index];
+
+          this.currentCity.val(loc.city);
+          this.latitude.val(loc.latitude);
+          this.longitude.val(loc.longitude);
+          this.selectTab(0);
+        }
+      });
+    });
   }
 
   private updateWeatherServiceSelection(): void {

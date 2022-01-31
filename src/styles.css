@@ -958,9 +958,10 @@ ul.my-tabs > li.tab-active {
 .recent-row {
   margin-bottom: 1em; }
   .recent-row .recent-locations {
+    align-items: center;
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 0.75em; }
+    gap: 0.25em 0.75em; }
     .recent-row .recent-locations .recent-location {
       background-color: #DDD;
       border-radius: 4px;

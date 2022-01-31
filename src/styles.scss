@@ -1221,9 +1221,10 @@ ul.my-tabs > li.tab-active {
   margin-bottom: 1em;
 
   .recent-locations {
+    align-items: center;
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 0.75em;
+    gap: 0.25em 0.75em;
 
     .recent-location {
       background-color: #DDD;
