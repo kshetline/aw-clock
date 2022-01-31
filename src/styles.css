@@ -341,8 +341,13 @@ label {
     grid-column: 1 / span 3; }
     .user-options > .colspan-full > input, .user-options > .colspan-full label, .user-options > .colspan-full span {
       margin-right: 4px; }
+    .user-options > .colspan-full > select {
+      margin-right: 8px; }
     .user-options > .colspan-full #weather-service-option {
       margin-right: 2em; }
+  .user-options > .options-divider {
+    grid-column: 1 / span 3;
+    height: 0.5em; }
   .user-options > .rowspan {
     display: -ms-grid;
     display: grid;
@@ -466,12 +471,6 @@ input, button, select, textarea, optgroup, option {
   max-height: 276px;
   overflow: auto;
   border: darkgray 1px solid; }
-
-@media only screen and (max-height: 479px) {
-  #settings-dialog > div {
-    height: 320px; }
-  .city-table-wrapper {
-    max-height: 64px; } }
 
 #city-table {
   border-spacing: 0;
@@ -943,3 +942,12 @@ ul.my-tabs > li.tab-active {
   width: 100%; }
   .tab-panel.tab-active {
     display: block; }
+
+@media only screen and (max-height: 479px) {
+  #settings-dialog > div {
+    height: 320px; }
+  .tab-wrapper {
+    height: 255px;
+    overflow: auto; }
+  .city-table-wrapper {
+    max-height: 150px; } }

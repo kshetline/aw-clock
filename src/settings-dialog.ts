@@ -9,6 +9,7 @@ import {
   incrementDialogCounter, popKeydownListener, pushKeydownListener
 } from './awc-util';
 import { abs } from '@tubular/math';
+import { toBoolean, toNumber } from '@tubular/util';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -115,6 +116,11 @@ export class SettingsDialog {
   private planets: JQuery;
   private hourlyForecast: JQuery;
   private weatherService: JQuery;
+  private showSkyMap: JQuery;
+  private floatHands: JQuery;
+  private drawConstellations: JQuery;
+  private skyColors: JQuery;
+  private skyFacing: JQuery;
   private readonly searchCity: JQuery;
   private submitSearch: JQuery;
   private getGps: JQuery;
@@ -171,6 +177,11 @@ export class SettingsDialog {
     this.planets = $('#planets-option');
     this.hourlyForecast = $('#hourly-forecast-option');
     this.weatherService = $('#weather-service-option');
+    this.showSkyMap = $('#sky-map-option');
+    this.floatHands = $('#float-hands-option');
+    this.drawConstellations = $('#constellations-option');
+    this.skyColors = $('#sky-colors-option');
+    this.skyFacing = $('#sky-facing-option');
     this.searchCity = $('#search-city');
     this.submitSearch = $('#submit-search');
     this.getGps = $('#get-gps');
@@ -434,6 +445,11 @@ export class SettingsDialog {
     this.enableAutocomplete(!previousSettings.onscreenKB);
     this.serviceSetting = previousSettings.service;
     this.updateWeatherServiceSelection();
+    this.showSkyMap.prop('checked', previousSettings.showSkyMap)
+    this.floatHands.prop('checked', previousSettings.floatHands)
+    this.drawConstellations.prop('checked', previousSettings.drawConstellations)
+    this.skyColors.val(previousSettings.showSkyColors.toString());
+    this.skyFacing.val(previousSettings.skyFacing);
 
     this.submitSearch.enable(true);
     this.getGps.enable(false);
@@ -523,6 +539,11 @@ export class SettingsDialog {
     newSettings.background = this.background.val() as string;
     newSettings.clockFace = this.clockFace.val() as string;
     newSettings.service = this.weatherService.val() as string;
+    newSettings.showSkyMap = this.showSkyMap.is(':checked');
+    newSettings.floatHands = this.floatHands.is(':checked')
+    newSettings.drawConstellations = this.drawConstellations.is(':checked')
+    newSettings.showSkyColors = toBoolean(this.skyColors.val() as string);
+    newSettings.skyFacing = toNumber(this.skyFacing.val() as string);
 
     if (!newSettings.city)
       this.alert('Current city must be specified.', () => this.currentCity.trigger('focus'));

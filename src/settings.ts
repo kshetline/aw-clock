@@ -1,7 +1,7 @@
 import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import Cookies from 'js-cookie';
-import { isChromium, isRaspbian, toBoolean } from '@tubular/util';
+import { isChromium, isRaspbian, toBoolean, toNumber } from '@tubular/util';
 
 export const runningDev = (document.location.port === '4200');
 export const localServer = (document.location.port &&
@@ -45,11 +45,11 @@ export class Settings {
   background = '#191970';
   clockFace = '#000000';
   service = '';
-  showSkyMap = true;
-  showConstellations = true;
+  showSkyMap = false;
+  drawConstellations = true;
   showSkyColors = true;
   skyFacing = 0;
-  overlaySkyWithClockHands = true;
+  floatHands = true;
 
   public defaultsSet(): boolean {
     return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
@@ -75,6 +75,11 @@ export class Settings {
     this.background = Cookies.get('background') || defaultSettings.background;
     this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
     this.service = Cookies.get('service') || defaultSettings.service;
+    this.showSkyMap = toBoolean(Cookies.get('show_sky_map')) || defaultSettings.showSkyMap;
+    this.drawConstellations = toBoolean(Cookies.get('draw_constellations')) || defaultSettings.drawConstellations;
+    this.showSkyColors = toBoolean(Cookies.get('show_sky_colors')) || defaultSettings.showSkyColors;
+    this.skyFacing = toNumber(Cookies.get('sky-facing')) || defaultSettings.skyFacing;
+    this.floatHands = toBoolean(Cookies.get('float_hands')) || defaultSettings.floatHands;
 
     const body = $('body');
 
@@ -104,6 +109,11 @@ export class Settings {
     Cookies.set('background', this.background, expiration);
     Cookies.set('clock_face', this.clockFace, expiration);
     Cookies.set('service', this.service, expiration);
+    Cookies.set('show_sky_map', this.showSkyMap.toString(), expiration);
+    Cookies.set('draw_constellations', this.drawConstellations.toString(), expiration);
+    Cookies.set('show_sky_colors', this.showSkyColors.toString(), expiration);
+    Cookies.set('sky-facing', this.skyFacing.toString(), expiration);
+    Cookies.set('show_sky_map', this.floatHands.toString(), expiration);
 
     const body = $('body');
 

@@ -181,7 +181,7 @@ class AwClockApp implements AppService {
     const settingsButton = $('#settings-btn');
 
     settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
-//    setTimeout(() => settingsButton.trigger('click'), 500); // TODO: remove after setting up dialog
+    setTimeout(() => settingsButton.trigger('click'), 500); // TODO: remove after setting up dialog
 
     const weatherLogo = $('.weather-logo a');
 
@@ -269,7 +269,7 @@ class AwClockApp implements AppService {
     return this.settings.service;
   }
 
-  get showConstellations(): boolean { return this.settings.showConstellations; }
+  get showConstellations(): boolean { return this.settings.drawConstellations; }
 
   get showSkyColors(): boolean { return this.settings.showSkyColors; }
 
@@ -507,8 +507,22 @@ class AwClockApp implements AppService {
       }
     }
 
-    if (!isEqual(this.settings.clockFace, oldSettings.clockFace))
-      this.updateSkyMap();
+    if (!isEqual(this.settings.showSkyMap, oldSettings.showSkyMap) ||
+        !isEqual(this.settings.showSkyColors, oldSettings.showSkyColors) ||
+        !isEqual(this.settings.drawConstellations, oldSettings.drawConstellations) ||
+        !isEqual(this.settings.skyFacing, oldSettings.skyFacing) ||
+        !isEqual(this.settings.floatHands, oldSettings.floatHands)) {
+      if (this.showSkyMap !== this.settings.showSkyMap)
+        this.toggleSkyMap();
+      else {
+        if (this.toggleSkyMapTimer) {
+          clearTimeout(this.toggleSkyMapTimer);
+          this.toggleSkyMapTimer = undefined;
+        }
+
+        this.updateSkyMap();
+      }
+    }
   }
 
   private updateEphemeris(): void {
@@ -658,10 +672,12 @@ class AwClockApp implements AppService {
   }
 
   private adjustHandsDisplay(): void {
-    if (this.settings.overlaySkyWithClockHands && this.showSkyMap)
+    if (this.settings.floatHands && this.showSkyMap)
       this.clockOverlaySvg.addClass('float');
-    else
+    else {
       this.clockOverlaySvg.removeClass('float');
+      this.clockOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
+    }
   }
 
   private static removeDefShadowRoots(): void {

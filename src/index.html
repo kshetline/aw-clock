@@ -436,6 +436,7 @@
               </select>
             </span>
             <span></span>
+            <span class="options-divider">&nbsp;</span>
             <span class="colspan-full">
               <select id="temperature-option">
                 <option value="F">°F / imperial</option>
@@ -467,6 +468,31 @@
                 <option value="">Default weather service</option>
               </select>
               <label for="user-id">User ID:</label><input id="user-id" type="text" size="12"><span>(optional)</span>
+            </span>
+            <span class="options-divider">&nbsp;</span>
+            <span class="colspan-full">
+              <span>
+                <input type="checkbox" id="sky-map-option" name="sky-map-option">
+                <label for="sky-map-option">Show sky map for clock face</label>
+              </span>
+              <span>
+                <input type="checkbox" id="float-hands-option" name="float-hands-option">
+                <label for="float-hands-option">Show clock hands over sky map</label>
+              </span>
+              <span>
+                <input type="checkbox" id="constellations-option" name="constellations-option">
+                <label for="constellations-option">Draw constellations</label>
+              </span>
+            </span>
+            <span class="colspan-full">
+              <select id="sky-colors-option">
+                <option value="true">Day/night sky colors</option>
+                <option value="false">Always-black sky</option>
+              </select>
+              <select id="sky-facing-option">
+                <option value="0">Top of sky map is north</option>
+                <option value="180">Top of sky map is south</option>
+              </select>
             </span>
           </div>
           <div class="tab-panel search-section">
