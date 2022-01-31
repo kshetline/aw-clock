@@ -14,8 +14,7 @@
     "build:client:tiny": "NODE_OPTIONS=--max-old-space-size=640 webpack",
     "build:sass": "cd sass && npx node-sass ../src/styles.scss ../src/styles.css && cd ..",
     "build:prod": "node build.js -p",
-    "lint": "eslint '**/*.ts' '**/*.js'",
-    "e2e": "protractor ./protractor.conf.js"
+    "lint": "eslint '**/*.ts' '**/*.js'"
   },
   "private": true,
   "dependencies": {

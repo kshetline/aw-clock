@@ -32,9 +32,10 @@ import { apiServer, localServer, raspbianChromium, runningDev, Settings } from '
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
-import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
+import { adjustCityName, anyDialogOpen, getJson, stopPropagation } from './awc-util';
 import { CurrentTemperatureHumidity, Rect, TimeFormat } from './shared-types';
 import { SkyMap } from './sky-map';
+import ClickEvent = JQuery.ClickEvent;
 
 pollForTimezoneUpdates(zonePollerBrowser);
 
@@ -126,7 +127,7 @@ class AwClockApp implements AppService {
     this.clockOverlaySvg = $('#clock-overlay-svg');
     this.testTime = $('#test-time');
 
-    $('#clock').on('click' as any, this.clockClick);
+    $('#clock').on('click' as any, (evt) => stopPropagation(evt as any, this.clockClick));
 
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
@@ -603,21 +604,21 @@ class AwClockApp implements AppService {
         canvas.style.opacity = this.showSkyMap ? '1' : '0';
 
         document.body.append(canvas);
-        canvas.addEventListener('click', this.skyClick);
+        canvas.addEventListener('click', (evt) => stopPropagation(evt as any, this.skyClick));
         this.updateSkyMap();
       }
     }
   }
 
-  private skyClick = (evt: MouseEvent): void => {
+  private skyClick = (evt: ClickEvent): void => {
     this.toggleSkyMap(evt, 2);
   }
 
-  private clockClick = (evt: MouseEvent): void => {
+  private clockClick = (evt: ClickEvent): void => {
     this.toggleSkyMap(evt, 2.5);
   }
 
-  private toggleSkyMap(evt?: MouseEvent, radiusProportion = 0): void {
+  private toggleSkyMap(evt?: ClickEvent, radiusProportion = 0): void {
     if (evt && radiusProportion > 0) {
       const r = (evt.target as Element).getBoundingClientRect();
       const x = evt.pageX - r.left - r.width / 2;

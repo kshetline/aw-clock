@@ -11,7 +11,7 @@ import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src
 import { reflow } from './svg-flow';
 import {
   compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
-  getJson, htmlEncode, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref
+  getJson, htmlEncode, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
@@ -223,7 +223,7 @@ export class Forecast {
     $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#sun-moon-clicker').on('click', () => this.appService.toggleSunMoon());
-    $('.hour-temps, .hour-pops, .hour-icon, .hour-wind').on('click', () => this.toggleHourInfo());
+    $('.hour-temps, .hour-pops, .hour-icon, .hour-wind').on('click', (evt) => stopPropagation(evt, () => this.toggleHourInfo()));
 
     const self = this;
 
@@ -989,7 +989,7 @@ export class Forecast {
 
     this.marqueeBackground = background;
     // It shouldn't be necessary to update colors for both marqueeOuterWrapper and marqueeWrapper, but Chrome doesn't seem.
-    // to pass through the inheritance of the background color all of the time. Also doing foreground for good measure.
+    // to pass through the inheritance of the background color all the time. Also doing foreground for good measure.
     this.marqueeOuterWrapper.css('background-color', background);
     this.marqueeWrapper.css('background-color', background);
     this.marqueeOuterWrapper.css('color', color);

@@ -5,6 +5,7 @@ import {
   asLines, htmlEscape, isEdge, isFunction, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
 } from '@tubular/util';
+import ClickEvent = JQuery.ClickEvent;
 
 export type KeyListener = (event: KeyboardEvent) => void;
 
@@ -24,6 +25,11 @@ export function pushKeydownListener(listener: KeyListener): void {
 export function popKeydownListener(): void {
   keydownListeners.pop();
 }
+
+export const stopPropagation = (evt: ClickEvent, callback: (evt?: ClickEvent) => void): void => {
+  callback(evt);
+  evt.stopPropagation();
+};
 
 window.addEventListener('keydown', (event: KeyboardEvent) => {
   if (keydownListeners.length > 0)
@@ -175,8 +181,8 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
     $('#confirm-message').text(message);
 
   if (!confirmInit) {
-    confirmOk.on('click', () => doCallback(true));
-    confirmCancel.on('click', () => doCallback(false));
+    confirmOk.on('click', (evt) => stopPropagation(evt, () => doCallback(true)));
+    confirmCancel.on('click', (evt) => stopPropagation(evt, () => doCallback(false)));
     confirmInit = true;
   }
 
@@ -366,6 +372,9 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     if (evt?.preventDefault)
       evt.preventDefault();
 
+    if (evt?.stopPropagation)
+      evt.stopPropagation();
+
     popKeydownListener();
     dialogStack.pop();
     dialog.hide();
@@ -429,7 +438,7 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     textArea.on('touchcancel', () => mouseUp());
 
     closer.on('click', hide);
-    textArea.parent().on('click', event => event.stopPropagation());
+    textArea.parent().on('click', evt => evt.stopPropagation());
     dialog.on('click', evt => {
       if (processMillis() >= openTime + OUTER_CLICK_DELAY)
         hide(evt);
