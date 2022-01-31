@@ -75,11 +75,11 @@ export class Settings {
     this.background = Cookies.get('background') || defaultSettings.background;
     this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
     this.service = Cookies.get('service') || defaultSettings.service;
-    this.showSkyMap = toBoolean(Cookies.get('show_sky_map')) || defaultSettings.showSkyMap;
-    this.drawConstellations = toBoolean(Cookies.get('draw_constellations')) || defaultSettings.drawConstellations;
-    this.showSkyColors = toBoolean(Cookies.get('show_sky_colors')) || defaultSettings.showSkyColors;
-    this.skyFacing = toNumber(Cookies.get('sky-facing')) || defaultSettings.skyFacing;
-    this.floatHands = toBoolean(Cookies.get('float_hands')) || defaultSettings.floatHands;
+    this.showSkyMap = toBoolean(Cookies.get('show_sky_map'), defaultSettings.showSkyMap);
+    this.drawConstellations = toBoolean(Cookies.get('draw_constellations'), defaultSettings.drawConstellations);
+    this.showSkyColors = toBoolean(Cookies.get('show_sky_colors'), defaultSettings.showSkyColors);
+    this.skyFacing = toNumber(Cookies.get('sky_facing'), defaultSettings.skyFacing);
+    this.floatHands = toBoolean(Cookies.get('float_hands'), defaultSettings.floatHands);
 
     const body = $('body');
 
@@ -112,8 +112,8 @@ export class Settings {
     Cookies.set('show_sky_map', this.showSkyMap.toString(), expiration);
     Cookies.set('draw_constellations', this.drawConstellations.toString(), expiration);
     Cookies.set('show_sky_colors', this.showSkyColors.toString(), expiration);
-    Cookies.set('sky-facing', this.skyFacing.toString(), expiration);
-    Cookies.set('show_sky_map', this.floatHands.toString(), expiration);
+    Cookies.set('sky_facing', this.skyFacing.toString(), expiration);
+    Cookies.set('float_hands', this.floatHands.toString(), expiration);
 
     const body = $('body');
 

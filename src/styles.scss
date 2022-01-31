@@ -157,6 +157,10 @@ label {
   overflow: visible;
 }
 
+#planet-tracks, #risen-tracks, #night-sky-tracks, #planets {
+  pointer-events: none;
+}
+
 .clock-face {
   font-family: $clock-face-font;
   font-size: 10px;

@@ -5,8 +5,8 @@ import { Keyboard } from './keyboard';
 import { apiServer, localServer, raspbianChromium, Settings, toTimeFormat, updateTest } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode,
-  incrementDialogCounter, popKeydownListener, pushKeydownListener
+  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode, incrementDialogCounter,
+  popKeydownListener, pushKeydownListener
 } from './awc-util';
 import { abs } from '@tubular/math';
 import { toBoolean, toNumber } from '@tubular/util';
@@ -540,18 +540,26 @@ export class SettingsDialog {
     newSettings.clockFace = this.clockFace.val() as string;
     newSettings.service = this.weatherService.val() as string;
     newSettings.showSkyMap = this.showSkyMap.is(':checked');
-    newSettings.floatHands = this.floatHands.is(':checked')
-    newSettings.drawConstellations = this.drawConstellations.is(':checked')
+    newSettings.floatHands = this.floatHands.is(':checked');
+    newSettings.drawConstellations = this.drawConstellations.is(':checked');
     newSettings.showSkyColors = toBoolean(this.skyColors.val() as string);
     newSettings.skyFacing = toNumber(this.skyFacing.val() as string);
 
+    if (newSettings.hourlyForecast === HourlyForecast.CIRCULAR && newSettings.showSkyMap)
+      newSettings.hourlyForecast = HourlyForecast.VERTICAL;
+
     if (!newSettings.city)
-      this.alert('Current city must be specified.', () => this.currentCity.trigger('focus'));
+      this.alert('Current city must be specified.', () => {
+        this.selectTab(0);
+        this.currentCity.trigger('focus');
+      });
     else if (isNaN(newSettings.latitude) || newSettings.latitude < -90 || newSettings.latitude > 90) {
+      this.selectTab(0);
       this.alert('A valid latitude must be provided from -90 to 90 degrees.', () =>
         this.latitude.trigger('focus'));
     }
     else if (isNaN(newSettings.longitude) || newSettings.longitude < -180 || newSettings.longitude > 180) {
+      this.selectTab(0);
       this.alert('A valid longitude must be provided from -180 to 180 degrees.', () =>
         this.longitude.trigger('focus'));
     }

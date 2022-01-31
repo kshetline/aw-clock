@@ -122,6 +122,9 @@ label {
   fill: white;
   overflow: visible; }
 
+#planet-tracks, #risen-tracks, #night-sky-tracks, #planets {
+  pointer-events: none; }
+
 .clock-face {
   font-family: "Arial Unicode MS", Arial, Helvetica, sans-serif;
   font-size: 10px;

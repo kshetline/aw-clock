@@ -169,7 +169,7 @@ export class SkyMap {
     const totality = this.solarSystem.getLocalSolarEclipseTotality(dc.jde, dc.skyObserver);
     let skyColor: string;
 
-    if (alt < -18)
+    if (alt < -18 || !this.appService.showSkyColors)
       skyColor = 'black';
     else if (alt < 0) {
       const shade = (18 + alt) / 18;

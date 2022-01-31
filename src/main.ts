@@ -181,7 +181,7 @@ class AwClockApp implements AppService {
     const settingsButton = $('#settings-btn');
 
     settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
-    setTimeout(() => settingsButton.trigger('click'), 500); // TODO: remove after setting up dialog
+    // setTimeout(() => settingsButton.trigger('click'), 500); // TODO: remove after setting up dialog
 
     const weatherLogo = $('.weather-logo a');
 
@@ -672,8 +672,10 @@ class AwClockApp implements AppService {
   }
 
   private adjustHandsDisplay(): void {
-    if (this.settings.floatHands && this.showSkyMap)
+    if (this.settings.floatHands && this.showSkyMap) {
       this.clockOverlaySvg.addClass('float');
+      this.clockOverlaySvg.css('opacity', '1');
+    }
     else {
       this.clockOverlaySvg.removeClass('float');
       this.clockOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
