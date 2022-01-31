@@ -331,7 +331,7 @@ label {
   grid-template-columns: max-content auto auto;
   grid-template-rows: auto;
   grid-column-gap: 6px;
-  grid-row-gap: 4px; }
+  grid-row-gap: 6px; }
   .user-options > * {
     -ms-grid-row-align: center;
     align-self: center; }
@@ -429,10 +429,6 @@ label {
     grid-column: 1;
     -ms-grid-column: 1; }
 
-@supports (-moz-appearance: none) {
-  .user-options {
-    grid-row-gap: 2px; } }
-
 #alert-dialog > div, #confirm-dialog > div {
   position: absolute;
   margin: auto;
@@ -452,12 +448,8 @@ input, button, select, textarea, optgroup, option {
   font-style: inherit;
   font-weight: inherit; }
 
-.search-section {
-  position: absolute;
-  width: calc(100% - 2em);
-  top: 15.5em; }
-  .search-section label, .search-section input {
-    margin-right: 0.5em; }
+.search-section label, .search-section input {
+  margin-right: 0.5em; }
 
 .center-color-options {
   left: -250px;
@@ -471,7 +463,7 @@ input, button, select, textarea, optgroup, option {
   margin-bottom: 12pt; }
 
 .city-table-wrapper {
-  max-height: 176px;
+  max-height: 276px;
   overflow: auto;
   border: darkgray 1px solid; }
 

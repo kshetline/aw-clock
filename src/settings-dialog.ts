@@ -5,17 +5,10 @@ import { Keyboard } from './keyboard';
 import { apiServer, localServer, raspbianChromium, Settings, toTimeFormat, updateTest } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName,
-  ClickishEvent,
-  decrementDialogCounter,
-  domAlert,
-  domConfirm,
-  getJson,
-  htmlEncode,
-  incrementDialogCounter,
-  popKeydownListener,
-  pushKeydownListener
+  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode,
+  incrementDialogCounter, popKeydownListener, pushKeydownListener
 } from './awc-util';
+import { abs } from '@tubular/math';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -48,7 +41,36 @@ async function callSearchApi(query: string): Promise<SearchResults> {
   // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations
   // is subject to future change and access restrictions. Users of this code should strongly consider substituting
   // a different API.
-  return getJson<SearchResults>('https://skyviewcafe.com/atlas', { jsonp: true, params: { q: query, client: 'web', pt: 'false' } });
+  const results = await getJson<SearchResults>('https://skyviewcafe.com/atlas',
+    { jsonp: true, params: { q: query, client: 'web', pt: 'false' } });
+  const matches = results.matches ?? [];
+  const sameNames = new Map<string, number[]>();
+  const deletions: number[] = [];
+
+  // Eliminate duplicates
+  matches.forEach((loc, index) => {
+    if (sameNames.has(loc.displayName))
+      sameNames.get(loc.displayName).push(index);
+    else
+      sameNames.set(loc.displayName, [index]);
+  });
+
+  sameNames.forEach(indices => {
+    for (let i = indices.length - 1; i > 0; --i) {
+      for (let j = 0; j < i; ++j) {
+        if (abs(matches[indices[i]].latitude - matches[indices[j]].latitude) <= 0.03 &&
+            abs(matches[indices[i]].longitude - matches[indices[j]].longitude) <= 0.03) {
+          deletions.push(indices[i]);
+          break;
+        }
+      }
+    }
+  });
+
+  deletions.sort((a, b) => b - a);
+  deletions.forEach(i => matches.splice(i, 1));
+
+  return results;
 }
 
 function formatDegrees(angle, compassPointsPosNeg, degreeDigits): string {

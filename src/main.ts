@@ -181,7 +181,7 @@ class AwClockApp implements AppService {
     const settingsButton = $('#settings-btn');
 
     settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
-    setTimeout(() => settingsButton.trigger('click'), 500);
+//    setTimeout(() => settingsButton.trigger('click'), 500); // TODO: remove after setting up dialog
 
     const weatherLogo = $('.weather-logo a');
 
@@ -581,6 +581,12 @@ class AwClockApp implements AppService {
 
     if (rect) {
       const offset = $(mapArea).offset();
+
+      if (offset.top === 0 && offset.left === 0) {
+        offset.top = rect.top;
+        offset.left = rect.left;
+      }
+
       const skyRect = { x: floor(offset.left), y: floor(offset.top), h: ceil(rect.height), w: ceil(rect.width) };
 
       if (!isEqual(this.skyRect, skyRect)) {
@@ -615,16 +621,17 @@ class AwClockApp implements AppService {
   }
 
   private clockClick = (evt: ClickishEvent): void => {
-    this.toggleSkyMap(evt, 2.5);
+    if ((evt.target as Element).id === 'face')
+      this.toggleSkyMap(evt, 3);
   }
 
-  private toggleSkyMap(evt?: ClickishEvent, radiusProportion = 0): void {
-    if (evt && radiusProportion > 0) {
+  private toggleSkyMap(evt?: ClickishEvent, diameterDivider = 0): void {
+    if (evt && diameterDivider > 0) {
       const r = (evt.target as Element).getBoundingClientRect();
       const x = evt.pageX - r.left - r.width / 2;
       const y = evt.pageY - r.top - r.height / 2;
 
-      if (sqrt(x ** 2 + y ** 2) > r.width / radiusProportion)
+      if (sqrt(x ** 2 + y ** 2) > r.height / diameterDivider)
         return;
     }
 
