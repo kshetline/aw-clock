@@ -14,7 +14,7 @@ const projectRoot = process.cwd();
 // noinspection JSUnusedGlobalSymbols
 module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-vars
   return {
-    mode: (env && env.mode) === 'prod' ? 'production' : 'development',
+    mode: (env?.mode) === 'prod' ? 'production' : 'development',
     performance: { hints: false },
     resolve: {
       extensions: [
@@ -92,6 +92,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
           output: { max_line_len: 511 }
         }
       })],
+      runtimeChunk: 'single'
     },
     devtool: enoughRam ? 'source-map' : undefined,
     plugins: [

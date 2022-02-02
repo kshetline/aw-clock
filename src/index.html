@@ -375,6 +375,7 @@
           <ul class="my-tabs">
             <li>Options</li>
             <li>Location Search</li>
+            <li>Alarms</li>
           </ul>
           <span style="white-space: nowrap;">
             <input type="checkbox" id="onscreen-kb" name="onscreen-kb">
@@ -506,7 +507,54 @@
 
             <div id="search-message">&nbsp;</div>
             <div class="city-table-wrapper">
-              <table id="city-table"></table>
+              <table id="city-table">
+                <thead>
+                  <tr id="header" class="geo"><th>&#x2605;</th><th>City</th><th>Latitude</th><th>Longitude</th><tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="tab-panel alarm-section">
+            <div class="alarm-entry-panel">
+              <div class="alarm-entry-buttons">
+                <button id='daily-alarm'>Set daily alarm</button>
+                <button id='one-time-alarm'>Set one-time alarm</button>
+              </div>
+              <div class="time-set-panel">
+                <div class="hour-minute-panel">
+                  <input type="text">
+                  <span>:</span>
+                  <input type="text">
+                  <select>
+                    <option value="A">AM</option>
+                    <option value="P">PM</option>
+                  </select>
+                </div>
+                <div class="day-of-week-panel">
+                </div>
+                <div class="date-panel">
+                  <input type="text" class="day">
+                  <select>
+                    <option value="1">Jan</option>
+                    <option value="2">Feb</option>
+                    <option value="3">Mar</option>
+                    <option value="4">Apr</option>
+                    <option value="5">May</option>
+                    <option value="6">Jun</option>
+                    <option value="7">Jul</option>
+                    <option value="8">Aug</option>
+                    <option value="9">Sep</option>
+                    <option value="10">Oct</option>
+                    <option value="11">Nov</option>
+                    <option value="12">Dec</option>
+                  </select>
+                  <input type="text" class="year">
+                </div>
+              </div>
+            </div>
+            <div class="alarm-list-panel">
+              &nbsp;
             </div>
           </div>
         </div>

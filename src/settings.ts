@@ -26,6 +26,14 @@ export function toTimeFormat(s: string, deflt = TimeFormat.UTC): TimeFormat {
       (s.includes('2') || s === 'false' ? TimeFormat.HR24 : deflt));
 }
 
+export class AlarmInfo {
+  days: string;
+  enabled: boolean;
+  message: string;
+  sound: string;
+  timeOfDay: number;
+}
+
 export class RecentLocation {
   city: string;
   latitude: number;
@@ -35,6 +43,7 @@ export class RecentLocation {
 export const MAX_RECENT_LOCATIONS = 5;
 
 export class Settings {
+  alarmList: AlarmInfo[] = [];
   background = '#191970';
   celsius = false;
   city = 'New York, NY';

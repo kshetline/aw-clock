@@ -17,6 +17,8 @@ const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
 const LIMIT_REACHED_BACKGROUND = '#FC9';
 
+const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 interface SearchLocation {
   city: string;
   displayName: string;
@@ -191,7 +193,7 @@ export class SettingsDialog {
     this.searching = $('.searching');
     this.searchMessage = $('#search-message');
     this.cityTableWrapper = $('.city-table-wrapper');
-    this.cityTable = $('#city-table');
+    this.cityTable = $('#city-table > tbody');
     this.okButton = $('#settings-ok');
     this.cancelButton = $('#settings-cancel');
     this.reloadButton = $('#settings-reload');
@@ -277,6 +279,19 @@ export class SettingsDialog {
         }
       });
     }
+
+    let dayOfWeekCheckboxes = '';
+
+    for (let i = 0; i < 7; ++i) {
+      const id = 'dow_cb_' + i;
+
+      dayOfWeekCheckboxes += `<input id="${id}" type="checkbox"><label for="${id}">${days[i]}</label>`;
+
+      if (i === 3)
+        dayOfWeekCheckboxes += '<div class="break"></div>';
+    }
+
+    $('.day-of-week-panel').html(dayOfWeekCheckboxes);
   }
 
   private doSearch(): void {
@@ -295,7 +310,7 @@ export class SettingsDialog {
       this.keyboard.hide();
 
       callSearchApi(query).then(response => {
-        let rows = '<tr id="header"><th>&#x2605;</th><th>City</th><th>Latitude</th><th>Longitude</th><tr>\n';
+        let rows = '';
 
         response.matches.forEach((city, index) => {
           rows +=

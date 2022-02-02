@@ -1246,3 +1246,103 @@ ul.my-tabs > li.tab-active {
     }
   }
 }
+
+#city-table > thead {
+  background-color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.alarm-section {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: space-between;
+
+  .alarm-entry-panel {
+    display: flex;
+    flex: 0 0 0;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: start;
+
+    .alarm-entry-buttons {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .time-set-panel {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: start;
+
+      .hour-minute-panel {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        justify-content: center;
+
+        input, select, span {
+          font-size: 2.5rem;
+          font-weight: bold;
+        }
+
+        input {
+          text-align: center;
+          width: 2.2ch;
+        }
+
+        select {
+          margin-left: 0.75rem;
+        }
+      }
+
+      .day-of-week-panel {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        justify-content: center;
+        margin-top: 1em;
+
+        input:not(:first-child) {
+          margin-left: 0.33rem;
+        }
+
+        .break {
+          flex-basis: 100%;
+          height: 0;
+        }
+      }
+
+      .date-panel {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1em;
+
+        input, select, option {
+          font-size: 2rem;
+          text-align: center;
+        }
+
+        .day {
+          width: 2.2ch;
+        }
+
+        .year {
+          width: 4.4ch;
+        }
+      }
+    }
+  }
+
+  .alarm-list-panel {
+    flex: 1 1 auto;
+  }
+}

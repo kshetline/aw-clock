@@ -5,7 +5,7 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
     "first-install": "npm i && cd server && npm i && cd .. && cd sass && npm i && cd ..",
-    "start": "npm run build:build && npm run build:sass && NODE_ENV=local webpack serve --port=4200 --host 0.0.0.0",
+    "start": "npm run build:build && npm run build:sass && webpack serve --env mode=local --port=4200 --host 0.0.0.0",
     "start-server": "cd server && npm start",
     "start-server-win": "cd server && npm run start-win",
     "build": "node build.js",
@@ -59,7 +59,7 @@
     "ts-node": "^10.4.0",
     "typescript": "^4.5.5",
     "url-loader": "^4.1.1",
-    "webpack": "^5.67.0",
+    "webpack": "^5.68.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.3",
     "webpack-node-externals": "^3.0.0"
