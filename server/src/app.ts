@@ -261,7 +261,7 @@ function getApp(): Express {
   theApp.use(cookieParser());
 
   theApp.get('/assets/audio/', (_req, res) => {
-    let audioDir = path.join(__dirname, 'assets', 'audio');
+    let audioDir = path.join(__dirname, 'public', 'assets', 'audio');
 
     if (!fs.existsSync(audioDir)) {
       audioDir = path.join(__dirname, '..', '..', 'src', 'assets', 'audio');
