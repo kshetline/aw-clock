@@ -158,7 +158,10 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
       global: true
     },
     devServer: {
-      historyApiFallback: true
+      historyApiFallback: true,
+      proxy: {
+        '/assets/audio/': 'http://localhost:4201'
+      }
     },
     ignoreWarnings: [{ message: /require function is used in a way/ }]
   };

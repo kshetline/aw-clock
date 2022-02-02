@@ -101,6 +101,8 @@ export class SettingsDialog {
   private readonly dialog: JQuery;
   private readonly tabs: JQuery;
   private readonly tabPanels: JQuery;
+
+  private audioSelect: JQuery;
   private currentCity: JQuery;
   private onscreenKB: JQuery;
   private latitude: JQuery;
@@ -108,6 +110,7 @@ export class SettingsDialog {
   private indoor: JQuery;
   private outdoor: JQuery;
   private indoorOutdoorOptions: JQuery;
+  private play: JQuery;
   private colorOptions: JQuery;
   private background: JQuery;
   private clockFace: JQuery;
@@ -144,15 +147,16 @@ export class SettingsDialog {
   private keyboard: Keyboard;
 
   private activeTab = 0;
-  private previousSettings: Settings;
-  private latestVersion = AWC_VERSION;
   private defaultLocation: any;
+  private latestVersion = AWC_VERSION;
+  private nowPlaying: HTMLAudioElement;
+  private previousSettings: Settings;
   private recentLocations: RecentLocation[] = [];
   private searchFieldFocused = false;
   private searchButtonFocused = false;
+  private serviceSetting = '';
   private updateFocused = false;
   private weatherServices = '';
-  private serviceSetting = '';
 
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
@@ -292,6 +296,43 @@ export class SettingsDialog {
     }
 
     $('.day-of-week-panel').html(dayOfWeekCheckboxes);
+
+    this.audioSelect = $('.audio-selection > select');
+    this.play = $('.audio-selection > button');
+
+    getJson<string[]>(`${apiServer}/assets/audio`).then(data => {
+      const options = data.reduce((prev, current) =>
+        prev + `<option value="${current}">${current.replace(/\.[^.]+$/, '').replace(/_/g, ' ')}</option>`, '');
+      this.audioSelect.html(options).on('change', () => this.stopAudio());
+    });
+
+    this.play.on('click', () => {
+      if (this.nowPlaying)
+        this.stopAudio();
+      else {
+        this.nowPlaying = new Audio(`/assets/audio/${encodeURI(this.audioSelect.val() as string)}`);
+
+        this.nowPlaying.addEventListener('canplaythrough', () => this.playAudio());
+        this.nowPlaying.addEventListener('ended', () => this.stopAudio());
+      }
+    });
+  }
+
+  private playAudio(): void {
+    if (this.nowPlaying) {
+      this.nowPlaying.play().finally();
+      this.play.text('⏹');
+    }
+  }
+
+  private stopAudio(): void {
+    if (this.nowPlaying) {
+      this.nowPlaying.pause();
+      this.nowPlaying.currentTime = 0;
+      this.nowPlaying = undefined;
+    }
+
+    this.play.text('▶️');
   }
 
   private doSearch(): void {
@@ -518,6 +559,7 @@ export class SettingsDialog {
     }));
 
     this.cancelButton.one('click', () => {
+      this.stopAudio();
       decrementDialogCounter();
       popKeydownListener();
       this.okButton.off('click', this.doOK);
@@ -560,6 +602,8 @@ export class SettingsDialog {
   }
 
   private doOK = (): void => {
+    this.stopAudio();
+
     const newSettings = new Settings();
 
     newSettings.background = this.background.val() as string;

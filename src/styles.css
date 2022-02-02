@@ -1004,6 +1004,7 @@ ul.my-tabs > li.tab-active {
       align-items: center;
       display: flex;
       flex-direction: column;
+      gap: 1rem;
       justify-content: start; }
       .alarm-section .alarm-entry-panel .time-set-panel .hour-minute-panel {
         display: flex;
@@ -1023,8 +1024,7 @@ ul.my-tabs > li.tab-active {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 0.25rem;
-        justify-content: center;
-        margin-top: 1em; }
+        justify-content: center; }
         .alarm-section .alarm-entry-panel .time-set-panel .day-of-week-panel input:not(:first-child) {
           margin-left: 0.33rem; }
         .alarm-section .alarm-entry-panel .time-set-panel .day-of-week-panel .break {
@@ -1034,14 +1034,24 @@ ul.my-tabs > li.tab-active {
         display: flex;
         flex-direction: row;
         gap: 0.5rem;
-        justify-content: center;
-        margin-top: 1em; }
-        .alarm-section .alarm-entry-panel .time-set-panel .date-panel input, .alarm-section .alarm-entry-panel .time-set-panel .date-panel select {
+        justify-content: center; }
+        .alarm-section .alarm-entry-panel .time-set-panel .date-panel input, .alarm-section .alarm-entry-panel .time-set-panel .date-panel select, .alarm-section .alarm-entry-panel .time-set-panel .date-panel option {
           font-size: 2rem;
           text-align: center; }
         .alarm-section .alarm-entry-panel .time-set-panel .date-panel .day {
           width: 2.2ch; }
         .alarm-section .alarm-entry-panel .time-set-panel .date-panel .year {
           width: 4.4ch; }
+      .alarm-section .alarm-entry-panel .time-set-panel .audio-selection {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        justify-content: center; }
+        .alarm-section .alarm-entry-panel .time-set-panel .audio-selection button {
+          background-color: transparent;
+          border: 0;
+          font-size: 1.5rem;
+          padding: 0; }
   .alarm-section .alarm-list-panel {
     flex: 1 1 auto; }

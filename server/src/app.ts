@@ -259,6 +259,18 @@ function getApp(): Express {
   theApp.use(express.json());
   theApp.use(express.urlencoded({ extended: false }));
   theApp.use(cookieParser());
+
+  theApp.get('/assets/audio/', (_req, res) => {
+    let audioDir = path.join(__dirname, 'assets', 'audio');
+
+    if (!fs.existsSync(audioDir)) {
+      audioDir = path.join(__dirname, '..', '..', 'src', 'assets', 'audio');
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+
+    res.send(JSON.stringify(fs.readdirSync(audioDir).filter(name => !name.startsWith('.'))));
+  });
+
   theApp.use(express.static(path.join(__dirname, 'public')));
   theApp.get('/', (req, res) => {
     res.send('Static home file not found');
