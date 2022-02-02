@@ -4,13 +4,14 @@ import Cookies from 'js-cookie';
 import { isChromium, isRaspbian, toBoolean, toNumber } from '@tubular/util';
 import { parseJson } from './awc-util';
 
-export const runningDev = (document.location.port === '4200');
-export const localServer = (document.location.port &&
-  document.location.port !== '80' && document.location.port !== '443');
+const docPort = document.location.port;
+
+export const runningDev = (docPort === '3000' || docPort === '4200');
+export const localServer = (docPort && docPort !== '80' && docPort !== '443');
 export const updateTest = toBoolean(new URLSearchParams(window.location.search).get('ut'), false, true);
 
 const apiParam = new URLSearchParams(window.location.search).get('api');
-const apiPort = apiParam || (runningDev ? '4201' : document.location.port || '8080');
+const apiPort = apiParam || (runningDev ? (docPort === '3000' ? '3002' : '4201') : docPort || '8080');
 const apiHost = ((document.location.hostname || '').startsWith('192.') ? document.location.hostname : 'localhost');
 
 // noinspection HttpUrlsUsage
@@ -43,7 +44,7 @@ export class RecentLocation {
 export const MAX_RECENT_LOCATIONS = 5;
 
 export class Settings {
-  alarmList: AlarmInfo[] = [];
+  alarms: AlarmInfo[] = [];
   background = '#191970';
   celsius = false;
   city = 'New York, NY';
@@ -75,6 +76,7 @@ export class Settings {
   }
 
   public load(): void {
+    this.alarms = parseJson(Cookies.get('alarms')) || defaultSettings.alarms;
     this.background = Cookies.get('background') || defaultSettings.background;
     this.celsius = toBoolean(Cookies.get('celsius'), false);
     this.city = Cookies.get('city') || defaultSettings.city;
@@ -110,6 +112,7 @@ export class Settings {
   public save(): void {
     const expiration = { expires: 36525 }; // One century from now.
 
+    Cookies.set('alarms', JSON.stringify(this.alarms));
     Cookies.set('background', this.background, expiration);
     Cookies.set('celsius', this.celsius.toString(), expiration);
     Cookies.set('city', this.city, expiration);

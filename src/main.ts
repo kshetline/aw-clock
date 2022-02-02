@@ -123,6 +123,7 @@ class AwClockApp implements AppService {
     this.body = $('body');
     this.cityLabel = $('#city');
     this.dimmer = $('#dimmer');
+    setTimeout(() => this.dimmer.css('transition', 'opacity 5s ease-in'));
     this.clockOverlaySvg = $('#clock-overlay-svg');
     this.testTime = $('#test-time');
 
@@ -590,17 +591,10 @@ class AwClockApp implements AppService {
 
   findSkyMapArea = (): void => {
     const mapArea = document.getElementById('face') as unknown as SVGElement;
-    const rect = mapArea?.getBoundingClientRect();
+    const rect = mapArea?.getClientRects()[0] ?? mapArea.getBoundingClientRect();
 
     if (rect) {
-      const offset = $(mapArea).offset();
-
-      if (offset.top === 0 && offset.left === 0) {
-        offset.top = rect.top;
-        offset.left = rect.left;
-      }
-
-      const skyRect = { x: floor(offset.left), y: floor(offset.top), h: ceil(rect.height), w: ceil(rect.width) };
+      const skyRect = { x: floor(rect.x), y: floor(rect.y), h: ceil(rect.height), w: ceil(rect.width) };
 
       if (!isEqual(this.skyRect, skyRect)) {
         this.skyRect = skyRect;

@@ -310,10 +310,15 @@ export class SettingsDialog {
       if (this.nowPlaying)
         this.stopAudio();
       else {
+        let loadStarted = false;
+        let playStarted = false;
+
         this.nowPlaying = new Audio(`/assets/audio/${encodeURI(this.audioSelect.val() as string)}`);
 
-        this.nowPlaying.addEventListener('canplaythrough', () => this.playAudio());
+        this.nowPlaying.addEventListener('canplaythrough', () => !playStarted && (playStarted = true) && this.playAudio());
         this.nowPlaying.addEventListener('ended', () => this.stopAudio());
+        this.nowPlaying.addEventListener('loadstart', () => loadStarted = true);
+        setTimeout(() => !playStarted && loadStarted && (playStarted = true) && this.playAudio(), 333);
       }
     });
   }
@@ -387,26 +392,24 @@ export class SettingsDialog {
 
         const self = this;
 
-        this.cityTable.find('tr').each(function (index) {
-          if (index !== 0) {
-            const $this = $(this);
+        this.cityTable.find('tr').each(function () {
+          const $this = $(this);
 
-            $this.on('click', () => {
-              self.currentCity.val($this.find('td.name').text().replace(/ \([^)]+\)/g, ''));
-              self.latitude.val($this.data('lat'));
-              self.longitude.val($this.data('lon'));
+          $this.on('click', () => {
+            self.currentCity.val($this.find('td.name').text().replace(/ \([^)]+\)/g, ''));
+            self.latitude.val($this.data('lat'));
+            self.longitude.val($this.data('lon'));
 
-              if (self.lastCityClick)
-                self.lastCityClick.removeClass('city-highlight');
+            if (self.lastCityClick)
+              self.lastCityClick.removeClass('city-highlight');
 
-              $this.addClass('city-highlight');
-              self.lastCityClick = $this;
-            });
+            $this.addClass('city-highlight');
+            self.lastCityClick = $this;
+          });
 
-            $this.on('dblclick', () => {
-              self.okButton.trigger('click');
-            });
-          }
+          $this.on('dblclick', () => {
+            self.okButton.trigger('click');
+          });
         });
       }).catch(reason => {
         this.submitSearch.enable(true);

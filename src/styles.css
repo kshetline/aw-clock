@@ -93,6 +93,9 @@ label {
   .weather-logo {
     zoom: 0.75; } }
 
+select:not([disabled]), button:not([disabled]), input:not([disabled])[type="submit"] {
+  color: black; }
+
 #clock-container, #clock-overlay {
   display: inline-block;
   left: 0;
@@ -568,7 +571,6 @@ input, button, select, textarea, optgroup, option {
   top: 0;
   bottom: 0;
   pointer-events: none;
-  transition: opacity 5s ease-in;
   z-index: 30; }
 
 .moving-dot {
@@ -903,7 +905,7 @@ ul.my-tabs > li {
   border-bottom: none;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
-  color: #555555;
+  color: black;
   cursor: pointer;
   display: inline-block;
   margin: 0 0.1em;
@@ -1049,7 +1051,7 @@ ul.my-tabs > li.tab-active {
         gap: 0.5rem;
         justify-content: center; }
         .alarm-section .alarm-entry-panel .time-set-panel .audio-selection button {
-          background-color: transparent;
+          background: transparent;
           border: 0;
           font-size: 1.5rem;
           padding: 0; }

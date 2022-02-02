@@ -1036,7 +1036,7 @@ export class Forecast {
     this.marquee.css('text-indent', '0');
 
     // Try to undo hard word-wrap (too bad lookbehinds aren't reliably supported yet in web browsers).
-    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-a-z,])\n(?=[a-z])/gi, '$1 ')
+    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-0-9a-z,])\n(?=[a-z]|(\d[^.#*)\]]))/gi, '$1 ')
       // No more than one blank line, and no trailing blank lines.
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
       // Improve alert formatting.

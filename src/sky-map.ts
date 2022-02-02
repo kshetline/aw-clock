@@ -571,7 +571,7 @@ export class SkyMap {
 
   private static checkForOverlap(li: LabelInfo, bias: number, markOverlaps: boolean, dc: DrawingContext): number {
     for (const li2 of dc.labels) {
-      if (intersects(li.labelBounds, li2.labelBounds)) {
+      if (li !== li2 && intersects(li.labelBounds, li2.labelBounds)) {
         const r = li2.labelBounds;
         const h = li.labelBounds.h;
 
