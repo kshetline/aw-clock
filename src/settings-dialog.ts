@@ -12,6 +12,7 @@ import {
 } from './awc-util';
 import { abs } from '@tubular/math';
 import { clone, isEqual, toBoolean, toNumber } from '@tubular/util';
+import ttime, { DateTime } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -99,52 +100,61 @@ export class SettingsDialog {
   private readonly dimmingEnd: JQuery;
 
   private readonly dialog: JQuery;
-  private readonly tabs: JQuery;
-  private readonly tabPanels: JQuery;
-
-  private audioSelect: JQuery;
-  private currentCity: JQuery;
-  private onscreenKB: JQuery;
-  private latitude: JQuery;
-  private longitude: JQuery;
-  private indoor: JQuery;
-  private outdoor: JQuery;
-  private indoorOutdoorOptions: JQuery;
-  private play: JQuery;
-  private colorOptions: JQuery;
-  private background: JQuery;
-  private clockFace: JQuery;
-  private userId: JQuery;
-  private dimming: JQuery;
-  private dimmingTo: JQuery;
-  private temperature: JQuery;
-  private format: JQuery;
-  private seconds: JQuery;
-  private planets: JQuery;
-  private hourlyForecast: JQuery;
-  private weatherService: JQuery;
-  private showSkyMap: JQuery;
-  private floatHands: JQuery;
-  private drawConstellations: JQuery;
-  private skyColors: JQuery;
-  private skyFacing: JQuery;
-  private readonly searchCity: JQuery;
-  private submitSearch: JQuery;
-  private getGps: JQuery;
-  private searching: JQuery;
-  private searchMessage: JQuery;
-  private cityTableWrapper: JQuery;
-  private cityTable: JQuery;
-  private lastCityClick: JQuery;
-  private okButton: JQuery;
-  private cancelButton: JQuery;
-  private reloadButton: JQuery;
   private readonly quitButton: JQuery;
   private readonly rebootButton: JQuery;
+  private readonly searchCity: JQuery;
   private readonly shutdownButton: JQuery;
-  private readonly updateButton: JQuery;
+  private readonly tabPanels: JQuery;
+  private readonly tabs: JQuery;
   private readonly updateBtnBackdrop: JQuery;
+  private readonly updateButton: JQuery;
+
+  private alarmDay: JQuery;
+  private alarmHour: JQuery;
+  private alarmMeridiem: JQuery
+  private alarmMinute: JQuery;
+  private alarmMonth: JQuery;
+  private alarmSetPanel: JQuery;
+  private alarmYear: JQuery;
+  private audioSelect: JQuery;
+  private background: JQuery;
+  private cancelButton: JQuery;
+  private cityTable: JQuery;
+  private cityTableWrapper: JQuery;
+  private clockFace: JQuery;
+  private colorOptions: JQuery;
+  private currentCity: JQuery;
+  private datePanel: JQuery;
+  private dayOfWeekPanel: JQuery;
+  private dimming: JQuery;
+  private dimmingTo: JQuery;
+  private drawConstellations: JQuery;
+  private floatHands: JQuery;
+  private format: JQuery;
+  private getGps: JQuery;
+  private hourlyForecast: JQuery;
+  private indoor: JQuery;
+  private indoorOutdoorOptions: JQuery;
   private keyboard: Keyboard;
+  private lastCityClick: JQuery;
+  private latitude: JQuery;
+  private longitude: JQuery;
+  private okButton: JQuery;
+  private onscreenKB: JQuery;
+  private outdoor: JQuery;
+  private planets: JQuery;
+  private play: JQuery;
+  private reloadButton: JQuery;
+  private searching: JQuery;
+  private searchMessage: JQuery;
+  private seconds: JQuery;
+  private showSkyMap: JQuery;
+  private skyColors: JQuery;
+  private skyFacing: JQuery;
+  private submitSearch: JQuery;
+  private temperature: JQuery;
+  private userId: JQuery;
+  private weatherService: JQuery;
 
   private activeTab = 0;
   private defaultLocation: any;
@@ -161,7 +171,16 @@ export class SettingsDialog {
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
 
-    this.dialog = $('#settings-dialog ');
+    this.alarmDay = $('#alarm-day');
+    this.alarmHour = $('#alarm-hour');
+    this.alarmMeridiem = $('#alarm-meridiem');
+    this.alarmMinute = $('#alarm-minute');
+    this.alarmMonth = $('#alarm-month');
+    this.alarmSetPanel = $('#alarm-set-panel');
+    this.alarmYear = $('#alarm-year');
+    this.datePanel = $('#date-panel');
+    this.dayOfWeekPanel = $('#day-of-week-panel');
+    this.dialog = $('#settings-dialog');
     this.tabs = $('#settings-dialog .my-tabs li');
     this.tabPanels = $('#settings-dialog .tab-wrapper .tab-panel');
     this.keyboard.setTopElement(this.dialog[0]);
@@ -227,6 +246,7 @@ export class SettingsDialog {
 
       SettingsDialog.fillInTimeChoices(this.dimmingStart, amPm);
       SettingsDialog.fillInTimeChoices(this.dimmingEnd, amPm);
+      this.adjustAlarmTime(amPm);
     });
 
     $('#search').on('submit', event => {
@@ -285,17 +305,19 @@ export class SettingsDialog {
     }
 
     let dayOfWeekCheckboxes = '';
+    const sow = ttime.getStartOfWeek(ttime.defaultLocale);
 
     for (let i = 0; i < 7; ++i) {
-      const id = 'dow_cb_' + i;
+      const ii = (i + sow) % 7;
+      const id = 'dow_cb_' + ii;
 
-      dayOfWeekCheckboxes += `<input id="${id}" type="checkbox"><label for="${id}">${days[i]}</label>`;
+      dayOfWeekCheckboxes += `<input id="${id}" type="checkbox"><label for="${id}">${days[ii]}</label>`;
 
       if (i === 3)
         dayOfWeekCheckboxes += '<div class="break"></div>';
     }
 
-    $('.day-of-week-panel').html(dayOfWeekCheckboxes);
+    this.dayOfWeekPanel.html(dayOfWeekCheckboxes);
 
     this.audioSelect = $('.audio-selection > select');
     this.play = $('.audio-selection > button');
@@ -310,16 +332,30 @@ export class SettingsDialog {
       if (this.nowPlaying)
         this.stopAudio();
       else {
-        let loadStarted = false;
+        let somewhatReady = false;
         let playStarted = false;
 
         this.nowPlaying = new Audio(`/assets/audio/${encodeURI(this.audioSelect.val() as string)}`);
 
+        this.nowPlaying.addEventListener('canplay', () => somewhatReady = true);
         this.nowPlaying.addEventListener('canplaythrough', () => !playStarted && (playStarted = true) && this.playAudio());
         this.nowPlaying.addEventListener('ended', () => this.stopAudio());
-        this.nowPlaying.addEventListener('loadstart', () => loadStarted = true);
-        setTimeout(() => !playStarted && loadStarted && (playStarted = true) && this.playAudio(), 333);
+        this.nowPlaying.addEventListener('loadstart', () => somewhatReady = true);
+        setTimeout(() => !playStarted && somewhatReady && (playStarted = true) && this.playAudio(), 333);
       }
+    });
+
+    $('#daily-alarm').on('click', () => {
+      this.alarmSetPanel.css('opacity', '1');
+      this.alarmSetPanel.css('pointer-events', 'all');
+      this.datePanel.css('display', 'none');
+      this.dayOfWeekPanel.css('display', 'flex');
+    });
+    $('#one-time-alarm').on('click', () => {
+      this.alarmSetPanel.css('opacity', '1');
+      this.alarmSetPanel.css('pointer-events', 'all');
+      this.datePanel.css('display', 'flex');
+      this.dayOfWeekPanel.css('display', 'none');
     });
   }
 
@@ -417,6 +453,27 @@ export class SettingsDialog {
         this.searching.css('visibility', 'hidden');
         this.alert(reason || 'Unable to access geographic database.');
       });
+    }
+  }
+
+  private adjustAlarmTime(amPm): void {
+    const wasAmPm = this.alarmMeridiem.css('display') !== 'none';
+
+    if (amPm === wasAmPm)
+      return;
+
+    const hour = toNumber(this.alarmHour.val());
+
+    if (amPm) {
+      this.alarmMeridiem.css('display', 'inline');
+      this.alarmMeridiem.val(hour < 12 ? 'A' : 'P');
+      this.alarmHour.val((hour === 0 ? 12 : hour < 12 ? hour : hour - 12).toString().padStart(2, '0'));
+    }
+    else {
+      const isAm = this.alarmMeridiem.val() === 'A';
+
+      this.alarmMeridiem.css('display', 'none');
+      this.alarmHour.val((isAm ? (hour === 12 ? 0 : hour) : (hour === 12 ? 12 : hour + 12)).toString().padStart(2, '0'));
     }
   }
 
@@ -593,6 +650,26 @@ export class SettingsDialog {
         }
       });
     });
+
+    this.alarmSetPanel.css('opacity', '0.33');
+    this.alarmSetPanel.css('pointer-events', 'none');
+    this.alarmHour.val('06');
+    this.alarmMinute.val('00');
+    this.alarmMeridiem.val('A');
+
+    this.adjustAlarmTime(previousSettings.timeFormat === TimeFormat.AMPM);
+
+    const weekEnd = ttime.getWeekend(ttime.defaultLocale);
+
+    this.dayOfWeekPanel.find('input[type="checkbox"').each(function () {
+      if (!weekEnd.includes(toNumber(this.id.substr(-1))))
+        this.setAttribute('checked', 'checked');
+    });
+    const now = new DateTime(null, this.appService.timezone).wallTime;
+
+    this.alarmDay.val(now.day);
+    this.alarmMonth.val(now.month);
+    this.alarmYear.val(now.year);
   }
 
   private updateWeatherServiceSelection(): void {

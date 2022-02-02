@@ -1,6 +1,7 @@
 import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
 import { Settings } from './settings';
 import { TimeInfo } from '../server/src/shared-types';
+import { Timezone } from '@tubular/time';
 
 export interface AppService {
   forecastHasBeenUpdated(): void;
@@ -18,6 +19,7 @@ export interface AppService {
   showConstellations: boolean;
   showSkyColors: boolean;
   skyFacing: number;
+  timezone: Timezone;
   toggleSunMoon(): void;
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;

@@ -1002,55 +1002,59 @@ ul.my-tabs > li.tab-active {
       flex-direction: row;
       gap: 1rem;
       justify-content: center; }
-    .alarm-section .alarm-entry-panel .time-set-panel {
+      .alarm-section .alarm-entry-panel .alarm-entry-buttons button {
+        white-space: nowrap; }
+    .alarm-section .alarm-entry-panel #alarm-set-panel {
       align-items: center;
       display: flex;
       flex-direction: column;
       gap: 1rem;
       justify-content: start; }
-      .alarm-section .alarm-entry-panel .time-set-panel .hour-minute-panel {
+      .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel {
         display: flex;
         flex-direction: row;
         gap: 1rem;
         justify-content: center; }
-        .alarm-section .alarm-entry-panel .time-set-panel .hour-minute-panel input, .alarm-section .alarm-entry-panel .time-set-panel .hour-minute-panel select, .alarm-section .alarm-entry-panel .time-set-panel .hour-minute-panel span {
+        .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel input, .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel select, .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel span {
           font-size: 2.5rem;
           font-weight: bold; }
-        .alarm-section .alarm-entry-panel .time-set-panel .hour-minute-panel input {
+        .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel input {
           text-align: center;
           width: 2.2ch; }
-        .alarm-section .alarm-entry-panel .time-set-panel .hour-minute-panel select {
+        .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel select {
           margin-left: 0.75rem; }
-      .alarm-section .alarm-entry-panel .time-set-panel .day-of-week-panel {
-        display: flex;
+      .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel {
+        display: none;
         flex-direction: row;
         flex-wrap: wrap;
         gap: 0.25rem;
-        justify-content: center; }
-        .alarm-section .alarm-entry-panel .time-set-panel .day-of-week-panel input:not(:first-child) {
+        justify-content: center;
+        min-height: 48px; }
+        .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel input:not(:first-child) {
           margin-left: 0.33rem; }
-        .alarm-section .alarm-entry-panel .time-set-panel .day-of-week-panel .break {
+        .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel .break {
           flex-basis: 100%;
           height: 0; }
-      .alarm-section .alarm-entry-panel .time-set-panel .date-panel {
-        display: flex;
+      .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel {
+        display: none;
         flex-direction: row;
         gap: 0.5rem;
-        justify-content: center; }
-        .alarm-section .alarm-entry-panel .time-set-panel .date-panel input, .alarm-section .alarm-entry-panel .time-set-panel .date-panel select, .alarm-section .alarm-entry-panel .time-set-panel .date-panel option {
+        justify-content: center;
+        min-height: 48px; }
+        .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel input, .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel select, .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel option {
           font-size: 2rem;
           text-align: center; }
-        .alarm-section .alarm-entry-panel .time-set-panel .date-panel .day {
+        .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel .day {
           width: 2.2ch; }
-        .alarm-section .alarm-entry-panel .time-set-panel .date-panel .year {
+        .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel .year {
           width: 4.4ch; }
-      .alarm-section .alarm-entry-panel .time-set-panel .audio-selection {
+      .alarm-section .alarm-entry-panel #alarm-set-panel .audio-selection {
         align-items: center;
         display: flex;
         flex-direction: row;
         gap: 0.5rem;
         justify-content: center; }
-        .alarm-section .alarm-entry-panel .time-set-panel .audio-selection button {
+        .alarm-section .alarm-entry-panel #alarm-set-panel .audio-selection button {
           background: transparent;
           border: 0;
           font-size: 1.5rem;

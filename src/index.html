@@ -521,21 +521,21 @@
                 <button id='daily-alarm'>Set daily alarm</button>
                 <button id='one-time-alarm'>Set one-time alarm</button>
               </div>
-              <div class="time-set-panel">
+              <div id="alarm-set-panel">
                 <div class="hour-minute-panel">
-                  <input type="text">
+                  <input id="alarm-hour" type="text">
                   <span>:</span>
-                  <input type="text">
-                  <select>
+                  <input id="alarm-minute" type="text">
+                  <select id="alarm-meridiem">
                     <option value="A">AM</option>
                     <option value="P">PM</option>
                   </select>
                 </div>
-                <div class="day-of-week-panel">
+                <div id="day-of-week-panel">
                 </div>
-                <div class="date-panel">
-                  <input type="text" class="day">
-                  <select>
+                <div id="date-panel">
+                  <input id="alarm-day" type="text" class="day">
+                  <select id="alarm-month">
                     <option value="1">Jan</option>
                     <option value="2">Feb</option>
                     <option value="3">Mar</option>
@@ -549,7 +549,7 @@
                     <option value="11">Nov</option>
                     <option value="12">Dec</option>
                   </select>
-                  <input type="text" class="year">
+                  <input id="alarm-year" type="text" class="year">
                 </div>
                 <div class="audio-selection">
                   <select></select>

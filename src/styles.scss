@@ -1278,9 +1278,13 @@ ul.my-tabs > li.tab-active {
       flex-direction: row;
       gap: 1rem;
       justify-content: center;
+
+      button {
+        white-space: nowrap;
+      }
     }
 
-    .time-set-panel {
+    #alarm-set-panel {
       align-items: center;
       display: flex;
       flex-direction: column;
@@ -1308,12 +1312,13 @@ ul.my-tabs > li.tab-active {
         }
       }
 
-      .day-of-week-panel {
-        display: flex;
+      #day-of-week-panel {
+        display: none;
         flex-direction: row;
         flex-wrap: wrap;
         gap: 0.25rem;
         justify-content: center;
+        min-height: 55px;
 
         input:not(:first-child) {
           margin-left: 0.33rem;
@@ -1325,11 +1330,12 @@ ul.my-tabs > li.tab-active {
         }
       }
 
-      .date-panel {
-        display: flex;
+      #date-panel {
+        display: none;
         flex-direction: row;
         gap: 0.5rem;
         justify-content: center;
+        min-height: 55px;
 
         input, select, option {
           font-size: 2rem;

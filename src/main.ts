@@ -275,6 +275,8 @@ class AwClockApp implements AppService {
 
   get skyFacing(): number { return this.settings.skyFacing; }
 
+  get timezone(): Timezone { return this.lastTimezone; }
+
   proxySensorUpdate(): Promise<boolean> {
     if (this.proxyStatus instanceof Promise)
       return this.proxyStatus;
