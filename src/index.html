@@ -518,8 +518,8 @@
           <div class="tab-panel alarm-section">
             <div class="alarm-entry-panel">
               <div class="alarm-entry-buttons">
-                <button id='daily-alarm'>Set daily alarm</button>
-                <button id='one-time-alarm'>Set one-time alarm</button>
+                <button id='daily-alarm'>Add daily alarm</button>
+                <button id='one-time-alarm'>Add one-time alarm</button>
               </div>
               <div id="alarm-set-panel">
                 <div class="hour-minute-panel">
@@ -559,11 +559,19 @@
                   <label for="alarm-message">Optional message:</label>
                   <input id="alarm-message" type="text" size="32">
                 </div>
-                <button id='alarm-save'>Save alarm</button>
+                <div class="alarm-save-buttons">
+                  <button id='alarm-save'>Save alarm</button>
+                  <button id='alarm-cancel'>Cancel</button>
+                </div>
                </div>
             </div>
             <div class="alarm-list-panel">
-              &nbsp;
+              <div>Saved alarms</div>
+              <div id="alarm-list"></div>
+              <div class="alarm-list-buttons">
+                <button>Edit</button>
+                <button>Delete</button>
+              </div>
             </div>
           </div>
         </div>

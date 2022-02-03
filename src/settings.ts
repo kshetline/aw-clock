@@ -28,11 +28,11 @@ export function toTimeFormat(s: string, deflt = TimeFormat.UTC): TimeFormat {
 }
 
 export class AlarmInfo {
-  days: string;
+  days?: string;
   enabled: boolean;
   message: string;
   sound: string;
-  timeOfDay: number;
+  time: number;
 }
 
 export class RecentLocation {

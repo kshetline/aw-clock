@@ -998,10 +998,10 @@ ul.my-tabs > li.tab-active {
     gap: 1rem;
     justify-content: center; }
     .alarm-section .alarm-entry-panel .alarm-entry-buttons {
+      align-items: center;
       display: flex;
-      flex-direction: row;
-      gap: 1rem;
-      justify-content: center; }
+      flex-direction: column;
+      gap: 0.5rem; }
       .alarm-section .alarm-entry-panel .alarm-entry-buttons button {
         white-space: nowrap; }
     .alarm-section .alarm-entry-panel #alarm-set-panel {
@@ -1024,17 +1024,16 @@ ul.my-tabs > li.tab-active {
         .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel select {
           margin-left: 0.75rem; }
       .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel {
-        display: none;
+        align-items: center;
+        display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
-        gap: 0.25rem;
+        gap: 0.5rem;
         justify-content: center;
         min-height: 55px; }
-        .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel input:not(:first-child) {
-          margin-left: 0.33rem; }
-        .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel .break {
-          flex-basis: 100%;
-          height: 0; }
+        .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel > div {
+          align-items: center;
+          display: flex;
+          flex-direction: column; }
       .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel {
         display: none;
         flex-direction: row;
@@ -1065,7 +1064,47 @@ ul.my-tabs > li.tab-active {
         flex-direction: column;
         gap: 0.25rem;
         justify-content: center; }
-      .alarm-section .alarm-entry-panel #alarm-set-panel #alarm-save {
-        margin-top: 1em; }
   .alarm-section .alarm-list-panel {
-    flex: 1 1 auto; }
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 100%; }
+    .alarm-section .alarm-list-panel #alarm-list {
+      border: 1px solid #AAA;
+      height: 100%;
+      overflow: auto;
+      width: 100%; }
+      .alarm-section .alarm-list-panel #alarm-list .alarm-item {
+        border-bottom: 1px solid #DDD;
+        padding: 0.5rem; }
+        .alarm-section .alarm-list-panel #alarm-list .alarm-item.selected {
+          background-color: #99DDFF; }
+        .alarm-section .alarm-list-panel #alarm-list .alarm-item > div {
+          align-items: center;
+          display: flex;
+          gap: 0.5rem; }
+          .alarm-section .alarm-list-panel #alarm-list .alarm-item > div span {
+            align-items: center;
+            display: flex;
+            white-space: nowrap; }
+          .alarm-section .alarm-list-panel #alarm-list .alarm-item > div .time {
+            font-size: 1.2em;
+            font-weight: bold; }
+          .alarm-section .alarm-list-panel #alarm-list .alarm-item > div .date, .alarm-section .alarm-list-panel #alarm-list .alarm-item > div .days, .alarm-section .alarm-list-panel #alarm-list .alarm-item > div .message {
+            flex: 1 1 0; }
+          .alarm-section .alarm-list-panel #alarm-list .alarm-item > div .message {
+            display: inline-block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 4em; }
+  .alarm-section .alarm-list-buttons, .alarm-section .alarm-save-buttons {
+    align-items: center;
+    display: flex;
+    gap: 1rem; }
+  .alarm-section .alarm-list-buttons > button {
+    min-width: 8rem; }
+  .alarm-section .alarm-save-buttons > button {
+    margin-top: 1rem;
+    min-width: 5rem; }

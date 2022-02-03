@@ -3,7 +3,8 @@ import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import {
-  apiServer, localServer, MAX_RECENT_LOCATIONS, raspbianChromium, RecentLocation, Settings, toTimeFormat, updateTest
+  AlarmInfo, apiServer, localServer, MAX_RECENT_LOCATIONS, raspbianChromium, RecentLocation, Settings,
+  toTimeFormat, updateTest
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
@@ -18,7 +19,7 @@ const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
 const LIMIT_REACHED_BACKGROUND = '#FC9';
 
-const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const days = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
 interface SearchLocation {
   city: string;
@@ -126,6 +127,31 @@ function numberKeyHandler(evt: JQuery.KeyDownEvent, elem: HTMLInputElement, mn: 
   }
 }
 
+function formatAlarmTime(time: number, amPm: boolean): string {
+  let hour = floor(time / 60) % 24;
+  const minute = time % 60;
+  let suffix = '';
+
+  if (amPm && hour < 12) {
+    hour = (hour === 0 ? 12 : hour);
+    suffix = ' AM';
+  }
+  else if (amPm) {
+    hour = (hour === 12 ? hour : hour - 12);
+    suffix = ' PM';
+  }
+
+  return hour.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0') + suffix;
+}
+
+function formatAlarmDays(days: string): string {
+  return days.match(/(..?)/g).join(' ');
+}
+
+function formatAlarmDate(time: number): string {
+  return new DateTime(time * 60000, 'UTC').format('DD MMM yyyy');
+}
+
 const UPDATE_OPTIONS = `<br>
 <input type="checkbox" id="interactive-update" name="interactive-update">
 <label for="interactive-update">Interactive update</label><br>
@@ -148,6 +174,8 @@ export class SettingsDialog {
 
   private alarmDay: JQuery;
   private alarmHour: JQuery;
+  private alarmList: JQuery;
+  private alarmMessage: JQuery;
   private alarmMeridiem: JQuery
   private alarmMinute: JQuery;
   private alarmMonth: JQuery;
@@ -213,7 +241,9 @@ export class SettingsDialog {
 
     this.alarmDay = $('#alarm-day');
     this.alarmHour = $('#alarm-hour');
+    this.alarmList = $('#alarm-list');
     this.alarmMeridiem = $('#alarm-meridiem');
+    this.alarmMessage = $('#alarm-message');
     this.alarmMinute = $('#alarm-minute');
     this.alarmMonth = $('#alarm-month');
     this.alarmSave = $('#alarm-save');
@@ -352,10 +382,7 @@ export class SettingsDialog {
       const ii = (i + sow) % 7;
       const id = 'dow_cb_' + ii;
 
-      dayOfWeekCheckboxes += `<input id="${id}" type="checkbox"><label for="${id}">${days[ii]}</label>`;
-
-      if (i === 3)
-        dayOfWeekCheckboxes += '<div class="break"></div>';
+      dayOfWeekCheckboxes += `<div><input id="${id}" type="checkbox"><label for="${id}">${days[ii]}</label></div>`;
     }
 
     this.dayOfWeekPanel.html(dayOfWeekCheckboxes);
@@ -445,6 +472,46 @@ export class SettingsDialog {
   }
 
   private saveAlarm(): void {
+    const hour = toNumber(this.alarmHour.val());
+    const minute = toNumber(this.alarmMinute.val());
+
+    if ((this.alarmAmPm && (hour < 1 || hour > 12)) ||
+        (!this.alarmAmPm && (hour < 0 || hour > 23)) ||
+        (minute < 0 || minute > 59)) {
+      domAlert('Invalid alarm time');
+      return;
+    }
+
+    this.clearAlarmTime();
+  }
+
+  private renderAlarmList(list: AlarmInfo[]): void {
+    let alarmHtml = '';
+
+    for (let i = 0; i < list.length; ++i) {
+      const alarm = list[i];
+      const time = formatAlarmTime(alarm.time, this.alarmAmPm);
+      const days = alarm.time < 1440 ? formatAlarmDays(alarm.days) : formatAlarmDate(alarm.time);
+
+      alarmHtml += `
+<div class="alarm-item">
+  <div>
+    <span class="time">${time}</span>
+    <span class="days">${days}</span>
+    <span>
+      <input type="checkbox" id="alarm-item${i}" name="alarm-item-${i}${alarm.enabled ? ' checked' : ''}">
+      <label for="alarm-item-${i}">Enabled</label>
+    </span>
+  </div>
+  <div>
+    <span class="sound">🔈 ${alarm.sound}</span>
+    <span class="message">${alarm.message ? '📜' + htmlEncode(alarm.message) : ''}</span>
+  </div>
+</div>
+`;
+    }
+
+    this.alarmList.html(alarmHtml);
   }
 
   private playAudio(): void {
@@ -741,13 +808,20 @@ export class SettingsDialog {
       });
     });
 
+    this.alarmAmPm = (previousSettings.timeFormat === TimeFormat.AMPM);
+    this.clearAlarmTime();
+    this.renderAlarmList([{ days: 'MOTUWETHFRSA', enabled: true, message: 'Wake up!', sound: 'Beep-beep-beep-beep.mp3', time: 450 }]);
+  }
+
+  private clearAlarmTime(): void {
     this.alarmSetPanel.css('opacity', '0.33');
     this.alarmSetPanel.css('pointer-events', 'none');
     this.alarmHour.val('06');
     this.alarmMinute.val('00');
     this.alarmMeridiem.val('A');
-
-    this.adjustAlarmTime(previousSettings.timeFormat === TimeFormat.AMPM);
+    this.adjustAlarmTime(this.alarmAmPm);
+    this.alarmMessage.val('');
+    (this.audioSelect[0] as HTMLSelectElement).selectedIndex = 0;
 
     const weekEnd = ttime.getWeekend(ttime.defaultLocale);
 
