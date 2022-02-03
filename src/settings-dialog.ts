@@ -10,8 +10,8 @@ import {
   adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode, incrementDialogCounter,
   popKeydownListener, pushKeydownListener
 } from './awc-util';
-import { abs } from '@tubular/math';
-import { clone, isEqual, toBoolean, toNumber } from '@tubular/util';
+import { abs, floor, mod } from '@tubular/math';
+import { clone, eventToKey, isEqual, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -89,6 +89,43 @@ function formatDegrees(angle, compassPointsPosNeg, degreeDigits): string {
     (degreeDigits > 1 && angle < 10 ? '\u2007' : '') + degrees + '\u00B0' + compass;
 }
 
+function numberKeyHandler(evt: JQuery.KeyDownEvent, elem: HTMLInputElement, mn: number, mx: number, inc: number): void {
+  const keyCode = eventToKey(evt.originalEvent);
+
+  if (keyCode.length === 1 && (keyCode < '0' || keyCode > '9')) {
+    evt.preventDefault();
+    return;
+  }
+
+  let val = toNumber(elem.value);
+  let modified = false;
+  const digits = 2 + (mx > 100 ? 2 : 0);
+
+  if (keyCode === 'ArrowUp') {
+    val += inc;
+    modified = true;
+  }
+  else if (keyCode === 'ArrowDown') {
+    val -= inc;
+    modified = true;
+  }
+
+  if (modified) {
+    val = floor(mod(val - mn, mx - mn + 1) / inc) * inc + mn;
+    evt.stopPropagation();
+    elem.value = val.toString().padStart(digits, '0');
+    setTimeout(() => elem.setSelectionRange(0, digits));
+  }
+  else {
+    setTimeout(() => {
+      if (elem.value.length > digits) {
+        elem.value = elem.value.substr(-digits);
+        elem.setSelectionRange(digits, digits);
+      }
+    });
+  }
+}
+
 const UPDATE_OPTIONS = `<br>
 <input type="checkbox" id="interactive-update" name="interactive-update">
 <label for="interactive-update">Interactive update</label><br>
@@ -114,6 +151,7 @@ export class SettingsDialog {
   private alarmMeridiem: JQuery
   private alarmMinute: JQuery;
   private alarmMonth: JQuery;
+  private alarmSave: JQuery;
   private alarmSetPanel: JQuery;
   private alarmYear: JQuery;
   private audioSelect: JQuery;
@@ -157,6 +195,8 @@ export class SettingsDialog {
   private weatherService: JQuery;
 
   private activeTab = 0;
+  private alarmAmPm = false;
+  private dailyAlarm = true;
   private defaultLocation: any;
   private latestVersion = AWC_VERSION;
   private nowPlaying: HTMLAudioElement;
@@ -176,6 +216,7 @@ export class SettingsDialog {
     this.alarmMeridiem = $('#alarm-meridiem');
     this.alarmMinute = $('#alarm-minute');
     this.alarmMonth = $('#alarm-month');
+    this.alarmSave = $('#alarm-save');
     this.alarmSetPanel = $('#alarm-set-panel');
     this.alarmYear = $('#alarm-year');
     this.datePanel = $('#date-panel');
@@ -346,17 +387,64 @@ export class SettingsDialog {
     });
 
     $('#daily-alarm').on('click', () => {
+      this.dailyAlarm = true;
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
       this.datePanel.css('display', 'none');
       this.dayOfWeekPanel.css('display', 'flex');
     });
+
     $('#one-time-alarm').on('click', () => {
+      this.dailyAlarm = false;
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
       this.datePanel.css('display', 'flex');
       this.dayOfWeekPanel.css('display', 'none');
     });
+
+    const self = this;
+
+    this.alarmHour.on('keydown', function (evt) {
+      if (self.alarmAmPm)
+        numberKeyHandler(evt, this as HTMLInputElement, 1, 12, 1);
+      else
+        numberKeyHandler(evt, this as HTMLInputElement, 0, 23, 1);
+    });
+
+    this.alarmMinute.on('keydown', function (evt) { numberKeyHandler(evt, this as HTMLInputElement, 0, 59, 5); });
+
+    this.alarmDay.on('keydown', function (evt) {
+      const month = toNumber(self.alarmMonth.val());
+      let year = toNumber(self.alarmYear.val(), -1);
+
+      if (year < 0)
+        year = new Date().getFullYear();
+
+      numberKeyHandler(evt, this as HTMLInputElement, 1, new DateTime([year, month, 1]).getDaysInMonth(), 1);
+    });
+
+    this.alarmMonth.on('change', () => {
+      const day = toNumber(this.alarmDay.val());
+      const month = toNumber(this.alarmMonth.val());
+      const year = toNumber(this.alarmYear.val(), -1);
+      const days = new DateTime([year, month, 1]).getDaysInMonth();
+
+      if (day > days)
+        this.alarmDay.val(days);
+      else if (day < 1)
+        this.alarmDay.val('01');
+    });
+
+    this.alarmYear.on('keydown', function (evt) {
+      const lowYear = new Date().getFullYear();
+
+      numberKeyHandler(evt, this as HTMLInputElement, lowYear, lowYear + 1000, 1);
+    });
+
+    this.alarmSave.on('click', () => this.saveAlarm());
+  }
+
+  private saveAlarm(): void {
   }
 
   private playAudio(): void {
@@ -475,6 +563,8 @@ export class SettingsDialog {
       this.alarmMeridiem.css('display', 'none');
       this.alarmHour.val((isAm ? (hour === 12 ? 0 : hour) : (hour === 12 ? 12 : hour + 12)).toString().padStart(2, '0'));
     }
+
+    this.alarmAmPm = amPm;
   }
 
   private static fillInTimeChoices(selectElem: JQuery, amPm: boolean): void {
@@ -665,9 +755,10 @@ export class SettingsDialog {
       if (!weekEnd.includes(toNumber(this.id.substr(-1))))
         this.setAttribute('checked', 'checked');
     });
+
     const now = new DateTime(null, this.appService.timezone).wallTime;
 
-    this.alarmDay.val(now.day);
+    this.alarmDay.val(now.day.toString().padStart(2, '0'));
     this.alarmMonth.val(now.month);
     this.alarmYear.val(now.year);
   }
