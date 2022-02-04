@@ -80,6 +80,10 @@ async function callSearchApi(query: string): Promise<SearchResults> {
   return results;
 }
 
+function p2(n: number): string {
+  return n.toString().padStart(2, '0');
+}
+
 function formatDegrees(angle, compassPointsPosNeg, degreeDigits): string {
   const compass = compassPointsPosNeg.charAt(angle < 0 ? 1 : 0);
   angle = Math.abs(angle);
@@ -114,7 +118,7 @@ function numberKeyHandler(evt: JQuery.KeyDownEvent, elem: HTMLInputElement, mn: 
   if (modified) {
     val = floor(mod(val - mn, mx - mn + 1) / inc) * inc + mn;
     evt.stopPropagation();
-    elem.value = val.toString().padStart(digits, '0');
+    elem.value = p2(val);
     setTimeout(() => elem.setSelectionRange(0, digits));
   }
   else {
@@ -141,7 +145,7 @@ function formatAlarmTime(time: number, amPm: boolean): string {
     suffix = ' PM';
   }
 
-  return hour.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0') + suffix;
+  return p2(hour) + ':' + p2(minute) + suffix;
 }
 
 function formatAlarmDate(time: number): string {
@@ -481,14 +485,16 @@ export class SettingsDialog {
     });
 
     this.alarmSave.on('click', () => this.saveAlarm());
-    this.alarmCancel.on('click', () => this.clearAlarmTime());
+    this.alarmCancel.on('click', () => { this.editAlarm = -1; this.clearAlarmTime(); });
+    this.alarmDelete.on('click', () => this.deleteSelectedAlarm());
+    this.alarmEdit.on('click', () => this.editSelectedAlarm());
   }
 
   private saveAlarm(): void {
     const hour = toNumber(this.alarmHour.val());
     const minute = toNumber(this.alarmMinute.val());
     const newAlarm = {
-      enabled: true,
+      enabled: this.editAlarm < 0 ? true : this.newAlarms[this.editAlarm].enabled,
       message: (this.alarmMessage.val() as string).trim(),
       sound: this.audioSelect.val()
     } as AlarmInfo;
@@ -496,7 +502,7 @@ export class SettingsDialog {
     if ((this.alarmAmPm && (hour < 1 || hour > 12)) ||
         (!this.alarmAmPm && (hour < 0 || hour > 23)) ||
         (minute < 0 || minute > 59)) {
-      domAlert('Invalid alarm time.');
+      this.alert('Invalid alarm time.');
       return;
     }
 
@@ -511,7 +517,7 @@ export class SettingsDialog {
       });
 
       if (!days) {
-        domAlert('At least one day of the week must be selected.');
+        this.alert('At least one day of the week must be selected.');
         return;
       }
 
@@ -523,14 +529,23 @@ export class SettingsDialog {
       const year = toNumber(this.alarmYear.val());
 
       if (year <= 0 || day <= 0 || !isValidDate_SGC(year, month, day)) {
-        domAlert('Invalid date.');
+        this.alert('Invalid date.');
         return;
       }
 
       newAlarm.time += new DateTime([year, month, day], 'UTC').wallTime.n * 1440;
     }
 
-    this.newAlarms.push(newAlarm);
+    if (this.editAlarm < 0) {
+      this.newAlarms.push(newAlarm);
+      setTimeout(() => this.alarmList.scrollTop(Number.MAX_SAFE_INTEGER));
+    }
+    else {
+      this.newAlarms[this.editAlarm] = newAlarm;
+      this.editAlarm = -1;
+    }
+
+    this.selectAlarm(-1);
     this.renderAlarmList(this.newAlarms);
     this.clearAlarmTime();
   }
@@ -564,6 +579,11 @@ export class SettingsDialog {
     this.alarmList.html(alarmHtml);
     this.alarmList.find('.alarm-item').each((index, elem) =>
       elem.addEventListener('click', () => this.selectAlarm(index)));
+    this.alarmList.find('.alarm-item input[type="checkbox"]').each((index, elem) =>
+      elem.addEventListener('click', evt => {
+        this.newAlarms[index].enabled = !this.newAlarms[index].enabled;
+        evt.stopPropagation();
+      }));
   }
 
   private playAudio(): void {
@@ -689,16 +709,55 @@ export class SettingsDialog {
     if (amPm) {
       this.alarmMeridiem.css('display', 'inline');
       this.alarmMeridiem.val(hour < 12 ? 'A' : 'P');
-      this.alarmHour.val((hour === 0 ? 12 : hour < 12 ? hour : hour - 12).toString().padStart(2, '0'));
+      this.alarmHour.val(p2(hour === 0 ? 12 : hour < 12 ? hour : hour - 12));
     }
     else {
       const isAm = this.alarmMeridiem.val() === 'A';
 
       this.alarmMeridiem.css('display', 'none');
-      this.alarmHour.val((isAm ? (hour === 12 ? 0 : hour) : (hour === 12 ? 12 : hour + 12)).toString().padStart(2, '0'));
+      this.alarmHour.val(p2(isAm ? (hour === 12 ? 0 : hour) : (hour === 12 ? 12 : hour + 12)));
     }
 
     this.alarmAmPm = amPm;
+  }
+
+  private deleteSelectedAlarm(): void {
+    if (this.selectedAlarm >= 0) {
+      this.newAlarms.splice(this.selectedAlarm, 1);
+      this.renderAlarmList(this.newAlarms);
+      this.selectAlarm(-1);
+    }
+  }
+
+  private editSelectedAlarm(): void {
+    if (this.selectedAlarm >= 0) {
+      const alarm = this.newAlarms[this.selectedAlarm];
+      const time = formatAlarmTime(alarm.time, this.alarmAmPm);
+      const daily = (alarm.time < 1440);
+
+      this.clearAlarmTime(daily);
+      this.dailyAlarm = daily;
+      this.editAlarm = this.selectedAlarm;
+      this.alarmSetPanel.css('opacity', '1');
+      this.alarmSetPanel.css('pointer-events', 'all');
+      this.datePanel.css('display', daily ? 'none' : 'flex');
+      this.dayOfWeekPanel.css('display', daily ? 'flex' : 'none');
+      this.alarmHour.val(time.substring(0, 2));
+      this.alarmMinute.val(time.substring(3, 5));
+      this.alarmMeridiem.val(time.substring(7, 8));
+      this.audioSelect.val(alarm.sound);
+      this.alarmMessage.val(alarm.message);
+
+      if (alarm.time < 1440)
+        alarm.days.split(' ').forEach(day => this.dayOfWeekPanel.find(`input[value="${day}"]`).prop('checked', true));
+      else {
+        const date = new DateTime(alarm.time * 60000, 'UTC').wallTime;
+
+        this.alarmDay.val(p2(date.day));
+        this.alarmMonth.val(date.month);
+        this.alarmYear.val(date.year);
+      }
+    }
   }
 
   private static fillInTimeChoices(selectElem: JQuery, amPm: boolean): void {
@@ -759,7 +818,7 @@ export class SettingsDialog {
 
   public openSettings(previousSettings: Settings, emphasizeUpdate = false): void {
     this.previousSettings = previousSettings;
-    this.newAlarms = previousSettings.alarms || [];
+    this.newAlarms = clone(previousSettings.alarms) || [];
     this.selectTab(0);
 
     const checkUiSizing = (): void => {
@@ -884,7 +943,7 @@ export class SettingsDialog {
     this.renderAlarmList(this.newAlarms);
   }
 
-  private clearAlarmTime(): void {
+  private clearAlarmTime(clearAllDays = false): void {
     this.alarmEditing = false;
     this.alarmSetPanel.css('opacity', '0.33');
     this.alarmSetPanel.css('pointer-events', 'none');
@@ -898,12 +957,12 @@ export class SettingsDialog {
     const weekEnd = ttime.getWeekend(ttime.defaultLocale);
 
     this.dayOfWeekPanel.find('input[type="checkbox"').each(function () {
-      $(this).prop('checked', !weekEnd.includes(toNumber(this.id.substr(-1))));
+      $(this).prop('checked', !clearAllDays && !weekEnd.includes(toNumber(this.id.substr(-1))));
     });
 
     const now = new DateTime(null, this.appService.timezone).wallTime;
 
-    this.alarmDay.val(now.day.toString().padStart(2, '0'));
+    this.alarmDay.val(p2(now.day));
     this.alarmMonth.val(now.month);
     this.alarmYear.val(now.year);
   }
@@ -985,6 +1044,7 @@ export class SettingsDialog {
       this.recentLocations.splice(-1, 1);
 
     newSettings.recentLocations = this.recentLocations;
+    newSettings.alarms = this.newAlarms;
     decrementDialogCounter();
     popKeydownListener();
     this.okButton.off('click', this.doOK);
