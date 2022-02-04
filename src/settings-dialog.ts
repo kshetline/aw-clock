@@ -13,7 +13,7 @@ import {
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
 import { clone, eventToKey, isEqual, toBoolean, toNumber } from '@tubular/util';
-import ttime, { DateTime } from '@tubular/time';
+import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';
@@ -144,12 +144,12 @@ function formatAlarmTime(time: number, amPm: boolean): string {
   return hour.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0') + suffix;
 }
 
-function formatAlarmDays(days: string): string {
-  return days.match(/(..?)/g).join(' ');
-}
-
 function formatAlarmDate(time: number): string {
   return new DateTime(time * 60000, 'UTC').format('DD MMM yyyy');
+}
+
+function soundName(fileName: string): string {
+  return fileName.replace(/\.[^.]+$/, '').replace(/_/g, ' ');
 }
 
 const UPDATE_OPTIONS = `<br>
@@ -172,7 +172,10 @@ export class SettingsDialog {
   private readonly updateBtnBackdrop: JQuery;
   private readonly updateButton: JQuery;
 
+  private alarmCancel: JQuery;
   private alarmDay: JQuery;
+  private alarmDelete: JQuery;
+  private alarmEdit: JQuery;
   private alarmHour: JQuery;
   private alarmList: JQuery;
   private alarmMessage: JQuery;
@@ -224,22 +227,29 @@ export class SettingsDialog {
 
   private activeTab = 0;
   private alarmAmPm = false;
+  private alarmEditing = false;
   private dailyAlarm = true;
   private defaultLocation: any;
+  private editAlarm = -1;
   private latestVersion = AWC_VERSION;
+  private newAlarms: AlarmInfo[] = [];
   private nowPlaying: HTMLAudioElement;
   private previousSettings: Settings;
   private recentLocations: RecentLocation[] = [];
   private searchFieldFocused = false;
   private searchButtonFocused = false;
   private serviceSetting = '';
+  private selectedAlarm = -1;
   private updateFocused = false;
   private weatherServices = '';
 
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
 
+    this.alarmCancel = $('#alarm-cancel');
     this.alarmDay = $('#alarm-day');
+    this.alarmDelete = $('#alarm-delete');
+    this.alarmEdit = $('#alarm-edit');
     this.alarmHour = $('#alarm-hour');
     this.alarmList = $('#alarm-list');
     this.alarmMeridiem = $('#alarm-meridiem');
@@ -382,7 +392,7 @@ export class SettingsDialog {
       const ii = (i + sow) % 7;
       const id = 'dow_cb_' + ii;
 
-      dayOfWeekCheckboxes += `<div><input id="${id}" type="checkbox"><label for="${id}">${days[ii]}</label></div>`;
+      dayOfWeekCheckboxes += `<div><input id="${id}" type="checkbox" value="${days[ii]}"><label for="${id}">${days[ii]}</label></div>`;
     }
 
     this.dayOfWeekPanel.html(dayOfWeekCheckboxes);
@@ -392,7 +402,7 @@ export class SettingsDialog {
 
     getJson<string[]>(`${apiServer}/assets/audio`).then(data => {
       const options = data.reduce((prev, current) =>
-        prev + `<option value="${current}">${current.replace(/\.[^.]+$/, '').replace(/_/g, ' ')}</option>`, '');
+        prev + `<option value="${current}">${soundName(current)}</option>`, '');
       this.audioSelect.html(options).on('change', () => this.stopAudio());
     });
 
@@ -415,6 +425,7 @@ export class SettingsDialog {
 
     $('#daily-alarm').on('click', () => {
       this.dailyAlarm = true;
+      this.alarmEditing = true;
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
       this.datePanel.css('display', 'none');
@@ -423,6 +434,7 @@ export class SettingsDialog {
 
     $('#one-time-alarm').on('click', () => {
       this.dailyAlarm = false;
+      this.alarmEditing = true;
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
       this.datePanel.css('display', 'flex');
@@ -469,19 +481,57 @@ export class SettingsDialog {
     });
 
     this.alarmSave.on('click', () => this.saveAlarm());
+    this.alarmCancel.on('click', () => this.clearAlarmTime());
   }
 
   private saveAlarm(): void {
     const hour = toNumber(this.alarmHour.val());
     const minute = toNumber(this.alarmMinute.val());
+    const newAlarm = {
+      enabled: true,
+      message: (this.alarmMessage.val() as string).trim(),
+      sound: this.audioSelect.val()
+    } as AlarmInfo;
 
     if ((this.alarmAmPm && (hour < 1 || hour > 12)) ||
         (!this.alarmAmPm && (hour < 0 || hour > 23)) ||
         (minute < 0 || minute > 59)) {
-      domAlert('Invalid alarm time');
+      domAlert('Invalid alarm time.');
       return;
     }
 
+    newAlarm.time = (this.alarmAmPm ? hour - (hour === 12 ? 12 : 0) + (this.alarmMeridiem.val() === 'P' ? 12 : 0) : hour) * 60 + minute;
+
+    if (this.dailyAlarm) {
+      let days = '';
+
+      this.dayOfWeekPanel.find('input[type=checkbox]').each((_index, elem: HTMLInputElement) => {
+        if (elem.checked)
+          days += elem.value + ' ';
+      });
+
+      if (!days) {
+        domAlert('At least one day of the week must be selected.');
+        return;
+      }
+
+      newAlarm.days = days.trim();
+    }
+    else {
+      const day = toNumber(this.alarmDay.val());
+      const month = toNumber(this.alarmMonth.val());
+      const year = toNumber(this.alarmYear.val());
+
+      if (year <= 0 || day <= 0 || !isValidDate_SGC(year, month, day)) {
+        domAlert('Invalid date.');
+        return;
+      }
+
+      newAlarm.time += new DateTime([year, month, day], 'UTC').wallTime.n * 1440;
+    }
+
+    this.newAlarms.push(newAlarm);
+    this.renderAlarmList(this.newAlarms);
     this.clearAlarmTime();
   }
 
@@ -491,27 +541,29 @@ export class SettingsDialog {
     for (let i = 0; i < list.length; ++i) {
       const alarm = list[i];
       const time = formatAlarmTime(alarm.time, this.alarmAmPm);
-      const days = alarm.time < 1440 ? formatAlarmDays(alarm.days) : formatAlarmDate(alarm.time);
+      const days = alarm.time < 1440 ? alarm.days : formatAlarmDate(alarm.time);
 
       alarmHtml += `
-<div class="alarm-item">
+<div class="alarm-item" data-index="${i}">
   <div>
     <span class="time">${time}</span>
     <span class="days">${days}</span>
     <span>
-      <input type="checkbox" id="alarm-item${i}" name="alarm-item-${i}${alarm.enabled ? ' checked' : ''}">
+      <input type="checkbox" id="alarm-item-${i}" name="alarm-item-${i}"${alarm.enabled ? ' checked' : ''}>
       <label for="alarm-item-${i}">Enabled</label>
     </span>
   </div>
   <div>
-    <span class="sound">🔈 ${alarm.sound}</span>
-    <span class="message">${alarm.message ? '📜' + htmlEncode(alarm.message) : ''}</span>
+    <span class="sound">🔈 ${soundName(alarm.sound)}</span>
+    <span class="message">${alarm.message ? '📜 ' + htmlEncode(alarm.message) : ''}</span>
   </div>
 </div>
 `;
     }
 
     this.alarmList.html(alarmHtml);
+    this.alarmList.find('.alarm-item').each((index, elem) =>
+      elem.addEventListener('click', () => this.selectAlarm(index)));
   }
 
   private playAudio(): void {
@@ -611,6 +663,21 @@ export class SettingsDialog {
     }
   }
 
+  private selectAlarm(index: number): void {
+    if (index === this.selectedAlarm)
+      return;
+
+    if (this.selectedAlarm >= 0)
+      $('.alarm-item.selected').removeClass('selected');
+
+    if (index >= 0)
+      $(`.alarm-item[data-index="${index}"]`).addClass('selected');
+
+    this.alarmDelete.prop('disabled', index < 0);
+    this.alarmEdit.prop('disabled', index < 0);
+    this.selectedAlarm = index;
+  }
+
   private adjustAlarmTime(amPm): void {
     const wasAmPm = this.alarmMeridiem.css('display') !== 'none';
 
@@ -667,14 +734,14 @@ export class SettingsDialog {
 
   private enableDimmingRange(enable: boolean): void {
     if (enable) {
-      this.dimmingStart.removeAttr('disabled');
+      this.dimmingStart.prop('disabled', false);
       this.dimmingTo.css('opacity', '1');
-      this.dimmingEnd.removeAttr('disabled');
+      this.dimmingEnd.prop('disabled', false);
     }
     else {
-      this.dimmingStart.attr('disabled', 'disabled');
+      this.dimmingStart.prop('disabled', true);
       this.dimmingTo.css('opacity', '0.33');
-      this.dimmingEnd.attr('disabled', 'disabled');
+      this.dimmingEnd.prop('disabled', true);
     }
   }
 
@@ -692,6 +759,7 @@ export class SettingsDialog {
 
   public openSettings(previousSettings: Settings, emphasizeUpdate = false): void {
     this.previousSettings = previousSettings;
+    this.newAlarms = previousSettings.alarms || [];
     this.selectTab(0);
 
     const checkUiSizing = (): void => {
@@ -809,11 +877,15 @@ export class SettingsDialog {
     });
 
     this.alarmAmPm = (previousSettings.timeFormat === TimeFormat.AMPM);
+    this.selectedAlarm = -1;
+    this.alarmDelete.prop('disabled', true);
+    this.alarmEdit.prop('disabled', true);
     this.clearAlarmTime();
-    this.renderAlarmList([{ days: 'MOTUWETHFRSA', enabled: true, message: 'Wake up!', sound: 'Beep-beep-beep-beep.mp3', time: 450 }]);
+    this.renderAlarmList(this.newAlarms);
   }
 
   private clearAlarmTime(): void {
+    this.alarmEditing = false;
     this.alarmSetPanel.css('opacity', '0.33');
     this.alarmSetPanel.css('pointer-events', 'none');
     this.alarmHour.val('06');
@@ -826,8 +898,7 @@ export class SettingsDialog {
     const weekEnd = ttime.getWeekend(ttime.defaultLocale);
 
     this.dayOfWeekPanel.find('input[type="checkbox"').each(function () {
-      if (!weekEnd.includes(toNumber(this.id.substr(-1))))
-        this.setAttribute('checked', 'checked');
+      $(this).prop('checked', !weekEnd.includes(toNumber(this.id.substr(-1))));
     });
 
     const now = new DateTime(null, this.appService.timezone).wallTime;
@@ -948,7 +1019,7 @@ export class SettingsDialog {
       let weatherOptions = '<option value="">Default weather service</option>\n';
 
       if (data.services && data.services.length > 2) {
-        this.weatherService.removeAttr('disabled');
+        this.weatherService.prop('disabled', false);
         weatherOptions += '<option value="wu">Weather Underground</option>\n';
 
         if (data.services?.includes('vc'))
@@ -960,7 +1031,7 @@ export class SettingsDialog {
         this.updateWeatherServiceSelection();
       }
       else
-        this.weatherService.attr('disabled', 'disabled');
+        this.weatherService.prop('disabled', true);
 
       this.weatherService.html(weatherOptions);
 
