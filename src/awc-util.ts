@@ -141,7 +141,6 @@ export function domAlert(message: string, callback?: () => void): void {
 }
 
 type OkCallback = (isOk: boolean) => void;
-let confirmInit = false;
 
 export function domConfirm(message: string, callback: OkCallback): void;
 export function domConfirm(message: string, optionsHtml: string, callback: OkCallback): void;
@@ -178,8 +177,13 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
     }
   });
 
-  const doCallback = (isOk: boolean): void => {
+  const doCallback = (isOk: boolean, evt?: JQuery.ClickEvent): void => {
+    if (evt)
+      evt.stopPropagation();
+
     popKeydownListener();
+    confirmOk.off('click');
+    confirmCancel.off('click');
     confirmDialog.hide();
     callback(isOk);
   };
@@ -189,12 +193,8 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   else
     $('#confirm-message').text(message);
 
-  if (!confirmInit) {
-    confirmOk.on('click', (evt) => stopPropagation(evt, () => doCallback(true)));
-    confirmCancel.on('click', (evt) => stopPropagation(evt, () => doCallback(false)));
-    confirmInit = true;
-  }
-
+  confirmOk.one('click', (evt) => doCallback(true, evt));
+  confirmCancel.one('click', (evt) => doCallback(false, evt));
   confirmDialog.show();
 }
 

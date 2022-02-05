@@ -176,6 +176,7 @@ export class SettingsDialog {
   private readonly updateBtnBackdrop: JQuery;
   private readonly updateButton: JQuery;
 
+  private alarmAudio: JQuery;
   private alarmCancel: JQuery;
   private alarmDay: JQuery;
   private alarmDelete: JQuery;
@@ -189,7 +190,6 @@ export class SettingsDialog {
   private alarmSave: JQuery;
   private alarmSetPanel: JQuery;
   private alarmYear: JQuery;
-  private audioSelect: JQuery;
   private background: JQuery;
   private cancelButton: JQuery;
   private cityTable: JQuery;
@@ -401,13 +401,26 @@ export class SettingsDialog {
 
     this.dayOfWeekPanel.html(dayOfWeekCheckboxes);
 
-    this.audioSelect = $('.audio-selection > select');
+    this.alarmAudio = $('.audio-selection > select');
     this.play = $('.audio-selection > button');
 
     getJson<string[]>(`${apiServer}/assets/audio`).then(data => {
-      const options = data.reduce((prev, current) =>
+      let options = data.reduce((prev, current) =>
         prev + `<option value="${current}">${soundName(current)}</option>`, '');
-      this.audioSelect.html(options).on('change', () => this.stopAudio());
+
+      options += '<option value="">(Silent)</option>';
+      this.alarmAudio.html(options).on('change', () => {
+        this.stopAudio();
+
+        if (this.alarmAudio.val()) {
+          this.play.css('opacity', '1');
+          this.play.css('pointer-events', 'all');
+        }
+        else {
+          this.play.css('opacity', '0.33');
+          this.play.css('pointer-events', 'none');
+        }
+      });
     });
 
     this.play.on('click', () => {
@@ -417,7 +430,7 @@ export class SettingsDialog {
         let somewhatReady = false;
         let playStarted = false;
 
-        this.nowPlaying = new Audio(`/assets/audio/${encodeURI(this.audioSelect.val() as string)}`);
+        this.nowPlaying = new Audio(`/assets/audio/${encodeURI(this.alarmAudio.val() as string)}`);
 
         this.nowPlaying.addEventListener('canplay', () => somewhatReady = true);
         this.nowPlaying.addEventListener('canplaythrough', () => !playStarted && (playStarted = true) && this.playAudio());
@@ -491,12 +504,12 @@ export class SettingsDialog {
   }
 
   private saveAlarm(): void {
-    const hour = toNumber(this.alarmHour.val());
+    let hour = toNumber(this.alarmHour.val());
     const minute = toNumber(this.alarmMinute.val());
     const newAlarm = {
       enabled: this.editAlarm < 0 ? true : this.newAlarms[this.editAlarm].enabled,
       message: (this.alarmMessage.val() as string).trim(),
-      sound: this.audioSelect.val()
+      sound: this.alarmAudio.val()
     } as AlarmInfo;
 
     if ((this.alarmAmPm && (hour < 1 || hour > 12)) ||
@@ -506,7 +519,8 @@ export class SettingsDialog {
       return;
     }
 
-    newAlarm.time = (this.alarmAmPm ? hour - (hour === 12 ? 12 : 0) + (this.alarmMeridiem.val() === 'P' ? 12 : 0) : hour) * 60 + minute;
+    hour = (this.alarmAmPm ? hour - (hour === 12 ? 12 : 0) + (this.alarmMeridiem.val() === 'P' ? 12 : 0) : hour);
+    newAlarm.time = hour * 60 + minute;
 
     if (this.dailyAlarm) {
       let days = '';
@@ -530,6 +544,11 @@ export class SettingsDialog {
 
       if (year <= 0 || day <= 0 || !isValidDate_SGC(year, month, day)) {
         this.alert('Invalid date.');
+        return;
+      }
+
+      if (new DateTime([year, month, day, hour, minute], this.appService.timezone).utcMillis < Date.now()) {
+        this.alert('The date/time of this alarm has already passed.');
         return;
       }
 
@@ -569,7 +588,7 @@ export class SettingsDialog {
     </span>
   </div>
   <div>
-    <span class="sound">🔈 ${soundName(alarm.sound)}</span>
+    <span class="sound">${alarm.sound ? '🔈' : '🔇'} ${soundName(alarm.sound)}</span>
     <span class="message">${alarm.message ? '📜 ' + htmlEncode(alarm.message) : ''}</span>
   </div>
 </div>
@@ -737,6 +756,7 @@ export class SettingsDialog {
 
       this.clearAlarmTime(daily);
       this.dailyAlarm = daily;
+      this.alarmEditing = true;
       this.editAlarm = this.selectedAlarm;
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
@@ -745,7 +765,7 @@ export class SettingsDialog {
       this.alarmHour.val(time.substring(0, 2));
       this.alarmMinute.val(time.substring(3, 5));
       this.alarmMeridiem.val(time.substring(7, 8));
-      this.audioSelect.val(alarm.sound);
+      this.alarmAudio.val(alarm.sound);
       this.alarmMessage.val(alarm.message);
 
       if (alarm.time < 1440)
@@ -805,7 +825,25 @@ export class SettingsDialog {
   }
 
   private tabClicked(evt: ClickishEvent): void {
-    this.selectTab(this.tabs.index(evt.target));
+    const tabIndex = this.tabs.index(evt.target);
+
+    if (tabIndex !== this.activeTab)
+      this.abortForUnsavedAlarm(abort => abort || this.selectTab(tabIndex));
+  }
+
+  private abortForUnsavedAlarm(callback: (abort: boolean) => void): void {
+    if (!this.alarmEditing) {
+      callback(false);
+      return;
+    }
+
+    this.keyboard.hide();
+    domConfirm('You have unsaved alarm changes.\n\nContinue anyway?', yesGoOn => {
+      if (yesGoOn)
+        this.clearAlarmTime();
+
+      callback(!yesGoOn);
+    });
   }
 
   private selectTab(tabIndex: number): void {
@@ -952,7 +990,7 @@ export class SettingsDialog {
     this.alarmMeridiem.val('A');
     this.adjustAlarmTime(this.alarmAmPm);
     this.alarmMessage.val('');
-    (this.audioSelect[0] as HTMLSelectElement).selectedIndex = 0;
+    (this.alarmAudio[0] as HTMLSelectElement).selectedIndex = 0;
 
     const weekEnd = ttime.getWeekend(ttime.defaultLocale);
 
@@ -977,7 +1015,13 @@ export class SettingsDialog {
   }
 
   private doOK = (): void => {
+    console.log('doOK');
     this.stopAudio();
+
+    if (this.alarmEditing) {
+      this.abortForUnsavedAlarm(abort => abort || this.doOK());
+      return;
+    }
 
     const newSettings = new Settings();
 
