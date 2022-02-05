@@ -175,7 +175,7 @@ export class Gps extends TimePoller {
     let ntpFallback = false;
 
     for (const line of ntpInfo) {
-      const $ = /^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s(-?[.\d]+)\s+[.\d]+\s*$/.exec(line);
+      const $ = /^\*SHM(\(\d+\))?\b.+\.PPS\.\s+0\s+l\s+.+?\s(-?[.\d]+)\s+[.\d]+\s*$/.exec(line);
 
       if ($ && Number($[1]) <= 1) {
         gpsFound = true;

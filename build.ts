@@ -569,7 +569,7 @@ async function checkForGps(): Promise<void> {
     const ntpInfo = await monitorProcessLines(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS);
 
     for (const line of ntpInfo) {
-      if (/^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s-?[.\d]+\s+[.\d]+\s*$/.test(line)) {
+      if (/^\*SHM(\(\d+\))?\b.+\.PPS\.\s+0\s+l\s+.+?\s-?[.\d]+\s+[.\d]+\s*$/.test(line)) {
         gpsTimeIsWorking = true;
         break;
       }
