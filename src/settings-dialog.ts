@@ -176,6 +176,7 @@ export class SettingsDialog {
   private readonly updateBtnBackdrop: JQuery;
   private readonly updateButton: JQuery;
 
+  private addAlarm: JQuery;
   private alarmAudio: JQuery;
   private alarmCancel: JQuery;
   private alarmDay: JQuery;
@@ -197,6 +198,7 @@ export class SettingsDialog {
   private clockFace: JQuery;
   private colorOptions: JQuery;
   private currentCity: JQuery;
+  private dailyAlarmBtn: JQuery;
   private datePanel: JQuery;
   private dayOfWeekPanel: JQuery;
   private dimming: JQuery;
@@ -213,6 +215,7 @@ export class SettingsDialog {
   private latitude: JQuery;
   private longitude: JQuery;
   private okButton: JQuery;
+  private oneTimeAlarmBtn: JQuery;
   private onscreenKB: JQuery;
   private outdoor: JQuery;
   private planets: JQuery;
@@ -440,22 +443,32 @@ export class SettingsDialog {
       }
     });
 
-    $('#daily-alarm').on('click', () => {
+    this.addAlarm = $('#add-alarm');
+    this.dailyAlarmBtn = $('#daily-alarm');
+    this.oneTimeAlarmBtn = $('#one-time-alarm');
+
+    this.addAlarm.on('click', () => {
       this.dailyAlarm = true;
       this.alarmEditing = true;
+      this.addAlarm.prop('disabled', true);
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
-      this.datePanel.css('display', 'none');
-      this.dayOfWeekPanel.css('display', 'flex');
     });
 
-    $('#one-time-alarm').on('click', () => {
+    this.dailyAlarmBtn.on('click', () => {
+      this.dailyAlarm = true;
+      this.datePanel.css('display', 'none');
+      this.dayOfWeekPanel.css('display', 'flex');
+      this.dailyAlarmBtn.prop('checked', true);
+      this.oneTimeAlarmBtn.prop('checked', false);
+    });
+
+    this.oneTimeAlarmBtn.on('click', () => {
       this.dailyAlarm = false;
-      this.alarmEditing = true;
-      this.alarmSetPanel.css('opacity', '1');
-      this.alarmSetPanel.css('pointer-events', 'all');
       this.datePanel.css('display', 'flex');
       this.dayOfWeekPanel.css('display', 'none');
+      this.dailyAlarmBtn.prop('checked', false);
+      this.oneTimeAlarmBtn.prop('checked', true);
     });
 
     const self = this;
@@ -742,9 +755,14 @@ export class SettingsDialog {
 
   private deleteSelectedAlarm(): void {
     if (this.selectedAlarm >= 0) {
-      this.newAlarms.splice(this.selectedAlarm, 1);
-      this.renderAlarmList(this.newAlarms);
-      this.selectAlarm(-1);
+      this.keyboard.hide();
+      domConfirm('Delete the selected alarm?', yep => {
+        if (yep) {
+          this.newAlarms.splice(this.selectedAlarm, 1);
+          this.renderAlarmList(this.newAlarms);
+          this.selectAlarm(-1);
+        }
+      });
     }
   }
 
@@ -756,7 +774,10 @@ export class SettingsDialog {
 
       this.clearAlarmTime(daily);
       this.dailyAlarm = daily;
+      this.dailyAlarmBtn.prop('checked', daily);
+      this.oneTimeAlarmBtn.prop('checked', !daily);
       this.alarmEditing = true;
+      this.addAlarm.prop('disabled', true);
       this.editAlarm = this.selectedAlarm;
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
@@ -983,6 +1004,10 @@ export class SettingsDialog {
 
   private clearAlarmTime(clearAllDays = false): void {
     this.alarmEditing = false;
+    this.addAlarm.prop('disabled', false);
+    this.dailyAlarm = true;
+    this.dailyAlarmBtn.prop('checked', true);
+    this.oneTimeAlarmBtn.prop('checked', false);
     this.alarmSetPanel.css('opacity', '0.33');
     this.alarmSetPanel.css('pointer-events', 'none');
     this.alarmHour.val('06');
@@ -991,6 +1016,8 @@ export class SettingsDialog {
     this.adjustAlarmTime(this.alarmAmPm);
     this.alarmMessage.val('');
     (this.alarmAudio[0] as HTMLSelectElement).selectedIndex = 0;
+    this.play.css('opacity', '1');
+    this.play.css('pointer-events', 'all');
 
     const weekEnd = ttime.getWeekend(ttime.defaultLocale);
 

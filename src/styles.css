@@ -997,19 +997,19 @@ ul.my-tabs > li.tab-active {
     flex-direction: column;
     gap: 1rem;
     justify-content: center; }
-    .alarm-section .alarm-entry-panel .alarm-entry-buttons {
-      align-items: center;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem; }
-      .alarm-section .alarm-entry-panel .alarm-entry-buttons button {
-        white-space: nowrap; }
     .alarm-section .alarm-entry-panel #alarm-set-panel {
       align-items: center;
       display: flex;
       flex-direction: column;
       gap: 1rem;
       justify-content: start; }
+      .alarm-section .alarm-entry-panel #alarm-set-panel .alarm-type-buttons {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 0.25rem; }
+        .alarm-section .alarm-entry-panel #alarm-set-panel .alarm-type-buttons label {
+          white-space: nowrap; }
       .alarm-section .alarm-entry-panel #alarm-set-panel .hour-minute-panel {
         display: flex;
         flex-direction: row;

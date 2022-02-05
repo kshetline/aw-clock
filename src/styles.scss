@@ -1273,23 +1273,23 @@ ul.my-tabs > li.tab-active {
     gap: 1rem;
     justify-content: center;
 
-    .alarm-entry-buttons {
-      align-items: center;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-
-      button {
-        white-space: nowrap;
-      }
-    }
-
     #alarm-set-panel {
       align-items: center;
       display: flex;
       flex-direction: column;
       gap: 1rem;
       justify-content: start;
+
+      .alarm-type-buttons {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 0.25rem;
+
+        label {
+          white-space: nowrap;
+        }
+      }
 
       .hour-minute-panel {
         display: flex;

@@ -517,11 +517,15 @@
           </div>
           <div class="tab-panel alarm-section">
             <div class="alarm-entry-panel">
-              <div class="alarm-entry-buttons">
-                <button id='daily-alarm'>Add daily alarm</button>
-                <button id='one-time-alarm'>Add one-time alarm</button>
-              </div>
+              <button id='add-alarm'>⏰ Add alarm</button>
               <div id="alarm-set-panel">
+                <div class="alarm-type-buttons">
+                  <input type="radio" id='daily-alarm' checked>
+                  <label for="daily-alarm">Daily</label>
+                  <span>&nbsp;&nbsp;</span>
+                  <input type="radio" id='one-time-alarm'>
+                  <label for="one-time-alarm">One time</label>
+                </div>
                 <div class="hour-minute-panel">
                   <input id="alarm-hour" type="text">
                   <span>:</span>
