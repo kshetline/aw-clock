@@ -1148,15 +1148,27 @@ ul.my-tabs > li.tab-active {
   right: 2.5rem;
   top: 2.5rem; }
 
-.update-section #hide-update-panel {
-  align-items: center;
-  background-color: #DEF;
+.update-section {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  padding: 0.25rem; }
-
-.update-section #update-version-info {
-  margin-top: 0.5rem; }
-  .update-section #update-version-info ul {
-    margin-top: 0; }
+  flex-direction: column; }
+  .update-section #hide-update-panel {
+    align-items: center;
+    background-color: #DEF;
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem; }
+  .update-section #update-version-info {
+    flex: 1 1 0;
+    height: 0;
+    margin-top: 0.5rem;
+    overflow: auto; }
+    .update-section #update-version-info code {
+      background-color: rgba(175, 184, 193, 0.2);
+      border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 85%;
+      margin: 0;
+      padding: 0.2em; }
+    .update-section #update-version-info ul {
+      margin-top: 0; }

@@ -1493,6 +1493,9 @@ ul.my-tabs > li.tab-active {
 }
 
 .update-section {
+  display: flex;
+  flex-direction: column;
+
   #hide-update-panel {
     align-items: center;
     background-color: #DEF;
@@ -1503,7 +1506,19 @@ ul.my-tabs > li.tab-active {
   }
 
   #update-version-info {
+    flex: 1 1 0;
+    height: 0;
     margin-top: 0.5rem;
+    overflow: auto;
+
+    code {
+      background-color: rgba(175, 184, 193, 0.2);
+      border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 85%;
+      margin: 0;
+      padding: 0.2em;
+    }
 
     ul {
       margin-top: 0;

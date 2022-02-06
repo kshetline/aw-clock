@@ -30,7 +30,7 @@ export class AlarmMonitor {
     this.startTime = processMillis();
   }
 
-  checkAlarms(alarmCheckTime: number, alarms: AlarmInfo[]): void {
+  checkAlarms(alarmCheckTime: number, alarms: AlarmInfo[]): AlarmInfo[] {
     let updatePrefs = false;
     const now = new DateTime(alarmCheckTime, this.appService.timezone);
     const nowMinutes = floor(now.utcSeconds / 60);
@@ -58,7 +58,7 @@ export class AlarmMonitor {
         alarmTime -= floor(now.utcOffsetSeconds / 60);
 
       if (!snoozed) {
-        if (!isDaily && alarmTime < nowMinutes - 60 && processMillis() > this.startTime + 120000) { // Expired alarm?
+        if (!isDaily && alarmTime < nowMinutes - 65 && processMillis() > this.startTime + 60000) { // Expired alarm?
           updatePrefs = true;
           alarms.splice(i, 1);
           continue;
@@ -93,6 +93,8 @@ export class AlarmMonitor {
     }
 
     this.updateActiveAlarms(newActiveAlarms, sound);
+
+    return alarms;
   }
 
   private updateActiveAlarms(newAlarms: AlarmInfo[], latestSound: string): void {

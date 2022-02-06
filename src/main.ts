@@ -345,7 +345,7 @@ class AwClockApp implements AppService {
     if (this.showTestTime && this.testTimeValue)
       alarmCheckTime = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
 
-    this.alarmMonitor.checkAlarms(alarmCheckTime, this.settings.alarms);
+    this.settings.alarms = this.alarmMonitor.checkAlarms(alarmCheckTime, this.settings.alarms);
 
     const now = this.getCurrentTime();
 
