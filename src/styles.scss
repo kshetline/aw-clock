@@ -469,7 +469,6 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
 
     &>* {
       align-self: center;
-      display: block; // Needed to make IE grid layout work
       justify-self: center;
     }
   }
@@ -1439,5 +1438,50 @@ ul.my-tabs > li.tab-active {
   .alarm-save-buttons > button {
     margin-top: 1rem;
     min-width: 5rem;
+  }
+}
+
+#current-alarm-display {
+  align-items: center;
+  background-color: yellow;
+  bottom: 9rem;
+  display: none; // Updated to flex when active
+  flex-direction: column;
+  justify-content: space-between;
+  left: -4rem;
+  padding: 1rem;
+  position: absolute;
+  top: 5.5rem;
+  width: 49rem;
+  z-index: 200;
+
+  button#stop-alarm {
+    align-self: stretch;
+    border-radius: 1.5rem;
+    font-size: 5rem;
+  }
+
+  #alarm-messages {
+    color: black;
+    flex: 1 1 0;
+    font-size: 2rem;
+    margin: 1rem;
+    overflow: auto;
+    width: 100%;
+
+    ul {
+      margin: 0;
+    }
+  }
+
+  .snooze-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center;
+
+    button {
+      font-size: 1.5rem;
+    }
   }
 }

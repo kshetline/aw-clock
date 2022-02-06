@@ -993,7 +993,7 @@ async function doServiceDeployment(): Promise<void> {
     spin, ErrorMode.ANY_ERROR);
 
   if (doKiosk)
-    launchChromium = launchChromium.replace(/\s+/, ' --kiosk ');
+    launchChromium = launchChromium.replace(/\s+/, ' --kiosk --autoplay-policy=no-user-gesture-required ');
 
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';

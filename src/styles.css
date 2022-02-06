@@ -364,7 +364,6 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
     margin: -5px -20px; }
     .user-options > .rowspan > * {
       align-self: center;
-      display: block;
       justify-self: center; }
   .user-options > *:nth-child(1) {
     grid-row: 1;
@@ -1108,3 +1107,37 @@ ul.my-tabs > li.tab-active {
   .alarm-section .alarm-save-buttons > button {
     margin-top: 1rem;
     min-width: 5rem; }
+
+#current-alarm-display {
+  align-items: center;
+  background-color: yellow;
+  bottom: 9rem;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  left: -4rem;
+  padding: 1rem;
+  position: absolute;
+  top: 5.5rem;
+  width: 49rem;
+  z-index: 200; }
+  #current-alarm-display button#stop-alarm {
+    align-self: stretch;
+    border-radius: 1.5rem;
+    font-size: 5rem; }
+  #current-alarm-display #alarm-messages {
+    color: black;
+    flex: 1 1 0;
+    font-size: 2rem;
+    margin: 1rem;
+    overflow: auto;
+    width: 100%; }
+    #current-alarm-display #alarm-messages ul {
+      margin: 0; }
+  #current-alarm-display .snooze-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center; }
+    #current-alarm-display .snooze-buttons button {
+      font-size: 1.5rem; }

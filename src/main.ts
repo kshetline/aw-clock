@@ -35,6 +35,7 @@ import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, anyDialogOpen, ClickishEvent, getJson, stopPropagation } from './awc-util';
 import { CurrentTemperatureHumidity, Rect, TimeFormat } from './shared-types';
 import { SkyMap } from './sky-map';
+import { AlarmMonitor } from './assets/alarm-monitor';
 
 pollForTimezoneUpdates(zonePollerBrowser);
 
@@ -59,6 +60,7 @@ $.ajaxSetup({
 });
 
 class AwClockApp implements AppService {
+  private alarmMonitor: AlarmMonitor;
   private clock: Clock;
   private currentTempManager: CurrentTempManager;
   private forecast: Forecast;
@@ -101,6 +103,8 @@ class AwClockApp implements AppService {
     this.settings.load();
     AwClockApp.removeDefShadowRoots();
 
+    this.alarmMonitor = new AlarmMonitor(this);
+
     this.clock = new Clock(this);
     this.clock.timeFormat = this.settings.timeFormat;
     this.clock.hideSeconds = this.settings.hideSeconds;
@@ -132,8 +136,10 @@ class AwClockApp implements AppService {
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
     this.updateAvailable.add(this.updateCaption).on('click', () => {
-      if (raspbianChromium && this.adminAllowed)
+      if (raspbianChromium && this.adminAllowed) {
+        this.alarmMonitor.stopAlarms();
         this.settingsDialog.openSettings(this.settings, true);
+      }
     });
 
     this.cityLabel.text(this.settings.city);
@@ -181,7 +187,10 @@ class AwClockApp implements AppService {
 
     const settingsButton = $('#settings-btn');
 
-    settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
+    settingsButton.on('click', () => {
+      this.alarmMonitor.stopAlarms();
+      this.settingsDialog.openSettings(this.settings);
+    });
 
     const weatherLogo = $('.weather-logo a');
 
@@ -331,6 +340,13 @@ class AwClockApp implements AppService {
   }
 
   updateTime(hour: number, minute: number, forceRefresh: boolean): void {
+    let alarmCheckTime = this.getCurrentTime();
+
+    if (this.showTestTime && this.testTimeValue)
+      alarmCheckTime = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
+
+    this.alarmMonitor.checkAlarms(alarmCheckTime, this.settings.alarms);
+
     const now = this.getCurrentTime();
 
     // Hide cursor if it hasn't been moved in the last two minutes.

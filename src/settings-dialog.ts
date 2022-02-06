@@ -12,7 +12,7 @@ import {
   popKeydownListener, pushKeydownListener
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
-import { clone, eventToKey, isEqual, toBoolean, toNumber } from '@tubular/util';
+import { clone, eventToKey, isEqual, noop, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -511,7 +511,12 @@ export class SettingsDialog {
     });
 
     this.alarmSave.on('click', () => this.saveAlarm());
-    this.alarmCancel.on('click', () => { this.editAlarm = -1; this.clearAlarmTime(); });
+    this.alarmCancel.on('click', () => {
+      this.editAlarm = -1;
+      this.clearAlarmTime();
+      this.alarmDelete.prop('disabled', this.selectedAlarm < 0);
+      this.alarmEdit.prop('disabled', this.selectedAlarm < 0);
+    });
     this.alarmDelete.on('click', () => this.deleteSelectedAlarm());
     this.alarmEdit.on('click', () => this.editSelectedAlarm());
   }
@@ -620,7 +625,7 @@ export class SettingsDialog {
 
   private playAudio(): void {
     if (this.nowPlaying) {
-      this.nowPlaying.play().finally();
+      this.nowPlaying.play().catch(() => noop);
       this.play.text('⏹');
     }
   }
@@ -779,6 +784,8 @@ export class SettingsDialog {
       this.alarmEditing = true;
       this.addAlarm.prop('disabled', true);
       this.editAlarm = this.selectedAlarm;
+      this.alarmDelete.prop('disabled', true);
+      this.alarmEdit.prop('disabled', true);
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
       this.datePanel.css('display', daily ? 'none' : 'flex');
@@ -1042,7 +1049,6 @@ export class SettingsDialog {
   }
 
   private doOK = (): void => {
-    console.log('doOK');
     this.stopAudio();
 
     if (this.alarmEditing) {
