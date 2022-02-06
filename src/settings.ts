@@ -112,7 +112,7 @@ export class Settings {
   public save(): void {
     const expiration = { expires: 36525 }; // One century from now.
 
-    Cookies.set('alarms', JSON.stringify(this.alarms));
+    Cookies.set('alarms', JSON.stringify(this.alarms), expiration);
     Cookies.set('background', this.background, expiration);
     Cookies.set('celsius', this.celsius.toString(), expiration);
     Cookies.set('city', this.city, expiration);
