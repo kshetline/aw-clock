@@ -11,15 +11,22 @@ export class AlarmMonitor {
   private alarmDisplay: JQuery;
   private alarmMessages: JQuery;
   private cantPlayAlertShown = false;
+  private clearSnoozeDisplay: JQuery;
   private currentSound: string;
   private nowPlaying: HTMLAudioElement;
   private silencedAlarms: { stoppedAt: number, alarm: AlarmInfo }[] = [];
+  private snoozedAlarms: { restartAt: number, alarm: AlarmInfo }[] = [];
   private readonly startTime: number;
 
   constructor(private appService: AppService) {
     this.alarmDisplay = $('#current-alarm-display');
     this.alarmMessages = $('#alarm-messages');
-    $('#stop-alarm').on('click', () => this.stopAlarms());
+    this.clearSnoozeDisplay = $('#clear-snooze-display');
+
+    $('#stop-alarm, #clear-snooze').on('click', () => this.stopAlarms());
+    $('#snooze-5').on('click', () => this.snoozeAlarms(5));
+    $('#snooze-10').on('click', () => this.snoozeAlarms(10));
+    $('#snooze-15').on('click', () => this.snoozeAlarms(15));
     this.startTime = processMillis();
   }
 
@@ -40,30 +47,37 @@ export class AlarmMonitor {
       if (this.activeAlarms.find(a => isEqual(a, alarm)) || this.silencedAlarms.find(sa => isEqual(sa.alarm, alarm)))
         continue;
 
-      if (isDaily)
+      const snoozed = this.snoozedAlarms.find(sa => isEqual(sa.alarm, alarm));
+
+      if (snoozed)
+        alarmTime = snoozed.restartAt;
+      else if (isDaily)
         alarmTime = floor(new DateTime([now.wallTime.y, now.wallTime.m, now.wallTime.d], this.appService.timezone).utcSeconds / 60) +
           alarmTime;
       else
         alarmTime -= floor(now.utcOffsetSeconds / 60);
 
-      console.log(alarm, nowMinutes, alarmTime, alarmTime - nowMinutes);
-
-      if (!isDaily && alarmTime < nowMinutes - 60 && processMillis() > this.startTime + 120000) { // Expired alarm?
-        updatePrefs = true;
-        alarms.splice(i, 1);
-        continue;
-      }
-      else if (!alarm.enabled)
-        continue;
-      else if (isDaily) {
-        const today = now.format('dd', 'en').toUpperCase();
-
-        if (!alarm.days?.includes(today))
+      if (!snoozed) {
+        if (!isDaily && alarmTime < nowMinutes - 60 && processMillis() > this.startTime + 120000) { // Expired alarm?
+          updatePrefs = true;
+          alarms.splice(i, 1);
           continue;
+        }
+        else if (!alarm.enabled)
+          continue;
+        else if (isDaily) {
+          const today = now.format('dd', 'en').toUpperCase();
+
+          if (!alarm.days?.includes(today))
+            continue;
+        }
       }
 
-      if (alarmTime <= nowMinutes) {
+      if (alarmTime <= nowMinutes && alarmTime >= nowMinutes - 60) {
         newActiveAlarms.push(alarm);
+
+        if (snoozed)
+          this.snoozedAlarms.splice(this.snoozedAlarms.indexOf(snoozed), 1);
 
         if (!sound)
           sound = alarm.sound;
@@ -84,8 +98,10 @@ export class AlarmMonitor {
   private updateActiveAlarms(newAlarms: AlarmInfo[], latestSound: string): void {
     this.activeAlarms.push(...newAlarms);
 
-    if (this.activeAlarms.length > 0)
+    if (this.activeAlarms.length > 0) {
       this.alarmDisplay.css('display', 'flex');
+      this.clearSnoozeDisplay.css('display', 'none');
+    }
 
     if (latestSound && latestSound !== this.currentSound) {
       this.stopAudio();
@@ -142,7 +158,19 @@ export class AlarmMonitor {
 
     this.stopAudio();
     this.alarmDisplay.css('display', 'none');
+    this.clearSnoozeDisplay.css('display', 'none');
     this.silencedAlarms.push(...this.activeAlarms.map(alarm => ({ stoppedAt, alarm })));
+    this.activeAlarms = [];
+    this.snoozedAlarms = [];
+  }
+
+  snoozeAlarms(snoozeTime: number): void {
+    const restartAt = floor(this.appService.getCurrentTime() / 60000) + snoozeTime;
+
+    this.stopAudio();
+    this.alarmDisplay.css('display', 'none');
+    this.clearSnoozeDisplay.css('display', 'block');
+    this.snoozedAlarms.push(...this.activeAlarms.map(alarm => ({ restartAt, alarm })));
     this.activeAlarms = [];
   }
 }

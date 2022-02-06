@@ -124,8 +124,12 @@ function numberKeyHandler(evt: JQuery.KeyDownEvent, elem: HTMLInputElement, mn: 
   else {
     setTimeout(() => {
       if (elem.value.length > digits) {
-        elem.value = elem.value.substr(-digits);
-        elem.setSelectionRange(digits, digits);
+        if (elem.selectionStart === elem.selectionEnd && elem.selectionStart >= digits)
+          elem.value = elem.value.substr(elem.selectionStart - digits, elem.selectionStart);
+        else {
+          elem.value = elem.value.substr(-digits);
+          elem.setSelectionRange(digits, digits);
+        }
       }
     });
   }
@@ -721,7 +725,7 @@ export class SettingsDialog {
   }
 
   private selectAlarm(index: number): void {
-    if (index === this.selectedAlarm)
+    if (index === this.selectedAlarm || this.editAlarm >= 0)
       return;
 
     if (this.selectedAlarm >= 0)

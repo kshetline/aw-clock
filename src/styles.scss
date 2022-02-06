@@ -1487,3 +1487,12 @@ ul.my-tabs > li.tab-active {
     }
   }
 }
+
+#clear-snooze-display {
+  background-color: yellow;
+  display: none; // Updated to block when active
+  padding: 0.5rem;
+  position: fixed;
+  right: 2.5rem;
+  top: 2.5rem;
+}

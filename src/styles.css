@@ -1143,3 +1143,11 @@ ul.my-tabs > li.tab-active {
     justify-content: center; }
     #current-alarm-display .snooze-buttons button {
       font-size: 1.5em; }
+
+#clear-snooze-display {
+  background-color: yellow;
+  display: none;
+  padding: 0.5rem;
+  position: fixed;
+  right: 2.5rem;
+  top: 2.5rem; }
