@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { AppService } from '../app.service';
 import { AlarmInfo, Settings } from '../settings';
-import { isEqual, noop } from '@tubular/util';
+import { isEqual, noop, processMillis } from '@tubular/util';
 import { DateTime } from '@tubular/time';
 import { floor } from '@tubular/math';
 import { domAlert, htmlEncode } from '../awc-util';
@@ -14,11 +14,13 @@ export class AlarmMonitor {
   private currentSound: string;
   private nowPlaying: HTMLAudioElement;
   private silencedAlarms: { stoppedAt: number, alarm: AlarmInfo }[] = [];
+  private readonly startTime: number;
 
   constructor(private appService: AppService) {
     this.alarmDisplay = $('#current-alarm-display');
     this.alarmMessages = $('#alarm-messages');
     $('#stop-alarm').on('click', () => this.stopAlarms());
+    this.startTime = processMillis();
   }
 
   checkAlarms(alarmCheckTime: number, alarms: AlarmInfo[]): void {
@@ -46,7 +48,7 @@ export class AlarmMonitor {
 
       console.log(alarm, nowMinutes, alarmTime, alarmTime - nowMinutes);
 
-      if (!isDaily && alarmTime < nowMinutes - 60) { // Expired alarm?
+      if (!isDaily && alarmTime < nowMinutes - 60 && processMillis() > this.startTime + 120000) { // Expired alarm?
         updatePrefs = true;
         alarms.splice(i, 1);
         continue;

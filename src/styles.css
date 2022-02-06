@@ -1115,20 +1115,22 @@ ul.my-tabs > li.tab-active {
   display: none;
   flex-direction: column;
   justify-content: space-between;
-  left: -4rem;
-  padding: 1rem;
+  left: 0;
+  max-width: 67vw;
+  min-height: 67vh;
+  padding: 1em;
   position: absolute;
   top: 5.5rem;
-  width: 49rem;
+  width: 43rem;
   z-index: 200; }
   #current-alarm-display button#stop-alarm {
     align-self: stretch;
-    border-radius: 1.5rem;
-    font-size: 5rem; }
+    border-radius: 1.5em;
+    font-size: 5em; }
   #current-alarm-display #alarm-messages {
     color: black;
     flex: 1 1 0;
-    font-size: 2rem;
+    font-size: 2em;
     margin: 1rem;
     overflow: auto;
     width: 100%; }
@@ -1140,4 +1142,4 @@ ul.my-tabs > li.tab-active {
     gap: 1rem;
     justify-content: center; }
     #current-alarm-display .snooze-buttons button {
-      font-size: 1.5rem; }
+      font-size: 1.5em; }

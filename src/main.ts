@@ -25,7 +25,7 @@ import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
 import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
-import { ceil, floor, irandom, sqrt } from '@tubular/math';
+import { ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
 import { isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
@@ -610,6 +610,8 @@ class AwClockApp implements AppService {
   findSkyMapArea = (): void => {
     const mapArea = document.getElementById('face') as unknown as SVGElement;
     const rect = mapArea?.getClientRects()[0] ?? mapArea.getBoundingClientRect();
+
+    $('#current-alarm-display').css('font-size', min(max(window.innerWidth / 10, 20), 100) + '%');
 
     if (rect) {
       const skyRect = { x: floor(rect.x), y: floor(rect.y), h: ceil(rect.height), w: ceil(rect.width) };
