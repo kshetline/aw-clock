@@ -4,14 +4,14 @@ import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
 import {
-  blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isObject,
+  blendColors, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject,
   last, processMillis, toNumber
 } from '@tubular/util';
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
   compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
-  getJson, htmlEncode, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
+  getJson, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
@@ -1031,7 +1031,7 @@ export class Forecast {
     const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
     const textWidth = getTextWidth(newText.replace(/{{|}}/g, '\u00A0'), this.marquee[0]);
 
-    newText = htmlEncode(newText).replace(/{{/g, START_ERROR_TAG).replace(/}}/g, CLOSE_ERROR_TAG);
+    newText = htmlEscape(newText).replace(/{{/g, START_ERROR_TAG).replace(/}}/g, CLOSE_ERROR_TAG);
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
@@ -1102,7 +1102,7 @@ export class Forecast {
     else
       text += narrativeEvening;
 
-    text = htmlEncode(text).replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
+    text = htmlEscape(text).replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
       .replace(/¬(.+?)¬/g, '<$1>').replace(/¬(.+?);/g, '</$1>');
 
     displayHtml('big-text-dialog', text, '#DDF');

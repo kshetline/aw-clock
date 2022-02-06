@@ -69,6 +69,7 @@ export class Settings {
   showSkyMap = false;
   skyFacing = 0;
   timeFormat = /[a-z]/i.test(new Date().toLocaleTimeString()) ? TimeFormat.AMPM : TimeFormat.UTC;
+  updateToHide = '';
   userId = '';
 
   public defaultsSet(): boolean {
@@ -101,6 +102,7 @@ export class Settings {
     this.showSkyMap = toBoolean(Cookies.get('show_sky_map'), defaultSettings.showSkyMap);
     this.skyFacing = toNumber(Cookies.get('sky_facing'), defaultSettings.skyFacing);
     this.timeFormat = toTimeFormat(Cookies.get('ampm'), defaultSettings.timeFormat);
+    this.updateToHide = Cookies.get('update-to-hide') || '';
     this.userId = Cookies.get('id') || '';
 
     const body = $('body');
@@ -137,6 +139,7 @@ export class Settings {
     Cookies.set('show_sky_map', this.showSkyMap.toString(), expiration);
     Cookies.set('sky_facing', this.skyFacing.toString(), expiration);
     Cookies.set('ampm', ['24', 'ampm', 'utc'][this.timeFormat] ?? '24', expiration);
+    Cookies.set('update-to-hide', this.updateToHide, expiration);
     Cookies.set('id', this.userId, expiration);
 
     const body = $('body');

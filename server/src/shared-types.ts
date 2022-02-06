@@ -6,8 +6,17 @@ const { version } = require('../package.json');
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
                                      'windDirection', 'windGust', 'windPhrase', 'windSpeed'];
+let altVersion = '';
 
-export const AWC_VERSION = version;
+try {
+  if (typeof process !== 'undefined')
+    altVersion = process.env.AWC_FAKE_CURRENT_VERSION;
+  else if (typeof window !== 'undefined')
+    altVersion = (window.location.href.match(/[?&]fake-ver=(.*?)(&|$)/)[0] || '').substring(10);
+}
+catch {}
+
+export const AWC_VERSION = altVersion || version;
 export const BACK_IN_TIME_THRESHOLD = 4000;
 
 // The following interfaces represent common interfaces to which all weather services will be
@@ -159,14 +168,16 @@ export interface TimeInfo {
 }
 
 export interface AwcDefaults {
-  indoorOption: string;
-  outdoorOption: string;
-  ip: string;
   allowAdmin: boolean;
+  city?: string;
+  currentVersion: string;
+  indoorOption: string;
+  ip: string;
   latestVersion: string;
-  updateAvailable: boolean;
+  latestVersionInfo?: string;
   latitude?: number;
   longitude?: number;
-  city?: string;
+  outdoorOption: string;
   services?: string;
+  updateAvailable: boolean;
 }

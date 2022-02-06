@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { acos, cos_deg, PI, sin_deg } from '@tubular/math';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData } from './shared-types';
-import { isNumber } from '@tubular/util';
+import { isNumber, isString } from '@tubular/util';
+import compareVersions, { CompareOperator } from 'compare-versions';
 
 export function noCache(res: Response): void {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -124,7 +125,7 @@ export async function hasGps(): Promise<boolean> {
 }
 
 export function getRemoteAddress(req: Request): string {
-  return (req.headers['x-real-ip'] as string) || req.connection.remoteAddress;
+  return (req.headers['x-real-ip'] as string) || req.socket.remoteAddress;
 }
 
 export function checkForecastIntegrity(forecast: ForecastData, currentOnly = false): boolean {
@@ -208,4 +209,23 @@ export function alertCleanUp(alertText: string): string {
     alert = '\n\n' + alert;
 
   return alert;
+}
+
+export function safeCompareVersions(firstVersion: string, secondVersion: string, defValue?: number): number;
+export function safeCompareVersions(firstVersion: string, secondVersion: string, operator?: CompareOperator, defValue?: boolean): boolean;
+export function safeCompareVersions(firstVersion: string, secondVersion: string,
+                                    operatorOrDefValue: CompareOperator | number, defValue = false): number | boolean {
+  try {
+    if (isString(operatorOrDefValue))
+      return compareVersions.compare(firstVersion, secondVersion, operatorOrDefValue);
+    else {
+      /* false inspection alarm */ // noinspection JSUnusedAssignment
+      operatorOrDefValue = operatorOrDefValue ?? -1;
+
+      return compareVersions(firstVersion, secondVersion);
+    }
+  }
+  catch {}
+
+  return isString(operatorOrDefValue) ? defValue : operatorOrDefValue;
 }

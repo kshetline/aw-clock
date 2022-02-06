@@ -1,10 +1,10 @@
 import $ from 'jquery';
 import { AppService } from '../app.service';
 import { AlarmInfo, Settings } from '../settings';
-import { isEqual, noop, processMillis } from '@tubular/util';
+import { htmlEscape, isEqual, noop, processMillis } from '@tubular/util';
 import { DateTime } from '@tubular/time';
 import { floor } from '@tubular/math';
-import { domAlert, htmlEncode } from '../awc-util';
+import { domAlert } from '../awc-util';
 
 export class AlarmMonitor {
   private activeAlarms: AlarmInfo[] = [];
@@ -128,7 +128,7 @@ export class AlarmMonitor {
     if (messages.length === 1)
       this.alarmMessages.text(messages[0]);
     else if (messages.length > 1)
-      this.alarmMessages.html('<ul><li>' + messages.map(msg => htmlEncode(msg)).join('</li>\n<li>') + '</li></ul>');
+      this.alarmMessages.html('<ul><li>' + messages.map(msg => htmlEscape(msg)).join('</li>\n<li>') + '</li></ul>');
   }
 
   private playAudio(): void {
@@ -138,7 +138,7 @@ export class AlarmMonitor {
       this.nowPlaying.play().catch(() => {
         if (!this.cantPlayAlertShown) {
           this.cantPlayAlertShown = true;
-          domAlert('Click OK to allow alarm audio to play', () => this.nowPlaying.play().catch(() => noop));
+          domAlert('Click OK to allow alarm audio to play', () => this.nowPlaying.play().catch(noop));
         }
       });
     }

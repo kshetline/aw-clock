@@ -336,12 +336,13 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
 }
 
 .dialog-buttons {
-  position: absolute;
-  bottom: 1em;
-  right: 1em;
-  left: 1em;
-  display: flex;
   align-items: center;
+  bottom: 1em;
+  display: flex;
+  justify-content: flex-end;
+  left: 1em;
+  position: absolute;
+  right: 1em;
 
   & button {
     min-width: 80px; // Ignored by macOS Chrome
@@ -356,12 +357,6 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   & button:not(:first-child), span:not(:first-child) {
     margin-left: 0.5em;
   }
-}
-
-.version-number {
-  flex-grow: 1;
-  color: #CCC;
-  font-size: smaller;
 }
 
 .alert-buttons, .confirm-buttons {
@@ -1495,4 +1490,23 @@ ul.my-tabs > li.tab-active {
   position: fixed;
   right: 2.5rem;
   top: 2.5rem;
+}
+
+.update-section {
+  #hide-update-panel {
+    align-items: center;
+    background-color: #DEF;
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  #update-version-info {
+    margin-top: 0.5rem;
+
+    ul {
+      margin-top: 0;
+    }
+  }
 }

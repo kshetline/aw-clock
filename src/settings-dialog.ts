@@ -8,11 +8,11 @@ import {
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, htmlEncode, incrementDialogCounter,
-  popKeydownListener, pushKeydownListener
+  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, incrementDialogCounter,
+  popKeydownListener, pushKeydownListener, safeCompareVersions
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
-import { clone, eventToKey, isEqual, noop, toBoolean, toNumber } from '@tubular/util';
+import { clone, eventToKey, htmlEscape, isEqual, noop, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -43,6 +43,9 @@ interface SearchResults {
   info?: string;
   limitReached: boolean;
 }
+
+// noinspection JSUnusedGlobalSymbols
+enum Tab { OPTIONS, LOCATION, ALARMS, UPDATE }
 
 async function callSearchApi(query: string): Promise<SearchResults> {
   // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations
@@ -211,6 +214,7 @@ export class SettingsDialog {
   private floatHands: JQuery;
   private format: JQuery;
   private getGps: JQuery;
+  private hideUpdate: JQuery;
   private hourlyForecast: JQuery;
   private indoor: JQuery;
   private indoorOutdoorOptions: JQuery;
@@ -236,7 +240,7 @@ export class SettingsDialog {
   private userId: JQuery;
   private weatherService: JQuery;
 
-  private activeTab = 0;
+  private activeTab = Tab.OPTIONS;
   private alarmAmPm = false;
   private alarmEditing = false;
   private dailyAlarm = true;
@@ -326,8 +330,6 @@ export class SettingsDialog {
     this.updateButton.on('blur', () => this.updateFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
     this.tabs.on('click', (evt) => this.tabClicked(evt));
-
-    $('.version-number').text(AWC_VERSION);
 
     this.dimming.on('change', () => {
       this.enableDimmingRange(this.dimming.val() !== '0');
@@ -611,7 +613,7 @@ export class SettingsDialog {
   </div>
   <div>
     <span class="sound">${alarm.sound ? '🔈' : '🔇'} ${soundName(alarm.sound)}</span>
-    <span class="message">${alarm.message ? '📜 ' + htmlEncode(alarm.message) : ''}</span>
+    <span class="message">${alarm.message ? '📜 ' + htmlEscape(alarm.message) : ''}</span>
   </div>
 </div>
 `;
@@ -629,7 +631,7 @@ export class SettingsDialog {
 
   private playAudio(): void {
     if (this.nowPlaying) {
-      this.nowPlaying.play().catch(() => noop);
+      this.nowPlaying.play().catch(noop);
       this.play.text('⏹');
     }
   }
@@ -667,7 +669,7 @@ export class SettingsDialog {
 `<tr data-lat="${city.latitude}"
     data-lon="${city.longitude}"${response.matches.length > 6 && Math.floor(index / 3) % 2 === 0 ? '\n    class=rowguide' : ''}>
   <td>${city.rank}</td>
-  <td class="name">${htmlEncode(city.displayName)}</td>
+  <td class="name">${htmlEscape(city.displayName)}</td>
   <td class="coordinates">${formatDegrees(city.latitude, 'NS', 2)}</td>
   <td class="coordinates">${formatDegrees(city.longitude, 'EW', 3)}</td>
 </tr>\n`;
@@ -857,7 +859,7 @@ export class SettingsDialog {
   }
 
   private tabClicked(evt: ClickishEvent): void {
-    const tabIndex = this.tabs.index(evt.target);
+    const tabIndex = this.tabs.index(evt.target) as Tab;
 
     if (tabIndex !== this.activeTab)
       this.abortForUnsavedAlarm(abort => abort || this.selectTab(tabIndex));
@@ -878,7 +880,7 @@ export class SettingsDialog {
     });
   }
 
-  private selectTab(tabIndex: number): void {
+  private selectTab(tabIndex: Tab): void {
     this.activeTab = tabIndex;
     this.tabs.removeClass('tab-active');
     this.tabs.eq(tabIndex).addClass('tab-active');
@@ -889,7 +891,7 @@ export class SettingsDialog {
   public openSettings(previousSettings: Settings, emphasizeUpdate = false): void {
     this.previousSettings = previousSettings;
     this.newAlarms = clone(previousSettings.alarms) || [];
-    this.selectTab(0);
+    this.selectTab(emphasizeUpdate ? Tab.UPDATE : Tab.OPTIONS);
 
     const checkUiSizing = (): void => {
       if (this.currentCity[0].offsetHeight === 0)
@@ -985,7 +987,7 @@ export class SettingsDialog {
     let recentHtml = '<label>Recent locations:</label>';
 
     this.recentLocations.forEach(loc => {
-      recentHtml += `<div class="recent-location">${htmlEncode(loc.city)}<span>✕</span></div>`;
+      recentHtml += `<div class="recent-location">${htmlEscape(loc.city)}<span>✕</span></div>`;
     });
 
     $('.recent-locations').html(recentHtml).find('.recent-location').each((index, elem) => {
@@ -1000,7 +1002,7 @@ export class SettingsDialog {
           this.currentCity.val(loc.city);
           this.latitude.val(loc.latitude);
           this.longitude.val(loc.longitude);
-          this.selectTab(0);
+          this.selectTab(Tab.OPTIONS);
         }
       });
     });
@@ -1011,6 +1013,16 @@ export class SettingsDialog {
     this.alarmEdit.prop('disabled', true);
     this.clearAlarmTime();
     this.renderAlarmList(this.newAlarms);
+
+    const defaults = this.appService.getLatestDefaults();
+
+    $('.latest-version-text').text(defaults?.latestVersion || '(unknown)');
+    $('.your-version-text').text(AWC_VERSION);
+    $('#update-version-info').html(defaults?.latestVersionInfo || '');
+    $('#hide-update-panel').css('display',
+      safeCompareVersions(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
+    this.hideUpdate = $('#hide-update');
+    this.hideUpdate.prop('checked', previousSettings.updateToHide === defaults?.latestVersion);
   }
 
   private clearAlarmTime(clearAllDays = false): void {
@@ -1092,21 +1104,21 @@ export class SettingsDialog {
 
     if (!newSettings.city) {
       this.alert('Current city must be specified.', () => {
-        this.selectTab(0);
+        this.selectTab(Tab.OPTIONS);
         this.currentCity.trigger('focus');
       });
 
       return;
     }
     else if (isNaN(newSettings.latitude) || newSettings.latitude < -90 || newSettings.latitude > 90) {
-      this.selectTab(0);
+      this.selectTab(Tab.OPTIONS);
       this.alert('A valid latitude must be provided from -90 to 90 degrees.', () =>
         this.latitude.trigger('focus'));
 
       return;
     }
     else if (isNaN(newSettings.longitude) || newSettings.longitude < -180 || newSettings.longitude > 180) {
-      this.selectTab(0);
+      this.selectTab(Tab.OPTIONS);
       this.alert('A valid longitude must be provided from -180 to 180 degrees.', () =>
         this.longitude.trigger('focus'));
 
@@ -1123,6 +1135,8 @@ export class SettingsDialog {
 
     if (this.recentLocations.length > MAX_RECENT_LOCATIONS)
       this.recentLocations.splice(-1, 1);
+
+    newSettings.updateToHide = this.hideUpdate.prop('checked') ? (this.appService.getLatestDefaults()?.latestVersion || '') : '';
 
     newSettings.recentLocations = this.recentLocations;
     newSettings.alarms = this.newAlarms;

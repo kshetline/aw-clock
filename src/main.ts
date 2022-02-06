@@ -82,22 +82,22 @@ class AwClockApp implements AppService {
   private readonly pollingMinute = irandom(0, 14);
   private readonly pollingMillis = irandom(0, 59_999);
 
+  private adminAllowed = false;
+  private frequent = false;
   private lastCursorMove = 0;
   private lastForecast = 0;
-  private lastTimezone: Timezone;
   private lastHour = -1;
-  private frequent = false;
+  private lastTimezone: Timezone;
+  private latestDefaults: AwcDefaults;
   private proxyStatus: boolean | Promise<boolean> = undefined;
-  private adminAllowed = false;
+  private settings = new Settings();
+  private settingsChecked = false;
   private showSkyMap = false;
   private showTestTime = false;
   private skyCanvas: HTMLCanvasElement;
   private skyRect: Rect;
   private testTimeValue = '';
   private toggleSkyMapTimer: any;
-
-  private settings = new Settings();
-  private settingsChecked = false;
 
   constructor() {
     this.settings.load();
@@ -395,7 +395,11 @@ class AwClockApp implements AppService {
             const localInstallation = raspbianChromium && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
-            const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable ? 'block' : 'none');
+            const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable &&
+              data[0].latestVersion !== (this.settings.updateToHide || '_') ? 'block' : 'none');
+
+            if (data[0])
+              this.latestDefaults = Object.freeze(data[0]);
 
             this.adminAllowed = data[0]?.allowAdmin;
             this.updateAvailable.css('display', showUpdate);
@@ -451,8 +455,10 @@ class AwClockApp implements AppService {
 
       const doUpdate = (): void => {
         getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
+          this.latestDefaults = Object.freeze(data);
           this.adminAllowed = data?.allowAdmin;
-          const updateAvailable = (this.adminAllowed && data?.updateAvailable ? 'block' : 'none');
+          const updateAvailable = (this.adminAllowed && data?.latestVersion !== (this.settings.updateToHide || '_') &&
+            data?.updateAvailable ? 'block' : 'none');
           this.updateAvailable.css('display', updateAvailable);
           this.updateCaption.css('display', updateAvailable);
         });
@@ -525,11 +531,11 @@ class AwClockApp implements AppService {
       }
     }
 
-    if (!isEqual(this.settings.showSkyMap, oldSettings.showSkyMap) ||
-        !isEqual(this.settings.showSkyColors, oldSettings.showSkyColors) ||
-        !isEqual(this.settings.drawConstellations, oldSettings.drawConstellations) ||
-        !isEqual(this.settings.skyFacing, oldSettings.skyFacing) ||
-        !isEqual(this.settings.floatHands, oldSettings.floatHands)) {
+    if (!isEqual(newSettings.showSkyMap, oldSettings.showSkyMap) ||
+        !isEqual(newSettings.showSkyColors, oldSettings.showSkyColors) ||
+        !isEqual(newSettings.drawConstellations, oldSettings.drawConstellations) ||
+        !isEqual(newSettings.skyFacing, oldSettings.skyFacing) ||
+        !isEqual(newSettings.floatHands, oldSettings.floatHands)) {
       if (this.showSkyMap !== this.settings.showSkyMap)
         this.toggleSkyMap();
       else {
@@ -541,6 +547,12 @@ class AwClockApp implements AppService {
         this.updateSkyMap();
       }
     }
+
+    const updateAvailable = (this.adminAllowed && this.latestDefaults?.latestVersion !== (this.settings.updateToHide || '_') &&
+            this.latestDefaults?.updateAvailable ? 'block' : 'none');
+
+    this.updateAvailable.css('display', updateAvailable);
+    this.updateCaption.css('display', updateAvailable);
   }
 
   private updateEphemeris(): void {
@@ -558,6 +570,10 @@ class AwClockApp implements AppService {
 
   getIndoorOption(): string {
     return this.settings.indoorOption;
+  }
+
+  getLatestDefaults(): AwcDefaults {
+    return this.latestDefaults;
   }
 
   getOutdoorOption(): string {

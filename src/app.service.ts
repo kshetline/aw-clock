@@ -1,6 +1,6 @@
 import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
 import { Settings } from './settings';
-import { TimeInfo } from '../server/src/shared-types';
+import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { Timezone } from '@tubular/time';
 
 export interface AppService {
@@ -8,6 +8,7 @@ export interface AppService {
   getApiServer(): string;
   getCurrentTime(bias?: number): number;
   getIndoorOption(): string;
+  getLatestDefaults(): AwcDefaults;
   getOutdoorOption(): string;
   getTimeFormat(): TimeFormat;
   getTimeInfo(bias?: number): TimeInfo;

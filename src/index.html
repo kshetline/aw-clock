@@ -389,6 +389,7 @@
             <li>Options</li>
             <li>Location Search</li>
             <li>Alarms</li>
+            <li>Update</li>
           </ul>
           <span style="white-space: nowrap;">
             <input type="checkbox" id="onscreen-kb" name="onscreen-kb">
@@ -590,9 +591,21 @@
               </div>
             </div>
           </div>
+          <div class="tab-panel update-section">
+            <div>
+              <span>Latest version: <span class="latest-version-text"></span></span>
+              &bull;
+              <span>Your version: <span class="your-version-text"></span></span>
+            </div>
+            <div id="hide-update-panel">
+              <input type="checkbox" id='hide-update'>
+              <label for="hide-update">Hide update notification for <span class="latest-version-text"></span></label>
+            </div>
+            <div id="update-version-info">
+            </div>
+          </div>
         </div>
         <div class="dialog-buttons">
-          <span class="version-number"></span>
           <div class="update-btn-wrapper">
             <div id="update-btn-backdrop">&nbsp;</div>
             <button id="settings-update" class="admin" style="display: none">Update</button>

@@ -5,6 +5,7 @@ import {
   asLines, htmlEscape, isEdge, isFunction, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
 } from '@tubular/util';
+import compareVersions, { CompareOperator } from 'compare-versions';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 export type ClickishEvent = JQuery.ClickEvent | MouseEvent
@@ -103,12 +104,6 @@ export function getBinary(url: string): Promise<ArrayBuffer> {
     request.onerror = (err: any): void => reject(err);
     request.send();
   });
-}
-
-const basicEntities: Record<string, string> = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
-
-export function htmlEncode(s: string): string {
-  return s.replace(/[<>&]/g, match => basicEntities[match]);
 }
 
 export function domAlert(message: string, callback?: () => void): void {
@@ -462,4 +457,23 @@ export function localDateString(time: number, zone: Timezone): string {
 
   return new Date(wallTime.y, wallTime.m - 1, wallTime.d, 12).toLocaleDateString(undefined,
     { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+export function safeCompareVersions(firstVersion: string, secondVersion: string, defValue?: number): number;
+export function safeCompareVersions(firstVersion: string, secondVersion: string, operator?: CompareOperator, defValue?: boolean): boolean;
+export function safeCompareVersions(firstVersion: string, secondVersion: string,
+                                    operatorOrDefValue: CompareOperator | number, defValue = false): number | boolean {
+  try {
+    if (isString(operatorOrDefValue))
+      return compareVersions.compare(firstVersion, secondVersion, operatorOrDefValue);
+    else {
+      /* false inspection alarm */ // noinspection JSUnusedAssignment
+      operatorOrDefValue = operatorOrDefValue ?? -1;
+
+      return compareVersions(firstVersion, secondVersion);
+    }
+  }
+  catch {}
+
+  return isString(operatorOrDefValue) ? defValue : operatorOrDefValue;
 }
