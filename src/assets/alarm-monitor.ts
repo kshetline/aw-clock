@@ -37,7 +37,7 @@ export class AlarmMonitor {
     const newActiveAlarms = [];
     let sound = '';
 
-    this.silencedAlarms = this.silencedAlarms.filter(sa => sa.stoppedAt > nowMinutes - 60);
+    this.silencedAlarms = this.silencedAlarms.filter(sa => sa.stoppedAt > nowMinutes - 65);
 
     for (let i = alarms.length - 1; i >= 0; --i) {
       const alarm = alarms[i];
@@ -156,19 +156,19 @@ export class AlarmMonitor {
   }
 
   stopAlarms(): void {
-    const stoppedAt = floor(this.appService.getCurrentTime() / 60000);
+    const stoppedAt = floor(this.appService.getAlarmTime() / 60000);
 
     this.stopAudio();
     this.alarmDisplay.css('display', 'none');
     this.clearSnoozeDisplay.css('display', 'none');
     this.silencedAlarms.push(...this.activeAlarms.map(alarm => ({ stoppedAt, alarm })));
-    this.silencedAlarms.push(...this.snoozedAlarms.map(alarm => ({ stoppedAt, alarm: alarm.alarm })));
+    this.silencedAlarms.push(...this.snoozedAlarms.map(sa => ({ stoppedAt, alarm: sa.alarm })));
     this.activeAlarms = [];
     this.snoozedAlarms = [];
   }
 
   snoozeAlarms(snoozeTime: number): void {
-    const restartAt = floor(this.appService.getCurrentTime() / 60000) + snoozeTime;
+    const restartAt = floor(this.appService.getAlarmTime() / 60000) + snoozeTime;
 
     this.stopAudio();
     this.alarmDisplay.css('display', 'none');

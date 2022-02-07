@@ -5,6 +5,7 @@ import { Timezone } from '@tubular/time';
 
 export interface AppService {
   forecastHasBeenUpdated(): void;
+  getAlarmTime(): number;
   getApiServer(): string;
   getCurrentTime(bias?: number): number;
   getIndoorOption(): string;

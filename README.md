@@ -2,31 +2,39 @@
 
 ![raspberry pi logo](https://shetline.com/readme/aw-clock/3.0.0/rpi_logo.svg)
 
-This project is designed to create a desktop clock which provides weather and astronomical information. While primarily designed to run on a Raspberry Pi, the code generates a Node.js server and client web app which can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors. GPS support is also primarily aimed at the Raspberry Pi, but might work on other Linux variants if similarly configured.
+This project is designed to create a desktop clock which provides weather and astronomical information while additionally functioning as an alarm clock. Although primarily designed to run on a Raspberry Pi, the project generates a Node.js server and a client web app which can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors. GPS support is also primarily aimed at the Raspberry Pi, but might work with other Linux variants if similarly configured.
 
-The clock displays the time and date in both analog and digital form, in 12- or 24-hour format, and has a special display mode for the occasional leap second. The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
+The clock displays the time and date in both analog and digital form, in 12- or 24-hour format, and has a special display mode for the occasional leap second. The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, weather alerts, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
 When displaying 24-hour time, that time can either be local time or UTC.
 
 On a display which is narrower than a 16-by-9 aspect ratio, four forecast days can be seen at one time without scrolling. On 16-by-9 or wider displays, five days are visible at a glance.
 
-*&#42;A touchscreen or mouse is required to display the last two or three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, or to switch from hourly temperatures to hourly probability-of-precipitation.*
+Multiple alarms can be set as either daily alarms (on selectable days of the week), or one-time alarms triggered at a specific date and time. Various alarms tones are available, and each alarm can be accompanied by an on-screen message. Alarms can be set to snooze for 5, 10, or 15 minutes.
+
+When viewing the sky map feature you can choose to see a multi-color sky, shaded to indicate daylight, sunrise and sunset, twilight, and even solar eclipse conditions. Or the sky can be shown as black all the time for easier viewing of the positions of the stars. Constellation lines can be optionally displayed as well.
+
+*&#42;A touchscreen or mouse is required to display the last two or three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, from clock face to sky map, or to switch from hourly temperatures to hourly probability-of-precipitation.*
 
 ![finished project](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-12.jpg)
 
 ![app screenshot](https://shetline.com/readme/aw-clock/3.0.0/awc_screenshot.png)
 
+![night sky](https://shetline.com/readme/aw-clock/3.0.0/sky-map-night.jpg)
+
+![day sky](https://shetline.com/readme/aw-clock/3.0.0/sky-map-day.jpg)
+
 ![app dst animation](https://shetline.com/readme/aw-clock/3.0.0/spring-forward-480.gif)
 
-<br/><br/>
+<br/>
 
 ### Getting started
 
-The following instructions are primarily aimed at turning a Raspberry Pi into a _dedicated_ Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
+The following instructions are primarily aimed at turning a Raspberry Pi into a *dedicated* Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
 
 The first step, if you want GPS support, is to install a GPS device according to the manufacturer’s instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested.
 
-In my own case, I needed to use an active GPS antenna to get a good signal, but you might not need one, depending on where you locate your device.
+In my own case I needed to use an active GPS antenna to get a good signal, but you might not need one, depending on where you locate your device.
 
 The next step (or the first, if you’re skipping GPS) is to clone the repository and perform the initial set-up:
 
@@ -39,6 +47,8 @@ $ sudo ./build.sh -i
 There will possibly be a long delay the first time you run this script while Node.js (if necessary) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
 
 You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the `build.sh` command above, and add `--ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled, no alternative weather services beyond Weather Underground, and no geocoding support.
+
+If you want to use the **alarm clock** feature, **it’s important that you use the default kiosk mode**. This ensures that audio can be played by the Chrome web browser without you having to interact with the browser first (working around a web browser safety feature designed to protect you from annoying ads on web sites that could otherwise suddenly blast you with sound).
 
 Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and don’t want to have to use SSH or VNC to perform these operations.
 
@@ -54,7 +64,7 @@ Having a back-up weather data source is still, therefore, a good idea. For that 
 
 3. There’s a limited capability in this software to fall back on using my personal RapidAPI/Weatherbit.io account, but depending on how much traffic I get, there’s no guarantee that this back-up will always be there.
 
-_Note: The Dark Sky weather API has been discontinued. Support for Dark Sky in this application has been removed._
+*Note: The Dark Sky weather API has been discontinued. Support for Dark Sky in this application has been removed.*
 
 ### Time keeping
 
@@ -62,7 +72,7 @@ By default, this application uses GPS-synced system time, if available, or uses 
 
 ![Hypothetical leap second](https://shetline.com/readme/aw-clock/3.0.0/moment_of_leap_second.jpg)
 
-_This image is hypothetical — the pictured moment in time not an actual leap second. Video here: <https://shetline.com/video/leap_second_display.mp4>_
+*This image is hypothetical — the pictured moment in time was not an actual leap second. Video here: <https://shetline.com/video/leap_second_display.mp4>*
 
 ### Web browser client options
 
@@ -70,7 +80,9 @@ As soon as you’ve got the Astronomy/Weather Clock up and running the first tim
 
 Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you’re using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
 
-![app screenshot](https://shetline.com/readme/aw-clock/3.0.0/awc_dlog.png)
+![user settings screenshot - options](https://shetline.com/readme/aw-clock/3.0.0/awc-dlog-options.jpg)
+![user settings screenshot - locations](https://shetline.com/readme/aw-clock/3.0.0/awc-dlog-locations.jpg)
+![user settings screenshot - alarms](https://shetline.com/readme/aw-clock/3.0.0/awc-dlog-alarms.jpg)
 
 To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
 
@@ -98,7 +110,10 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 ### Touchscreen/mouse features
 
+A touchscreen is the most practical way to use the alarm features of this clock, so that alarms can conveniently be silenced or “snoozed” at a touch. Other functionality is enhanced as follows:
+
 * Swipe left or right on the daily forecast to view the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four (or five) days.*
+* Tap/click in the center of the clock face to temporarily view a current sky map. The sky map can also be set as your default view, so that a tap/click in the center of the sky map will temporarily display the clock face. *After one minute, the display reverts to your default view.*
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
 * Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation and wind speed. Tap/click again to toggle back to weather icons and temperatures. *After one minute, the display reverts to weather icons and hourly temperatures.*
@@ -143,6 +158,8 @@ The 3D model for this stand is provided by the project file `raspberry_pi_setup/
 ![3D stand rear view](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-01.jpg)
 
 This is my second design of this stand, after making a few improvements from my first design. I made this version shorter, improved wire routing, and added an access hole where (using tweezers) it’s possible to access the SD card slot without disassembling the clock.
+
+**UPDATE**: While upgrading my Raspberry Pi to Bullseye I finally had an opportunity to use the access hole I’d designed for reaching the SD card. It worked, but it was a struggle to get a decent grip on the card using tweezers, especially since I couldn't both aim the tweezers straight into the hole and get my fingers where they needed to be to squeeze hard at the same time. I suspect a tool like a hemostat might have done a better job.
 
 <br>
 
@@ -240,21 +257,20 @@ While this would actually be a good thing if it meant I could hook up the clock 
 * [¼-wave 433 MHz antenna](https://www.digikey.com/en/products/detail/linx-technologies-inc/ANT-433-PW-RA/340122)
 * [Right-angle HDMI adapter](https://www.amazon.com/gp/product/B00Y7UT6EK/)
 * [12-inch 90°-down micro HDMI male to HDMI male cable](https://www.amazon.com/gp/product/B07BLX88H4/)
-* [USB power blocker](https://www.amazon.com/gp/product/B08VHDKCX3/) _(Data blockers are easy to find &mdash; power blockers, not!)_
+* [USB power blocker](https://www.amazon.com/gp/product/B08VHDKCX3/) *(Data blockers are easy to find &mdash; power blockers, not!)*
 * Miscellaneous other jumper wires, cables, machine screws (some specifics listed above), etc.
-
 <br>
 
 ### Info for code development, testing, and non-Raspberry Pi use
 
 To build and run this project you can use the following commands:
 
-* “`sudo ./build.sh`” &#x5B; _various-options_ &#x5D;” to run the installer.
+* “`sudo ./build.sh`” &#x5B; *various-options* &#x5D;” to run the installer.
 * “`npm run first-install`” to install all npm packages needed for both the client and the server (a separate, inner project) with one command.
-* “`npm run build`” &#x5B;‑‑ _various-options_ &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
+* “`npm run build`” &#x5B;‑‑ *various-options* &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
 * “`npm run start-server`” to start the data server for this project (except on Windows) on `localhost:4201`. (You may need to make this precede this command with `sudo`.) The server will be automatically restarted whenever you edit the code.
 * “`npm run start-server-win`” to start the data server for this project (on Windows) on `localhost:4201`.
-* “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code. _(Note that for development and testing, two different ports are used (4200, 4201), but that when the server is deployed, all content and data is served on a single port, by default 8080.)_
+* “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code. *(Note that for development and testing, two different ports are used (4200, 4201), but that when the server is deployed, all content and data is served on a single port, by default 8080.)*
 
 To build the server along with the web client, use `npm run build`, possibly followed by `‑‑` and other options listed below:
 
@@ -319,8 +335,9 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 1. A combined client/server distribution directory is created.
 1. If any of the options `‑‑ddev`, `‑i`, or `‑‑sd` are used, the distribution is copied to the `~/weather` directory (typically `/home/pi/weather`), deleting anything which might have previously been present in that directory.
 
-<br>_No further steps listed below are performed except as part of dedicated device set-up (options `‑‑ddev` or `‑i`)_.<br>
+<br>*No further steps listed below are performed except as part of dedicated device set-up (options `‑‑ddev` or `‑i`)*.<br>
 
+<!-- markdownlint-disable-next-line MD001 MD029 -->
 17. The file `weatherService` (located in the `raspberry_pi_setup` folder) is copied to `/etc/init.d/`, and changed to root ownership.
 1. Server set-up options are saved to `/etc/defaults/weatherService`, which is also owned by root. Rather than re-running the installer to change the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
 1. The commands `sudo update-rc.d weatherService defaults` and `sudo systemctl enable weatherService` are performed to establish and enable the service.

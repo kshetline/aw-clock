@@ -26,7 +26,7 @@ import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
 import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
 import { ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
-import { isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
+import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
@@ -73,7 +73,7 @@ class AwClockApp implements AppService {
   private cityLabel: JQuery;
   private clockOverlaySvg: JQuery;
   private dimmer: JQuery;
-  private testTime: JQuery;
+  private readonly testTime: JQuery;
   private updateAvailable: JQuery;
   private updateCaption: JQuery;
 
@@ -90,13 +90,16 @@ class AwClockApp implements AppService {
   private lastTimezone: Timezone;
   private latestDefaults: AwcDefaults;
   private proxyStatus: boolean | Promise<boolean> = undefined;
+  private runTestTime = false;
   private settings = new Settings();
   private settingsChecked = false;
   private showSkyMap = false;
   private showTestTime = false;
   private skyCanvas: HTMLCanvasElement;
   private skyRect: Rect;
-  private testTimeValue = '';
+  private testTimeValue: number | undefined = undefined;
+  private testTimeStr = '';
+  private timeDelta = 0;
   private toggleSkyMapTimer: any;
 
   constructor() {
@@ -144,46 +147,24 @@ class AwClockApp implements AppService {
 
     this.cityLabel.text(this.settings.city);
 
-    document.addEventListener('keypress', event => {
-      if (!event.repeat && event.target === document.body) {
-        if (event.code === 'KeyF' || event.key === 'F' || event.key === 'f')
-          setFullScreen(true);
-        else if (event.code === 'KeyN' || event.key === 'N' || event.key === 'n')
-          setFullScreen(false);
-        else if (event.code === 'KeyT' && event.ctrlKey && event.shiftKey) {
-          this.showTestTime = !this.showTestTime;
-          this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
-
-          const updateTestEphemeris = (): void => {
-            const time = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
-
-            this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
-              this.settings.timeFormat === TimeFormat.AMPM);
-            this.updateSkyMap(time);
-          };
-
-          if (this.showTestTime && !this.testTimeValue) {
-            this.testTimeValue = new DateTime(this.getCurrentTime(), this.lastTimezone).toIsoString().substr(0, 16);
-            this.testTime.on('input', () => {
-              this.testTimeValue = this.testTime.val() as string;
-              updateTestEphemeris();
-            });
-            this.testTime.val(this.testTimeValue);
-            updateTestEphemeris();
-          }
-          else {
-            this.updateEphemeris();
-            this.updateSkyMap();
-          }
-        }
-      }
-    });
-
+    document.addEventListener('keypress', this.keyHandler);
     document.addEventListener('mousemove', () => {
       // Reveal cursor when moved.
       this.body.css('cursor', 'auto');
       this.lastCursorMove = performance.now();
     });
+    this.testTime[0].addEventListener('keydown', evt => {
+      // Tracking to make time roll forward with up-arrow minute, rather than wrapping back to the beginning of the hour.
+      const key = eventToKey(evt);
+
+      if (key === 'ArrowUp')
+        this.timeDelta = 1;
+      else if (key === 'ArrowDown')
+        this.timeDelta = -1;
+      else
+        this.timeDelta = 0;
+    });
+    this.testTime[0].addEventListener('keypress', this.keyHandler);
 
     const settingsButton = $('#settings-btn');
 
@@ -256,6 +237,10 @@ class AwClockApp implements AppService {
 
   getTimeFormat(): TimeFormat {
     return this.settings.timeFormat;
+  }
+
+  getAlarmTime(): number {
+    return this.testTimeValue ?? this.getCurrentTime(0);
   }
 
   getCurrentTime(bias = 0): number {
@@ -340,12 +325,19 @@ class AwClockApp implements AppService {
   }
 
   updateTime(hour: number, minute: number, forceRefresh: boolean): void {
-    let alarmCheckTime = this.getCurrentTime();
+    if (this.showTestTime && this.testTimeStr) {
+      let testTime = new DateTime(parseISODateTime(this.testTimeStr), this.lastTimezone).utcTimeMillis;
 
-    if (this.showTestTime && this.testTimeValue)
-      alarmCheckTime = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
-
-    this.settings.alarms = this.alarmMonitor.checkAlarms(alarmCheckTime, this.settings.alarms);
+      if (this.runTestTime) {
+        testTime += 60000;
+        this.testTimeValue = testTime;
+        this.testTimeStr = new DateTime(testTime, this.lastTimezone).toIsoString(16);
+        this.testTime.val(this.testTimeStr);
+        this.updateTestTime();
+      }
+    }
+    else
+      this.settings.alarms = this.alarmMonitor.checkAlarms(this.getCurrentTime(), this.settings.alarms);
 
     const now = this.getCurrentTime();
 
@@ -733,4 +725,87 @@ class AwClockApp implements AppService {
       this.parentElement.innerHTML = markup;
     });
   }
+
+  private keyHandler = (evt: KeyboardEvent): void => {
+    const key = eventToKey(evt);
+
+    if (!evt.repeat && (evt.target === document.body || evt.target === this.testTime[0])) {
+      let handled = true;
+
+      if (key === 'F' || evt.key === 'f')
+        setFullScreen(true);
+      else if (key === 'N' || key === 'n')
+        setFullScreen(false);
+      else if (key === 'Enter' || key === ' ')
+        this.alarmMonitor.stopAlarms();
+      else if (key === '5')
+        this.alarmMonitor.snoozeAlarms(5);
+      else if (key === '0' || key === 'S' || key === 's')
+        this.alarmMonitor.snoozeAlarms(10);
+      else if (key === '.')
+        this.alarmMonitor.snoozeAlarms(15);
+      else if (key === 'T' && evt.ctrlKey && evt.shiftKey)
+        this.toggleTestTimeInput();
+      else if (key === 'R' || key === 'r') {
+        this.runTestTime = !this.runTestTime;
+        this.testTime.prop('disabled', this.runTestTime);
+      }
+      else
+        handled = false;
+
+      if (handled)
+        evt.stopPropagation();
+    }
+  };
+
+  private toggleTestTimeInput(): void {
+    this.showTestTime = !this.showTestTime;
+    this.runTestTime = false;
+    this.testTime.prop('disabled', false);
+    this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
+
+    if (this.showTestTime && !this.testTimeStr)
+      this.testTime.on('input', this.timeInputHandler);
+
+    if (this.showTestTime) {
+      if (this.testTimeValue == null) {
+        this.testTimeValue = this.getCurrentTime();
+        this.testTimeStr = new DateTime(this.testTimeValue, this.lastTimezone).toIsoString(16);
+      }
+
+      this.testTime.val(this.testTimeStr);
+      this.timeDelta = 0;
+      this.updateTestTime();
+    }
+    else {
+      this.testTimeValue = undefined;
+      this.updateEphemeris();
+      this.updateSkyMap();
+    }
+  }
+
+  private updateTestTime(): void {
+    this.testTimeValue = new DateTime(parseISODateTime(this.testTimeStr), this.lastTimezone).utcTimeMillis;
+
+    this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.testTimeValue, this.lastTimezone,
+      this.settings.timeFormat === TimeFormat.AMPM);
+    this.updateSkyMap(this.testTimeValue);
+    this.alarmMonitor.checkAlarms(this.testTimeValue, this.settings.alarms);
+  }
+
+  private timeInputHandler = (): void => {
+    let newTime = this.testTime.val() as string;
+
+    if (this.timeDelta > 0 && newTime < this.testTimeStr) {
+      newTime = new DateTime(this.testTimeValue + 60000, this.lastTimezone).toIsoString(16);
+      this.testTime.val(newTime);
+    }
+    else if (this.timeDelta < 0 && newTime > this.testTimeStr) {
+      newTime = new DateTime(this.testTimeValue - 60000, this.lastTimezone).toIsoString(16);
+      this.testTime.val(newTime);
+    }
+
+    this.testTimeStr = newTime;
+    this.updateTestTime();
+  };
 }
