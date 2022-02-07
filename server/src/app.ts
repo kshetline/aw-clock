@@ -114,9 +114,17 @@ async function checkForUpdate(): Promise<void> {
 
       try {
         if (repoInfo.html_url) {
-          const bodyHtml = await requestText(repoInfo.html_url, options);
+          const bodyHtml = await requestText('https://github.com/kshetline/tubular_time/releases/tag/v2.6.4', options);
           const parsed = new HtmlParser().parse(bodyHtml);
           const infoHtml = parsed.domRoot.querySelector('div.markdown-body');
+
+          // "Denature" links in release notes.
+          infoHtml.querySelectorAll('a').forEach(link => {
+            link.tag = 'span';
+            link.attributes = ['class'];
+            link.values = ['ex-link'];
+            link.valuesLookup = { class: 'ex-link' };
+          });
 
           latestVersionInfo = infoHtml.toString(false);
         }

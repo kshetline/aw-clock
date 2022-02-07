@@ -518,6 +518,7 @@ export class SettingsDialog {
 
     this.alarmSave.on('click', () => this.saveAlarm());
     this.alarmCancel.on('click', () => {
+      this.stopAudio();
       this.editAlarm = -1;
       this.clearAlarmTime();
       this.alarmDelete.prop('disabled', this.selectedAlarm < 0);

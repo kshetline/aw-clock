@@ -1485,11 +1485,22 @@ ul.my-tabs > li.tab-active {
 
 #clear-snooze-display {
   background-color: yellow;
+  color: black;
   display: none; // Updated to block when active
-  padding: 0.5rem;
+  font-size: 1.8vw;
+  height: 4vw;
+  padding: 0.5vw;
   position: fixed;
-  right: 2.5rem;
-  top: 2.5rem;
+  right: 1vw;
+  text-align: center;
+  top: 1vw;
+  width: 18vw;
+
+  span {
+    display: inline-block;
+    position: relative;
+    top: -0.25vw;
+  }
 }
 
 .update-section {
@@ -1518,6 +1529,10 @@ ul.my-tabs > li.tab-active {
       font-size: 85%;
       margin: 0;
       padding: 0.2em;
+    }
+
+    span.ex-link {
+      color: #000088;
     }
 
     ul {

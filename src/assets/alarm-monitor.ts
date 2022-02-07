@@ -23,7 +23,7 @@ export class AlarmMonitor {
     this.alarmMessages = $('#alarm-messages');
     this.clearSnoozeDisplay = $('#clear-snooze-display');
 
-    $('#stop-alarm, #clear-snooze').on('click', () => this.stopAlarms());
+    $('#stop-alarm, #clear-snooze-display').on('click', () => this.stopAlarms());
     $('#snooze-5').on('click', () => this.snoozeAlarms(5));
     $('#snooze-10').on('click', () => this.snoozeAlarms(10));
     $('#snooze-15').on('click', () => this.snoozeAlarms(15));
@@ -162,6 +162,7 @@ export class AlarmMonitor {
     this.alarmDisplay.css('display', 'none');
     this.clearSnoozeDisplay.css('display', 'none');
     this.silencedAlarms.push(...this.activeAlarms.map(alarm => ({ stoppedAt, alarm })));
+    this.silencedAlarms.push(...this.snoozedAlarms.map(alarm => ({ stoppedAt, alarm: alarm.alarm })));
     this.activeAlarms = [];
     this.snoozedAlarms = [];
   }
