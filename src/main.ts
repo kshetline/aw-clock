@@ -25,7 +25,7 @@ import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
 import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
-import { ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
+import { abs, ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
 import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
@@ -157,14 +157,14 @@ class AwClockApp implements AppService {
       // Tracking to make time roll forward with up-arrow minute, rather than wrapping back to the beginning of the hour.
       const key = eventToKey(evt);
 
-      if (key === 'ArrowUp')
+      if (key === 'ArrowUp' && evt.shiftKey)
         this.timeDelta = 1;
-      else if (key === 'ArrowDown')
+      else if (key === 'ArrowDown' && evt.shiftKey)
         this.timeDelta = -1;
       else
         this.timeDelta = 0;
     });
-    this.testTime[0].addEventListener('keypress', this.keyHandler);
+    this.testTime[0].addEventListener('keypress', (evt) => this.keyHandler(evt, true));
 
     const settingsButton = $('#settings-btn');
 
@@ -726,10 +726,10 @@ class AwClockApp implements AppService {
     });
   }
 
-  private keyHandler = (evt: KeyboardEvent): void => {
+  private keyHandler = (evt: KeyboardEvent, skipTargetTest = false): void => {
     const key = eventToKey(evt);
 
-    if (!evt.repeat && (evt.target === document.body || evt.target === this.testTime[0])) {
+    if (!evt.repeat && (skipTargetTest || evt.target === document.body)) {
       let handled = true;
 
       if (key === 'F' || evt.key === 'f')
@@ -749,6 +749,12 @@ class AwClockApp implements AppService {
       else if (key === 'R' || key === 'r') {
         this.runTestTime = !this.runTestTime;
         this.testTime.prop('disabled', this.runTestTime);
+      }
+      else if ((key === 'C' || key === 'c') && this.testTimeStr) {
+        this.testTimeValue = this.getCurrentTime();
+        this.testTimeStr = new DateTime(this.testTimeValue, this.lastTimezone).toIsoString(16);
+        this.testTime.val(this.testTimeStr);
+        this.updateTestTime();
       }
       else
         handled = false;
@@ -794,18 +800,30 @@ class AwClockApp implements AppService {
   }
 
   private timeInputHandler = (): void => {
-    let newTime = this.testTime.val() as string;
+    let newTimeStr = this.testTime.val() as string;
 
-    if (this.timeDelta > 0 && newTime < this.testTimeStr) {
-      newTime = new DateTime(this.testTimeValue + 60000, this.lastTimezone).toIsoString(16);
-      this.testTime.val(newTime);
-    }
-    else if (this.timeDelta < 0 && newTime > this.testTimeStr) {
-      newTime = new DateTime(this.testTimeValue - 60000, this.lastTimezone).toIsoString(16);
-      this.testTime.val(newTime);
+    if ((this.timeDelta > 0 && newTimeStr < this.testTimeStr) || (this.timeDelta < 0 && newTimeStr > this.testTimeStr)) {
+      let newTime = new DateTime(newTimeStr, this.lastTimezone).utcTimeMillis;
+
+      if (abs(newTime - this.testTimeValue) < 3_600_000)
+        newTime = this.testTimeValue + this.timeDelta * 60000;
+      else if (abs(newTime - this.testTimeValue) < 86_400_000)
+        newTime = this.testTimeValue + this.timeDelta * 3_600_000;
+      else {
+        const testDate = new DateTime(this.testTimeValue, this.lastTimezone);
+        const monthLength = testDate.getDaysInMonth() * 86_400_000;
+
+        if (abs(newTime - this.testTimeValue) < monthLength)
+          newTime = testDate.add('day', this.timeDelta).utcTimeMillis;
+        else
+          newTime = testDate.add('month', this.timeDelta).utcTimeMillis;
+      }
+
+      newTimeStr = new DateTime(newTime, this.lastTimezone).toIsoString(16);
+      this.testTime.val(newTimeStr);
     }
 
-    this.testTimeStr = newTime;
+    this.testTimeStr = newTimeStr;
     this.updateTestTime();
   };
 }
