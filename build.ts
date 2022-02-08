@@ -560,7 +560,8 @@ async function checkForGps(): Promise<void> {
       setTimeout(() => {
         if (!finished) {
           proc.kill();
-          reject(new Error('gpspipe timeout'));
+          console.warn(chalk.yellow('Warning: gpspipe timed out.'));
+          resolve([]);
         }
       }, 10000);
     });
@@ -589,7 +590,8 @@ async function checkForGps(): Promise<void> {
       setTimeout(() => {
         if (!finished) {
           proc.kill();
-          reject(new Error('ntpq timeout'));
+          console.warn(chalk.yellow('Warning: ntpq timed out.'));
+          resolve([]);
         }
       }, 10000);
     });
