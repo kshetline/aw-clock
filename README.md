@@ -368,7 +368,7 @@ xrandr --output HDMI-1 --primary --scale 0.5x0.5
 
 ### Adafruit GPS HAT installation notes
 
-Adafruit provides its own instruction on initial set-up of their GPS HAT here: https://learn.adafruit.com/adafruit-ultimate-gps-hat-for-raspberry-pi/pi-setup
+Adafruit provides its own instructions on initial set-up of their GPS HAT here: https://learn.adafruit.com/adafruit-ultimate-gps-hat-for-raspberry-pi/pi-setup
 
 ...but I’m including some extra details and clarifications below for the particular steps that helped with this clock set-up.
 
