@@ -8,7 +8,7 @@ import {
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, incrementDialogCounter,
+  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, getText, incrementDialogCounter,
   popKeydownListener, pushKeydownListener, safeCompareVersions
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
@@ -1016,14 +1016,17 @@ export class SettingsDialog {
     this.renderAlarmList(this.newAlarms);
 
     const defaults = this.appService.getLatestDefaults();
+    const updateVersionInfo = $('#update-version-info');
 
     $('.latest-version-text').text(defaults?.latestVersion || '(unknown)');
     $('.your-version-text').text(AWC_VERSION);
-    $('#update-version-info').html(defaults?.latestVersionInfo || '');
+    updateVersionInfo.html(defaults?.latestVersionInfo || '');
     $('#hide-update-panel').css('display',
       safeCompareVersions(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
     this.hideUpdate = $('#hide-update');
     this.hideUpdate.prop('checked', previousSettings.updateToHide === defaults?.latestVersion);
+
+    getText(this.appService.getApiServer() + '/changelog').then(text => updateVersionInfo.html(text)).catch(noop);
   }
 
   private clearAlarmTime(clearAllDays = false): void {

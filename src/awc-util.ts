@@ -106,6 +106,16 @@ export function getBinary(url: string): Promise<ArrayBuffer> {
   });
 }
 
+export function getText(url: string): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    $.ajax({
+      url,
+      success: (data: string, _textStatus: string) => { resolve(data); },
+      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
+    });
+  });
+}
+
 export function domAlert(message: string, callback?: () => void): void {
   const alertElem = $('#alert-dialog');
   const alertOk = $('#alert-ok');

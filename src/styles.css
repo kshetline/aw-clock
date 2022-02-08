@@ -1167,10 +1167,13 @@ ul.my-tabs > li.tab-active {
     gap: 0.5rem;
     margin-top: 0.25rem;
     padding: 0.25rem; }
+  .update-section .update-header {
+    background-color: #EEEEEE;
+    padding: 0.25rem; }
   .update-section #update-version-info {
     flex: 1 1 0;
     height: 0;
-    margin-top: 0.5rem;
+    margin: 0.5rem 0 0 .25rem;
     overflow: auto; }
     .update-section #update-version-info code {
       background-color: rgba(175, 184, 193, 0.2);
@@ -1179,7 +1182,13 @@ ul.my-tabs > li.tab-active {
       font-size: 85%;
       margin: 0;
       padding: 0.2em; }
+    .update-section #update-version-info h2 {
+      border-bottom: #DDD 1px solid;
+      font-size: 1.25em;
+      margin: 0.5rem 1rem 0.25rem 0; }
     .update-section #update-version-info span.ex-link {
       color: #000088; }
     .update-section #update-version-info ul {
-      margin-top: 0; }
+      margin-block-start: 0.5rem;
+      margin-top: 0;
+      padding-inline-start: 20px; }

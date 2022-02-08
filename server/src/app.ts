@@ -34,6 +34,7 @@ import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
+import { router as changelogRouter } from './changelog-router';
 import { hasGps, jsonOrJsonp, noCache, normalizePort, safeCompareVersions, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
@@ -114,16 +115,15 @@ async function checkForUpdate(): Promise<void> {
 
       try {
         if (repoInfo.html_url) {
-          const bodyHtml = await requestText('https://github.com/kshetline/tubular_time/releases/tag/v2.6.4', options);
+          const bodyHtml = await requestText(repoInfo.html_url, options);
           const parsed = new HtmlParser().parse(bodyHtml);
           const infoHtml = parsed.domRoot.querySelector('div.markdown-body');
 
           // "Denature" links in release notes.
           infoHtml.querySelectorAll('a').forEach(link => {
             link.tag = 'span';
-            link.attributes = ['class'];
-            link.values = ['ex-link'];
-            link.valuesLookup = { class: 'ex-link' };
+            link.clearAttributes();
+            link.addAttribute('class', 'ex-link');
           });
 
           latestVersionInfo = infoHtml.toString(false);
@@ -344,6 +344,7 @@ function getApp(): Express {
 
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
+  theApp.use('/changelog', changelogRouter);
 
   if (indoorRouter)
     theApp.use('/indoor', indoorRouter);
