@@ -621,8 +621,10 @@ export class SettingsDialog {
     }
 
     this.alarmList.html(alarmHtml);
-    this.alarmList.find('.alarm-item').each((index, elem) =>
-      elem.addEventListener('click', () => this.selectAlarm(index)));
+    this.alarmList.find('.alarm-item').each((index, elem) => {
+      elem.addEventListener('click', () => this.selectAlarm(index));
+      elem.addEventListener('dblclick', () => this.editSelectedAlarm());
+    });
     this.alarmList.find('.alarm-item input[type="checkbox"]').each((index, elem) =>
       elem.addEventListener('click', evt => {
         this.newAlarms[index].enabled = !this.newAlarms[index].enabled;

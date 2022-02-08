@@ -120,6 +120,15 @@ A touchscreen is the most practical way to use the alarm features of this clock,
 * Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for it to scroll by.
 * Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
 
+### Alarm keyboard control
+
+As an alternative to silencing and snoozing alarms with a touchscreen, there are keypress values associated with these actions. And rather than using a full keyboard, a small set of programmable USB keys could be used to provide a more tactile yet compact way of controlling alarms.
+
+Stop alarm: &lt;space&gt; *or* Enter
+Snooze 5 minutes: 5
+Snooze 10 minutes: 0 *or* S
+Snooze 15 minutes: . *(period)*
+
 ### Wind speed
 
 <img src="https://shetline.com/readme/aw-clock/3.0.0/wind_barbs.png" width=820 height=55 alt="wind barbs">
@@ -249,7 +258,7 @@ While this would actually be a good thing if it meant I could hook up the clock 
 * Raspberry Pi 4 with 2 GB RAM
 * [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324) (connected using a stacking header, so it was still easy to attach the leads for the temperature/humidity sensor and the RF receiver)
 * [Active GPS antenna](https://www.amazon.com/Antenna-Active-Aerial-Connector-Stereos/dp/B07RRT615K/)
-* 2560x1600 ELECROW 10.1" touchscreen (in pixel doubling mode)
+* 2560x1600 ELECROW 10.1" touchscreen (in [*pixel doubling mode (see note)*](#pixel-doubling-using-raspbian-bullseye))
 * Custom-printed 3D stand
 * Wired DHT22/AM2302 sensor
 * 2 x 433 MHz Acu Rite 06002M wireless temperature and humidity sensors
@@ -344,6 +353,21 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `-pi` on the end for Debian), or the existing `autostart` file is modified, to launch the Chromium web browser in kiosk mode, displaying the Astronomy/Weather Clock.
 1. The included file `autostart_extra.sh` is also copied to the above directory. This adds code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up.
 . The options `‑‑launch` or `‑‑reboot` are performed if specified.
+
+### Pixel doubling using Raspbian Bullseye
+
+When using a high resolution display like the 2560x1600 ELECROW 10.1" monitor I chose to use, which is nearly 300 ppi (~120 pixels per cm) you’ll often want to apply a scaling/zooming factor to the display, otherwise text and other details will be impractically small to see. Before the Bullseye release of Debian Linux for the Raspberry Pi, this kind of scaling was typically done using the pixel doubling option below:
+
+![Stand attached to monitor](https://shetline.com/readme/aw-clock/3.0.0/config-pixel-dbl.jpg)
+
+When I set this mode after a fresh install of Bullseye, however, I ended up with a blank screen, had to reboot via SSH, and was back to squinting at my screen. The above method turns out to not be the best way to handle display scaling with Bullseye’s new GTK+3 UI toolkit.
+
+The generally recommended approach is to go into Preferences/Appearance Settings/Defaults and “Set Defaults” “For large screens”. This doesn't scale everything for all apps at once, however, and I found editing the file `/usr/share/dispsetup.sh` as follows to produce better results for me:
+
+```
+#!/bin/sh
+xrandr --output HDMI-1 --primary --scale 0.5x0.5
+```
 
 ### Developer notes
 
