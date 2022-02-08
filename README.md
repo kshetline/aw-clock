@@ -124,10 +124,7 @@ A touchscreen is the most practical way to use the alarm features of this clock,
 
 As an alternative to silencing and snoozing alarms with a touchscreen, there are keypress values associated with these actions. And rather than using a full keyboard, a small set of programmable USB keys could be used to provide a more tactile yet compact way of controlling alarms.
 
-Stop alarm: &lt;space&gt; *or* Enter
-Snooze 5 minutes: 5
-Snooze 10 minutes: 0 *or* S
-Snooze 15 minutes: . *(period)*
+Stop alarm: &lt;space&gt; *or* Enter<br>Snooze 5 minutes: 5<br>Snooze 10 minutes: 0 *or* S<br>Snooze 15 minutes: . *(period)*<br>
 
 ### Wind speed
 
