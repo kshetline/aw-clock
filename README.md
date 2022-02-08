@@ -32,7 +32,7 @@ When viewing the sky map feature you can choose to see a multi-color sky, shaded
 
 The following instructions are primarily aimed at turning a Raspberry Pi into a *dedicated* Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
 
-The first step, if you want GPS support, is to install a GPS device according to the manufacturer’s instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested.
+The first step, if you want GPS support, is to install a GPS device according to the manufacturer’s instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested. I’ve also provided [notes on the Adafruit GPS HAT installation](#adafruit-gps-hat-installation-notes) at the end of this document.
 
 In my own case I needed to use an active GPS antenna to get a good signal, but you might not need one, depending on where you locate your device.
 
@@ -122,7 +122,7 @@ A touchscreen is the most practical way to use the alarm features of this clock,
 
 ### Alarm keyboard control
 
-As an alternative to silencing and snoozing alarms with a touchscreen, there are keypress values associated with these actions. And rather than using a full keyboard, a small set of programmable USB keys could be used to provide a more tactile yet compact way of controlling alarms.
+As an alternative to silencing and snoozing alarms with a touchscreen, there are also keypress values associated with these actions. While you probably wouldn’t want a full-size keyboard attached to your clock all the time, a small set of programmable USB keys, or even a single key, could be used to provide a more tactile yet compact way of controlling alarms.
 
 Stop alarm: &lt;space&gt; *or* Enter<br>Snooze 5 minutes: 5<br>Snooze 10 minutes: 0 *or* S<br>Snooze 15 minutes: . *(period)*<br>
 
@@ -165,7 +165,7 @@ The 3D model for this stand is provided by the project file `raspberry_pi_setup/
 
 This is my second design of this stand, after making a few improvements from my first design. I made this version shorter, improved wire routing, and added an access hole where (using tweezers) it’s possible to access the SD card slot without disassembling the clock.
 
-**UPDATE**: While upgrading my Raspberry Pi to Bullseye I finally had an opportunity to use the access hole I’d designed for reaching the SD card. It worked, but it was a struggle to get a decent grip on the card using tweezers, especially since I couldn't both aim the tweezers straight into the hole and get my fingers where they needed to be to squeeze hard at the same time. I suspect a tool like a hemostat might have done a better job.
+**UPDATE**: While upgrading my Raspberry Pi to Bullseye I finally had an opportunity to use the access hole I’d designed for reaching the SD card. It worked, but it was a struggle to get a decent grip on the card using tweezers, especially since I couldn’t both aim the tweezers straight into the hole and get my fingers where they needed to be to squeeze hard on the tweezers at the same time. I suspect a tool like a hemostat might have done a better job.
 
 <br>
 
@@ -357,13 +357,64 @@ When using a high resolution display like the 2560x1600 ELECROW 10.1" monitor I 
 
 ![Stand attached to monitor](https://shetline.com/readme/aw-clock/3.0.0/config-pixel-dbl.jpg)
 
-When I set this mode after a fresh install of Bullseye, however, I ended up with a blank screen, had to reboot via SSH, and was back to squinting at my screen. The above method turns out to not be the best way to handle display scaling with Bullseye’s new GTK+3 UI toolkit.
+When I set this mode after a fresh installation of Bullseye, however, I ended up with a blank screen, had to reboot via SSH, and was back to squinting at my screen. The above method turns out to not be the best way to handle display scaling with Bullseye’s new GTK+3 UI toolkit.
 
-The generally recommended approach is to go into Preferences/Appearance Settings/Defaults and “Set Defaults” “For large screens”. This doesn't scale everything for all apps at once, however, and I found editing the file `/usr/share/dispsetup.sh` as follows to produce better results for me:
+The generally recommended approach is to go into Preferences/Appearance Settings/Defaults and select “Set Defaults” “For large screens”. This doesn’t scale everything for all apps at once, however, and I found editing the file `/usr/share/dispsetup.sh` as follows to produce better results for me:
 
-```
+```text
 #!/bin/sh
 xrandr --output HDMI-1 --primary --scale 0.5x0.5
+```
+
+### Adafruit GPS HAT installation notes
+
+Adafruit provides its own instruction on initial set-up of their GPS HAT here: https://learn.adafruit.com/adafruit-ultimate-gps-hat-for-raspberry-pi/pi-setup
+
+...but I’m including some extra details and clarifications below for the particular steps that helped with this clock set-up.
+
+As documented by Adafruit, I used `sudo raspi-config` to disable shell access via the serial console while leaving the serial hardware enabled. Then I installed GPS and NTP tools as follows:
+
+```text
+sudo apt-get update
+sudo apt install pps-tools gpsd gpsd-clients ntp
+```
+
+I added the following lines to the end of `/boot/config.txt` (`enable_uart=1` is probably already there due to `raspi-config`):
+
+```text
+enable_uart=1
+
+# GPS
+dtoverlay=pps-gpio,gpiopin=4
+```
+
+I added the following lines to the end of `/etc/ntp.conf`:
+
+```text
+# GPS PPS reference
+server 127.127.28.2 prefer
+fudge  127.127.28.2 refid PPS
+
+# get time from SHM from gpsd
+server 127.127.28.0
+fudge  127.127.28.0 refid GPS
+```
+
+And the entirety of my `/etc/default/gpsd` is as follows:
+
+```text
+# Devices gpsd should collect to at boot time.
+# They need to be read/writeable, either by user gpsd or the group dialout.
+DEVICES="/dev/serial0 /dev/pps0"
+
+# Other options you want to pass to gpsd
+GPSD_OPTIONS="-n"
+
+# Automatically hot add/remove USB GPS devices via gpsdctl
+USBAUTO="false"
+
+# Start the gpsd daemon automatically at boot time
+START_DAEMON="true"
 ```
 
 ### Developer notes
