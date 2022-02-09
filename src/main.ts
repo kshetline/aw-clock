@@ -1,6 +1,6 @@
 import { AppService } from './app.service';
 /*
-  Copyright © 2018-2021 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2022 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -25,15 +25,17 @@ import { Forecast } from './forecast';
 import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
 import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
-import { irandom } from '@tubular/math';
-import { isBoolean, isEffectivelyFullScreen, isFirefox, isObject, setFullScreen } from '@tubular/util';
+import { abs, ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
+import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
-import { adjustCityName, anyDialogOpen, getJson } from './awc-util';
-import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
+import { adjustCityName, anyDialogOpen, ClickishEvent, getJson, stopPropagation } from './awc-util';
+import { CurrentTemperatureHumidity, Rect, TimeFormat } from './shared-types';
+import { SkyMap } from './sky-map';
+import { AlarmMonitor } from './assets/alarm-monitor';
 
 pollForTimezoneUpdates(zonePollerBrowser);
 
@@ -58,17 +60,20 @@ $.ajaxSetup({
 });
 
 class AwClockApp implements AppService {
+  private alarmMonitor: AlarmMonitor;
   private clock: Clock;
   private currentTempManager: CurrentTempManager;
   private forecast: Forecast;
   private ephemeris: Ephemeris;
   private sensors: Sensors;
   private settingsDialog: SettingsDialog;
+  private skyMap: SkyMap;
 
   private body: JQuery;
   private cityLabel: JQuery;
+  private clockOverlaySvg: JQuery;
   private dimmer: JQuery;
-  private testTime: JQuery;
+  private readonly testTime: JQuery;
   private updateAvailable: JQuery;
   private updateCaption: JQuery;
 
@@ -77,22 +82,31 @@ class AwClockApp implements AppService {
   private readonly pollingMinute = irandom(0, 14);
   private readonly pollingMillis = irandom(0, 59_999);
 
+  private adminAllowed = false;
+  private frequent = false;
   private lastCursorMove = 0;
   private lastForecast = 0;
-  private lastTimezone: Timezone;
   private lastHour = -1;
-  private frequent = false;
+  private lastTimezone: Timezone;
+  private latestDefaults: AwcDefaults;
   private proxyStatus: boolean | Promise<boolean> = undefined;
-  private adminAllowed = false;
-  private showTestTime = false;
-  private testTimeValue = '';
-
+  private runTestTime = false;
   private settings = new Settings();
   private settingsChecked = false;
+  private showSkyMap = false;
+  private showTestTime = false;
+  private skyCanvas: HTMLCanvasElement;
+  private skyRect: Rect;
+  private testTimeValue: number | undefined = undefined;
+  private testTimeStr = '';
+  private timeDelta = 0;
+  private toggleSkyMapTimer: any;
 
   constructor() {
     this.settings.load();
     AwClockApp.removeDefShadowRoots();
+
+    this.alarmMonitor = new AlarmMonitor(this);
 
     this.clock = new Clock(this);
     this.clock.timeFormat = this.settings.timeFormat;
@@ -108,64 +122,56 @@ class AwClockApp implements AppService {
     this.ephemeris.hidePlanets = this.settings.hidePlanets;
 
     this.sensors = new Sensors(this);
+    this.skyMap = new SkyMap(this);
+    this.showSkyMap = this.settings.showSkyMap;
 
     this.settingsDialog = new SettingsDialog(this);
 
     this.body = $('body');
     this.cityLabel = $('#city');
     this.dimmer = $('#dimmer');
+    setTimeout(() => this.dimmer.css('transition', 'opacity 5s ease-in'));
+    this.clockOverlaySvg = $('#clock-overlay-svg');
     this.testTime = $('#test-time');
+
+    $('#clock').on('click', (evt) => stopPropagation(evt, this.clockClick));
 
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
     this.updateAvailable.add(this.updateCaption).on('click', () => {
-      if (raspbianChromium && this.adminAllowed)
+      if (raspbianChromium && this.adminAllowed) {
+        this.alarmMonitor.stopAlarms();
         this.settingsDialog.openSettings(this.settings, true);
+      }
     });
 
     this.cityLabel.text(this.settings.city);
 
-    document.addEventListener('keypress', event => {
-      if (!event.repeat && event.target === document.body) {
-        if (event.code === 'KeyF' || event.key === 'F' || event.key === 'f')
-          setFullScreen(true);
-        else if (event.code === 'KeyN' || event.key === 'N' || event.key === 'n')
-          setFullScreen(false);
-        else if (event.code === 'KeyT' && event.ctrlKey && event.shiftKey) {
-          this.showTestTime = !this.showTestTime;
-          this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
-
-          const updateTestEphemeris = (): void => {
-            const time = new DateTime(parseISODateTime(this.testTimeValue), this.lastTimezone).utcTimeMillis;
-
-            this.ephemeris.update(this.settings.latitude, this.settings.longitude, time, this.lastTimezone,
-              this.settings.timeFormat === TimeFormat.AMPM);
-          };
-
-          if (this.showTestTime && !this.testTimeValue) {
-            this.testTimeValue = new DateTime(this.getCurrentTime(), this.lastTimezone).toIsoString().substr(0, 16);
-            this.testTime.on('input', () => {
-              this.testTimeValue = this.testTime.val() as string;
-              updateTestEphemeris();
-            });
-            this.testTime.val(this.testTimeValue);
-            updateTestEphemeris();
-          }
-          else
-            this.updateEphemeris();
-        }
-      }
-    });
-
+    document.addEventListener('keypress', this.keyHandler);
     document.addEventListener('mousemove', () => {
       // Reveal cursor when moved.
       this.body.css('cursor', 'auto');
       this.lastCursorMove = performance.now();
     });
+    this.testTime[0].addEventListener('keydown', evt => {
+      // Tracking to make time roll forward with up-arrow minute, rather than wrapping back to the beginning of the hour.
+      const key = eventToKey(evt);
+
+      if (key === 'ArrowUp' && evt.shiftKey)
+        this.timeDelta = 1;
+      else if (key === 'ArrowDown' && evt.shiftKey)
+        this.timeDelta = -1;
+      else
+        this.timeDelta = 0;
+    });
+    this.testTime[0].addEventListener('keypress', (evt) => this.keyHandler(evt, true));
 
     const settingsButton = $('#settings-btn');
 
-    settingsButton.on('click', () => this.settingsDialog.openSettings(this.settings));
+    settingsButton.on('click', () => {
+      this.alarmMonitor.stopAlarms();
+      this.settingsDialog.openSettings(this.settings);
+    });
 
     const weatherLogo = $('.weather-logo a');
 
@@ -225,10 +231,16 @@ class AwClockApp implements AppService {
         }
       });
     }
+
+    window.addEventListener('resize', this.findSkyMapArea);
   }
 
   getTimeFormat(): TimeFormat {
     return this.settings.timeFormat;
+  }
+
+  getAlarmTime(): number {
+    return this.testTimeValue ?? this.getCurrentTime(0);
   }
 
   getCurrentTime(bias = 0): number {
@@ -250,6 +262,14 @@ class AwClockApp implements AppService {
   getWeatherOption(): string {
     return this.settings.service;
   }
+
+  get showConstellations(): boolean { return this.settings.drawConstellations; }
+
+  get showSkyColors(): boolean { return this.settings.showSkyColors; }
+
+  get skyFacing(): number { return this.settings.skyFacing; }
+
+  get timezone(): Timezone { return this.lastTimezone; }
 
   proxySensorUpdate(): Promise<boolean> {
     if (this.proxyStatus instanceof Promise)
@@ -296,6 +316,7 @@ class AwClockApp implements AppService {
 
   start(): void {
     this.clock.start();
+    this.findSkyMapArea();
 
     setTimeout(() => {
       updateSvgFlowItems();
@@ -304,15 +325,31 @@ class AwClockApp implements AppService {
   }
 
   updateTime(hour: number, minute: number, forceRefresh: boolean): void {
+    if (this.showTestTime && this.testTimeStr) {
+      let testTime = new DateTime(parseISODateTime(this.testTimeStr), this.lastTimezone).utcTimeMillis;
+
+      if (this.runTestTime) {
+        testTime += 60000;
+        this.testTimeValue = testTime;
+        this.testTimeStr = new DateTime(testTime, this.lastTimezone).toIsoString(16);
+        this.testTime.val(this.testTimeStr);
+        this.updateTestTime();
+      }
+    }
+    else
+      this.settings.alarms = this.alarmMonitor.checkAlarms(this.getCurrentTime(), this.settings.alarms);
+
     const now = this.getCurrentTime();
 
     // Hide cursor if it hasn't been moved in the last two minutes.
     if (performance.now() > this.lastCursorMove + 120000)
       this.body.css('cursor', 'none');
 
-    if (!this.showTestTime)
+    if (!this.showTestTime) {
       this.ephemeris.update(this.settings.latitude, this.settings.longitude, now, this.lastTimezone,
         this.settings.timeFormat === TimeFormat.AMPM);
+      this.updateSkyMap();
+    }
 
     // If it's a new day, make sure we update the weather display to show the change of day,
     // even if we aren't polling for new weather data right now.
@@ -321,6 +358,13 @@ class AwClockApp implements AppService {
 
     this.lastHour = hour;
     this.updateWeather(minute, now, forceRefresh);
+  }
+
+  private updateSkyMap(time?: number): void {
+    this.adjustHandsDisplay();
+
+    if (this.showSkyMap && this.skyCanvas)
+      this.skyMap.draw(this.skyCanvas, this.settings.longitude, this.settings.latitude, time);
   }
 
   resetGpsState(): void {
@@ -334,15 +378,20 @@ class AwClockApp implements AppService {
       else {
         const promises = [
           getJson<AwcDefaults>(`${apiServer}/defaults`),
-          getJson<any>('http://ip-api.com/json/?callback=?')
+          getJson<any>('http://ip-api.com/json/')
         ];
 
-        Promise.all(promises)
-          .then(data => {
+        Promise.allSettled(promises)
+          .then(dataPairs => {
+            const data = dataPairs.map(item => item.status === 'rejected' ? null : item.value);
             const localInstallation = raspbianChromium && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
-            const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable ? 'block' : 'none');
+            const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable &&
+              data[0].latestVersion !== (this.settings.updateToHide || '_') ? 'block' : 'none');
+
+            if (data[0])
+              this.latestDefaults = Object.freeze(data[0]);
 
             this.adminAllowed = data[0]?.allowAdmin;
             this.updateAvailable.css('display', showUpdate);
@@ -398,8 +447,10 @@ class AwClockApp implements AppService {
 
       const doUpdate = (): void => {
         getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
+          this.latestDefaults = Object.freeze(data);
           this.adminAllowed = data?.allowAdmin;
-          const updateAvailable = (this.adminAllowed && data?.updateAvailable ? 'block' : 'none');
+          const updateAvailable = (this.adminAllowed && data?.latestVersion !== (this.settings.updateToHide || '_') &&
+            data?.updateAvailable ? 'block' : 'none');
           this.updateAvailable.css('display', updateAvailable);
           this.updateCaption.css('display', updateAvailable);
         });
@@ -471,6 +522,29 @@ class AwClockApp implements AppService {
         this.updateEphemeris();
       }
     }
+
+    if (!isEqual(newSettings.showSkyMap, oldSettings.showSkyMap) ||
+        !isEqual(newSettings.showSkyColors, oldSettings.showSkyColors) ||
+        !isEqual(newSettings.drawConstellations, oldSettings.drawConstellations) ||
+        !isEqual(newSettings.skyFacing, oldSettings.skyFacing) ||
+        !isEqual(newSettings.floatHands, oldSettings.floatHands)) {
+      if (this.showSkyMap !== this.settings.showSkyMap)
+        this.toggleSkyMap();
+      else {
+        if (this.toggleSkyMapTimer) {
+          clearTimeout(this.toggleSkyMapTimer);
+          this.toggleSkyMapTimer = undefined;
+        }
+
+        this.updateSkyMap();
+      }
+    }
+
+    const updateAvailable = (this.adminAllowed && this.latestDefaults?.latestVersion !== (this.settings.updateToHide || '_') &&
+            this.latestDefaults?.updateAvailable ? 'block' : 'none');
+
+    this.updateAvailable.css('display', updateAvailable);
+    this.updateCaption.css('display', updateAvailable);
   }
 
   private updateEphemeris(): void {
@@ -488,6 +562,10 @@ class AwClockApp implements AppService {
 
   getIndoorOption(): string {
     return this.settings.indoorOption;
+  }
+
+  getLatestDefaults(): AwcDefaults {
+    return this.latestDefaults;
   }
 
   getOutdoorOption(): string {
@@ -537,6 +615,94 @@ class AwClockApp implements AppService {
     this.ephemeris.toggleSunMoon();
   }
 
+  findSkyMapArea = (): void => {
+    const mapArea = document.getElementById('face') as unknown as SVGElement;
+    const rect = mapArea?.getClientRects()[0] ?? mapArea.getBoundingClientRect();
+
+    $('#current-alarm-display').css('font-size', min(max(window.innerWidth / 10, 20), 100) + '%');
+
+    if (rect) {
+      const skyRect = { x: floor(rect.x), y: floor(rect.y), h: ceil(rect.height), w: ceil(rect.width) };
+
+      if (!isEqual(this.skyRect, skyRect)) {
+        this.skyRect = skyRect;
+
+        if (this.skyCanvas)
+          this.skyCanvas.remove();
+
+        const canvasScaling = window.devicePixelRatio || 1;
+        const canvas = (this.skyCanvas = document.createElement('canvas'));
+        const width = ceil(skyRect.w * canvasScaling);
+        const height = ceil(skyRect.w * canvasScaling);
+
+        canvas.classList.add('sky-map');
+        canvas.width = ceil(width);
+        canvas.height = ceil(height);
+        canvas.style.top = skyRect.y + 'px';
+        canvas.style.left = skyRect.x + 'px';
+        canvas.style.width = skyRect.w + 'px';
+        canvas.style.height = skyRect.w + 'px';
+        canvas.style.opacity = this.showSkyMap ? '1' : '0';
+
+        document.body.append(canvas);
+        canvas.addEventListener('click', (evt) => stopPropagation(evt, this.skyClick));
+        this.updateSkyMap();
+      }
+    }
+  }
+
+  private skyClick = (evt: ClickishEvent): void => {
+    this.toggleSkyMap(evt, 2);
+  }
+
+  private clockClick = (evt: ClickishEvent): void => {
+    if ((evt.target as Element).id === 'face')
+      this.toggleSkyMap(evt, 3);
+  }
+
+  private toggleSkyMap(evt?: ClickishEvent, diameterDivider = 0): void {
+    if (evt && diameterDivider > 0) {
+      const r = (evt.target as Element).getBoundingClientRect();
+      const x = evt.pageX - r.left - r.width / 2;
+      const y = evt.pageY - r.top - r.height / 2;
+
+      if (sqrt(x ** 2 + y ** 2) > r.height / diameterDivider)
+        return;
+    }
+
+    if (this.toggleSkyMapTimer) {
+      clearTimeout(this.toggleSkyMapTimer);
+      this.toggleSkyMapTimer = undefined;
+    }
+
+    if (this.showSkyMap) {
+      this.showSkyMap = false;
+      this.skyCanvas.style.pointerEvents = 'none';
+      this.skyCanvas.style.opacity = '0';
+      this.adjustHandsDisplay();
+    }
+    else {
+      this.showSkyMap = true;
+      this.skyCanvas.style.pointerEvents = 'all';
+      this.skyCanvas.style.opacity = '1';
+      this.updateSkyMap();
+    }
+
+    if (this.showSkyMap !== this.settings.showSkyMap)
+      this.toggleSkyMapTimer = setTimeout(() => this.toggleSkyMap(), 60000);
+  }
+
+  private adjustHandsDisplay(): void {
+    if (this.settings.floatHands && this.showSkyMap) {
+      this.clockOverlaySvg.addClass('float');
+      this.clockOverlaySvg.css('opacity', '1');
+    }
+    else {
+      this.clockOverlaySvg.removeClass('float');
+      this.clockOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
+    }
+  }
+
   private static removeDefShadowRoots(): void {
     const signalMeter = $('#signal-meter');
     const days = $('#forecast-day');
@@ -559,4 +725,105 @@ class AwClockApp implements AppService {
       this.parentElement.innerHTML = markup;
     });
   }
+
+  private keyHandler = (evt: KeyboardEvent, skipTargetTest = false): void => {
+    const key = eventToKey(evt);
+
+    if (!evt.repeat && (skipTargetTest || evt.target === document.body)) {
+      let handled = true;
+
+      if (key === 'F' || evt.key === 'f')
+        setFullScreen(true);
+      else if (key === 'N' || key === 'n')
+        setFullScreen(false);
+      else if (key === 'Enter' || key === ' ')
+        this.alarmMonitor.stopAlarms();
+      else if (key === '5')
+        this.alarmMonitor.snoozeAlarms(5);
+      else if (key === '0' || key === 'S' || key === 's')
+        this.alarmMonitor.snoozeAlarms(10);
+      else if (key === '.')
+        this.alarmMonitor.snoozeAlarms(15);
+      else if (key === 'T' && evt.ctrlKey && evt.shiftKey)
+        this.toggleTestTimeInput();
+      else if (key === 'R' || key === 'r') {
+        this.runTestTime = !this.runTestTime;
+        this.testTime.prop('disabled', this.runTestTime);
+      }
+      else if ((key === 'C' || key === 'c') && this.testTimeStr) {
+        this.testTimeValue = this.getCurrentTime();
+        this.testTimeStr = new DateTime(this.testTimeValue, this.lastTimezone).toIsoString(16);
+        this.testTime.val(this.testTimeStr);
+        this.updateTestTime();
+      }
+      else
+        handled = false;
+
+      if (handled)
+        evt.stopPropagation();
+    }
+  };
+
+  private toggleTestTimeInput(): void {
+    this.showTestTime = !this.showTestTime;
+    this.runTestTime = false;
+    this.testTime.prop('disabled', false);
+    this.testTime.css('display', this.showTestTime ? 'inline-block' : 'none');
+
+    if (this.showTestTime && !this.testTimeStr)
+      this.testTime.on('input', this.timeInputHandler);
+
+    if (this.showTestTime) {
+      if (this.testTimeValue == null) {
+        this.testTimeValue = this.getCurrentTime();
+        this.testTimeStr = new DateTime(this.testTimeValue, this.lastTimezone).toIsoString(16);
+      }
+
+      this.testTime.val(this.testTimeStr);
+      this.timeDelta = 0;
+      this.updateTestTime();
+    }
+    else {
+      this.testTimeValue = undefined;
+      this.updateEphemeris();
+      this.updateSkyMap();
+    }
+  }
+
+  private updateTestTime(): void {
+    this.testTimeValue = new DateTime(parseISODateTime(this.testTimeStr), this.lastTimezone).utcTimeMillis;
+
+    this.ephemeris.update(this.settings.latitude, this.settings.longitude, this.testTimeValue, this.lastTimezone,
+      this.settings.timeFormat === TimeFormat.AMPM);
+    this.updateSkyMap(this.testTimeValue);
+    this.alarmMonitor.checkAlarms(this.testTimeValue, this.settings.alarms);
+  }
+
+  private timeInputHandler = (): void => {
+    let newTimeStr = this.testTime.val() as string;
+
+    if ((this.timeDelta > 0 && newTimeStr < this.testTimeStr) || (this.timeDelta < 0 && newTimeStr > this.testTimeStr)) {
+      let newTime = new DateTime(newTimeStr, this.lastTimezone).utcTimeMillis;
+
+      if (abs(newTime - this.testTimeValue) < 3_600_000)
+        newTime = this.testTimeValue + this.timeDelta * 60000;
+      else if (abs(newTime - this.testTimeValue) < 86_400_000)
+        newTime = this.testTimeValue + this.timeDelta * 3_600_000;
+      else {
+        const testDate = new DateTime(this.testTimeValue, this.lastTimezone);
+        const monthLength = testDate.getDaysInMonth() * 86_400_000;
+
+        if (abs(newTime - this.testTimeValue) < monthLength)
+          newTime = testDate.add('day', this.timeDelta).utcTimeMillis;
+        else
+          newTime = testDate.add('month', this.timeDelta).utcTimeMillis;
+      }
+
+      newTimeStr = new DateTime(newTime, this.lastTimezone).toIsoString(16);
+      this.testTime.val(newTimeStr);
+    }
+
+    this.testTimeStr = newTimeStr;
+    this.updateTestTime();
+  };
 }

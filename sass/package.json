@@ -1,6 +1,6 @@
 {
   "name": "aw-clock-sass",
-  "version": "2.12.2",
+  "version": "3.0.0",
   "description": "SASS builder for aw-clock",
   "keywords": [
     "sass"
@@ -8,6 +8,6 @@
   "author": "Kerry Shetline",
   "license": "MIT",
   "devDependencies": {
-    "node-sass": "^6.0.1"
+    "node-sass": "^7.0.1"
   }
 }

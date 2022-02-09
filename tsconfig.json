@@ -12,8 +12,12 @@
     "lib": [
       "es2020",
       "dom"
+    ],
+    "typeRoots": [
+      "node_modules/@types",
+      "./custom-types"
     ]
   },
-  "include": ["./src/**/*"],
+  "include": ["./custom-types/**/*", "./src/**/*"],
   "exclude": ["node_modules", "server", "**/*.spec.ts"]
 }

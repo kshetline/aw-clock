@@ -15,7 +15,7 @@ export interface LeapSecond {
 }
 
 export const DEFAULT_LEAP_SECOND_HTTPS_URL = 'https://hpiers.obspm.fr/iers/bul/bulc/ntp/leap-seconds.list';
-export const DEFAULT_LEAP_SECOND_FTP_URL = 'ftp://ftp.nist.gov/pub/time/leap-seconds.list';
+export const DEFAULT_LEAP_SECOND_FTP_URL = 'ftp://ftp.boulder.nist.gov/pub/time/leap-seconds.list';
 export const DEFAULT_LEAP_SECOND_URLS = DEFAULT_LEAP_SECOND_HTTPS_URL + ';' + DEFAULT_LEAP_SECOND_FTP_URL;
 
 interface DeltaUt1Utc {

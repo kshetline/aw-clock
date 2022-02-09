@@ -5,8 +5,10 @@ import {
   asLines, htmlEscape, isEdge, isFunction, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
 } from '@tubular/util';
+import compareVersions, { CompareOperator } from 'compare-versions';
 
 export type KeyListener = (event: KeyboardEvent) => void;
+export type ClickishEvent = JQuery.ClickEvent | MouseEvent
 
 export interface JsonOptions {
   jsonp?: boolean;
@@ -23,6 +25,20 @@ export function pushKeydownListener(listener: KeyListener): void {
 
 export function popKeydownListener(): void {
   keydownListeners.pop();
+}
+
+export const stopPropagation = (evt: ClickishEvent, callback: (evt?: ClickishEvent) => void): void => {
+  callback(evt);
+  evt.stopPropagation();
+};
+
+export function parseJson(json: string): any {
+  try {
+    return JSON.parse(json);
+  }
+  catch {}
+
+  return undefined;
 }
 
 window.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -57,9 +73,6 @@ $.fn.extend({
 
 export function getJson<T>(url: string, options?: JsonOptions): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    // `$.ajax()` returns a Promise, but if I try to use that Promise directly, I can't find a way to get
-    //   around "Uncaught (in promise)" errors, when what I want is a Promise resolved with an Error value.
-    // noinspection JSIgnoredPromiseFromCall
     $.ajax({
       url,
       data: options?.params || undefined,
@@ -76,10 +89,31 @@ export function getJson<T>(url: string, options?: JsonOptions): Promise<T> {
   });
 }
 
-const basicEntities: Record<string, string> = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
+export function getBinary(url: string): Promise<ArrayBuffer> {
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const request = new XMLHttpRequest();
 
-export function htmlEncode(s: string): string {
-  return s.replace(/[<>&]/g, match => basicEntities[match]);
+    request.open('GET', url, true);
+    request.responseType = 'arraybuffer';
+    request.onload = (): void => {
+      if (request.status === 200)
+        resolve(request.response);
+      else
+        reject(new Error(`${request.status}: ${request.statusText}`));
+    };
+    request.onerror = (err: any): void => reject(err);
+    request.send();
+  });
+}
+
+export function getText(url: string): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    $.ajax({
+      url,
+      success: (data: string, _textStatus: string) => { resolve(data); },
+      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
+    });
+  });
 }
 
 export function domAlert(message: string, callback?: () => void): void {
@@ -112,7 +146,6 @@ export function domAlert(message: string, callback?: () => void): void {
 }
 
 type OkCallback = (isOk: boolean) => void;
-let confirmInit = false;
 
 export function domConfirm(message: string, callback: OkCallback): void;
 export function domConfirm(message: string, optionsHtml: string, callback: OkCallback): void;
@@ -149,8 +182,13 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
     }
   });
 
-  const doCallback = (isOk: boolean): void => {
+  const doCallback = (isOk: boolean, evt?: JQuery.ClickEvent): void => {
+    if (evt)
+      evt.stopPropagation();
+
     popKeydownListener();
+    confirmOk.off('click');
+    confirmCancel.off('click');
     confirmDialog.hide();
     callback(isOk);
   };
@@ -160,12 +198,8 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   else
     $('#confirm-message').text(message);
 
-  if (!confirmInit) {
-    confirmOk.on('click', () => doCallback(true));
-    confirmCancel.on('click', () => doCallback(false));
-    confirmInit = true;
-  }
-
+  confirmOk.one('click', (evt) => doCallback(true, evt));
+  confirmCancel.one('click', (evt) => doCallback(false, evt));
   confirmDialog.show();
 }
 
@@ -352,6 +386,9 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     if (evt?.preventDefault)
       evt.preventDefault();
 
+    if (evt?.stopPropagation)
+      evt.stopPropagation();
+
     popKeydownListener();
     dialogStack.pop();
     dialog.hide();
@@ -415,7 +452,7 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     textArea.on('touchcancel', () => mouseUp());
 
     closer.on('click', hide);
-    textArea.parent().on('click', event => event.stopPropagation());
+    textArea.parent().on('click', evt => evt.stopPropagation());
     dialog.on('click', evt => {
       if (processMillis() >= openTime + OUTER_CLICK_DELAY)
         hide(evt);
@@ -430,4 +467,23 @@ export function localDateString(time: number, zone: Timezone): string {
 
   return new Date(wallTime.y, wallTime.m - 1, wallTime.d, 12).toLocaleDateString(undefined,
     { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+export function safeCompareVersions(firstVersion: string, secondVersion: string, defValue?: number): number;
+export function safeCompareVersions(firstVersion: string, secondVersion: string, operator?: CompareOperator, defValue?: boolean): boolean;
+export function safeCompareVersions(firstVersion: string, secondVersion: string,
+                                    operatorOrDefValue: CompareOperator | number, defValue = false): number | boolean {
+  try {
+    if (isString(operatorOrDefValue))
+      return compareVersions.compare(firstVersion, secondVersion, operatorOrDefValue);
+    else {
+      /* false inspection alarm */ // noinspection JSUnusedAssignment
+      operatorOrDefValue = operatorOrDefValue ?? -1;
+
+      return compareVersions(firstVersion, secondVersion);
+    }
+  }
+  catch {}
+
+  return isString(operatorOrDefValue) ? defValue : operatorOrDefValue;
 }

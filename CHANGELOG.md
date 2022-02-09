@@ -1,3 +1,18 @@
+## 3.0.0
+
+* Added optional sky maps, allowing the clock face to be replaced with a map of the planets, stars, and constellations as they appear in your local sky.
+* Added alarm clock feature, with daily and one-time alarms.
+* Fixed bug in recognizing GPS clock sync when using updated `ntpq`.
+* Improved software update notifications.
+* Improved weather alert formatting.
+* Improved installation reliability.
+* Improved user settings dialog.
+* Updated FTP leap second retrieval.
+
+## 2.12.3
+
+* Get default forecast if automatic location check fails.
+
 ## 2.12.2
 
 * Fix for Visual Crossing and Weatherbit.io snowfall amounts.

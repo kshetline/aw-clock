@@ -1,6 +1,6 @@
 // #!/usr/bin/env node
 /*
-  Copyright © 2018-2021 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2022 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -19,9 +19,8 @@
 */
 
 import { router as adminRouter } from './admin-router';
-import { requestJson } from 'by-request';
+import { requestJson, requestText } from 'by-request';
 import { execSync } from 'child_process';
-import compareVersions from 'compare-versions';
 import cookieParser from 'cookie-parser';
 import { Daytime, DaytimeData, DEFAULT_DAYTIME_SERVER } from './daytime';
 import express, { Express, Request, Router } from 'express';
@@ -29,16 +28,18 @@ import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
 import os from 'os';
-import { asLines, isString, toBoolean, toNumber } from '@tubular/util';
+import { asLines, htmlEscape, isString, noop, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
 import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
+import { router as changelogRouter } from './changelog-router';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, safeCompareVersions, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
 import { NtpPoolPoller } from './ntp-pool-poller';
+import { HtmlParser } from 'fortissimo-html';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -96,22 +97,42 @@ const UPDATE_POLL_INTERVAL = 10800000; // 3 hours
 const UPDATE_POLL_RETRY_TIME = 60_000; // 10 minutes
 let updatePollTimer: any;
 let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
+let latestVersionInfo = '';
 
 async function checkForUpdate(): Promise<void> {
   updatePollTimer = undefined;
 
   let delay = UPDATE_POLL_INTERVAL;
+  const options = { headers: { 'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION } };
 
   try {
-    const repoInfo = await requestJson('https://api.github.com/repos/kshetline/aw-clock/releases/latest', {
-      headers: {
-        'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION
-      }
-    });
-    const currentVersion = repoInfo?.tag_name?.replace(/^\D+/, '').replace(/_nu_.*$/i, '');
+    const repoInfo = await requestJson('https://api.github.com/repos/kshetline/aw-clock/releases/latest', options);
+    const currentVersion = process.env.AWC_FAKE_UPDATE_VERSION || repoInfo?.tag_name?.replace(/^\D+/, '').replace(/_nu_.*$/i, '');
 
-    if (currentVersion)
+    if (currentVersion) {
       latestVersion = currentVersion;
+      latestVersionInfo = htmlEscape(repoInfo.body || '').replace(/\r\n|\r|\n/g, '<br>');
+
+      try {
+        if (repoInfo.html_url) {
+          const bodyHtml = await requestText(repoInfo.html_url, options);
+          const parsed = new HtmlParser().parse(bodyHtml);
+          const infoHtml = parsed.domRoot.querySelector('div.markdown-body');
+
+          // "Denature" links in release notes.
+          infoHtml.querySelectorAll('a').forEach(link => {
+            link.tag = 'span';
+            link.clearAttributes();
+            link.addAttribute('class', 'ex-link');
+          });
+
+          latestVersionInfo = infoHtml.toString(false);
+        }
+      }
+      catch (err) {
+        console.error(err);
+      }
+    }
     else // noinspection ExceptionCaughtLocallyJS
       throw new Error('Could not parse tag_name');
   }
@@ -125,9 +146,7 @@ async function checkForUpdate(): Promise<void> {
   updatePollTimer = unref(setTimeout(checkForUpdate, delay));
 }
 
-if (!process.env.AWC_FAKE_UPDATE_VERSION)
-  // noinspection JSIgnoredPromiseFromCall
-  checkForUpdate();
+checkForUpdate().catch(noop);
 
 // Create HTTP server
 const devMode = process.argv.includes('-d');
@@ -259,6 +278,18 @@ function getApp(): Express {
   theApp.use(express.json());
   theApp.use(express.urlencoded({ extended: false }));
   theApp.use(cookieParser());
+
+  theApp.get('/assets/audio/', (_req, res) => {
+    let audioDir = path.join(__dirname, 'public', 'assets', 'audio');
+
+    if (!fs.existsSync(audioDir)) {
+      audioDir = path.join(__dirname, '..', '..', 'src', 'assets', 'audio');
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+
+    res.send(JSON.stringify(fs.readdirSync(audioDir).filter(name => !name.startsWith('.'))));
+  });
+
   theApp.use(express.static(path.join(__dirname, 'public')));
   theApp.get('/', (req, res) => {
     res.send('Static home file not found');
@@ -313,6 +344,7 @@ function getApp(): Express {
 
   theApp.use('/forecast', forecastRouter);
   theApp.use('/wireless-th', tempHumidityRouter);
+  theApp.use('/changelog', changelogRouter);
 
   if (indoorRouter)
     theApp.use('/indoor', indoorRouter);
@@ -328,13 +360,15 @@ function getApp(): Express {
 
     const ip = requestIp.getClientIp(req);
     const defaults: AwcDefaults = {
-      indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
-      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
-      ip,
       allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
+      currentVersion: AWC_VERSION,
+      indoorOption: (indoorModule?.hasWiredIndoorSensor() ? 'D' : 'X'),
+      ip,
       latestVersion,
-      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && compareVersions.compare(latestVersion, AWC_VERSION, '>'),
-      services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : '')
+      latestVersionInfo,
+      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
+      services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : ''),
+      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && safeCompareVersions(latestVersion, AWC_VERSION, '>', false)
     };
 
     if (gps) {

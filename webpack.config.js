@@ -92,6 +92,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
           output: { max_line_len: 511 }
         }
       })],
+      runtimeChunk: 'single'
     },
     devtool: enoughRam ? 'source-map' : undefined,
     plugins: [
@@ -115,6 +116,10 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
             context: 'src',
             to: '',
             from: 'favicon.ico'
+          },
+          {
+            to: 'assets/',
+            from: 'node_modules/@tubular/astronomy/dist/resources/stars.dat'
           }
         ]
       }),
@@ -153,7 +158,11 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
       global: true
     },
     devServer: {
-      historyApiFallback: true
-    }
+      historyApiFallback: true,
+      proxy: {
+        '/assets/audio/': 'http://localhost:4201'
+      }
+    },
+    ignoreWarnings: [{ message: /require function is used in a way/ }]
   };
 };

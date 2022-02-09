@@ -550,7 +550,21 @@ async function checkForGps(): Promise<void> {
   let gpsTimeIsWorking = false;
 
   if (hasGpsTools) {
-    const gpsInfo = await monitorProcessLines(spawn('gpspipe', ['-w', '-n', '12']), null, ErrorMode.NO_ERRORS);
+    const gpsInfo = await new Promise<string[]>((resolve, reject) => {
+      const proc = spawn('gpspipe', ['-w', '-n', '12']);
+      let finished = false;
+
+      monitorProcessLines(proc, null, ErrorMode.NO_ERRORS)
+        .then(lines => { finished = true; resolve(lines); })
+        .catch(err => { finished = true; reject(err); });
+      setTimeout(() => {
+        if (!finished) {
+          proc.kill();
+          console.warn(chalk.yellow('Warning: gpspipe timed out.'));
+          resolve([]);
+        }
+      }, 10000);
+    });
 
     for (const line of gpsInfo) {
       try {
@@ -566,10 +580,24 @@ async function checkForGps(): Promise<void> {
   }
 
   if (hasNtpTools) {
-    const ntpInfo = await monitorProcessLines(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS);
+    const ntpInfo = await new Promise<string[]>((resolve, reject) => {
+      const proc = spawn('ntpq', ['-p']);
+      let finished = false;
+
+      monitorProcessLines(proc, null, ErrorMode.NO_ERRORS)
+        .then(lines => { finished = true; resolve(lines); })
+        .catch(err => { finished = true; reject(err); });
+      setTimeout(() => {
+        if (!finished) {
+          proc.kill();
+          console.warn(chalk.yellow('Warning: ntpq timed out.'));
+          resolve([]);
+        }
+      }, 10000);
+    });
 
     for (const line of ntpInfo) {
-      if (/^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s-?[.\d]+\s+[.\d]+\s*$/.test(line)) {
+      if (/^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s[-+]?[.\d]+\s+[.\d]+\s*$/.test(line)) {
         gpsTimeIsWorking = true;
         break;
       }
@@ -993,7 +1021,7 @@ async function doServiceDeployment(): Promise<void> {
     spin, ErrorMode.ANY_ERROR);
 
   if (doKiosk)
-    launchChromium = launchChromium.replace(/\s+/, ' --kiosk ');
+    launchChromium = launchChromium.replace(/\s+/, ' --kiosk --autoplay-policy=no-user-gesture-required ');
 
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';

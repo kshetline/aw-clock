@@ -4,14 +4,14 @@ import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
 import {
-  blendColors, doesCharacterGlyphExist, getTextWidth, isChrome, isChromium, isEdge, isObject,
+  blendColors, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject,
   last, processMillis, toNumber
 } from '@tubular/util';
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
   compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
-  getJson, htmlEncode, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref
+  getJson, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
@@ -223,7 +223,7 @@ export class Forecast {
     $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#sun-moon-clicker').on('click', () => this.appService.toggleSunMoon());
-    $('.hour-temps, .hour-pops, .hour-icon, .hour-wind').on('click', () => this.toggleHourInfo());
+    $('.hour-temps, .hour-pops, .hour-icon, .hour-wind').on('click', (evt) => stopPropagation(evt, () => this.toggleHourInfo()));
 
     const self = this;
 
@@ -989,7 +989,7 @@ export class Forecast {
 
     this.marqueeBackground = background;
     // It shouldn't be necessary to update colors for both marqueeOuterWrapper and marqueeWrapper, but Chrome doesn't seem.
-    // to pass through the inheritance of the background color all of the time. Also doing foreground for good measure.
+    // to pass through the inheritance of the background color all the time. Also doing foreground for good measure.
     this.marqueeOuterWrapper.css('background-color', background);
     this.marqueeWrapper.css('background-color', background);
     this.marqueeOuterWrapper.css('color', color);
@@ -1007,8 +1007,8 @@ export class Forecast {
       const width = this.forecastDaysVisible * FORECAST_DAY_WIDTH;
       const extraWidth = (this.forecastDaysVisible - 4) * FORECAST_DAY_WIDTH;
 
-      $('#clock-container').toggleClass('display16x9', this.forecastDaysVisible > 4);
-      $('#clock').attr('viewBox', `0 0 ${172 + extraWidth} 108`);
+      $('#clock-container, #clock-overlay').toggleClass('display16x9', this.forecastDaysVisible > 4);
+      $('#clock, #clock-overlay-svg').attr('viewBox', `0 0 ${172 + extraWidth} 108`);
       $('#current-forecast').attr('transform', `translate(${extraWidth / 2})`);
       $('#forecast-rect').attr('width', width.toString());
       $('#forecast-clip').attr('width', width.toString());
@@ -1031,12 +1031,12 @@ export class Forecast {
     const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
     const textWidth = getTextWidth(newText.replace(/{{|}}/g, '\u00A0'), this.marquee[0]);
 
-    newText = htmlEncode(newText).replace(/{{/g, START_ERROR_TAG).replace(/}}/g, CLOSE_ERROR_TAG);
+    newText = htmlEscape(newText).replace(/{{/g, START_ERROR_TAG).replace(/}}/g, CLOSE_ERROR_TAG);
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
     // Try to undo hard word-wrap (too bad lookbehinds aren't reliably supported yet in web browsers).
-    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-a-z,])\n(?=[a-z])/gi, '$1 ')
+    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-0-9a-z,])\n(?=[a-z]|(\d[^.#*)\]]))/gi, '$1 ')
       // No more than one blank line, and no trailing blank lines.
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
       // Improve alert formatting.
@@ -1102,7 +1102,7 @@ export class Forecast {
     else
       text += narrativeEvening;
 
-    text = htmlEncode(text).replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
+    text = htmlEscape(text).replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
       .replace(/¬(.+?)¬/g, '<$1>').replace(/¬(.+?);/g, '</$1>');
 
     displayHtml('big-text-dialog', text, '#DDF');

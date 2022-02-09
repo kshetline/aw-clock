@@ -13,13 +13,14 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "typeRoots": [
-      "node_modules/@types"
+      "node_modules/@types",
+      "../custom-types"
     ],
     "lib": [
       "es2020",
       "dom"
     ]
   },
-  "include": ["./src/**/*"],
+  "include": ["../custom-types/**/*", "./src/**/*"],
   "exclude": ["node_modules", "tsc-out", "**/*.spec.ts"]
 }

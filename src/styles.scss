@@ -120,37 +120,50 @@ label {
   }
 }
 
-#clock-container {
+// Unless explicit, these come out blue or white on iOS for some reason
+select:not([disabled]), button:not([disabled]), input:not([disabled])[type="submit"] {
+  color: black;
+}
+
+#clock-container, #clock-overlay {
   display: inline-block;
-  position: absolute;
   left: 0;
-  right: 0;
   margin: auto;
-  width: calc(1.556 * (100vh - 2em));
-  padding: 1em;
-  vertical-align: middle;
   overflow: visible;
-  background: var(--background-color);
+  padding: 1rem;
+  position: absolute;
+  right: 0;
+  width: calc(1.556 * (100vh - 2rem));
 
   &.display16x9 {
-    width: calc(1.675 * (100vh - 2em));
+    width: calc(1.675 * (100vh - 2rem));
   }
 }
 
-.clock-container-ie-fix {
-  height: 100%;
+#clock-container {
+  background-color: var(--background-color);
+}
+
+#clock-overlay {
+  background-color: transparent;
+  pointer-events: none;
+  z-index: 20;
 }
 
 @media only screen and (max-aspect-ratio: 43 / 27) {
-  #clock-container {
-    width: calc(100vw - 4em);
+  #clock-container, #clock-overlay {
+    width: calc(100vw - 4rem);
   }
 }
 
-#clock {
+#clock, #clock-overlay-svg {
   font-family: $std-font;
   fill: white;
   overflow: visible;
+}
+
+#planet-tracks, #risen-tracks, #night-sky-tracks, #planets {
+  pointer-events: none;
 }
 
 .clock-face {
@@ -319,15 +332,17 @@ label {
   font-family: $dialog-font;
   font-size: 14px;
   cursor: auto;
+  z-index: 200;
 }
 
 .dialog-buttons {
-  position: absolute;
-  bottom: 1em;
-  right: 1em;
-  left: 1em;
-  display: flex;
   align-items: center;
+  bottom: 1em;
+  display: flex;
+  justify-content: flex-end;
+  left: 1em;
+  position: absolute;
+  right: 1em;
 
   & button {
     min-width: 80px; // Ignored by macOS Chrome
@@ -342,12 +357,6 @@ label {
   & button:not(:first-child), span:not(:first-child) {
     margin-left: 0.5em;
   }
-}
-
-.version-number {
-  flex-grow: 1;
-  color: #CCC;
-  font-size: smaller;
 }
 
 .alert-buttons, .confirm-buttons {
@@ -378,6 +387,11 @@ label {
   color: black;
 }
 
+.dialog-tab-row {
+  display: flex;
+  justify-content: space-between;
+}
+
 .compact-ui {
   input[type='text'], select, input[type='button'], input[type='submit'], button {
     -webkit-appearance: none;
@@ -402,17 +416,16 @@ label {
 }
 
 .user-options {
-  display: -ms-grid;
+  align-content: start;
   display: grid;
-  -ms-grid-columns: max-content auto auto;
   grid-template-columns: max-content auto auto;
-  grid-column-gap: 4px;
-  grid-row-gap: 3px;
+  grid-template-rows: auto;
+  grid-column-gap: 6px;
+  grid-row-gap: 6px;
 
   &>* {
     -ms-grid-row-align: center;
     align-self: center;
-    display: block; // Needed to make IE grid layout work
   }
 
   &>.colspan {
@@ -426,9 +439,18 @@ label {
       margin-right: 4px;
     }
 
+    > select {
+      margin-right: 8px;
+    }
+
     #weather-service-option {
       margin-right: 2em;
     }
+  }
+
+  &>.options-divider {
+    grid-column: 1 / span 3;
+    height: 0.5em;
   }
 
   &>.rowspan {
@@ -442,7 +464,6 @@ label {
 
     &>* {
       align-self: center;
-      display: block; // Needed to make IE grid layout work
       justify-self: center;
     }
   }
@@ -554,24 +575,6 @@ label {
   }
 }
 
-.squeeze-user-options {
-  grid-row-gap: 0;
-}
-
-.squeeze-user-options-more {
-  grid-row-gap: 0;
-
-  input, select {
-    margin: 1px 2px;
-  }
-}
-
-@supports (-moz-appearance: none) {
-  .user-options  {
-    grid-row-gap: 2px;
-  }
-}
-
 #alert-dialog, #confirm-dialog {
   > div {
     position: absolute;
@@ -593,10 +596,6 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .search-section {
-  position: absolute;
-  width: calc(100% - 2em);
-  top: 15.5em;
-
   & label, input {
     margin-right: 0.5em;
   }
@@ -617,19 +616,9 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 }
 
 .city-table-wrapper {
-  max-height: 176px;
+  max-height: 264px;
   overflow: auto;
   border: darkgray 1px solid;
-}
-
-@media only screen and (max-height: 479px) {
-  #settings-dialog > div {
-    height: 320px;
-  }
-
-  .city-table-wrapper {
-    max-height: 64px;
-  }
 }
 
 #city-table {
@@ -753,7 +742,9 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   top: 0;
   bottom: 0;
   pointer-events: none;
-  transition: opacity 5s ease-in;
+  // Apply this transition after start-up, so dimmer is immediately transparent at start-up.
+  // transition: opacity 5s ease-in;
+  z-index: 30;
 }
 
 .moving-dot {
@@ -1029,6 +1020,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   padding: 1em 1.5em 1em 1em;
   background-color: white;
   color: black;
+  z-index: 100;
 
   .dialog-text {
     max-height: calc(var(--page-lines, 1) * 3.6vh);
@@ -1113,4 +1105,451 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 #test-time {
   display: none;
   position: absolute;
+}
+
+.sky-map {
+  position: fixed;
+  transition: opacity 1s;
+  z-index: 10;
+}
+
+#clock-overlay-svg {
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 1s;
+
+  &.float {
+    #hands {
+      opacity: 0.4;
+    }
+
+    #hub, #subhub {
+      opacity: 0;
+    }
+
+    .dot {
+      opacity: 0;
+
+      &.big-dot {
+        opacity: 0.25;
+      }
+    }
+  }
+}
+
+ul.my-tabs {
+  list-style-type: none;
+  margin: 0 0 0 0.5em;
+  padding: 0;
+  overflow: visible;
+}
+
+ul.my-tabs > li {
+  background-color: #D7DDEE;
+  border: 1px solid #CCCCD6;
+  border-bottom: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  color: black;
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 0.1em;
+  padding: 0.5em 1em;
+  user-select: none;
+}
+
+ul.my-tabs > li:hover {
+  background-color: #E8EEFF;
+}
+
+ul.my-tabs > li.tab-active {
+  background-color: white;
+  cursor: default;
+  position: relative;
+
+  &::after {
+    background-color: white;
+    display: block;
+    content: ' ';
+    height: 10px;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    z-index: 1;
+  }
+}
+
+.tab-wrapper {
+  border: 1px solid #CCC;
+  box-sizing: border-box;
+  height: 415px;
+  position: relative;
+}
+
+.tab-panel {
+  background-color: white;
+  box-sizing: border-box;
+  height: 100%;
+  left: 0;
+  padding: 1em;
+  position: absolute;
+  top: 0;
+  visibility: hidden;
+  width: 100%;
+
+  &.tab-active {
+    display: block;
+  }
+}
+
+@media only screen and (max-height: 479px) {
+  #settings-dialog > div {
+    height: 320px;
+  }
+
+  .tab-wrapper {
+    height: 255px;
+    overflow: auto;
+  }
+
+  .city-table-wrapper {
+    max-height: 138px;
+  }
+}
+
+.recent-row {
+  margin-bottom: 1em;
+
+  .recent-locations {
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25em 0.75em;
+
+    .recent-location {
+      background-color: #DDD;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-block;
+      padding: 0.33em 0.1em 0.33em 0.5em;
+      position: relative;
+
+      span {
+        background-color: #BBB;
+        border-radius: 50%;
+        font-size: 0.8em;
+        margin: 0 0.33em;
+        padding: 0.3em 0.5em;
+        position: relative;
+        top: -0.1em;
+      }
+    }
+  }
+}
+
+#city-table > thead {
+  background-color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.alarm-section {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: space-between;
+
+  .alarm-entry-panel {
+    display: flex;
+    flex: 0 0 0;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+
+    #alarm-set-panel {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      justify-content: start;
+
+      .alarm-type-buttons {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 0.25rem;
+
+        label {
+          white-space: nowrap;
+        }
+      }
+
+      .hour-minute-panel {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        justify-content: center;
+
+        input, select, span {
+          font-size: 2.5rem;
+          font-weight: bold;
+        }
+
+        input {
+          text-align: center;
+          width: 2.2ch;
+        }
+
+        select {
+          margin-left: 0.75rem;
+        }
+      }
+
+      #day-of-week-panel {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        justify-content: center;
+        min-height: 55px;
+
+        > div {
+          align-items: center;
+          display: flex;
+          flex-direction: column;
+        }
+      }
+
+      #date-panel {
+        display: none; // Updated to flex when active
+        flex-direction: row;
+        gap: 0.5rem;
+        justify-content: center;
+        min-height: 55px;
+
+        input, select, option {
+          font-size: 2rem;
+          text-align: center;
+        }
+
+        .day {
+          width: 2.2ch;
+        }
+
+        .year {
+          width: 4.4ch;
+        }
+      }
+
+      .audio-selection {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        justify-content: center;
+
+        button {
+          background: transparent;
+          border: 0;
+          font-size: 1.5rem;
+          padding: 0;
+        }
+      }
+
+      .alarm-message-panel {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        justify-content: center;
+      }
+    }
+  }
+
+  .alarm-list-panel {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 100%;
+
+    #alarm-list {
+      border: 1px solid #AAA;
+      height: 100%;
+      overflow: auto;
+      width: 100%;
+
+      .alarm-item {
+        border-bottom: 1px solid #DDD;
+        padding: 0.5rem;
+
+        &.selected {
+          background-color: #99DDFF;
+        }
+
+        > div {
+          align-items: center;
+          display: flex;
+          gap: 0.5rem;
+
+          span {
+            align-items: center;
+            display: flex;
+            white-space: nowrap;
+          }
+
+          .time {
+            font-size: 1.2em;
+            font-weight: bold;
+          }
+
+          .date, .days, .message {
+            flex: 1 1 0;
+          }
+
+          .message {
+            display: inline-block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 4em;
+          }
+        }
+      }
+    }
+  }
+
+  .alarm-list-buttons, .alarm-save-buttons {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+  }
+
+  .alarm-list-buttons > button {
+    min-width: 8rem;
+  }
+
+  .alarm-save-buttons > button {
+    margin-top: 1rem;
+    min-width: 5rem;
+  }
+}
+
+#current-alarm-display {
+  align-items: center;
+  background-color: yellow;
+  bottom: 9rem;
+  display: none; // Updated to flex when active
+  flex-direction: column;
+  justify-content: space-between;
+  left: 0;
+  max-width: 67vw;
+  min-height: 67vh;
+  padding: 1em;
+  position: absolute;
+  top: 5.5rem;
+  width: 43rem;
+  z-index: 200;
+
+  button#stop-alarm {
+    align-self: stretch;
+    border-radius: 1.5em;
+    font-size: 5em;
+  }
+
+  #alarm-messages {
+    color: black;
+    flex: 1 1 0;
+    font-size: 2em;
+    margin: 1rem;
+    overflow: auto;
+    width: 100%;
+
+    ul {
+      margin: 0;
+    }
+  }
+
+  .snooze-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center;
+
+    button {
+      font-size: 1.5em;
+    }
+  }
+}
+
+#clear-snooze-display {
+  background-color: yellow;
+  color: black;
+  display: none; // Updated to block when active
+  font-size: 1.8vw;
+  height: 4vw;
+  padding: 0.5vw;
+  position: fixed;
+  right: 1vw;
+  text-align: center;
+  top: 1vw;
+  width: 18vw;
+
+  span {
+    display: inline-block;
+    position: relative;
+    top: -0.25vw;
+  }
+}
+
+.update-section {
+  display: flex;
+  flex-direction: column;
+
+  #hide-update-panel {
+    align-items: center;
+    background-color: #DEF;
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .update-header {
+    background-color: #EEEEEE;
+    padding: 0.25rem;
+  }
+
+  #update-version-info {
+    flex: 1 1 0;
+    height: 0;
+    margin: 0.5rem 0 0 .25rem;
+    overflow: auto;
+
+    code {
+      background-color: rgba(175, 184, 193, 0.2);
+      border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 85%;
+      margin: 0;
+      padding: 0.2em;
+    }
+
+    h2 {
+      border-bottom: #DDD 1px solid;
+      font-size: 1.25em;
+      margin: 0.5rem 1rem 0.25rem 0;
+    }
+
+    span.ex-link {
+      color: #000088;
+    }
+
+    ul {
+      margin-block-start: 0.5rem;
+      margin-top: 0;
+      padding-inline-start: 20px;
+    }
+  }
 }

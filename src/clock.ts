@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import $ from 'jquery';
 import { DateAndTime, getDayOfWeek, getLastDateInMonthGregorian, DateTime, Timezone } from '@tubular/time';
 import { abs, cos_deg, floor, interpolate, irandom, max, min, mod2, sin_deg } from '@tubular/math';
-import { getCssValue, isIE, isRaspbian, padLeft } from '@tubular/util';
+import { getCssValue, isRaspbian, padLeft } from '@tubular/util';
 import { TimeFormat } from './shared-types';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
 import { getJson, setSignalLevel } from './awc-util';
@@ -35,7 +35,6 @@ export class Clock {
   private readonly hourHand: HTMLElement;
   private readonly forecastStart: HTMLElement;
   private readonly forecastEnd: HTMLElement;
-  private readonly hands: HTMLElement;
   private readonly gpsMeter: HTMLElement;
 
   private readonly secTurn: SVGAnimationElement;
@@ -58,6 +57,7 @@ export class Clock {
   private dtaiCaption: HTMLElement;
   private dayHeaders: HTMLElement[];
   private clock: HTMLElement;
+  private clockOverlaySvg: SVGElement;
 
   private readonly hasBeginElement: boolean;
 
@@ -91,7 +91,6 @@ export class Clock {
     this.hourTurn = document.getElementById('hour-turn') as SVGAnimationElement;
     this.forecastStart = document.getElementById('hourly-forecast-start');
     this.forecastEnd = document.getElementById('hourly-forecast-end');
-    this.hands = document.getElementById('hands');
     this.zoneCaption = document.getElementById('timezone');
     this.hub = document.getElementById('hub');
     this.dayOfWeekCaption = document.getElementById('day-of-week');
@@ -114,9 +113,6 @@ export class Clock {
     this.hasBeginElement = !!this.secTurn.beginElement;
 
     this.decorateClockFace();
-
-    if (isIE())
-      $('#clock-container').addClass('clock-container-ie-fix');
   }
 
   public start(): void {
@@ -162,6 +158,7 @@ export class Clock {
     let firstTick: SVGCircleElement;
 
     this.clock = document.getElementById('clock');
+    this.clockOverlaySvg = document.getElementById('clock-overlay-svg') as unknown as SVGElement;
 
     for (let deg = 0; deg <= 360; deg += 6) { // 61 dots created, not just 60, so there's one for a possible leap second.
       const i = deg / 6;
@@ -175,6 +172,10 @@ export class Clock {
       tickMark.setAttribute('r', (big ? 1 : 0.333).toString());
       tickMark.setAttribute('fill', (big ? 'white' : faceColor));
       tickMark.setAttribute('fill-opacity', '1');
+      tickMark.classList.add('dot');
+
+      if (big)
+        tickMark.classList.add('big-dot');
 
       if (i > 55) {
         tickMark.setAttribute('id', 'dot-' + i);
@@ -185,9 +186,9 @@ export class Clock {
         firstTick = tickMark;
 
       if (i < 60)
-        this.clock.appendChild(tickMark);
+        this.clockOverlaySvg.appendChild(tickMark);
       else
-        this.clock.insertBefore(tickMark, firstTick);
+        this.clockOverlaySvg.insertBefore(tickMark, firstTick);
 
       if (deg % 30 === 0) {
         const h = (deg === 270 ? 12 : ((deg + 90) % 360) / 30);
@@ -210,7 +211,7 @@ export class Clock {
             text2.style.letterSpacing = '-0.1em';
         }
 
-        this.clock.insertBefore(text2, this.hands);
+        this.clock.insertBefore(text2, risenTracks);
 
         const x3 = CLOCK_CENTER + CONSTELLATION_RADIUS * cos_deg(-deg - 15);
         const y3 = CLOCK_CENTER + CONSTELLATION_RADIUS * sin_deg(-deg - 15);
@@ -348,8 +349,8 @@ export class Clock {
 
     if (this.inMinuteOfLeapSecond !== minuteOfLeapSecond) {
       if (!minuteOfLeapSecond) {
-        this.clock.classList.remove('leap-second');
-        this.clock.classList.remove('neg-leap-second');
+        this.clockOverlaySvg.classList.remove('leap-second');
+        this.clockOverlaySvg.classList.remove('neg-leap-second');
 
         if (this.upcomingLeapSecond) {
           // Use previous end-of-day TAI and dut1 values, adjusted by the last new leap second, until this info is re-polled.
@@ -362,9 +363,9 @@ export class Clock {
         }
       }
       else if (timeInfo.leapSecond > 0)
-        this.clock.classList.add('leap-second');
+        this.clockOverlaySvg.classList.add('leap-second');
       else
-        this.clock.classList.add('neg-leap-second');
+        this.clockOverlaySvg.classList.add('neg-leap-second');
 
       this.inMinuteOfLeapSecond = minuteOfLeapSecond;
     }

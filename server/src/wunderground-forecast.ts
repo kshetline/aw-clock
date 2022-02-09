@@ -1,11 +1,9 @@
 import { purgeCache, requestJson, requestText } from './request-cache';
-import { Request, Router } from 'express';
+import { Request } from 'express';
 import { max } from '@tubular/math';
 import { isObject, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
 import { alertCleanUp, autoHpa, autoInHg, checkForecastIntegrity, filterError } from './awcs-util';
-
-export const router = Router();
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const url = `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`;
