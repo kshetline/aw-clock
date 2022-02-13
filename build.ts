@@ -1,3 +1,4 @@
+/// <reference path="./ambient.d.ts" />
 import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as fs from 'fs';

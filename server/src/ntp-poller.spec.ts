@@ -1,3 +1,4 @@
+/// <reference path="../../ambient.d.ts" />
 import { expect } from 'chai';
 import { NtpPoller } from './ntp-poller';
 import { afterEach, describe, it } from 'mocha';

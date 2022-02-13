@@ -124,8 +124,8 @@ export class Gps extends TimePoller {
             else if (this.gpsData.estimatedPositionError > 10)
               this.gpsData.signalQuality *= 3 / 4;
 
-            if (this.gpsData.averageSNR < 35)
-              this.gpsData.signalQuality *= (65 + this.gpsData.averageSNR) / 100;
+            if ((this.gpsData.averageSNR ?? 0) < 35)
+              this.gpsData.signalQuality *= (65 + (this.gpsData.averageSNR ?? 0)) / 100;
 
             this.gpsData.signalQuality = round(this.gpsData.signalQuality);
           }
@@ -144,12 +144,12 @@ export class Gps extends TimePoller {
               ++usedCount;
               totalSNR += sat.ss;
             }
-
-            if (usedCount > 0)
-              this.gpsData.averageSNR = round(totalSNR / usedCount);
-            else
-              delete this.gpsData.averageSNR;
           }
+
+          if (usedCount > 0)
+            this.gpsData.averageSNR = round(totalSNR / usedCount);
+          else
+            delete this.gpsData.averageSNR;
         }
         else if (obj?.class === 'PPS' && obj.real_sec) {
           const gpsTime = BigInt(obj.real_sec) * BILLION + BigInt(obj.real_nsec);
@@ -177,7 +177,7 @@ export class Gps extends TimePoller {
     for (const line of ntpInfo) {
       const $ = /^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s([-+]?[.\d]+)\s+[.\d]+\s*$/.exec(line);
 
-      if ($ && Number($[1]) <= 1) {
+      if ($ && abs(toNumber($[1])) <= 1) {
         gpsFound = true;
         break;
       }

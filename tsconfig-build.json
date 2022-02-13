@@ -12,11 +12,10 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "typeRoots": [
-      "node_modules/@types",
-      "./custom-types"
+    "types": [
+      "node"
     ]
   },
-  "include": ["./custom-types/**/*", "./build.ts"],
+  "include": ["./ambient.d.ts", "./build.ts"],
   "exclude": ["node_modules", "src", "sass", "server", "dist", "tsc-out", "**/*.spec.ts"]
 }
