@@ -1,3 +1,8 @@
+## 3.1.0
+
+* Allow user to add their own alarm tones.
+* More built-in alarm tones.
+
 ## 3.0.0
 
 * Added optional sky maps, allowing the clock face to be replaced with a map of the planets, stars, and constellations as they appear in your local sky.

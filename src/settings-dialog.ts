@@ -12,7 +12,7 @@ import {
   popKeydownListener, pushKeydownListener, safeCompareVersions
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
-import { clone, eventToKey, htmlEscape, isEqual, noop, toBoolean, toNumber } from '@tubular/util';
+import { beep, clone, eventToKey, htmlEscape, isEqual, noop, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -160,7 +160,7 @@ function formatAlarmDate(time: number): string {
 }
 
 function soundName(fileName: string): string {
-  return fileName.replace(/\.[^.]+$/, '').replace(/_/g, ' ');
+  return (fileName || '???').replace(/^user\//, '✭').replace(/\.[^.]+$/, '').replace(/_/g, ' ');
 }
 
 const UPDATE_OPTIONS = `<br>
@@ -444,6 +444,7 @@ export class SettingsDialog {
         this.nowPlaying.addEventListener('canplay', () => somewhatReady = true);
         this.nowPlaying.addEventListener('canplaythrough', () => !playStarted && (playStarted = true) && this.playAudio());
         this.nowPlaying.addEventListener('ended', () => this.stopAudio());
+        this.nowPlaying.addEventListener('error', () => { beep(); this.stopAudio(); });
         this.nowPlaying.addEventListener('loadstart', () => somewhatReady = true);
         setTimeout(() => !playStarted && somewhatReady && (playStarted = true) && this.playAudio(), 333);
       }

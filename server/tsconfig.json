@@ -13,7 +13,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "types": [
-      "nodes"
+      "node"
     ],
     "lib": [
       "es2020",
