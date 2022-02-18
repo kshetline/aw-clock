@@ -411,27 +411,21 @@ export class SettingsDialog {
     this.dayOfWeekPanel.html(dayOfWeekCheckboxes);
 
     this.alarmAudio = $('.audio-selection > select');
-    this.play = $('.audio-selection > button');
+    this.updateAudioChoices();
+    this.alarmAudio.on('change', () => {
+      this.stopAudio();
 
-    getJson<string[]>(`${apiServer}/assets/audio`).then(data => {
-      let options = data.reduce((prev, current) =>
-        prev + `<option value="${current}">${soundName(current)}</option>`, '');
-
-      options += '<option value="">(Silent)</option>';
-      this.alarmAudio.html(options).on('change', () => {
-        this.stopAudio();
-
-        if (this.alarmAudio.val()) {
-          this.play.css('opacity', '1');
-          this.play.css('pointer-events', 'all');
-        }
-        else {
-          this.play.css('opacity', '0.33');
-          this.play.css('pointer-events', 'none');
-        }
-      });
+      if (this.alarmAudio.val()) {
+        this.play.css('opacity', '1');
+        this.play.css('pointer-events', 'all');
+      }
+      else {
+        this.play.css('opacity', '0.33');
+        this.play.css('pointer-events', 'none');
+      }
     });
 
+    this.play = $('.audio-selection > button');
     this.play.on('click', () => {
       if (this.nowPlaying)
         this.stopAudio();
@@ -527,6 +521,16 @@ export class SettingsDialog {
     });
     this.alarmDelete.on('click', () => this.deleteSelectedAlarm());
     this.alarmEdit.on('click', () => this.editSelectedAlarm());
+  }
+
+  private updateAudioChoices(): void {
+    getJson<string[]>(`${apiServer}/assets/audio`).then(data => {
+      let options = data.reduce((prev, current) =>
+        prev + `<option value="${current}">${soundName(current)}</option>`, '');
+
+      options += '<option value="">(Silent)</option>';
+      this.alarmAudio.html(options);
+    });
   }
 
   private saveAlarm(): void {
@@ -896,6 +900,7 @@ export class SettingsDialog {
     this.previousSettings = previousSettings;
     this.newAlarms = clone(previousSettings.alarms) || [];
     this.selectTab(emphasizeUpdate ? Tab.UPDATE : Tab.OPTIONS);
+    this.updateAudioChoices();
 
     const checkUiSizing = (): void => {
       if (this.currentCity[0].offsetHeight === 0)
