@@ -1,6 +1,6 @@
 ## 3.1.0
 
-* Allow user to add their own alarm tones.
+* Allow users to add their own alarm tones.
 * More built-in alarm tones.
 
 ## 3.0.0
