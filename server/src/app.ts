@@ -193,7 +193,7 @@ if (!fs.existsSync(audioDir)) {
   disableCorsForAudio = true;
 }
 
-let userAudioDir = path.join('/', 'pi', 'awc-alarm-tones');
+let userAudioDir = path.join('/', 'home', 'pi', 'awc-alarm-tones');
 
 if (!fs.existsSync(userAudioDir)) {
   userAudioDir = path.join(os.homedir(), 'awc-alarm-tones');
