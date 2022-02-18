@@ -205,8 +205,14 @@ if (!fs.existsSync(userAudioDir)) {
 if (userAudioDir) {
   const linkPath = path.join(audioDir, 'user');
 
-  if (!fs.existsSync(linkPath))
-    fs.symlinkSync(userAudioDir, linkPath);
+  if (!fs.existsSync(linkPath)) {
+    try {
+      fs.symlinkSync(userAudioDir, linkPath);
+    }
+    catch {
+      userAudioDir = undefined;
+    }
+  }
 }
 
 function createAndStartServer(): void {

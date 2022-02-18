@@ -1217,6 +1217,9 @@ async function doServiceDeployment(): Promise<void> {
       showStep();
       write('Moving server to ~/weather directory' + trailingSpace);
 
+      if (!fs.existsSync(userHome + '/awc-alarm-tones'))
+        fs.mkdirSync(userHome + '/awc-alarm-tones');
+
       if (!fs.existsSync(userHome + '/weather'))
         await monitorProcess(spawn('mkdir', [userHome + '/weather']), spin);
       else
