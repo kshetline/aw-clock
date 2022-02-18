@@ -1,10 +1,12 @@
 import $ from 'jquery';
-import { AppService } from '../app.service';
-import { AlarmInfo, Settings } from '../settings';
-import { htmlEscape, isEqual, noop, processMillis } from '@tubular/util';
+import { AppService } from './app.service';
+import { AlarmInfo, Settings } from './settings';
+import { beep, htmlEscape, isEqual, noop, processMillis } from '@tubular/util';
 import { DateTime } from '@tubular/time';
 import { floor } from '@tubular/math';
-import { domAlert } from '../awc-util';
+import { domAlert } from './awc-util';
+
+const FALLBACK_AUDIO = 'Beep-beep-beep-beep.mp3';
 
 export class AlarmMonitor {
   private activeAlarms: AlarmInfo[] = [];
@@ -13,6 +15,7 @@ export class AlarmMonitor {
   private cantPlayAlertShown = false;
   private clearSnoozeDisplay: JQuery;
   private currentSound: string;
+  private fallbackBeep: any;
   private nowPlaying: HTMLAudioElement;
   private silencedAlarms: { stoppedAt: number, alarm: AlarmInfo }[] = [];
   private snoozedAlarms: { restartAt: number, alarm: AlarmInfo }[] = [];
@@ -107,17 +110,7 @@ export class AlarmMonitor {
 
     if (latestSound && latestSound !== this.currentSound) {
       this.stopAudio();
-
-      let somewhatReady = false;
-      let playStarted = false;
-
-      this.currentSound = latestSound;
-      this.nowPlaying = new Audio(`/assets/audio/${encodeURI(latestSound)}`);
-
-      this.nowPlaying.addEventListener('canplay', () => somewhatReady = true);
-      this.nowPlaying.addEventListener('canplaythrough', () => !playStarted && (playStarted = true) && this.playAudio());
-      this.nowPlaying.addEventListener('loadstart', () => somewhatReady = true);
-      setTimeout(() => !playStarted && somewhatReady && (playStarted = true) && this.playAudio(), 333);
+      this.createAudio(latestSound);
     }
 
     const messages: string[] = [];
@@ -131,6 +124,36 @@ export class AlarmMonitor {
       this.alarmMessages.text(messages[0]);
     else if (messages.length > 1)
       this.alarmMessages.html('<ul><li>' + messages.map(msg => htmlEscape(msg)).join('</li>\n<li>') + '</li></ul>');
+  }
+
+  private createAudio(fileName: string): void {
+    let somewhatReady = false;
+    let playStarted = false;
+    let gotError = false;
+
+    this.currentSound = fileName;
+    this.nowPlaying = new Audio(`/assets/audio/${encodeURI(fileName)}`);
+
+    this.nowPlaying.addEventListener('canplay', () => somewhatReady = true);
+    this.nowPlaying.addEventListener('canplaythrough', () => !playStarted && (playStarted = true) && this.playAudio());
+    this.nowPlaying.addEventListener('loadstart', () => somewhatReady = true);
+    this.nowPlaying.addEventListener('error', err => {
+      if (gotError)
+        return;
+
+      const wasPlaying = this.currentSound;
+
+      gotError = true;
+      console.error(err);
+      this.stopAudio();
+
+      if (wasPlaying !== FALLBACK_AUDIO)
+        this.createAudio(FALLBACK_AUDIO);
+      else
+        this.fallbackBeep = setInterval(beep, 500);
+    });
+
+    setTimeout(() => !playStarted && somewhatReady && (playStarted = true) && this.playAudio(), 333);
   }
 
   private playAudio(): void {
@@ -152,6 +175,11 @@ export class AlarmMonitor {
       this.nowPlaying.currentTime = 0;
       this.nowPlaying = undefined;
       this.currentSound = undefined;
+    }
+
+    if (this.fallbackBeep) {
+      clearInterval(this.fallbackBeep);
+      this.fallbackBeep = undefined;
     }
   }
 

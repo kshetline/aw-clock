@@ -1,3 +1,4 @@
+/// <reference path="./ambient.d.ts" />
 import * as Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as fs from 'fs';
@@ -1215,6 +1216,9 @@ async function doServiceDeployment(): Promise<void> {
     if (doStdDeploy) {
       showStep();
       write('Moving server to ~/weather directory' + trailingSpace);
+
+      if (!fs.existsSync(userHome + '/awc-alarm-tones'))
+        fs.mkdirSync(userHome + '/awc-alarm-tones');
 
       if (!fs.existsSync(userHome + '/weather'))
         await monitorProcess(spawn('mkdir', [userHome + '/weather']), spin);

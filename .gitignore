@@ -38,6 +38,8 @@ testem.log
 /typings
 .first-time-install
 node_path.txt
+/src/assets/audio/user
+/src/assets/audio/user/
 
 # e2e
 /e2e/*.js

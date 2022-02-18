@@ -35,7 +35,7 @@ import { reflow, updateSvgFlowItems } from './svg-flow';
 import { adjustCityName, anyDialogOpen, ClickishEvent, getJson, stopPropagation } from './awc-util';
 import { CurrentTemperatureHumidity, Rect, TimeFormat } from './shared-types';
 import { SkyMap } from './sky-map';
-import { AlarmMonitor } from './assets/alarm-monitor';
+import { AlarmMonitor } from './alarm-monitor';
 
 pollForTimezoneUpdates(zonePollerBrowser);
 

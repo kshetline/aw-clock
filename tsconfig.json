@@ -13,11 +13,10 @@
       "es2020",
       "dom"
     ],
-    "typeRoots": [
-      "node_modules/@types",
-      "./custom-types"
+    "types": [
+      "node"
     ]
   },
-  "include": ["./custom-types/**/*", "./src/**/*"],
+  "include": ["./ambient.d.ts", "./src/**/*"],
   "exclude": ["node_modules", "server", "**/*.spec.ts"]
 }

@@ -28,7 +28,7 @@ import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
 import os from 'os';
-import { asLines, htmlEscape, isString, noop, toBoolean, toNumber } from '@tubular/util';
+import { asLines, htmlEscape, isString, noop, push, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
 import * as path from 'path';
 import * as requestIp from 'request-ip';
@@ -185,6 +185,36 @@ if (process.env.AWC_DEBUG_TIME) {
 else
   hasGps().then(hasIt => gps = hasIt ? new Gps(taiUtc) : null);
 
+let audioDir = path.join(__dirname, 'public', 'assets', 'audio');
+let disableCorsForAudio = false;
+
+if (!fs.existsSync(audioDir)) {
+  audioDir = path.join(__dirname, '..', '..', 'src', 'assets', 'audio');
+  disableCorsForAudio = true;
+}
+
+let userAudioDir = path.join('/', 'home', 'pi', 'awc-alarm-tones');
+
+if (!fs.existsSync(userAudioDir)) {
+  userAudioDir = path.join(os.homedir(), 'awc-alarm-tones');
+
+  if (!fs.existsSync(userAudioDir))
+    userAudioDir = undefined;
+}
+
+if (userAudioDir) {
+  const linkPath = path.join(audioDir, 'user');
+
+  if (!fs.existsSync(linkPath)) {
+    try {
+      fs.symlinkSync(userAudioDir, linkPath);
+    }
+    catch {
+      userAudioDir = undefined;
+    }
+  }
+}
+
 function createAndStartServer(): void {
   console.log(`*** Starting server on port ${httpPort} at ${timeStamp()} ***`);
   httpServer = http.createServer(app);
@@ -271,6 +301,10 @@ function shutdown(signal?: string): void {
   NtpPoolPoller.closeAll();
 }
 
+function isAudioFile(name: string): boolean {
+  return /\.(mp3|mp4|ogg)$/i.test(name);
+}
+
 function getApp(): Express {
   const theApp = express();
 
@@ -280,14 +314,15 @@ function getApp(): Express {
   theApp.use(cookieParser());
 
   theApp.get('/assets/audio/', (_req, res) => {
-    let audioDir = path.join(__dirname, 'public', 'assets', 'audio');
-
-    if (!fs.existsSync(audioDir)) {
-      audioDir = path.join(__dirname, '..', '..', 'src', 'assets', 'audio');
+    if (disableCorsForAudio)
       res.header('Access-Control-Allow-Origin', '*');
-    }
 
-    res.send(JSON.stringify(fs.readdirSync(audioDir).filter(name => !name.startsWith('.'))));
+    let files = fs.readdirSync(audioDir).filter(name => isAudioFile(name));
+
+    if (userAudioDir)
+      files = push(fs.readdirSync(userAudioDir).filter(name => isAudioFile(name)).map(name => 'user/' + name), ...files);
+
+    res.send(JSON.stringify(files));
   });
 
   theApp.use(express.static(path.join(__dirname, 'public')));

@@ -124,7 +124,13 @@ A touchscreen is the most practical way to use the alarm features of this clock,
 
 As an alternative to silencing and snoozing alarms with a touchscreen, there are also keypress values associated with these actions. While you probably wouldn’t want a full-size keyboard attached to your clock all the time, a small set of programmable USB keys, or even a single key, could be used to provide a more tactile yet compact way of controlling alarms.
 
+A Bluetooth numeric keypad, while not exactly the ideal form factor, can provide a convenient and inexpensive means of remotely silencing and snoozing alarms.
+
 Stop alarm: &lt;space&gt; *or* Enter<br>Snooze 5 minutes: 5<br>Snooze 10 minutes: 0 *or* S<br>Snooze 15 minutes: . *(period)*<br>
+
+### Custom alarm tones
+
+When you perform the standard dedicated device installation, a folder will be created for your own alarm tones at `/home/pi/awc-alarm-tones`. Simply add MP3, MP4, or OGG audio files to this folder to make them available for alarms.
 
 ### Wind speed
 
@@ -308,7 +314,7 @@ The following environment variables affect how the server part of this software 
 * `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `/etc/defaults/weatherService` file, or by setting it to `false`.
 * `AWC_GIT_REPO_PATH`: The path to your aw-clock Git repository.
 * `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or in addition, you can set up `AWC_WEATHERBIT_API_KEY` for both geocoding and weather data.
-* `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not.
+* `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not. *(Note: Changing this setting alone will not change kiosk behavior. If you want to change kiosk mode without running `build.sh` again, you must edit the file `/home/pi/.config/lxsession/LXDE-pi/autostart` to add or remove the `--kiosk` parameter from the `chromium-browser` command.)*
 * `AWC_LOG_CACHE_ACTIVITY`: As a debugging/development aid, set to `true` to enable additional logging of the server’s web cache behavior.
 * `AWC_NTP_SERVERS`: Optional alternate NTP servers used by this software, as a comma-separated list of domain names. (See previous comments about selecting alternate servers.)
 * `AWC_PORT`: By default the deployed server runs on localhost port 8080, but you can use a different port if you prefer.

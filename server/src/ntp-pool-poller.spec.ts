@@ -1,3 +1,4 @@
+/// <reference path="../../ambient.d.ts" />
 import { expect } from 'chai';
 import { NtpPoolPoller } from './ntp-pool-poller';
 import { afterEach, describe, it } from 'mocha';
@@ -58,7 +59,7 @@ describe('ntp-pool-poller', () => {
                 if (i === 2)
                   expect(nsec).to.not.equal(59);
 
-                expect(now).to.be.greaterThan(change + 750,
+                expect(now).to.be.greaterThan(change + 750, // TODO: Investigate sporadic failure of this test with negative leap seconds.
                   `changed too quickly (${round(now - change)}ms) from ${secs.slice(-5, -3)} to ${sec}`);
                 expect(now).to.be.lessThan(change + 1750,
                   `changed too slowly (${round(now - change)}ms) from ${secs.slice(-5, -3)} to ${sec}`);
