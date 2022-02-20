@@ -188,7 +188,7 @@ export class Forecast {
     const width = forecastRect.getBoundingClientRect().width;
 
     const dragStartThreshold = 3;
-    const swipeThreshold = width * 0.8 / this.forecastDaysVisible; // 80% of the distance across one day
+    const swipeThreshold = width * 2 / 7; // Distance across two viewable days
     const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
     const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
     const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
@@ -308,8 +308,6 @@ export class Forecast {
         doSwipe(1);
     });
 
-    const canMoveDirection = (dx: number): boolean => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
-
     const mouseMove = (x: number): void => {
       if (!dragging || x === lastX)
         return;
@@ -319,23 +317,17 @@ export class Forecast {
       minMove = Math.max(Math.abs(dx), Math.abs(minMove));
       lastX = x;
 
-      if (canMoveDirection(dx)) {
-        if (minMove >= swipeThreshold) {
-          dragging = false;
-          dragEndTime = processMillis();
-          lastX = undefined;
-          doSwipe(dx);
-        }
-        else if (minMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
-          const shift = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
-          const currentShift = this.showingStartOfWeek ? 0 : shift;
-          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, shift), 0);
+      if (minMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
+        const shift = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
+        const currentShift = this.showingStartOfWeek ? 0 : shift;
+        const dragTo = currentShift + dx / width * 91;
+        const dragToClamped = Math.min(Math.max(dragTo, shift - FORECAST_DAY_WIDTH / 4), FORECAST_DAY_WIDTH / 4);
 
-          $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
-          $(animateWeekDrag).attr('to', `${dragTo} 0`);
-          lastAnimX = dragTo;
-          animateWeekDrag.beginElement();
-        }
+        $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
+        $(animateWeekDrag).attr('to', `${dragToClamped} 0`);
+        lastAnimX = dragTo;
+        animateWeekDrag.beginElement();
+        downX += (dragTo - dragToClamped) * width / 91;
       }
     };
     window.addEventListener('mousemove', event => mouseMove(event.pageX));
@@ -345,12 +337,10 @@ export class Forecast {
       if (dragging && minMove >= 0) {
         const dx = (x ?? downX) - downX;
 
-        if (x == null || canMoveDirection(dx)) {
-          if (Math.abs(dx) >= swipeThreshold)
-            doSwipe(dx);
-          else if (minMove >= dragStartThreshold)
-            restorePosition();
-        }
+        if (Math.abs(dx) >= swipeThreshold)
+          doSwipe(dx);
+        else
+          restorePosition();
 
         if (minMove >= dragStartThreshold)
           dragEndTime = processMillis();

@@ -1,3 +1,7 @@
+## 3.1.1
+
+* Improved touch/swipe interface for daily forecast.
+
 ## 3.1.0
 
 * Allow users to add their own alarm tones.
