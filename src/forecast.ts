@@ -316,7 +316,7 @@ export class Forecast {
 
       let dx = x - lastX;
 
-      if (smoothTarget || abs(dx) > 3) {
+      if (smoothTarget || abs(dx) > 4) {
         if (!smoothTarget) {
           smoothTarget = x;
           x = lastX + sign(x - lastX);
@@ -326,12 +326,12 @@ export class Forecast {
         }
 
         dx = smoothTarget - x;
-        const nextX = lastX + sign(dx) * min(abs(dx), 2);
+        const nextX = lastX + sign(dx) * min(abs(dx), 4);
 
         smoother = setTimeout(() => {
           smoother = undefined;
           mouseMove(nextX, smoothTarget === nextX ? 0 : smoothTarget);
-        }, 50);
+        }, 10);
       }
       else if (smoother) {
         clearTimeout(smoother);
