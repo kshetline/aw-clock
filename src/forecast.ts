@@ -2,7 +2,7 @@ import { AppService } from './app.service';
 import { CLOCK_CENTER } from './clock';
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
-import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
+import { abs, cos_deg, floor, max, min, sign, sin_deg } from '@tubular/math';
 import {
   blendColors, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject,
   last, processMillis, toNumber
@@ -201,7 +201,7 @@ export class Forecast {
     let dragEndTime = 0;
     let downX: number;
     let lastX: number;
-    let minMove = 0;
+    let maxMove = 0;
     let revertToStart: any;
     let swipeAnimating = false;
     let lastAnimX = 0;
@@ -241,7 +241,7 @@ export class Forecast {
     const mouseDown = (x: number): void => {
       dragging = true;
       lastX = downX = x;
-      minMove = 0;
+      maxMove = 0;
     };
     window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? mouseDown(event.pageX) : null);
     window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
@@ -308,19 +308,45 @@ export class Forecast {
         doSwipe(1);
     });
 
-    const mouseMove = (x = lastX): void => {
+    let smoother: any;
+
+    const mouseMove = (x = lastX, smoothTarget = 0): void => {
       if (!dragging || x === lastX)
         return;
 
-      const dx = x - downX;
+      let dx = x - lastX;
 
-      minMove = Math.max(Math.abs(dx), Math.abs(minMove));
+      if (smoothTarget || abs(dx) > 3) {
+        if (!smoothTarget) {
+          smoothTarget = x;
+          x = lastX + sign(x - lastX);
+
+          if (smoother)
+            clearTimeout(smoother);
+        }
+
+        dx = smoothTarget - x;
+        const nextX = lastX + sign(dx) * min(abs(dx), 2);
+
+        smoother = setTimeout(() => {
+          smoother = undefined;
+          mouseMove(nextX, smoothTarget === nextX ? 0 : smoothTarget);
+        }, 50);
+      }
+      else if (smoother) {
+        clearTimeout(smoother);
+        smoother = undefined;
+      }
+
+      const deltaStart = x - downX;
+
+      maxMove = Math.max(Math.abs(deltaStart), Math.abs(maxMove));
       lastX = x;
 
-      if (minMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
+      if (maxMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
         const shift = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
         const currentShift = this.showingStartOfWeek ? 0 : shift;
-        const dragTo = currentShift + dx / width * 91;
+        const dragTo = currentShift + deltaStart / width * 91;
         const dragToClamped = Math.min(Math.max(dragTo, shift - FORECAST_DAY_WIDTH / 4), FORECAST_DAY_WIDTH / 4);
 
         $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
@@ -334,7 +360,7 @@ export class Forecast {
     window.addEventListener('touchmove', event => mouseMove(event.touches[0]?.pageX ?? lastX));
 
     const mouseUp = (x: number): void => {
-      if (dragging && minMove >= 0) {
+      if (dragging && maxMove >= 0) {
         const dx = (x ?? downX) - downX;
 
         if (Math.abs(dx) >= swipeThreshold)
@@ -342,9 +368,11 @@ export class Forecast {
         else
           restorePosition();
 
-        if (minMove >= dragStartThreshold)
+        if (maxMove >= dragStartThreshold)
           dragEndTime = processMillis();
       }
+      else
+        restorePosition();
 
       dragging = false;
       lastX = undefined;
@@ -366,7 +394,9 @@ export class Forecast {
       const hourWind = isNew ? document.createElementNS(SVG_NAMESPACE, 'svg') : this.hourWinds[i];
       const hourTemp = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourTemps[i];
       const hourPop = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourPops[i];
-      let r, x, y;
+      let r: number;
+      let x: number;
+      let y: number;
 
       if (vertical) {
         x = i < 12 ? HOURLY_LEFT_COLUMN : HOURLY_RIGHT_COLUMN;
