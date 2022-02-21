@@ -530,7 +530,7 @@ export class SettingsDialog {
 
       options += '<option value="">(Silent)</option>';
       this.alarmAudio.html(options);
-    });
+    }).catch(err => console.error('Retrieving alarm tone list failed:', err));
   }
 
   private saveAlarm(): void {

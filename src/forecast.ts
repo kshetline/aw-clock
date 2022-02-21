@@ -308,7 +308,7 @@ export class Forecast {
         doSwipe(1);
     });
 
-    const mouseMove = (x: number): void => {
+    const mouseMove = (x = lastX): void => {
       if (!dragging || x === lastX)
         return;
 

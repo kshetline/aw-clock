@@ -423,7 +423,7 @@ class AwClockApp implements AppService {
             this.settings.city = adjustCityName(this.settings.city);
             this.settingsChecked = true;
             this.updateSettings(this.settings);
-          });
+          }).catch(err => console.error('Default set-up failed:', err));
 
         return;
       }
@@ -453,7 +453,7 @@ class AwClockApp implements AppService {
             data?.updateAvailable ? 'block' : 'none');
           this.updateAvailable.css('display', updateAvailable);
           this.updateCaption.css('display', updateAvailable);
-        });
+        }).catch(err => console.error('Update check failed:', err));
 
         this.forecast.update(this.settings.latitude, this.settings.longitude, this.settings.celsius, this.settings.knots,
           this.settings.userId);
