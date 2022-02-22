@@ -238,14 +238,15 @@ export class Forecast {
       });
     }
 
+    let usingTouch = false;
     const mouseDown = (x: number): void => {
       dragging = true;
       lastX = downX = x;
       maxMove = 0;
     };
-    window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? mouseDown(event.pageX) : null);
+    window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? usingTouch || mouseDown(event.pageX) : null);
     window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
-      mouseDown(event.touches[0].pageX) : null
+      (usingTouch = true) && mouseDown(event.touches[0].pageX) : null
     );
 
     const doSwipe = (dx: number): void => {
@@ -310,16 +311,16 @@ export class Forecast {
 
     let smoother: any;
 
-    const mouseMove = (x = lastX, smoothTarget = 0): void => {
+    const mouseMove = (x = lastX, smoothTarget?: number): void => {
       if (!dragging || x === lastX)
         return;
 
       let dx = x - lastX;
 
       if (smoothTarget || abs(dx) > 4) {
-        if (!smoothTarget) {
+        if (smoothTarget == null) {
           smoothTarget = x;
-          x = lastX + sign(x - lastX);
+          x = lastX + sign(x - lastX) * min(abs(x - lastX), 4);
 
           if (smoother)
             clearTimeout(smoother);
@@ -330,7 +331,7 @@ export class Forecast {
 
         smoother = setTimeout(() => {
           smoother = undefined;
-          mouseMove(nextX, smoothTarget === nextX ? 0 : smoothTarget);
+          mouseMove(nextX, smoothTarget === nextX ? undefined : smoothTarget);
         }, 10);
       }
       else if (smoother) {
@@ -360,6 +361,11 @@ export class Forecast {
     window.addEventListener('touchmove', event => mouseMove(event.touches[0]?.pageX ?? lastX));
 
     const mouseUp = (x: number): void => {
+      if (smoother) {
+        clearTimeout(smoother);
+        smoother = undefined;
+      }
+
       if (dragging && maxMove >= 0) {
         const dx = (x ?? downX) - downX;
 
@@ -376,6 +382,7 @@ export class Forecast {
 
       dragging = false;
       lastX = undefined;
+      usingTouch = false;
     };
     window.addEventListener('mouseup', event => mouseUp(event.pageX));
     window.addEventListener('touchend', event => mouseUp(event.touches[0]?.pageX ?? lastX));
