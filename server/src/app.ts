@@ -28,7 +28,7 @@ import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
 import os from 'os';
-import { asLines, htmlEscape, isString, noop, push, toBoolean, toNumber } from '@tubular/util';
+import { asLines, htmlEscape, isString, noop, processMillis, push, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
 import * as path from 'path';
 import * as requestIp from 'request-ip';
@@ -93,11 +93,12 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
 }
 
 // Poll for software updates
-const UPDATE_POLL_INTERVAL = 10800000; // 3 hours
+const UPDATE_POLL_INTERVAL = 7200000; // 2 hours
 const UPDATE_POLL_RETRY_TIME = 60_000; // 10 minutes
 let updatePollTimer: any;
 let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
 let latestVersionInfo = '';
+let lastUpdateCheck = Number.MIN_SAFE_INTEGER;
 
 async function checkForUpdate(): Promise<void> {
   updatePollTimer = undefined;
@@ -143,6 +144,7 @@ async function checkForUpdate(): Promise<void> {
       console.error('%s: Update info request failed: %s', timeStamp(), e.message ?? e.toString());
   }
 
+  lastUpdateCheck = processMillis();
   updatePollTimer = unref(setTimeout(checkForUpdate, delay));
 }
 
@@ -392,6 +394,9 @@ function getApp(): Express {
 
   theApp.get('/defaults', async (req, res) => {
     noCache(res);
+
+    if (lastUpdateCheck < processMillis() - UPDATE_POLL_RETRY_TIME)
+      await checkForUpdate();
 
     const ip = requestIp.getClientIp(req);
     const defaults: AwcDefaults = {
