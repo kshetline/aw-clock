@@ -2,7 +2,7 @@ import { AppService } from './app.service';
 import { CLOCK_CENTER } from './clock';
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
-import { cos_deg, floor, max, min, sin_deg } from '@tubular/math';
+import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
 import {
   blendColors, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject,
   last, processMillis, toNumber
@@ -188,7 +188,7 @@ export class Forecast {
     const width = forecastRect.getBoundingClientRect().width;
 
     const dragStartThreshold = 3;
-    const swipeThreshold = width * 0.8 / this.forecastDaysVisible; // 80% of the distance across one day
+    const swipeThreshold = width * 1.5 / 7; // Distance across 1.5 viewable days
     const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
     const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
     const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
@@ -201,7 +201,7 @@ export class Forecast {
     let dragEndTime = 0;
     let downX: number;
     let lastX: number;
-    let minMove = 0;
+    let maxMove = 0;
     let revertToStart: any;
     let swipeAnimating = false;
     let lastAnimX = 0;
@@ -238,14 +238,17 @@ export class Forecast {
       });
     }
 
+    let usingTouch = false;
+    let maxInc = 4;
     const mouseDown = (x: number): void => {
       dragging = true;
       lastX = downX = x;
-      minMove = 0;
+      maxMove = 0;
+      maxInc = 4;
     };
-    window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? mouseDown(event.pageX) : null);
+    window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? usingTouch || mouseDown(event.pageX) : null);
     window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
-      mouseDown(event.touches[0].pageX) : null
+      (usingTouch = true) && mouseDown(event.touches[0].pageX) : null
     );
 
     const doSwipe = (dx: number): void => {
@@ -298,66 +301,93 @@ export class Forecast {
       }
     };
 
-    skipToEnd.addEventListener('click', () => {
+    $('#week-forward, #week-forward-bkg').on('click', () => {
       if (this.showingStartOfWeek)
         doSwipe(-1);
     });
 
-    skipToStart.addEventListener('click', () => {
+    $('#week-backward, #week-backward-bkg').on('click', () => {
       if (!this.showingStartOfWeek)
         doSwipe(1);
     });
 
-    const canMoveDirection = (dx: number): boolean => (this.showingStartOfWeek && dx < 0) || (!this.showingStartOfWeek && dx > 0);
+    let smoother: any;
 
-    const mouseMove = (x: number): void => {
+    const mouseMove = (x = lastX, smoothTarget?: number): void => {
       if (!dragging || x === lastX)
         return;
 
-      const dx = x - downX;
+      const dx = x - lastX;
 
-      minMove = Math.max(Math.abs(dx), Math.abs(minMove));
+      if (smoothTarget || abs(dx) > maxInc) {
+        if (smoothTarget == null) {
+          smoothTarget = x;
+          x = lastX + sign(x - lastX) * min(abs(x - lastX), maxInc);
+
+          if (smoother)
+            clearTimeout(smoother);
+        }
+
+        const dx = smoothTarget - x;
+
+        smoother = setTimeout(() => {
+          const nextX = lastX + sign(dx) * min(abs(dx), maxInc);
+          smoother = undefined;
+          mouseMove(nextX, smoothTarget === nextX ? undefined : smoothTarget);
+        }, 10);
+      }
+      else if (smoother) {
+        clearTimeout(smoother);
+        smoother = undefined;
+      }
+
+      const deltaStart = x - downX;
+
+      maxMove = max(abs(deltaStart), abs(maxMove));
       lastX = x;
 
-      if (canMoveDirection(dx)) {
-        if (minMove >= swipeThreshold) {
-          dragging = false;
-          dragEndTime = processMillis();
-          lastX = undefined;
-          doSwipe(dx);
-        }
-        else if (minMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
-          const shift = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
-          const currentShift = this.showingStartOfWeek ? 0 : shift;
-          const dragTo = Math.min(Math.max(currentShift + dx / width * 91, shift), 0);
+      if (maxMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
+        const shift = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
+        const currentShift = this.showingStartOfWeek ? 0 : shift;
+        const dragTo = currentShift + deltaStart / width * 91;
+        const dragToClamped = min(max(dragTo, shift - FORECAST_DAY_WIDTH / 4), FORECAST_DAY_WIDTH / 4);
 
-          $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
-          $(animateWeekDrag).attr('to', `${dragTo} 0`);
-          lastAnimX = dragTo;
-          animateWeekDrag.beginElement();
-        }
+        $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
+        $(animateWeekDrag).attr('to', `${dragToClamped} 0`);
+        lastAnimX = dragTo;
+        animateWeekDrag.beginElement();
+        downX += (dragTo - dragToClamped) * width / 91;
       }
     };
     window.addEventListener('mousemove', event => mouseMove(event.pageX));
     window.addEventListener('touchmove', event => mouseMove(event.touches[0]?.pageX ?? lastX));
 
     const mouseUp = (x: number): void => {
-      if (dragging && minMove >= 0) {
-        const dx = (x ?? downX) - downX;
-
-        if (x == null || canMoveDirection(dx)) {
-          if (Math.abs(dx) >= swipeThreshold)
-            doSwipe(dx);
-          else if (minMove >= dragStartThreshold)
-            restorePosition();
-        }
-
-        if (minMove >= dragStartThreshold)
-          dragEndTime = processMillis();
+      if (!dragging)
+        return;
+      else if (smoother) {
+        maxInc = 12;
+        setTimeout(() => mouseUp(x), 10);
+        return;
       }
 
       dragging = false;
       lastX = undefined;
+      usingTouch = false;
+
+      if (maxMove >= 0) {
+        const dx = (x ?? downX) - downX;
+
+        if (abs(dx) >= swipeThreshold)
+          doSwipe(dx);
+        else
+          restorePosition();
+
+        if (maxMove >= dragStartThreshold)
+          dragEndTime = processMillis();
+      }
+      else
+        restorePosition();
     };
     window.addEventListener('mouseup', event => mouseUp(event.pageX));
     window.addEventListener('touchend', event => mouseUp(event.touches[0]?.pageX ?? lastX));
@@ -376,7 +406,9 @@ export class Forecast {
       const hourWind = isNew ? document.createElementNS(SVG_NAMESPACE, 'svg') : this.hourWinds[i];
       const hourTemp = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourTemps[i];
       const hourPop = isNew ? document.createElementNS(SVG_NAMESPACE, 'text') : this.hourPops[i];
-      let r, x, y;
+      let r: number;
+      let x: number;
+      let y: number;
 
       if (vertical) {
         x = i < 12 ? HOURLY_LEFT_COLUMN : HOURLY_RIGHT_COLUMN;
@@ -594,7 +626,7 @@ export class Forecast {
         precipProbability: forecastData.currently.precipProbability,
         precipType: forecastData.currently.precipType,
         temperature: forecastData.currently.temperature,
-        time: Math.floor(now / 3600) * 3600
+        time: floor(now / 3600) * 3600
       });
 
     for (let i = inserted; i < forecastData.hourly.length; ++i) {
@@ -722,7 +754,7 @@ export class Forecast {
       if (hourInfo && firstHourIndex >= 0) {
         icon = this.getIconSource(hourInfo.icon);
         temp = hourInfo.temperature.toFixed(0) + '°';
-        pop = hourInfo.precipProbability != null ? Math.round(hourInfo.precipProbability * 100) + PCT : '--' + PCT;
+        pop = hourInfo.precipProbability != null ? round(hourInfo.precipProbability * 100) + PCT : '--' + PCT;
 
         if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
           const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, timeFormat === TimeFormat.AMPM, true)}</tspan>`;
@@ -799,12 +831,12 @@ export class Forecast {
           wind.html(windBarbsSvg(daily.windSpeed, daily.windGust, isMetric, forecastData.knots, daily.windDirection, true));
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
-          const low = Math.round(daily.temperatureLow);
-          const high = Math.round(daily.temperatureHigh);
+          const low = round(daily.temperatureLow);
+          const high = round(daily.temperatureHigh);
 
           this.dayLowHighs[index].text(`${high}°/${low}°`);
 
-          let chancePrecip = Math.round(daily.precipProbability * 100) + PCT;
+          let chancePrecip = round(daily.precipProbability * 100) + PCT;
 
           if (!this.rainGlyph) // Raindrop emoji, or umbrella with raindrops
             this.rainGlyph = doesCharacterGlyphExist(textElem[0], '\uD83D\uDCA7') ? '\uD83D\uDCA7' : '\u2614';
@@ -925,7 +957,7 @@ export class Forecast {
   }
 
   refreshAlerts(forecastData = this.lastForecastData): void {
-    let newText;
+    let newText: string;
     let maxSeverity = 0;
     const alerts: string[] = [];
     const now = this.appService.getCurrentTime();
@@ -942,7 +974,7 @@ export class Forecast {
 
         if (expires >= now) {
           const severities = ['advisory', 'watch', 'warning'];
-          maxSeverity = Math.max(severities.indexOf(alert.severity) + 1, maxSeverity);
+          maxSeverity = max(severities.indexOf(alert.severity) + 1, maxSeverity);
           alerts.push(alert.title + ': ' + alert.description);
         }
       });
@@ -953,8 +985,8 @@ export class Forecast {
       .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
     ).join(BULLET_SPACER);
 
-    let background;
-    let color;
+    let background: string;
+    let color: string;
 
     if (alertText) {
       switch (maxSeverity) {

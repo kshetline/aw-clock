@@ -29,6 +29,7 @@ export class Gps extends TimePoller {
   private gpsData: GpsData = { fix: 0, signalQuality: 0 };
   private googleAccessDenied = false;
   private googleKey: string;
+  private gpsHighDelay = false;
   private gpspipe: ChildProcess;
   private lastGpsInfo = 0;
   private leapSecond = 0;
@@ -114,7 +115,7 @@ export class Gps extends TimePoller {
           if ((this.gpsData.fix || 0) === 0)
             this.gpsData.signalQuality = 0;
           else {
-            this.gpsData.signalQuality = (this.gpsData.fix === 1 ? 75 : 100);
+            this.gpsData.signalQuality = (this.gpsData.fix === 1 ? 75 : 100) * (this.gpsHighDelay ? 0.667 : 1);
 
             if (!this.gpsData.pps)
               this.gpsData.signalQuality /= 2;
@@ -171,22 +172,21 @@ export class Gps extends TimePoller {
 
   private async checkSystemTime(): Promise<void> {
     const ntpInfo = asLines(await monitorProcess(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS));
-    let gpsFound = false;
-    let ntpFallback = false;
+
+    this.systemTimeIsGps = false;
+    this.gpsData.ntpFallback = false;
 
     for (const line of ntpInfo) {
       const $ = /^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s([-+]?[.\d]+)\s+[.\d]+\s*$/.exec(line);
 
-      if ($ && abs(toNumber($[1])) <= 1) {
-        gpsFound = true;
+      if ($) {
+        this.systemTimeIsGps = true;
+        this.gpsHighDelay = (abs(toNumber($[1])) > 1);
         break;
       }
       else if (line.startsWith('*'))
-        ntpFallback = true;
+        this.gpsData.ntpFallback = true;
     }
-
-    this.systemTimeIsGps = gpsFound;
-    this.gpsData.ntpFallback = ntpFallback;
 
     const cd = await this.taiUtc.getCurrentDelta();
 

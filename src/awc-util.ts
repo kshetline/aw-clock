@@ -2,7 +2,7 @@ import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, mod, Point, sin_deg } from '@tubular/math';
 import {
-  asLines, htmlEscape, isEdge, isFunction, isSafari, isString, last, padLeft, parseColor,
+  asLines, htmlEscape, isEdge, isFunction, isObject, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
 } from '@tubular/util';
 import compareVersions, { CompareOperator } from 'compare-versions';
@@ -147,20 +147,33 @@ export function domAlert(message: string, callback?: () => void): void {
 
 type OkCallback = (isOk: boolean) => void;
 
+interface ConfirmOptions {
+  cancelText?: string;
+  okText?: string;
+  optionalHtml?: string;
+}
+
 export function domConfirm(message: string, callback: OkCallback): void;
-export function domConfirm(message: string, optionsHtml: string, callback: OkCallback): void;
-export function domConfirm(message: string, callbackOrOptions: OkCallback | string, callback?: OkCallback): void {
+export function domConfirm(message: string, optionsHtml: string | ConfirmOptions, callback: OkCallback): void;
+export function domConfirm(message: string, callbackOrOptions: OkCallback | string | ConfirmOptions, callback?: OkCallback): void {
+  let cancelText = '';
+  let okText = '';
   let optionalHtml: string;
 
-  if (isString(callbackOrOptions))
-    optionalHtml = callbackOrOptions;
-  else if (!isFunction(callback))
+  if (isFunction(callbackOrOptions))
     callback = callbackOrOptions;
+  else if (isObject(callbackOrOptions))
+    ({ cancelText, okText, optionalHtml } = callbackOrOptions);
+  else if (isString(callbackOrOptions))
+    optionalHtml = callbackOrOptions;
 
   const confirmDialog = $('#confirm-dialog');
   const confirmOk = $('#confirm-ok');
   const confirmCancel = $('#confirm-cancel');
   const confirmOptions = $('#confirm-options');
+
+  confirmCancel.text(cancelText || 'Cancel');
+  confirmOk.text(okText || 'OK');
 
   if (optionalHtml) {
     confirmOptions.css('display', 'block');
