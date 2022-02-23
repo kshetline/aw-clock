@@ -2,7 +2,7 @@ import { AppService } from './app.service';
 import { CLOCK_CENTER } from './clock';
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
-import { abs, cos_deg, floor, max, min, sign, sin_deg } from '@tubular/math';
+import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
 import {
   blendColors, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject,
   last, processMillis, toNumber
@@ -188,7 +188,7 @@ export class Forecast {
     const width = forecastRect.getBoundingClientRect().width;
 
     const dragStartThreshold = 3;
-    const swipeThreshold = width * 2 / 7; // Distance across two viewable days
+    const swipeThreshold = width * 1.5 / 7; // Distance across 1.5 viewable days
     const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
     const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
     const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
@@ -239,12 +239,12 @@ export class Forecast {
     }
 
     let usingTouch = false;
-    let maxInc = 5;
+    let maxInc = 4;
     const mouseDown = (x: number): void => {
       dragging = true;
       lastX = downX = x;
       maxMove = 0;
-      maxInc = 5;
+      maxInc = 4;
     };
     window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? usingTouch || mouseDown(event.pageX) : null);
     window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
@@ -317,7 +317,7 @@ export class Forecast {
       if (!dragging || x === lastX)
         return;
 
-      let dx = x - lastX;
+      const dx = x - lastX;
 
       if (smoothTarget || abs(dx) > maxInc) {
         if (smoothTarget == null) {
@@ -328,10 +328,10 @@ export class Forecast {
             clearTimeout(smoother);
         }
 
-        dx = smoothTarget - x;
-        const nextX = lastX + sign(dx) * min(abs(dx), maxInc);
+        const dx = smoothTarget - x;
 
         smoother = setTimeout(() => {
+          const nextX = lastX + sign(dx) * min(abs(dx), maxInc);
           smoother = undefined;
           mouseMove(nextX, smoothTarget === nextX ? undefined : smoothTarget);
         }, 10);
@@ -343,15 +343,16 @@ export class Forecast {
 
       const deltaStart = x - downX;
 
-      maxMove = Math.max(Math.abs(deltaStart), Math.abs(maxMove));
+      maxMove = max(abs(deltaStart), abs(maxMove));
       lastX = x;
 
       if (maxMove >= dragStartThreshold && !dragAnimating && !swipeAnimating) {
         const shift = FORECAST_DAY_WIDTH * (this.forecastDaysVisible - 7);
         const currentShift = this.showingStartOfWeek ? 0 : shift;
         const dragTo = currentShift + deltaStart / width * 91;
-        const dragToClamped = Math.min(Math.max(dragTo, shift - FORECAST_DAY_WIDTH / 4), FORECAST_DAY_WIDTH / 4);
+        const dragToClamped = min(max(dragTo, shift - FORECAST_DAY_WIDTH / 4), FORECAST_DAY_WIDTH / 4);
 
+        animateWeekDrag.endElement();
         $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
         $(animateWeekDrag).attr('to', `${dragToClamped} 0`);
         lastAnimX = dragTo;
@@ -363,16 +364,22 @@ export class Forecast {
     window.addEventListener('touchmove', event => mouseMove(event.touches[0]?.pageX ?? lastX));
 
     const mouseUp = (x: number): void => {
-      if (smoother) {
-        maxInc = 20;
+      if (!dragging)
+        return;
+      else if (smoother) {
+        maxInc = 12;
         setTimeout(() => mouseUp(x), 10);
         return;
       }
 
-      if (dragging && maxMove >= 0) {
+      dragging = false;
+      lastX = undefined;
+      usingTouch = false;
+
+      if (maxMove >= 0) {
         const dx = (x ?? downX) - downX;
 
-        if (Math.abs(dx) >= swipeThreshold)
+        if (abs(dx) >= swipeThreshold)
           doSwipe(dx);
         else
           restorePosition();
@@ -382,10 +389,6 @@ export class Forecast {
       }
       else
         restorePosition();
-
-      dragging = false;
-      lastX = undefined;
-      usingTouch = false;
     };
     window.addEventListener('mouseup', event => mouseUp(event.pageX));
     window.addEventListener('touchend', event => mouseUp(event.touches[0]?.pageX ?? lastX));
@@ -624,7 +627,7 @@ export class Forecast {
         precipProbability: forecastData.currently.precipProbability,
         precipType: forecastData.currently.precipType,
         temperature: forecastData.currently.temperature,
-        time: Math.floor(now / 3600) * 3600
+        time: floor(now / 3600) * 3600
       });
 
     for (let i = inserted; i < forecastData.hourly.length; ++i) {
@@ -752,7 +755,7 @@ export class Forecast {
       if (hourInfo && firstHourIndex >= 0) {
         icon = this.getIconSource(hourInfo.icon);
         temp = hourInfo.temperature.toFixed(0) + '°';
-        pop = hourInfo.precipProbability != null ? Math.round(hourInfo.precipProbability * 100) + PCT : '--' + PCT;
+        pop = hourInfo.precipProbability != null ? round(hourInfo.precipProbability * 100) + PCT : '--' + PCT;
 
         if (vertical && (i <= 3 || (8 <= i && i <= 15) || i >= 20)) {
           const hourText = `<tspan class="temp-by-hour">${formatHour(hour.hrs, timeFormat === TimeFormat.AMPM, true)}</tspan>`;
@@ -829,12 +832,12 @@ export class Forecast {
           wind.html(windBarbsSvg(daily.windSpeed, daily.windGust, isMetric, forecastData.knots, daily.windDirection, true));
           setSvgHref(dayIcon, this.getIconSource(daily.icon));
 
-          const low = Math.round(daily.temperatureLow);
-          const high = Math.round(daily.temperatureHigh);
+          const low = round(daily.temperatureLow);
+          const high = round(daily.temperatureHigh);
 
           this.dayLowHighs[index].text(`${high}°/${low}°`);
 
-          let chancePrecip = Math.round(daily.precipProbability * 100) + PCT;
+          let chancePrecip = round(daily.precipProbability * 100) + PCT;
 
           if (!this.rainGlyph) // Raindrop emoji, or umbrella with raindrops
             this.rainGlyph = doesCharacterGlyphExist(textElem[0], '\uD83D\uDCA7') ? '\uD83D\uDCA7' : '\u2614';
@@ -955,7 +958,7 @@ export class Forecast {
   }
 
   refreshAlerts(forecastData = this.lastForecastData): void {
-    let newText;
+    let newText: string;
     let maxSeverity = 0;
     const alerts: string[] = [];
     const now = this.appService.getCurrentTime();
@@ -972,7 +975,7 @@ export class Forecast {
 
         if (expires >= now) {
           const severities = ['advisory', 'watch', 'warning'];
-          maxSeverity = Math.max(severities.indexOf(alert.severity) + 1, maxSeverity);
+          maxSeverity = max(severities.indexOf(alert.severity) + 1, maxSeverity);
           alerts.push(alert.title + ': ' + alert.description);
         }
       });
@@ -983,8 +986,8 @@ export class Forecast {
       .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
     ).join(BULLET_SPACER);
 
-    let background;
-    let color;
+    let background: string;
+    let color: string;
 
     if (alertText) {
       switch (maxSeverity) {
