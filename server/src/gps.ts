@@ -185,7 +185,7 @@ export class Gps extends TimePoller {
         break;
       }
       else if (line.startsWith('*'))
-      this.gpsData.ntpFallback = true;
+        this.gpsData.ntpFallback = true;
     }
 
     const cd = await this.taiUtc.getCurrentDelta();

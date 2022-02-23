@@ -352,7 +352,6 @@ export class Forecast {
         const dragTo = currentShift + deltaStart / width * 91;
         const dragToClamped = min(max(dragTo, shift - FORECAST_DAY_WIDTH / 4), FORECAST_DAY_WIDTH / 4);
 
-        animateWeekDrag.endElement();
         $(animateWeekDrag).attr('from', `${lastAnimX} 0`);
         $(animateWeekDrag).attr('to', `${dragToClamped} 0`);
         lastAnimX = dragTo;
