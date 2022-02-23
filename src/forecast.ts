@@ -301,12 +301,12 @@ export class Forecast {
       }
     };
 
-    skipToEnd.addEventListener('click', () => {
+    $('#week-forward, #week-forward-bkg').on('click', () => {
       if (this.showingStartOfWeek)
         doSwipe(-1);
     });
 
-    skipToStart.addEventListener('click', () => {
+    $('#week-backward, #week-backward-bkg').on('click', () => {
       if (!this.showingStartOfWeek)
         doSwipe(1);
     });
