@@ -32,7 +32,7 @@ import { apiServer, localServer, raspbianChromium, runningDev, Settings } from '
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
-import { adjustCityName, anyDialogOpen, ClickishEvent, getJson, stopPropagation } from './awc-util';
+import { adjustCityName, anyDialogOpen, ClickishEvent, domConfirm, getJson, stopPropagation } from './awc-util';
 import { CurrentTemperatureHumidity, Rect, TimeFormat } from './shared-types';
 import { SkyMap } from './sky-map';
 import { AlarmMonitor } from './alarm-monitor';
@@ -185,27 +185,35 @@ class AwClockApp implements AppService {
           evt.preventDefault();
           settingsButton.trigger('click');
         }
-        else if (fromRightEdge < logoWidth / 2)
-          evt.preventDefault();
         // ...else let the touch be a click on the weather logo
       }
       else
         evt.preventDefault();
     });
 
+    const self = this;
+
     weatherLogo.on('click', function (evt) {
       let href: string;
 
-      if (isEffectivelyFullScreen() && window.innerWidth === window.screen.availWidth && (href = $(this).attr('href'))) {
-        const TITLE_AND_ADDRESS_HEIGHT = 58;
-        const width = window.screen.width * 0.9;
-        const height = window.screen.height * 0.9 - TITLE_AND_ADDRESS_HEIGHT;
-        const left = (window.screen.width - width) / 2;
-        const top = (window.screen.height - height - TITLE_AND_ADDRESS_HEIGHT) / 2;
+      evt.preventDefault();
+      domConfirm('Open weather service page, or settings dialog?', { okText: 'Weather Service', cancelText: 'Settings' }, doWeather => {
+        if (doWeather && (href = $(this).attr('href'))) {
+          if (isEffectivelyFullScreen() && window.innerWidth === window.screen.availWidth) {
+            const TITLE_AND_ADDRESS_HEIGHT = 58;
+            const width = window.screen.width * 0.9;
+            const height = window.screen.height * 0.9 - TITLE_AND_ADDRESS_HEIGHT;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height - TITLE_AND_ADDRESS_HEIGHT) / 2;
 
-        evt.preventDefault();
-        window.open(href, '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=yes,titlebar=yes`);
-      }
+            window.open(href, '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=yes,titlebar=yes`);
+          }
+          else
+            window.open(href, '_blank');
+        }
+        else
+          self.settingsDialog.openSettings(self.settings);
+      });
     });
 
     // Firefox doesn't detect clicks on the following SVG elements without this extra help.
