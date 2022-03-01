@@ -240,11 +240,13 @@ export class Forecast {
 
     let usingTouch = false;
     let maxInc = 4;
+    let downTime = Number.MIN_SAFE_INTEGER;
     const mouseDown = (x: number): void => {
       dragging = true;
       lastX = downX = x;
       maxMove = 0;
       maxInc = 4;
+      downTime = processMillis();
     };
     window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? usingTouch || mouseDown(event.pageX) : null);
     window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
@@ -376,15 +378,31 @@ export class Forecast {
       usingTouch = false;
 
       if (maxMove >= 0) {
-        const dx = (x ?? downX) - downX;
+        if (maxMove < dragStartThreshold && processMillis() < downTime + 500) {
+          const dayClickers = Array.from(document.querySelectorAll('[id$="-clicker"]')).filter(elem => /^day\d-clicker$/.test(elem.id));
 
-        if (abs(dx) >= swipeThreshold)
-          doSwipe(dx);
-        else
+          for (const clicker of dayClickers) {
+            const r = clicker.getBoundingClientRect();
+
+            if ((r.left <= x && x <= r.right)) {
+              (clicker as HTMLElement).click();
+              break;
+            }
+          }
+
           restorePosition();
+        }
+        else {
+          const dx = (x ?? downX) - downX;
 
-        if (maxMove >= dragStartThreshold)
-          dragEndTime = processMillis();
+          if (abs(dx) >= swipeThreshold)
+            doSwipe(dx);
+          else
+            restorePosition();
+
+          if (maxMove >= dragStartThreshold)
+            dragEndTime = processMillis();
+        }
       }
       else
         restorePosition();

@@ -1,3 +1,7 @@
+## 3.1.2
+
+* Fix forecast day click action for iOS. (This fix might also help with other touchscreens.)
+
 ## 3.1.1
 
 * Improved touch/swipe interface for daily forecast.
