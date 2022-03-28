@@ -134,7 +134,7 @@ class AwClockApp implements AppService {
     this.clockOverlaySvg = $('#clock-overlay-svg');
     this.testTime = $('#test-time');
 
-    $('#clock').on('click', (evt) => stopPropagation(evt, this.clockClick));
+    $('#clock').on('click', evt => stopPropagation(evt, this.clockClick));
 
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
@@ -553,6 +553,7 @@ class AwClockApp implements AppService {
 
     this.updateAvailable.css('display', updateAvailable);
     this.updateCaption.css('display', updateAvailable);
+    this.alarmMonitor.checkAlarms(this.getCurrentTime(), this.settings.alarms);
   }
 
   private updateEphemeris(): void {
@@ -653,7 +654,7 @@ class AwClockApp implements AppService {
         canvas.style.opacity = this.showSkyMap ? '1' : '0';
 
         document.body.append(canvas);
-        canvas.addEventListener('click', (evt) => stopPropagation(evt, this.skyClick));
+        canvas.addEventListener('click', evt => stopPropagation(evt, this.skyClick));
         this.updateSkyMap();
       }
     }

@@ -211,6 +211,9 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   font-size: 2px;
   fill: #888; }
 
+#alarm-indicator {
+  opacity: 0; }
+
 #city {
   font-size: 3px; }
 

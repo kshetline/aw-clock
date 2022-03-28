@@ -10,6 +10,7 @@ import {
 import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
+  ClickishEvent,
   compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
   getJson, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
 } from './awc-util';
@@ -241,16 +242,21 @@ export class Forecast {
     let usingTouch = false;
     let maxInc = 4;
     let downTime = Number.MIN_SAFE_INTEGER;
-    const mouseDown = (x: number): void => {
+    let sunMoonClick = false;
+    const mouseDown = (x: number, evt?: ClickishEvent | TouchEvent): void => {
+      if (evt && !(evt.target.id || '').match(/^(sun|day).+-clicker$/))
+        return;
+
       dragging = true;
       lastX = downX = x;
       maxMove = 0;
       maxInc = 4;
       downTime = processMillis();
+      sunMoonClick = (evt?.target.id === 'sun-moon-clicker');
     };
-    window.addEventListener('mousedown', event => eventInside(event, forecastRect) ? usingTouch || mouseDown(event.pageX) : null);
-    window.addEventListener('touchstart', event => event.touches.length > 0 && eventInside(event.touches[0], forecastRect) ?
-      (usingTouch = true) && mouseDown(event.touches[0].pageX) : null
+    window.addEventListener('mousedown', evt => eventInside(evt, forecastRect) ? usingTouch || mouseDown(evt.pageX, evt) : null);
+    window.addEventListener('touchstart', evt => evt.touches.length > 0 && eventInside(evt.touches[0], forecastRect) ?
+      (usingTouch = true) && mouseDown(evt.touches[0].pageX, evt) : null
     );
 
     const doSwipe = (dx: number): void => {
@@ -378,14 +384,19 @@ export class Forecast {
       usingTouch = false;
 
       if (maxMove >= 0) {
-        if (maxMove < dragStartThreshold && processMillis() < downTime + 500) {
-          const dayClickers = Array.from(document.querySelectorAll('[id$="-clicker"]')).filter(elem => /^day\d-clicker$/.test(elem.id));
+        if (maxMove < dragStartThreshold && processMillis() < downTime + 500 && !sunMoonClick) {
+          const dayClickers = Array.from(document.querySelectorAll('[id$="-clicker"]'))
+            .filter(elem => /^day\d-clicker$/.test(elem.id)) as HTMLElement[];
 
           for (const clicker of dayClickers) {
             const r = clicker.getBoundingClientRect();
 
             if ((r.left <= x && x <= r.right)) {
-              (clicker as HTMLElement).click();
+              if (clicker.click) // No click() method on Firefox SVG <rect>
+                clicker.click();
+              else if (clicker.dispatchEvent)
+                clicker.dispatchEvent(new Event('click'));
+
               break;
             }
           }

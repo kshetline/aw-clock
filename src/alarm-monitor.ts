@@ -7,10 +7,12 @@ import { floor } from '@tubular/math';
 import { domAlert } from './awc-util';
 
 const FALLBACK_AUDIO = 'Beep-beep-beep-beep.mp3';
+const MINUTES_PER_DAY = 1440;
 
 export class AlarmMonitor {
   private activeAlarms: AlarmInfo[] = [];
   private alarmDisplay: JQuery;
+  private alarmIndicator: JQuery;
   private alarmMessages: JQuery;
   private cantPlayAlertShown = false;
   private clearSnoozeDisplay: JQuery;
@@ -23,6 +25,7 @@ export class AlarmMonitor {
 
   constructor(private appService: AppService) {
     this.alarmDisplay = $('#current-alarm-display');
+    this.alarmIndicator = $('#alarm-indicator');
     this.alarmMessages = $('#alarm-messages');
     this.clearSnoozeDisplay = $('#clear-snooze-display');
 
@@ -39,6 +42,7 @@ export class AlarmMonitor {
     const nowMinutes = floor(now.utcSeconds / 60);
     const newActiveAlarms = [];
     let sound = '';
+    let next24Hours = false;
 
     this.silencedAlarms = this.silencedAlarms.filter(sa => sa.stoppedAt > nowMinutes - 65);
 
@@ -69,11 +73,19 @@ export class AlarmMonitor {
         else if (!alarm.enabled)
           continue;
         else if (isDaily) {
+          const tomorrow = now.add('day', 1).format('dd', 'en').toUpperCase();
+
+          if (alarm.days?.includes(tomorrow) && alarmTime < nowMinutes)
+            next24Hours = true;
+
           const today = now.format('dd', 'en').toUpperCase();
 
           if (!alarm.days?.includes(today))
             continue;
         }
+
+        if (alarmTime < nowMinutes + MINUTES_PER_DAY)
+          next24Hours = true;
       }
 
       if (alarmTime <= nowMinutes && alarmTime >= nowMinutes - 60) {
@@ -96,6 +108,7 @@ export class AlarmMonitor {
     }
 
     this.updateActiveAlarms(newActiveAlarms, sound);
+    this.alarmIndicator.css('opacity', next24Hours ? '1' : '0');
 
     return alarms;
   }
