@@ -89,7 +89,7 @@ export class AlarmMonitor {
         else if (!alarm.enabled)
           continue;
         else if (isDaily) {
-          const tomorrow = now.add('day', 1).format('dd', 'en').toUpperCase();
+          const tomorrow = now.clone().add('day', 1).format('dd', 'en').toUpperCase();
 
           if (alarm.days?.includes(tomorrow) && alarmTime < nowMinutes)
             next24Hours = true;
@@ -99,8 +99,7 @@ export class AlarmMonitor {
           if (!alarm.days?.includes(today))
             continue;
         }
-
-        if (alarmTime < nowMinutes + MINUTES_PER_DAY)
+        else if (alarmTime < nowMinutes + MINUTES_PER_DAY)
           next24Hours = true;
       }
 
@@ -283,7 +282,7 @@ export class AlarmMonitor {
   }
 
   private updateAlarmDisabling(nowMinutes: number): void {
-    if (this.disableStartTime === 0 || nowMinutes > this.disableStartTime + this.disableDuration) {
+    if (this.disableStartTime === 0 || nowMinutes >= this.disableStartTime + this.disableDuration) {
       this.alarmSlash.css('opacity', '0');
       this.alarmIndicator.css('opacity', this.alarmsPending ? '1' : '0');
       this.alarmIndicator.css('fill', '#0C0');
