@@ -213,11 +213,13 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
 
 #alarm-disable-countdown {
   fill: #9CF;
-  font-size: 12px;
+  font-size: 10px;
   paint-order: stroke;
   pointer-events: none;
   stroke: black;
-  stroke-width: 2px; }
+  stroke-width: 3px; }
+  #alarm-disable-countdown tspan {
+    text-anchor: middle; }
 
 #alarm-indicator {
   fill: #0C0;

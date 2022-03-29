@@ -44,6 +44,8 @@ export class RecentLocation {
 export const MAX_RECENT_LOCATIONS = 5;
 
 export class Settings {
+  alarmDisableDuration = 0;
+  alarmDisableStartTime = 0;
   alarms: AlarmInfo[] = [];
   background = '#191970';
   celsius = false;
@@ -77,6 +79,8 @@ export class Settings {
   }
 
   public load(): void {
+    this.alarmDisableDuration = Number(Cookies.get('alarm_disable_duration')) || defaultSettings.alarmDisableDuration;
+    this.alarmDisableStartTime = Number(Cookies.get('alarm_disable_start_time')) || defaultSettings.alarmDisableStartTime;
     this.alarms = parseJson(Cookies.get('alarms')) || defaultSettings.alarms;
     this.background = Cookies.get('background') || defaultSettings.background;
     this.celsius = toBoolean(Cookies.get('celsius'), false);
@@ -114,6 +118,8 @@ export class Settings {
   public save(): void {
     const expiration = { expires: 36525 }; // One century from now.
 
+    Cookies.set('alarm_disable_duration', this.alarmDisableDuration.toString(), expiration);
+    Cookies.set('alarm_disable_start_time', this.alarmDisableStartTime.toString(), expiration);
     Cookies.set('alarms', JSON.stringify(this.alarms), expiration);
     Cookies.set('background', this.background, expiration);
     Cookies.set('celsius', this.celsius.toString(), expiration);

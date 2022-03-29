@@ -5,6 +5,7 @@ import { beep, htmlEscape, isEqual, noop, processMillis } from '@tubular/util';
 import { DateTime } from '@tubular/time';
 import { floor } from '@tubular/math';
 import { domAlert } from './awc-util';
+import { TimeFormat } from './shared-types';
 
 const FALLBACK_AUDIO = 'Beep-beep-beep-beep.mp3';
 const MINUTES_PER_DAY = 1440;
@@ -41,6 +42,12 @@ export class AlarmMonitor {
     $('#snooze-10').on('click', () => this.snoozeAlarms(10));
     $('#snooze-15').on('click', () => this.snoozeAlarms(15));
     $('#alarm-disable').on('click', () => this.alarmDisable());
+
+    const settings = new Settings();
+
+    settings.load();
+    this.disableDuration = settings.alarmDisableDuration;
+    this.disableStartTime = settings.alarmDisableStartTime;
 
     this.startTime = processMillis();
   }
@@ -119,10 +126,10 @@ export class AlarmMonitor {
     this.alarmsPending = next24Hours;
     this.updateAlarmDisabling(nowMinutes);
 
-    if (this.disableStartTime !== 0)
+    if (this.disableStartTime === 0)
       this.updateActiveAlarms(newActiveAlarms, sound);
-
-    this.alarmIndicator.css('opacity', next24Hours ? '1' : '0');
+    else
+      this.silencedAlarms.push(...newActiveAlarms.map(alarm => ({ stoppedAt: nowMinutes, alarm })));
 
     return alarms;
   }
@@ -233,7 +240,9 @@ export class AlarmMonitor {
   }
 
   private alarmDisable(reset = false): void {
-    if (this.alarmsPending || reset) {
+    this.stopAlarms();
+
+    if (this.alarmsPending || reset || this.disableStartTime > 0) {
       const nowMinutes = floor(new DateTime(this.appService.getCurrentTime(), this.appService.timezone).utcSeconds / 60);
 
       if (this.disableDuration === 1440 || reset) {
@@ -255,12 +264,22 @@ export class AlarmMonitor {
         this.disableStartTime = nowMinutes;
       }
 
-      if (!reset)
-        this.updateAlarmDisabling(nowMinutes);
+      this.updateAlarmDisableSettings();
 
-      if (!reset)
+      if (!reset) {
+        this.updateAlarmDisabling(nowMinutes);
         beep(this.disableStartTime ? 440 : 220);
+      }
     }
+  }
+
+  private updateAlarmDisableSettings(): void {
+    const settings = new Settings();
+
+    settings.load();
+    settings.alarmDisableDuration = this.disableDuration;
+    settings.alarmDisableStartTime = this.disableStartTime;
+    settings.save();
   }
 
   private updateAlarmDisabling(nowMinutes: number): void {
@@ -275,17 +294,20 @@ export class AlarmMonitor {
         this.disableStartTime = 0;
         this.disableDuration = 0;
         this.alarmDisable(true);
+        this.updateAlarmDisableSettings();
       }
     }
     else {
       this.alarmSlash.css('opacity', '1');
+      this.alarmIndicator.css('opacity', '1');
       this.alarmIndicator.css('fill', '#999');
       this.alarmIndicator.css('stroke', '#999');
 
-      const timeRemaining = this.disableStartTime + this.disableDuration - nowMinutes;
+      const endTime = (this.disableStartTime + this.disableDuration) * 60000;
+      const format = (this.appService.getTimeFormat() === TimeFormat.AMPM ? 'IxS' : 'HH:mm');
 
-      this.alarmDisableCountdown.text(floor(timeRemaining / 60).toString().padStart(2, '0') + 'h' +
-        (timeRemaining % 60).toString().padStart(2, '0') + 'm');
+      this.alarmDisableCountdown.html(`<tspan x="45%" dy="-1em">until</tspan><tspan x="45%" dy="1em">` +
+        new DateTime(endTime, this.appService.timezone).format(format) + '</tspan');
     }
   }
 }
