@@ -11,12 +11,17 @@ const MINUTES_PER_DAY = 1440;
 
 export class AlarmMonitor {
   private activeAlarms: AlarmInfo[] = [];
+  private alarmDisableCountdown: JQuery;
   private alarmDisplay: JQuery;
   private alarmIndicator: JQuery;
   private alarmMessages: JQuery;
+  private alarmSlash: JQuery;
+  private alarmsPending = false;
   private cantPlayAlertShown = false;
   private clearSnoozeDisplay: JQuery;
   private currentSound: string;
+  private disableDuration = 0;
+  private disableStartTime = 0;
   private fallbackBeep: any;
   private nowPlaying: HTMLAudioElement;
   private silencedAlarms: { stoppedAt: number, alarm: AlarmInfo }[] = [];
@@ -24,15 +29,19 @@ export class AlarmMonitor {
   private readonly startTime: number;
 
   constructor(private appService: AppService) {
+    this.alarmDisableCountdown = $('#alarm-disable-countdown');
     this.alarmDisplay = $('#current-alarm-display');
     this.alarmIndicator = $('#alarm-indicator');
     this.alarmMessages = $('#alarm-messages');
+    this.alarmSlash = $('#alarm-slash');
     this.clearSnoozeDisplay = $('#clear-snooze-display');
 
     $('#stop-alarm, #clear-snooze-display').on('click', () => this.stopAlarms());
     $('#snooze-5').on('click', () => this.snoozeAlarms(5));
     $('#snooze-10').on('click', () => this.snoozeAlarms(10));
     $('#snooze-15').on('click', () => this.snoozeAlarms(15));
+    $('#alarm-disable').on('click', () => this.alarmDisable());
+
     this.startTime = processMillis();
   }
 
@@ -107,7 +116,12 @@ export class AlarmMonitor {
       settings.save();
     }
 
-    this.updateActiveAlarms(newActiveAlarms, sound);
+    this.alarmsPending = next24Hours;
+    this.updateAlarmDisabling(nowMinutes);
+
+    if (this.disableStartTime !== 0)
+      this.updateActiveAlarms(newActiveAlarms, sound);
+
     this.alarmIndicator.css('opacity', next24Hours ? '1' : '0');
 
     return alarms;
@@ -216,5 +230,62 @@ export class AlarmMonitor {
     this.clearSnoozeDisplay.css('display', 'block');
     this.snoozedAlarms.push(...this.activeAlarms.map(alarm => ({ restartAt, alarm })));
     this.activeAlarms = [];
+  }
+
+  private alarmDisable(reset = false): void {
+    if (this.alarmsPending || reset) {
+      const nowMinutes = floor(new DateTime(this.appService.getCurrentTime(), this.appService.timezone).utcSeconds / 60);
+
+      if (this.disableDuration === 1440 || reset) {
+        this.disableDuration = 0;
+        this.disableStartTime = 0;
+      }
+      else {
+        const remaining = (this.disableStartTime || nowMinutes) + this.disableDuration - nowMinutes;
+
+        if (this.disableDuration === 0 || remaining < 179)
+          this.disableDuration = 180;
+        else if (this.disableDuration < 359)
+          this.disableDuration = 360;
+        else if (this.disableDuration < 719)
+          this.disableDuration = 720;
+        else
+          this.disableDuration = 1440;
+
+        this.disableStartTime = nowMinutes;
+      }
+
+      if (!reset)
+        this.updateAlarmDisabling(nowMinutes);
+
+      if (!reset)
+        beep(this.disableStartTime ? 440 : 220);
+    }
+  }
+
+  private updateAlarmDisabling(nowMinutes: number): void {
+    if (this.disableStartTime === 0 || nowMinutes > this.disableStartTime + this.disableDuration) {
+      this.alarmSlash.css('opacity', '0');
+      this.alarmIndicator.css('opacity', this.alarmsPending ? '1' : '0');
+      this.alarmIndicator.css('fill', '#0C0');
+      this.alarmIndicator.css('stroke', '#0C0');
+      this.alarmDisableCountdown.text('');
+
+      if (this.disableStartTime !== 0) {
+        this.disableStartTime = 0;
+        this.disableDuration = 0;
+        this.alarmDisable(true);
+      }
+    }
+    else {
+      this.alarmSlash.css('opacity', '1');
+      this.alarmIndicator.css('fill', '#999');
+      this.alarmIndicator.css('stroke', '#999');
+
+      const timeRemaining = this.disableStartTime + this.disableDuration - nowMinutes;
+
+      this.alarmDisableCountdown.text(floor(timeRemaining / 60).toString().padStart(2, '0') + 'h' +
+        (timeRemaining % 60).toString().padStart(2, '0') + 'm');
+    }
   }
 }

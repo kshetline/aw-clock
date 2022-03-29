@@ -211,8 +211,28 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   font-size: 2px;
   fill: #888; }
 
+#alarm-disable-countdown {
+  fill: #9CF;
+  font-size: 12px;
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: black;
+  stroke-width: 2px; }
+
 #alarm-indicator {
-  opacity: 0; }
+  fill: #0C0;
+  stroke: #0C0;
+  opacity: 0;
+  pointer-events: none; }
+
+#alarm-slash {
+  fill: red;
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+  stroke: red;
+  transform: rotate(45deg);
+  transform-origin: center; }
 
 #city {
   font-size: 3px; }
