@@ -18,6 +18,8 @@ const apiHost = ((document.location.hostname || '').startsWith('192.') ? documen
 export const apiServer = new URL(window.location.href).searchParams.get('weather_server') ||
   (runningDev ? `http://${apiHost}:${apiPort}` : '');
 export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;
+export const runningLocally = runningDev || (document.location.hostname || '').match(/\b(localhost|127\.0\.0\.0)\b/);
+export const allowAdminFeatures = raspbianChromium || runningLocally;
 
 export function toTimeFormat(s: string, deflt = TimeFormat.UTC): TimeFormat {
   s = (s || '').toLowerCase();

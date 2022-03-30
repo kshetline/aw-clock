@@ -28,7 +28,7 @@ import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePolle
 import { abs, ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
 import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
-import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
+import { allowAdminFeatures, apiServer, localServer, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
@@ -139,7 +139,7 @@ class AwClockApp implements AppService {
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
     this.updateAvailable.add(this.updateCaption).on('click', () => {
-      if (raspbianChromium && this.adminAllowed) {
+      if (allowAdminFeatures && this.adminAllowed) {
         this.alarmMonitor.stopAlarms();
         this.settingsDialog.openSettings(this.settings, true);
       }
@@ -392,7 +392,7 @@ class AwClockApp implements AppService {
         Promise.allSettled(promises)
           .then(dataPairs => {
             const data = dataPairs.map(item => item.status === 'rejected' ? null : item.value);
-            const localInstallation = raspbianChromium && (localServer || runningDev);
+            const localInstallation = allowAdminFeatures && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
             const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable &&
@@ -747,6 +747,7 @@ class AwClockApp implements AppService {
 
     if (!evt.repeat && (skipTargetTest || evt.target === document.body)) {
       let handled = true;
+      const isTestTime = ((evt.target as any)?.id === 'test-time');
 
       if (key === 'F' || evt.key === 'f')
         setFullScreen(true);
@@ -754,9 +755,9 @@ class AwClockApp implements AppService {
         setFullScreen(false);
       else if (key === 'Enter' || key === ' ')
         this.alarmMonitor.stopAlarms();
-      else if (key === '5')
+      else if (key === '5' && !isTestTime)
         this.alarmMonitor.snoozeAlarms(5);
-      else if (key === '0' || key === 'S' || key === 's')
+      else if ((key === '0' && !isTestTime) || key === 'S' || key === 's')
         this.alarmMonitor.snoozeAlarms(10);
       else if (key === '.')
         this.alarmMonitor.snoozeAlarms(15);
@@ -770,6 +771,10 @@ class AwClockApp implements AppService {
         this.testTimeValue = this.getCurrentTime();
         this.testTimeStr = new DateTime(this.testTimeValue, this.lastTimezone).toIsoString(16);
         this.testTime.val(this.testTimeStr);
+        this.updateTestTime();
+      }
+      else if ((key === 'X' || key === 'x') && this.testTimeStr) {
+        this.alarmMonitor.resetAlarmState();
         this.updateTestTime();
       }
       else

@@ -1,3 +1,7 @@
+## 3.2.3
+
+* Improvements in handling of temporarily disabled alarms.
+
 ## 3.2.2
 
 * Fix availability of Update button.
