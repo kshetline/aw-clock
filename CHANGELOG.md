@@ -2,6 +2,7 @@
 
 * Added the ability to temporarily disable upcoming alarms at a touch so, if you wake up before your alarm, you can prevent it from going off without worrying about forgetting to turn the alarm back on for the next day.
 * Add HTTPS backup source for IERS Bulletin A, previously only retrieved from one FTP source, for obtaining ΔUT1 value.
+* New option for solid clock hands over sky map, in addition to translucent clock hands or no clock hands at all.
 
 ## 3.1.2
 

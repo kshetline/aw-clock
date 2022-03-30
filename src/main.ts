@@ -702,12 +702,19 @@ class AwClockApp implements AppService {
   }
 
   private adjustHandsDisplay(): void {
-    if (this.settings.floatHands && this.showSkyMap) {
+    if (this.settings.floatHands !== 'N' && this.showSkyMap) {
       this.clockOverlaySvg.addClass('float');
+
+      if (this.settings.floatHands === 'S')
+        this.clockOverlaySvg.addClass('solid');
+      else
+        this.clockOverlaySvg.removeClass('solid');
+
       this.clockOverlaySvg.css('opacity', '1');
     }
     else {
       this.clockOverlaySvg.removeClass('float');
+      this.clockOverlaySvg.removeClass('solid');
       this.clockOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
     }
   }

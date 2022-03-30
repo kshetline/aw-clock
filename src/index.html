@@ -528,10 +528,6 @@
                 <label for="sky-map-option">Show sky map for clock face</label>
               </span>
               <span>
-                <input type="checkbox" id="float-hands-option" name="float-hands-option">
-                <label for="float-hands-option">Show clock hands over sky map</label>
-              </span>
-              <span>
                 <input type="checkbox" id="constellations-option" name="constellations-option">
                 <label for="constellations-option">Draw constellations</label>
               </span>
@@ -545,7 +541,12 @@
                 <option value="0">Top of sky map is north</option>
                 <option value="180">Top of sky map is south</option>
               </select>
-            </span>
+              <select id="float-hands-option">
+                <option value="N">No clock hands over sky map</option>
+                <option value="T">Show translucent hands over sky map</option>
+                <option value="S">Show solid clock hands over sky map</option>
+              </select>
+           </span>
           </div>
           <div class="tab-panel search-section">
             <div class="recent-row"><div class="recent-locations"></div></div>

@@ -1165,6 +1165,16 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
       }
     }
   }
+
+  &.float.solid {
+    #hands {
+      opacity: 1;
+    }
+
+    .dot.big-dot {
+      opacity: 0.5;
+    }
+  }
 }
 
 ul.my-tabs {

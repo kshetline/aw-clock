@@ -93,14 +93,16 @@ export class AlarmMonitor {
           const tomorrow = now.clone().add('day', 1).format('dd', 'en').toUpperCase();
 
           if (alarm.days?.includes(tomorrow) && alarmTime < nowMinutes)
-            next24Hours = min(alarmTime, next24Hours);
+            next24Hours = min(alarmTime + MINUTES_PER_DAY, next24Hours);
 
           const today = now.format('dd', 'en').toUpperCase();
 
           if (!alarm.days?.includes(today))
             continue;
+          else if (alarmTime > nowMinutes && alarmTime < nowMinutes + MINUTES_PER_DAY)
+            next24Hours = min(alarmTime, next24Hours);
         }
-        else if (alarmTime < nowMinutes + MINUTES_PER_DAY)
+        else if (alarmTime > nowMinutes && alarmTime < nowMinutes + MINUTES_PER_DAY)
           next24Hours = min(alarmTime, next24Hours);
       }
 

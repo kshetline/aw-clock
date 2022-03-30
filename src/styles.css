@@ -912,6 +912,10 @@ input, button, select, textarea, optgroup, option {
     opacity: 0; }
     #clock-overlay-svg.float .dot.big-dot {
       opacity: 0.25; }
+  #clock-overlay-svg.float.solid #hands {
+    opacity: 1; }
+  #clock-overlay-svg.float.solid .dot.big-dot {
+    opacity: 0.5; }
 
 ul.my-tabs {
   list-style-type: none;
