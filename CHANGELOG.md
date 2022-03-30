@@ -1,3 +1,7 @@
+## 3.2.1
+
+* Fix Firefox forecast clicking issues.
+
 ## 3.2.0
 
 * Added the ability to temporarily disable upcoming alarms at a touch so, if you wake up before your alarm, you can prevent it from going off without worrying about forgetting to turn the alarm back on for the next day.

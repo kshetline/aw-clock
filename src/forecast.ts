@@ -243,8 +243,11 @@ export class Forecast {
     let maxInc = 4;
     let downTime = Number.MIN_SAFE_INTEGER;
     let sunMoonClick = false;
+    let isForecastRect = false;
     const mouseDown = (x: number, evt?: ClickishEvent | TouchEvent): void => {
-      if (evt && !(evt.target.id || '').match(/^(sun|day).+-clicker$/))
+      isForecastRect = (evt?.target?.id === 'forecast-rect');
+
+      if (!isForecastRect && evt && !(evt.target.id || '').match(/^(sun|day).+-clicker$/))
         return;
 
       dragging = true;
@@ -253,6 +256,14 @@ export class Forecast {
       maxInc = 4;
       downTime = processMillis();
       sunMoonClick = (evt?.target.id === 'sun-moon-clicker');
+
+      if (isForecastRect && 'pageY' in evt) {
+        const r = evt.target.getBoundingClientRect();
+        const y = ((evt as any).pageY - r.top) / r.height;
+
+        if (y > 0.5)
+          sunMoonClick = true;
+      }
     };
     window.addEventListener('mousedown', evt => eventInside(evt, forecastRect) ? usingTouch || mouseDown(evt.pageX, evt) : null);
     window.addEventListener('touchstart', evt => evt.touches.length > 0 && eventInside(evt.touches[0], forecastRect) ?
@@ -384,7 +395,11 @@ export class Forecast {
       usingTouch = false;
 
       if (maxMove >= 0) {
-        if (maxMove < dragStartThreshold && processMillis() < downTime + 500 && !sunMoonClick) {
+        const goodClick = (maxMove < dragStartThreshold && processMillis() < downTime + 500);
+
+        if (goodClick && sunMoonClick && isForecastRect)
+          this.appService.toggleSunMoon();
+        else if (goodClick && !sunMoonClick) {
           const dayClickers = Array.from(document.querySelectorAll('[id$="-clicker"]'))
             .filter(elem => /^day\d-clicker$/.test(elem.id)) as HTMLElement[];
 
@@ -418,6 +433,7 @@ export class Forecast {
       else
         restorePosition();
     };
+
     window.addEventListener('mouseup', event => mouseUp(event.pageX));
     window.addEventListener('touchend', event => mouseUp(event.touches[0]?.pageX ?? lastX));
     window.addEventListener('touchcancel', () => mouseUp(null));
