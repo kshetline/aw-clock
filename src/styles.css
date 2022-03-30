@@ -96,7 +96,7 @@ label {
 select:not([disabled]), button:not([disabled]), input:not([disabled])[type="submit"] {
   color: black; }
 
-#clock-container, #clock-overlay {
+#clock-container, #clock-overlay, #planet-overlay {
   display: inline-block;
   left: 0;
   margin: auto;
@@ -105,7 +105,7 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   position: absolute;
   right: 0;
   width: calc(1.556 * (100vh - 2rem)); }
-  #clock-container.display16x9, #clock-overlay.display16x9 {
+  #clock-container.display16x9, #clock-overlay.display16x9, #planet-overlay.display16x9 {
     width: calc(1.675 * (100vh - 2rem)); }
 
 #clock-container {
@@ -115,6 +115,11 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   background-color: transparent;
   pointer-events: none;
   z-index: 20; }
+
+#planet-overlay {
+  background-color: transparent;
+  pointer-events: none;
+  z-index: 21; }
 
 @media only screen and (max-aspect-ratio: 43 / 27) {
   #clock-container, #clock-overlay {
@@ -923,6 +928,11 @@ input, button, select, textarea, optgroup, option {
     opacity: 1; }
   #clock-overlay-svg.float.solid .dot.big-dot {
     opacity: 0.5; }
+
+#planet-overlay-svg {
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 1s; }
 
 ul.my-tabs {
   list-style-type: none;

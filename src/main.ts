@@ -74,6 +74,7 @@ class AwClockApp implements AppService {
   private clockOverlaySvg: JQuery;
   private dimmer: JQuery;
   private readonly testTime: JQuery;
+  private planetOverlaySvg: JQuery;
   private updateAvailable: JQuery;
   private updateCaption: JQuery;
 
@@ -132,6 +133,7 @@ class AwClockApp implements AppService {
     this.dimmer = $('#dimmer');
     setTimeout(() => this.dimmer.css('transition', 'opacity 5s ease-in'));
     this.clockOverlaySvg = $('#clock-overlay-svg');
+    this.planetOverlaySvg = $('#planet-overlay-svg');
     this.testTime = $('#test-time');
 
     $('#clock').on('click', evt => stopPropagation(evt, this.clockClick));
@@ -694,6 +696,7 @@ class AwClockApp implements AppService {
       this.showSkyMap = true;
       this.skyCanvas.style.pointerEvents = 'all';
       this.skyCanvas.style.opacity = '1';
+      this.planetOverlaySvg.css('opacity', '1');
       this.updateSkyMap();
     }
 
@@ -711,11 +714,13 @@ class AwClockApp implements AppService {
         this.clockOverlaySvg.removeClass('solid');
 
       this.clockOverlaySvg.css('opacity', '1');
+      this.planetOverlaySvg.css('opacity', '0');
     }
     else {
       this.clockOverlaySvg.removeClass('float');
       this.clockOverlaySvg.removeClass('solid');
       this.clockOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
+      this.planetOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
     }
   }
 
