@@ -1,3 +1,7 @@
+## 3.2.2
+
+* Fix availability of Update button.
+
 ## 3.2.1
 
 * Fix Firefox forecast clicking issues.

@@ -448,10 +448,14 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
 .user-options {
   align-content: start;
   display: grid;
-  grid-template-columns: max-content auto auto;
+  grid-template-columns: auto auto auto;
   grid-template-rows: auto;
   grid-column-gap: 6px;
   grid-row-gap: 6px;
+
+  label {
+    max-width: 180px;
+  }
 
   &>* {
     -ms-grid-row-align: center;
