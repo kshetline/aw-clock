@@ -44,6 +44,8 @@ export class RecentLocation {
 export const MAX_RECENT_LOCATIONS = 5;
 
 export class Settings {
+  alarmDisableDuration = 0;
+  alarmDisableStartTime = 0;
   alarms: AlarmInfo[] = [];
   background = '#191970';
   celsius = false;
@@ -53,7 +55,7 @@ export class Settings {
   dimmingEnd = '7:00';
   dimmingStart = '23:00';
   drawConstellations = true;
-  floatHands = true;
+  floatHands = 'T';
   hidePlanets = false;
   hideSeconds = false;
   hourlyForecast = HourlyForecast.VERTICAL;
@@ -77,6 +79,8 @@ export class Settings {
   }
 
   public load(): void {
+    this.alarmDisableDuration = Number(Cookies.get('alarm_disable_duration')) || defaultSettings.alarmDisableDuration;
+    this.alarmDisableStartTime = Number(Cookies.get('alarm_disable_start_time')) || defaultSettings.alarmDisableStartTime;
     this.alarms = parseJson(Cookies.get('alarms')) || defaultSettings.alarms;
     this.background = Cookies.get('background') || defaultSettings.background;
     this.celsius = toBoolean(Cookies.get('celsius'), false);
@@ -86,7 +90,7 @@ export class Settings {
     this.dimmingEnd = Cookies.get('dimming_end') || defaultSettings.dimmingEnd;
     this.dimmingStart = Cookies.get('dimming_start') || defaultSettings.dimmingStart;
     this.drawConstellations = toBoolean(Cookies.get('draw_constellations'), defaultSettings.drawConstellations);
-    this.floatHands = toBoolean(Cookies.get('float_hands'), defaultSettings.floatHands);
+    this.floatHands = Cookies.get('float_hands') || defaultSettings.floatHands;
     this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
     this.hideSeconds = toBoolean(Cookies.get('hides'), false);
     this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) || defaultSettings.hourlyForecast;
@@ -105,6 +109,11 @@ export class Settings {
     this.updateToHide = Cookies.get('update-to-hide') || '';
     this.userId = Cookies.get('id') || '';
 
+    if (this.floatHands === 'true')
+      this.floatHands = 'T';
+    else if (this.floatHands === 'false')
+      this.floatHands = 'N';
+
     const body = $('body');
 
     body.css('--background-color', this.background);
@@ -114,6 +123,8 @@ export class Settings {
   public save(): void {
     const expiration = { expires: 36525 }; // One century from now.
 
+    Cookies.set('alarm_disable_duration', this.alarmDisableDuration.toString(), expiration);
+    Cookies.set('alarm_disable_start_time', this.alarmDisableStartTime.toString(), expiration);
     Cookies.set('alarms', JSON.stringify(this.alarms), expiration);
     Cookies.set('background', this.background, expiration);
     Cookies.set('celsius', this.celsius.toString(), expiration);
@@ -123,7 +134,7 @@ export class Settings {
     Cookies.set('dimming_end', this.dimmingEnd, expiration);
     Cookies.set('dimming_start', this.dimmingStart, expiration);
     Cookies.set('draw_constellations', this.drawConstellations.toString(), expiration);
-    Cookies.set('float_hands', this.floatHands.toString(), expiration);
+    Cookies.set('float_hands', this.floatHands, expiration);
     Cookies.set('hidep', this.hidePlanets.toString(), expiration);
     Cookies.set('hides', this.hideSeconds.toString(), expiration);
     Cookies.set('hourly_forecast', this.hourlyForecast, expiration);

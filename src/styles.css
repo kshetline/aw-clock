@@ -211,6 +211,31 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   font-size: 2px;
   fill: #888; }
 
+#alarm-disable-countdown {
+  fill: white;
+  font-size: 10px;
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: black;
+  stroke-width: 3px; }
+  #alarm-disable-countdown tspan {
+    text-anchor: middle; }
+
+#alarm-indicator {
+  fill: #0C0;
+  stroke: #0C0;
+  opacity: 0;
+  pointer-events: none; }
+
+#alarm-slash {
+  fill: red;
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+  stroke: red;
+  transform: rotate(45deg);
+  transform-origin: center; }
+
 #city {
   font-size: 3px; }
 
@@ -887,6 +912,10 @@ input, button, select, textarea, optgroup, option {
     opacity: 0; }
     #clock-overlay-svg.float .dot.big-dot {
       opacity: 0.25; }
+  #clock-overlay-svg.float.solid #hands {
+    opacity: 1; }
+  #clock-overlay-svg.float.solid .dot.big-dot {
+    opacity: 0.5; }
 
 ul.my-tabs {
   list-style-type: none;

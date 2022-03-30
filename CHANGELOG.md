@@ -1,3 +1,9 @@
+## 3.2.0
+
+* Added the ability to temporarily disable upcoming alarms at a touch so, if you wake up before your alarm, you can prevent it from going off without worrying about forgetting to turn the alarm back on for the next day.
+* Added HTTPS backup source for IERS Bulletin A, previously retrieved from only one FTP source, for obtaining ΔUT1 value.
+* New option for solid clock hands over sky map, in addition to translucent clock hands or no clock hands at all.
+
 ## 3.1.2
 
 * Fix forecast day click action for iOS. (This fix might also help with other touchscreens.)

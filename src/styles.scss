@@ -269,6 +269,36 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   fill: #888;
 }
 
+#alarm-disable-countdown {
+  fill: white;
+  font-size: 10px;
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: black;
+  stroke-width: 3px;
+
+  tspan {
+    text-anchor: middle;
+  }
+}
+
+#alarm-indicator {
+  fill: #0C0;
+  stroke: #0C0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#alarm-slash {
+  fill: red;
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+  stroke: red;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
 #city {
   font-size: 3px;
 }
@@ -1133,6 +1163,16 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
       &.big-dot {
         opacity: 0.25;
       }
+    }
+  }
+
+  &.float.solid {
+    #hands {
+      opacity: 1;
+    }
+
+    .dot.big-dot {
+      opacity: 0.5;
     }
   }
 }

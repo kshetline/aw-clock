@@ -28,7 +28,8 @@ interface DebugTime {
   leapUtc: number;
 }
 
-const IERS_BULLETIN_A_URL = 'ftp://ftp.iers.org/products/eop/rapid/daily/finals.daily';
+const IERS_BULLETIN_A_HTTPS_URL =  'https://maia.usno.navy.mil/ser7/finals.all';
+const IERS_BULLETIN_A_FTP_URL = 'ftp://ftp.iers.org/products/eop/rapid/daily/finals.daily';
 
 const DAYS_BETWEEN_POLLS = 7;
 const FTP_TIMEOUT = 7500;
@@ -37,10 +38,6 @@ const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180_000; // Three minutes
 const MILLIS_PER_DAY = 86_400_000;
 const NTP_BASE = 2_208_988_800; // Seconds before 1970-01-01 epoch for 1900-01-01 epoch
 const TIME_AND_DELTA = /^(\d{10,})\s+(\d{2,4})\s*#\s*1\s+[A-Za-z]{3}\s+\d{4}/;
-
-function makeError(err: any): Error {
-  return err instanceof Error ? err : new Error(err.toString);
-}
 
 function getUtcFromMJD(mjd: number): number {
   return getDateFromDayNumber_SGC(mjd - 40587).n * 86400;
@@ -125,7 +122,7 @@ export class TaiUtc {
       gotBulletinA = true;
     }
     catch (err) {
-      console.error('%s -- Failed to read IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_URL);
+      console.error('%s -- Failed to read IERS Bulletin', timeStamp());
 
       if (os.uptime() > 90)
         console.error(err);
@@ -135,16 +132,16 @@ export class TaiUtc {
 
     this.urls.forEach(url => {
       if (new URL(url).protocol === 'ftp:')
-        promises.push(TaiUtc.getFtpText(url, false));
+        promises.push(TaiUtc.getFtpText(url));
       else
-        promises.push(requestText(url, { timeout: HTTP_TIMEOUT }).catch(err => makeError(err)));
+        promises.push(requestText(url, { timeout: HTTP_TIMEOUT }));
     });
 
-    const docs = await Promise.all(promises);
+    const docs = await Promise.allSettled(promises) as PromiseFulfilledResult<string>[];
     let newLeaps: LeapSecond[] = [];
 
     docs.forEach((doc, index) => {
-      if (!isString(doc)) {
+      if (!isString(doc.value)) {
         console.error('%s -- Failed to retrieve leap seconds from %s', timeStamp(), this.urls[index]);
 
         if (os.uptime() > 90)
@@ -153,7 +150,7 @@ export class TaiUtc {
         return;
       }
 
-      const lines = asLines(doc).filter(line => TIME_AND_DELTA.test(line));
+      const lines = asLines(doc.value).filter(line => TIME_AND_DELTA.test(line));
 
       if (lines.length > 1 && lines.length > newLeaps.length) {
         newLeaps = [];
@@ -227,8 +224,20 @@ export class TaiUtc {
 
   // IERS Bulletin A provides (among other things) current and predicted UTC1-UTC values.
   private async getIersBulletinA(): Promise<void> {
-    const lines = asLines((await TaiUtc.getFtpText(IERS_BULLETIN_A_URL, true)).toString());
+    let lines: string[];
     const newDeltas: DeltaUt1Utc[] = [];
+
+    try {
+      lines = asLines((await TaiUtc.getFtpText(IERS_BULLETIN_A_FTP_URL)).toString());
+    }
+    catch (err) {
+      console.error('%s -- Failed to retrieve IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_FTP_URL);
+
+      if (os.uptime() > 90)
+        console.error(err);
+
+      lines = asLines(await requestText(IERS_BULLETIN_A_HTTPS_URL));
+    }
 
     lines.forEach(line => {
       const $ = /[ \d]{6}\s+(\d{5,})[.\d]*\s+[IP](?:\s+[-.\d]+){4}\s+[IP][ +]?([-.\d]+)/i.exec(line);
@@ -247,7 +256,7 @@ export class TaiUtc {
     }
   }
 
-  private static getFtpText(url: string, throwError = false): Promise<string | Error> {
+  private static getFtpText(url: string): Promise<string> {
     console.log(timeStamp(), url);
 
     const parsed = new URL(url);
@@ -282,7 +291,7 @@ export class TaiUtc {
       })
       // TODO: Why this error, requiring typecasting to fix?
       //    TS2741: Property '[Symbol.toStringTag]' is missing in type 'Bluebird<string | Error>'
-      //    but required in type 'Promise<string | Error>'.
-      .catch(err => throwError ? Promise.reject(err) : makeError(err)) as unknown as Promise<string>;
+      //    but required in type 'Promise<string>'.
+      .catch(err => Promise.reject(err)) as unknown as Promise<string>;
   }
 }

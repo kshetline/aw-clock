@@ -110,7 +110,7 @@ When connecting the 433 MHz receiver module follow the same precautions as speci
 
 ### Touchscreen/mouse features
 
-A touchscreen is the most practical way to use the alarm features of this clock, so that alarms can conveniently be silenced or “snoozed” at a touch. Other functionality is enhanced as follows:
+A touchscreen is the most practical way to use the alarm features of this clock, so that alarms can conveniently be silenced, “snoozed”, or temporarily disabled at a touch. Other functionality is enhanced as follows:
 
 * Swipe left or right on the daily forecast to view the full seven-day forecast. You can also tap/click on the left/right arrows on either side of the forecast. *After one minute, the display reverts to the first four (or five) days.*
 * Tap/click in the center of the clock face to temporarily view a current sky map. The sky map can also be set as your default view, so that a tap/click in the center of the sky map will temporarily display the clock face. *After one minute, the display reverts to your default view.*
@@ -131,6 +131,16 @@ Stop alarm: &lt;space&gt; *or* Enter<br>Snooze 5 minutes: 5<br>Snooze 10 minutes
 ### Custom alarm tones
 
 When you perform the standard dedicated device installation, a folder will be created for your own alarm tones at `/home/pi/awc-alarm-tones`. Simply add MP3, MP4, or OGG audio files to this folder to make them available for alarms.
+
+### Temporarily disabling upcoming alarms
+
+<img src="https://shetline.com/readme/aw-clock/3.0.0/alarm-indicator.jpg" width=105 height=85 alt="alarm indicator">&nbsp;&nbsp;&nbsp;<img src="https://shetline.com/readme/aw-clock/3.0.0/alarm-disabled.jpg" width=105 height=85 alt="alarm indicator">
+
+Ever wake up before your alarm goes off, don’t walk to worry about the alarm going off when you aren’t around, but you're also worried that if you turn the alarm off you’ll forget to turn it back on again for when you need it next?
+
+When an alarm is coming up within the next 24 hours a green alarm indicator is displayed, as seen above, near the middle of the top of the screen, to the right of the current date. The time of the next upcoming alarm is shown.
+
+If you tap/click on this indicator, alarms will be temporarily disabled for the next 3, 6, 12, or 24 hours, increasing with each tap. (Tap once more in this sequence to re-enable alarms.) The time when alarms will resume again is displayed.
 
 ### Wind speed
 

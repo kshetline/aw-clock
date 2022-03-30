@@ -916,7 +916,7 @@ export class SettingsDialog {
     this.currentCity.val(previousSettings.city);
     this.clockFace.val(previousSettings.clockFace);
     this.drawConstellations.prop('checked', previousSettings.drawConstellations);
-    this.floatHands.prop('checked', previousSettings.floatHands);
+    this.floatHands.val(previousSettings.floatHands);
     this.planets.val(previousSettings.hidePlanets ? 'H' : 'S');
     this.seconds.val(previousSettings.hideSeconds ? 'H' : 'S');
     this.hourlyForecast.val(previousSettings.hourlyForecast);
@@ -1094,7 +1094,7 @@ export class SettingsDialog {
     newSettings.dimmingEnd = this.dimmingEnd.val() as string;
     newSettings.dimmingStart = this.dimmingStart.val() as string;
     newSettings.drawConstellations = this.drawConstellations.is(':checked');
-    newSettings.floatHands = this.floatHands.is(':checked');
+    newSettings.floatHands = this.floatHands.val() as string;
     newSettings.hidePlanets = (this.planets.val() as string) === 'H';
     newSettings.hideSeconds = (this.seconds.val() as string) === 'H';
     newSettings.hourlyForecast = this.hourlyForecast.val() as HourlyForecast;
