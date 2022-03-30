@@ -467,6 +467,11 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   }
 
   &>.colspan-full {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
     grid-column: 1 / span 3;
 
     > input, label, span {

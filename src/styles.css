@@ -367,6 +367,11 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   .user-options > .colspan {
     grid-column: 2 / span 2; }
   .user-options > .colspan-full {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
     grid-column: 1 / span 3; }
     .user-options > .colspan-full > input, .user-options > .colspan-full label, .user-options > .colspan-full span {
       margin-right: 4px; }
