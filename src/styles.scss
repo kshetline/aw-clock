@@ -125,7 +125,7 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   color: black;
 }
 
-#clock-container, #clock-overlay {
+#clock-container, #clock-overlay, #planet-overlay {
   display: inline-block;
   left: 0;
   margin: auto;
@@ -148,6 +148,12 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   background-color: transparent;
   pointer-events: none;
   z-index: 20;
+}
+
+#planet-overlay {
+  background-color: transparent;
+  pointer-events: none;
+  z-index: 21;
 }
 
 @media only screen and (max-aspect-ratio: 43 / 27) {
@@ -467,6 +473,11 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   }
 
   &>.colspan-full {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
     grid-column: 1 / span 3;
 
     > input, label, span {
@@ -1181,6 +1192,12 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   }
 }
 
+#planet-overlay-svg {
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 1s;
+}
+
 ul.my-tabs {
   list-style-type: none;
   margin: 0 0 0 0.5em;
@@ -1594,6 +1611,42 @@ ul.my-tabs > li.tab-active {
       margin-block-start: 0.5rem;
       margin-top: 0;
       padding-inline-start: 20px;
+    }
+  }
+}
+
+.firefox-mods {
+  .user-options > .colspan-full {
+    select {
+      margin-right: 0;
+    }
+
+    #hourly-forecast-option {
+      width: 167px;
+    }
+
+    #weather-service-option {
+      width: 171px;
+    }
+
+    #sky-colors-option {
+      width: 150px;
+    }
+
+    #sky-facing-option {
+      width: 171px;
+    }
+
+    #float-hands-option {
+      width: 265px;
+    }
+
+    #weather-service-option {
+      margin-right: 0.5em;
+    }
+
+    #user-id {
+      margin: 0;
     }
   }
 }

@@ -1,3 +1,8 @@
+## 3.2.3
+
+* Position planets back over the top of clock hands.
+* Improvements in handling of temporarily disabled alarms.
+
 ## 3.2.2
 
 * Fix availability of Update button.

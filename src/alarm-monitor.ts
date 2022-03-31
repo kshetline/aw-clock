@@ -67,9 +67,10 @@ export class AlarmMonitor {
       const alarm = alarms[i];
       const isDaily = alarm.time < 1440;
       let alarmTime = alarm.time;
+      let canAddAlarm = true;
 
       if (this.activeAlarms.find(a => isEqual(a, alarm)) || this.silencedAlarms.find(sa => isEqual(sa.alarm, alarm)))
-        continue;
+        canAddAlarm = false;
 
       const snoozed = this.snoozedAlarms.find(sa => isEqual(sa.alarm, alarm));
 
@@ -106,7 +107,7 @@ export class AlarmMonitor {
           next24Hours = min(alarmTime, next24Hours);
       }
 
-      if (alarmTime <= nowMinutes && alarmTime >= nowMinutes - 60) {
+      if (canAddAlarm && alarmTime <= nowMinutes && alarmTime >= nowMinutes - 60) {
         newActiveAlarms.push(alarm);
 
         if (snoozed)
@@ -134,6 +135,11 @@ export class AlarmMonitor {
       this.silencedAlarms.push(...newActiveAlarms.map(alarm => ({ stoppedAt: nowMinutes, alarm })));
 
     return alarms;
+  }
+
+  resetAlarmState(): void {
+    this.silencedAlarms = [];
+    this.snoozedAlarms = [];
   }
 
   private updateActiveAlarms(newAlarms: AlarmInfo[], latestSound: string): void {

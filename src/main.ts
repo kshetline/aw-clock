@@ -28,7 +28,7 @@ import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePolle
 import { abs, ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
 import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
-import { apiServer, localServer, raspbianChromium, runningDev, Settings } from './settings';
+import { allowAdminFeatures, apiServer, localServer, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
@@ -74,6 +74,7 @@ class AwClockApp implements AppService {
   private clockOverlaySvg: JQuery;
   private dimmer: JQuery;
   private readonly testTime: JQuery;
+  private planetOverlaySvg: JQuery;
   private updateAvailable: JQuery;
   private updateCaption: JQuery;
 
@@ -132,6 +133,7 @@ class AwClockApp implements AppService {
     this.dimmer = $('#dimmer');
     setTimeout(() => this.dimmer.css('transition', 'opacity 5s ease-in'));
     this.clockOverlaySvg = $('#clock-overlay-svg');
+    this.planetOverlaySvg = $('#planet-overlay-svg');
     this.testTime = $('#test-time');
 
     $('#clock').on('click', evt => stopPropagation(evt, this.clockClick));
@@ -139,7 +141,7 @@ class AwClockApp implements AppService {
     this.updateAvailable = $('#update-available');
     this.updateCaption = $('#update-caption');
     this.updateAvailable.add(this.updateCaption).on('click', () => {
-      if (raspbianChromium && this.adminAllowed) {
+      if (allowAdminFeatures && this.adminAllowed) {
         this.alarmMonitor.stopAlarms();
         this.settingsDialog.openSettings(this.settings, true);
       }
@@ -218,6 +220,8 @@ class AwClockApp implements AppService {
 
     // Firefox doesn't detect clicks on the following SVG elements without this extra help.
     if (isFirefox()) {
+      document.body.classList.add('firefox-mods');
+
       const clickTargets = Array.from(document.getElementsByClassName('ff-click'));
 
       window.addEventListener('click', evt => {
@@ -392,7 +396,7 @@ class AwClockApp implements AppService {
         Promise.allSettled(promises)
           .then(dataPairs => {
             const data = dataPairs.map(item => item.status === 'rejected' ? null : item.value);
-            const localInstallation = raspbianChromium && (localServer || runningDev);
+            const localInstallation = allowAdminFeatures && (localServer || runningDev);
             let citySet = false;
             let countryCode = '';
             const showUpdate = (localInstallation && this.adminAllowed && data[0]?.updateAvailable &&
@@ -694,6 +698,7 @@ class AwClockApp implements AppService {
       this.showSkyMap = true;
       this.skyCanvas.style.pointerEvents = 'all';
       this.skyCanvas.style.opacity = '1';
+      this.planetOverlaySvg.css('opacity', '1');
       this.updateSkyMap();
     }
 
@@ -711,11 +716,13 @@ class AwClockApp implements AppService {
         this.clockOverlaySvg.removeClass('solid');
 
       this.clockOverlaySvg.css('opacity', '1');
+      this.planetOverlaySvg.css('opacity', '0');
     }
     else {
       this.clockOverlaySvg.removeClass('float');
       this.clockOverlaySvg.removeClass('solid');
       this.clockOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
+      this.planetOverlaySvg.css('opacity', this.showSkyMap ? '0' : '1');
     }
   }
 
@@ -747,6 +754,7 @@ class AwClockApp implements AppService {
 
     if (!evt.repeat && (skipTargetTest || evt.target === document.body)) {
       let handled = true;
+      const isTestTime = ((evt.target as any)?.id === 'test-time');
 
       if (key === 'F' || evt.key === 'f')
         setFullScreen(true);
@@ -754,9 +762,9 @@ class AwClockApp implements AppService {
         setFullScreen(false);
       else if (key === 'Enter' || key === ' ')
         this.alarmMonitor.stopAlarms();
-      else if (key === '5')
+      else if (key === '5' && !isTestTime)
         this.alarmMonitor.snoozeAlarms(5);
-      else if (key === '0' || key === 'S' || key === 's')
+      else if ((key === '0' && !isTestTime) || key === 'S' || key === 's')
         this.alarmMonitor.snoozeAlarms(10);
       else if (key === '.')
         this.alarmMonitor.snoozeAlarms(15);
@@ -770,6 +778,10 @@ class AwClockApp implements AppService {
         this.testTimeValue = this.getCurrentTime();
         this.testTimeStr = new DateTime(this.testTimeValue, this.lastTimezone).toIsoString(16);
         this.testTime.val(this.testTimeStr);
+        this.updateTestTime();
+      }
+      else if ((key === 'X' || key === 'x') && this.testTimeStr) {
+        this.alarmMonitor.resetAlarmState();
         this.updateTestTime();
       }
       else

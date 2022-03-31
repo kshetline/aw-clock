@@ -3,7 +3,7 @@ import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import {
-  AlarmInfo, apiServer, localServer, MAX_RECENT_LOCATIONS, raspbianChromium, RecentLocation, Settings,
+  AlarmInfo, allowAdminFeatures, apiServer, localServer, MAX_RECENT_LOCATIONS, RecentLocation, Settings,
   toTimeFormat, updateTest
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
@@ -1175,11 +1175,11 @@ export class SettingsDialog {
 
   private getDefaults(): void {
     getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
-      this.updateButton.css('display', (data.allowAdmin && raspbianChromium) || updateTest ? 'inline' : 'none');
+      this.updateButton.css('display', (data.allowAdmin && allowAdminFeatures) || updateTest ? 'inline' : 'none');
       this.updateButton.prop('disabled', !data.updateAvailable && !updateTest);
       this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
       this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
-      this.quitButton.css('display', data.allowAdmin && raspbianChromium ? 'inline' : 'none');
+      this.quitButton.css('display', data.allowAdmin && allowAdminFeatures ? 'inline' : 'none');
       this.latestVersion = data.latestVersion;
       this.weatherServices = data.services;
 

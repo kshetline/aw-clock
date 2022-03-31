@@ -96,7 +96,7 @@ label {
 select:not([disabled]), button:not([disabled]), input:not([disabled])[type="submit"] {
   color: black; }
 
-#clock-container, #clock-overlay {
+#clock-container, #clock-overlay, #planet-overlay {
   display: inline-block;
   left: 0;
   margin: auto;
@@ -105,7 +105,7 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   position: absolute;
   right: 0;
   width: calc(1.556 * (100vh - 2rem)); }
-  #clock-container.display16x9, #clock-overlay.display16x9 {
+  #clock-container.display16x9, #clock-overlay.display16x9, #planet-overlay.display16x9 {
     width: calc(1.675 * (100vh - 2rem)); }
 
 #clock-container {
@@ -115,6 +115,11 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   background-color: transparent;
   pointer-events: none;
   z-index: 20; }
+
+#planet-overlay {
+  background-color: transparent;
+  pointer-events: none;
+  z-index: 21; }
 
 @media only screen and (max-aspect-ratio: 43 / 27) {
   #clock-container, #clock-overlay {
@@ -367,6 +372,11 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   .user-options > .colspan {
     grid-column: 2 / span 2; }
   .user-options > .colspan-full {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
     grid-column: 1 / span 3; }
     .user-options > .colspan-full > input, .user-options > .colspan-full label, .user-options > .colspan-full span {
       margin-right: 4px; }
@@ -919,6 +929,11 @@ input, button, select, textarea, optgroup, option {
   #clock-overlay-svg.float.solid .dot.big-dot {
     opacity: 0.5; }
 
+#planet-overlay-svg {
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 1s; }
+
 ul.my-tabs {
   list-style-type: none;
   margin: 0 0 0 0.5em;
@@ -1223,3 +1238,27 @@ ul.my-tabs > li.tab-active {
       margin-block-start: 0.5rem;
       margin-top: 0;
       padding-inline-start: 20px; }
+
+.firefox-mods .user-options > .colspan-full select {
+  margin-right: 0; }
+
+.firefox-mods .user-options > .colspan-full #hourly-forecast-option {
+  width: 167px; }
+
+.firefox-mods .user-options > .colspan-full #weather-service-option {
+  width: 171px; }
+
+.firefox-mods .user-options > .colspan-full #sky-colors-option {
+  width: 150px; }
+
+.firefox-mods .user-options > .colspan-full #sky-facing-option {
+  width: 171px; }
+
+.firefox-mods .user-options > .colspan-full #float-hands-option {
+  width: 265px; }
+
+.firefox-mods .user-options > .colspan-full #weather-service-option {
+  margin-right: 0.5em; }
+
+.firefox-mods .user-options > .colspan-full #user-id {
+  margin: 0; }
