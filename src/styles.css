@@ -1238,3 +1238,27 @@ ul.my-tabs > li.tab-active {
       margin-block-start: 0.5rem;
       margin-top: 0;
       padding-inline-start: 20px; }
+
+.firefox-mods .user-options > .colspan-full select {
+  margin-right: 0; }
+
+.firefox-mods .user-options > .colspan-full #hourly-forecast-option {
+  width: 167px; }
+
+.firefox-mods .user-options > .colspan-full #weather-service-option {
+  width: 171px; }
+
+.firefox-mods .user-options > .colspan-full #sky-colors-option {
+  width: 150px; }
+
+.firefox-mods .user-options > .colspan-full #sky-facing-option {
+  width: 171px; }
+
+.firefox-mods .user-options > .colspan-full #float-hands-option {
+  width: 265px; }
+
+.firefox-mods .user-options > .colspan-full #weather-service-option {
+  margin-right: 0.5em; }
+
+.firefox-mods .user-options > .colspan-full #user-id {
+  margin: 0; }

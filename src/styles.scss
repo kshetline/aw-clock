@@ -1614,3 +1614,39 @@ ul.my-tabs > li.tab-active {
     }
   }
 }
+
+.firefox-mods {
+  .user-options > .colspan-full {
+    select {
+      margin-right: 0;
+    }
+
+    #hourly-forecast-option {
+      width: 167px;
+    }
+
+    #weather-service-option {
+      width: 171px;
+    }
+
+    #sky-colors-option {
+      width: 150px;
+    }
+
+    #sky-facing-option {
+      width: 171px;
+    }
+
+    #float-hands-option {
+      width: 265px;
+    }
+
+    #weather-service-option {
+      margin-right: 0.5em;
+    }
+
+    #user-id {
+      margin: 0;
+    }
+  }
+}

@@ -220,6 +220,8 @@ class AwClockApp implements AppService {
 
     // Firefox doesn't detect clicks on the following SVG elements without this extra help.
     if (isFirefox()) {
+      document.body.classList.add('firefox-mods');
+
       const clickTargets = Array.from(document.getElementsByClassName('ff-click'));
 
       window.addEventListener('click', evt => {
