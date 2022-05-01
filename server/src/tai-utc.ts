@@ -228,15 +228,15 @@ export class TaiUtc {
     const newDeltas: DeltaUt1Utc[] = [];
 
     try {
-      lines = asLines((await TaiUtc.getFtpText(IERS_BULLETIN_A_FTP_URL)).toString());
+      lines = asLines(await requestText(IERS_BULLETIN_A_HTTPS_URL));
     }
     catch (err) {
-      console.error('%s -- Failed to retrieve IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_FTP_URL);
+      console.error('%s -- Failed to retrieve IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_HTTPS_URL);
 
       if (os.uptime() > 90)
         console.error(err);
 
-      lines = asLines(await requestText(IERS_BULLETIN_A_HTTPS_URL));
+      lines = asLines((await TaiUtc.getFtpText(IERS_BULLETIN_A_FTP_URL)).toString());
     }
 
     lines.forEach(line => {

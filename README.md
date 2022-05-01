@@ -12,7 +12,7 @@ On a display which is narrower than a 16-by-9 aspect ratio, four forecast days c
 
 Multiple alarms can be set as either daily alarms (on selectable days of the week), or one-time alarms triggered at a specific date and time. Various alarms tones are available, and each alarm can be accompanied by an on-screen message. Alarms can be set to snooze for 5, 10, or 15 minutes.
 
-When viewing the sky map feature you can choose to see a multi-color sky, shaded to indicate daylight, sunrise and sunset, twilight, and even solar eclipse conditions. Or the sky can be shown as black all the time for easier viewing of the positions of the stars. Constellation lines can be optionally displayed as well.
+When viewing the sky map feature you can choose to see a multicolor sky, shaded to indicate daylight, sunrise and sunset, twilight, and even solar eclipse conditions. Or the sky can be shown as black all the time for easier viewing of the positions of the stars. Constellation lines can be optionally displayed as well.
 
 *&#42;A touchscreen or mouse is required to display the last two or three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, from clock face to sky map, or to switch from hourly temperatures to hourly probability-of-precipitation.*
 
@@ -48,7 +48,7 @@ There will possibly be a long delay the first time you run this script while Nod
 
 You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the `build.sh` command above, and add `--ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled, no alternative weather services beyond Weather Underground, and no geocoding support.
 
-If you want to use the **alarm clock** feature, **it’s important that you use the default kiosk mode**. This ensures that audio can be played by the Chrome web browser without you having to interact with the browser first (working around a web browser safety feature designed to protect you from annoying ads on web sites that could otherwise suddenly blast you with sound).
+If you want to use the **alarm clock** feature, **it’s important that you use the default kiosk mode**. This ensures that audio can be played by the Chrome web browser without you having to interact with the browser first (working around a web browser safety feature designed to protect you from annoying ads on websites that could otherwise suddenly blast you with sound).
 
 Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and don’t want to have to use SSH or VNC to perform these operations.
 

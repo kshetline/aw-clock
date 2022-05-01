@@ -20,6 +20,6 @@
       "dom"
     ]
   },
-  "include": ["../ambient.d.ts", "./src/**/*"],
+  "include": ["../../ambient.d.ts", "./src/**/*"],
   "exclude": ["node_modules", "tsc-out", "**/*.spec.ts"]
 }

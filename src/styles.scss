@@ -157,7 +157,7 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
 }
 
 @media only screen and (max-aspect-ratio: 43 / 27) {
-  #clock-container, #clock-overlay {
+  #clock-container, #clock-overlay, #planet-overlay {
     width: calc(100vw - 4rem);
   }
 }

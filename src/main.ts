@@ -662,16 +662,16 @@ class AwClockApp implements AppService {
         this.updateSkyMap();
       }
     }
-  }
+  };
 
   private skyClick = (evt: ClickishEvent): void => {
     this.toggleSkyMap(evt, 2);
-  }
+  };
 
   private clockClick = (evt: ClickishEvent): void => {
     if ((evt.target as Element).id === 'face')
       this.toggleSkyMap(evt, 3);
-  }
+  };
 
   private toggleSkyMap(evt?: ClickishEvent, diameterDivider = 0): void {
     if (evt && diameterDivider > 0) {
