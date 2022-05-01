@@ -178,7 +178,7 @@ function extractGust(baseSpeed: number, ...phrases: string[]): number {
 
 function convertCurrent(forecast: ForecastData, wc: any, wh: any, isMetric: boolean): void {
   // For some strange reason pressure is always metric for current conditions, but changes to inches of mercury
-  // (inHg) for the hourly imperial values. As I don't trust this inconsistency so I'll use the numeric range of
+  // (inHg) for the hourly imperial values. As I don't trust this inconsistency, I'll use the numeric range of
   // the input values to decide on what conversion to do.
   forecast.currently = {
     time: wc.validTimeUtc,
