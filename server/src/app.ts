@@ -104,7 +104,11 @@ async function checkForUpdate(): Promise<void> {
   updatePollTimer = undefined;
 
   let delay = UPDATE_POLL_INTERVAL;
-  const options = { headers: { 'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION } };
+  const options = { headers: { 'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION } as any };
+  const gitHubToken = process.env.AWC_GITHUB_TOKEN;
+
+  if (gitHubToken)
+    options.headers.Authorization = 'token ' + gitHubToken;
 
   try {
     const repoInfo = await requestJson('https://api.github.com/repos/kshetline/aw-clock/releases/latest', options);

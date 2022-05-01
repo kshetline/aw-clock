@@ -1,6 +1,7 @@
 ## 3.2.4
 
 * Fixed iOS Safari layout bug.
+* HTTPS access to IERS Bulletin A is now tried first, before trying to access currently-offline FTP server. (If FTP access is permanently gone, an alternate backup access method will be added in the future).
 
 ## 3.2.3
 
