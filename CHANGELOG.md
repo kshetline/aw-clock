@@ -1,3 +1,7 @@
+## 3.2.4
+
+* Fixed iOS Safari layout bug.
+
 ## 3.2.3
 
 * Position planets back over the top of clock hands.

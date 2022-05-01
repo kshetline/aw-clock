@@ -192,7 +192,7 @@ export class SettingsDialog {
   private alarmHour: JQuery;
   private alarmList: JQuery;
   private alarmMessage: JQuery;
-  private alarmMeridiem: JQuery
+  private alarmMeridiem: JQuery;
   private alarmMinute: JQuery;
   private alarmMonth: JQuery;
   private alarmSave: JQuery;
@@ -875,7 +875,7 @@ export class SettingsDialog {
 
   private abortForUnsavedAlarm(callback: (abort: boolean) => void): void {
     if (!this.alarmEditing) {
-      callback(false);
+      callback(false); // eslint-disable-line n/no-callback-literal
       return;
     }
 
@@ -884,7 +884,7 @@ export class SettingsDialog {
       if (yesGoOn)
         this.clearAlarmTime();
 
-      callback(!yesGoOn);
+      callback(!yesGoOn); // eslint-disable-line n/no-callback-literal
     });
   }
 
