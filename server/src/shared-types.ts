@@ -87,7 +87,7 @@ export const AlertKeys = ['description', 'expires', 'severity', 'title', 'url'];
 export interface Alert {
   description: string;
   expires: number;    // See CommonConditions
-  severity: 'advisory' | 'watch' | 'warning';
+  severity: 'info' | 'advisory' | 'watch' | 'warning';
   time: number;       // See CommonConditions
   title: string;
   url?: string;

@@ -1588,16 +1588,24 @@ ul.my-tabs > li.tab-active {
     }
   }
 
-  #filter-list {
+  #filter-list-wrapper {
     border: 1px solid #AAA;
     display: flex;
     flex-direction: column;
-    gap: 0.5em;
     height: 100%;
     justify-content: stretch;
-    overflow: auto;
+    overflow: hidden;
     padding: 4px;
     width: 100%;
+
+    #filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      justify-content: stretch;
+      overflow: auto;
+      width: 100%;
+    }
   }
 
   .filter-item {

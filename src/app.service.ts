@@ -1,5 +1,5 @@
 import { CurrentTemperatureHumidity, TimeFormat } from './shared-types';
-import { Settings } from './settings';
+import { AlertFilter, Settings } from './settings';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { Timezone } from '@tubular/time';
 
@@ -8,6 +8,7 @@ export interface AppService {
   getAlarmTime(): number;
   getApiServer(): string;
   getCurrentTime(bias?: number): number;
+  getAlertFilters(): AlertFilter[];
   getIndoorOption(): string;
   getLatestDefaults(): AwcDefaults;
   getOutdoorOption(): string;

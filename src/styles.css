@@ -1221,16 +1221,22 @@ ul.my-tabs > li.tab-active {
       margin-top: -5px;
       position: relative;
       top: 4px; }
-  .alert-section #filter-list {
+  .alert-section #filter-list-wrapper {
     border: 1px solid #AAA;
     display: flex;
     flex-direction: column;
-    gap: 0.5em;
     height: 100%;
     justify-content: stretch;
-    overflow: auto;
+    overflow: hidden;
     padding: 4px;
     width: 100%; }
+    .alert-section #filter-list-wrapper #filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      justify-content: stretch;
+      overflow: auto;
+      width: 100%; }
   .alert-section .filter-item {
     display: flex;
     gap: 0.5em; }

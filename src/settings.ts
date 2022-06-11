@@ -46,6 +46,7 @@ export class RecentLocation {
 export enum AlertFilterType { DOWNGRADE, HIDE }
 
 export class AlertFilter {
+  checkDescription: boolean;
   content: string;
   type: AlertFilterType;
 }
@@ -92,6 +93,7 @@ export class Settings {
     this.alarmDisableDuration = Number(Cookies.get('alarm_disable_duration')) || defaultSettings.alarmDisableDuration;
     this.alarmDisableStartTime = Number(Cookies.get('alarm_disable_start_time')) || defaultSettings.alarmDisableStartTime;
     this.alarms = parseJson(Cookies.get('alarms')) || defaultSettings.alarms;
+    this.alertFilters = parseJson(Cookies.get('alert-filters')) || defaultSettings.alertFilters;
     this.background = Cookies.get('background') || defaultSettings.background;
     this.celsius = toBoolean(Cookies.get('celsius'), false);
     this.city = Cookies.get('city') || defaultSettings.city;
@@ -136,6 +138,7 @@ export class Settings {
     Cookies.set('alarm_disable_duration', this.alarmDisableDuration.toString(), expiration);
     Cookies.set('alarm_disable_start_time', this.alarmDisableStartTime.toString(), expiration);
     Cookies.set('alarms', JSON.stringify(this.alarms), expiration);
+    Cookies.set('alert-filters', JSON.stringify(this.alertFilters), expiration);
     Cookies.set('background', this.background, expiration);
     Cookies.set('celsius', this.celsius.toString(), expiration);
     Cookies.set('city', this.city, expiration);

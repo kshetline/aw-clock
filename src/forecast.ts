@@ -4,18 +4,18 @@ import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
 import {
-  blendColors, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject,
-  last, processMillis, toNumber
+  blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject, last,
+  processMillis, toNumber
 } from '@tubular/util';
-import { CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
+import { Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  ClickishEvent,
-  compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour,
-  getJson, JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
+  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getJson,
+  JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
+import { AlertFilterType } from './settings';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -86,6 +86,13 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
   const y = event.pageY;
 
   return rect.x <= x && x <= rect.right && rect.y <= y && y <= rect.bottom;
+}
+
+function concatenateAlerts(alerts: string[]): string {
+  return alerts.map(a => a.replace(/\r\n|\r/g, '\n').trim()
+    .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '') // Remove seemingly random trailing characters from alerts.
+    .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
+  ).join(BULLET_SPACER);
 }
 
 export class Forecast {
@@ -1005,6 +1012,8 @@ export class Forecast {
     let newText: string;
     let maxSeverity = 0;
     const alerts: string[] = [];
+    let droppedAlertSymbols = ' ';
+    const droppedAlerts: string[] = [];
     const now = this.appService.getCurrentTime();
 
     if (this.appService.sensorDeadAir())
@@ -1015,21 +1024,28 @@ export class Forecast {
 
     if (forecastData?.alerts) {
       forecastData.alerts.forEach(alert => {
+        alert = clone(alert);
+
         const expires = alert.expires * 1000;
 
         if (expires >= now) {
           const severities = ['advisory', 'watch', 'warning'];
-          maxSeverity = max(severities.indexOf(alert.severity) + 1, maxSeverity);
-          alerts.push(alert.title + ': ' + alert.description);
+          const allowed = this.alertAllowed(alert);
+          const severity = severities.indexOf(alert.severity) + 1;
+
+          if (allowed) {
+            maxSeverity = max(severity, maxSeverity);
+            alerts.push(alert.title + ': ' + alert.description);
+          }
+          else {
+            droppedAlertSymbols += ['🔵', '🟠', '🔴'][severity - 1] || '';
+            droppedAlerts.push(alert.title + ': ' + alert.description);
+          }
         }
       });
     }
 
-    const alertText = alerts.map(a => a.replace(/\r\n|\r/g, '\n').trim()
-      .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '') // Remove seemingly random trailing characters from alerts.
-      .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
-    ).join(BULLET_SPACER);
-
+    const alertText = concatenateAlerts(alerts) + droppedAlertSymbols.trimEnd();
     let background: string;
     let color: string;
 
@@ -1071,7 +1087,24 @@ export class Forecast {
     this.marqueeWrapper.css('background-color', background);
     this.marqueeOuterWrapper.css('color', color);
     this.marqueeWrapper.css('color', color);
-    this.updateMarqueeAnimation(newText);
+    this.updateMarqueeAnimation(newText, concatenateAlerts(droppedAlerts));
+  }
+
+  private alertAllowed(alert: Alert): boolean {
+    const title = alert.title.toLowerCase();
+    const text = title + '\n' + alert.description.toLowerCase().replace(/\s+/g, ' ').trim();
+    const filters = this.appService.getAlertFilters();
+
+    return filters.findIndex(filter => {
+      if ((filter.checkDescription ? text : title).includes(filter.content.toLowerCase())) {
+        if (filter.type === AlertFilterType.HIDE)
+          return true;
+        else
+          alert.severity = 'info';
+      }
+
+      return false;
+    }) < 0;
   }
 
   private checkAspectRatio(): void {
@@ -1095,7 +1128,7 @@ export class Forecast {
     }
   }
 
-  private updateMarqueeAnimation(newText: string): void {
+  private updateMarqueeAnimation(newText: string, droppedAlerts?: string): void {
     if (newText !== null) {
       if (newText === this.marqueeText)
         return;
@@ -1112,12 +1145,15 @@ export class Forecast {
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
-    // Try to undo hard word-wrap (too bad lookbehinds aren't reliably supported yet in web browsers).
-    this.marqueeDialogText = newText.replace(BULLET_REGEX, '\n<hr>').replace(/([-0-9a-z,])\n(?=[a-z]|(\d[^.#*)\]]))/gi, '$1 ')
+    // Try to undo hard word-wrap.
+    this.marqueeDialogText = (newText + (droppedAlerts ? BULLET_SPACER + droppedAlerts : ''))
+      .replace(BULLET_REGEX, '\n<hr>').replace(/([-\da-z,])\n(?=[a-z]|(\d[^.#*)\]]))/gi, '$1 ')
       // No more than one blank line, and no trailing blank lines.
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
       // Improve alert formatting.
-      .replace(SUBJECT_INTRO_PATTERN, '$1: ');
+      .replace(SUBJECT_INTRO_PATTERN, '$1: ')
+      // Remove hidden alert icons.
+      .replace(/ (\uD83D[\uDD34-\uDD35\uDFe0])+/, '');
 
     if (textWidth <= marqueeWidth) {
       this.marquee.html(newText);

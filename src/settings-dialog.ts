@@ -169,6 +169,10 @@ function filterHtml(filter: AlertFilter, index: number): string {
     <option value="${AlertFilterType.DOWNGRADE}"${filter.type === AlertFilterType.DOWNGRADE ? ' selected' : ''}>Downgrade</option>
     <option value="${AlertFilterType.HIDE}"${filter.type === AlertFilterType.HIDE ? ' selected' : ''}>Hide</option>
   </select>
+  <div>
+    <input id="filter-description-${index}" type="checkbox"${filter.checkDescription ? ' checked' : ''}>
+    <label for="filter-description-${index}">Check description</label>
+  </div>
   <input id="filter-context-${index}" type="text" value="${htmlEscape(filter.content, true)}">
   <span>✕</span>
 </div>\n`;
@@ -555,7 +559,7 @@ export class SettingsDialog {
   }
 
   private addAlertFilter(): void {
-    this.previousSettings.alertFilters.push({ content: '', type: AlertFilterType.HIDE });
+    this.previousSettings.alertFilters.push({ checkDescription: false, content: '', type: AlertFilterType.HIDE });
     this.renderAlertFilterList(this.previousSettings);
   }
 
@@ -1210,10 +1214,11 @@ export class SettingsDialog {
 
     newSettings.alertFilters = [];
     this.filterList.find('select').each(function () {
-      const content = this.parentElement.querySelector('input').value.trim();
+      const checkDescription = (this.parentElement.querySelector('input[type="checkbox"]') as HTMLInputElement).checked;
+      const content = (this.parentElement.querySelector('input[type="text"]') as HTMLInputElement).value.trim();
 
       if (content)
-        newSettings.alertFilters.push({ content, type: toNumber(this.value) });
+        newSettings.alertFilters.push({ checkDescription, content, type: toNumber(this.value) });
     });
 
     decrementDialogCounter();
