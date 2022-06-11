@@ -163,13 +163,13 @@ function soundName(fileName: string): string {
   return (fileName || '???').replace(/^user\//, '✭').replace(/\.[^.]+$/, '').replace(/_/g, ' ');
 }
 
-function filterHtml(filter: AlertFilter, index: number): string {
+function renderFilterHtml(filter: AlertFilter, index: number): string {
   return `<div id="filter-item-${index}" class="filter-item">
   <select id="filter-type-${index}">
     <option value="${AlertFilterType.DOWNGRADE}"${filter.type === AlertFilterType.DOWNGRADE ? ' selected' : ''}>Downgrade</option>
     <option value="${AlertFilterType.HIDE}"${filter.type === AlertFilterType.HIDE ? ' selected' : ''}>Hide</option>
   </select>
-  <div>
+  <div class="filter-checkbox">
     <input id="filter-description-${index}" type="checkbox"${filter.checkDescription ? ' checked' : ''}>
     <label for="filter-description-${index}">Check description</label>
   </div>
@@ -559,18 +559,26 @@ export class SettingsDialog {
   }
 
   private addAlertFilter(): void {
-    this.previousSettings.alertFilters.push({ checkDescription: false, content: '', type: AlertFilterType.HIDE });
-    this.renderAlertFilterList(this.previousSettings);
+    const filters = this.getAlertFilters(false);
+
+    filters.push({ checkDescription: false, content: '', type: AlertFilterType.HIDE });
+    this.renderAlertFilterList(filters);
+    this.filterList.scrollTop(Number.MAX_SAFE_INTEGER);
   }
 
   private deleteAlertFilter(index: number): void {
+    const deleteFilter = (): void => {
+      const filters = this.getAlertFilters(false);
+
+      filters.splice(index, 1);
+      this.renderAlertFilterList(filters);
+    };
+
     if (index >= 0) {
-      domConfirm('Delete the selected filter?', yep => {
-        if (yep) {
-          this.previousSettings.alertFilters.splice(index, 1);
-          this.renderAlertFilterList(this.previousSettings);
-        }
-      });
+      if ((document.getElementById(`filter-context-${index}`) as HTMLInputElement)?.value.trim() === '')
+        deleteFilter();
+      else
+        domConfirm('Delete the selected filter?', yep => yep && deleteFilter());
     }
   }
 
@@ -921,11 +929,15 @@ export class SettingsDialog {
     const tabIndex = this.tabs.index(evt.target) as Tab;
 
     if (tabIndex !== this.activeTab)
-      this.abortForUnsavedAlarm(abort => abort || this.selectTab(tabIndex));
+      this.abortForUnsavedAlarmOrBadRegex(abort => abort || this.selectTab(tabIndex));
   }
 
-  private abortForUnsavedAlarm(callback: (abort: boolean) => void): void {
-    if (!this.alarmEditing) {
+  private abortForUnsavedAlarmOrBadRegex(callback: (abort: boolean) => void): void {
+    if (!this.getAlertFilters()) {
+      callback(true); // eslint-disable-line n/no-callback-literal
+      return;
+    }
+    else if (!this.alarmEditing) {
       callback(false); // eslint-disable-line n/no-callback-literal
       return;
     }
@@ -1074,7 +1086,7 @@ export class SettingsDialog {
     this.clearAlarmTime();
     this.renderAlarmList(this.newAlarms);
 
-    this.renderAlertFilterList(previousSettings);
+    this.renderAlertFilterList(previousSettings.alertFilters);
 
     const defaults = this.appService.getLatestDefaults();
     const updateVersionInfo = $('#update-version-info');
@@ -1120,10 +1132,34 @@ export class SettingsDialog {
     this.alarmYear.val(now.year);
   }
 
-  private renderAlertFilterList(settings: Settings): void {
-    const filters = settings.alertFilters.map((filter, index) => filterHtml(filter, index)).join('');
+  private filterTextCheck = (evt: InputEvent): void => {
+    const input = evt.target as HTMLInputElement;
+    const text = input.value.trim();
+    const $ = /^\/([^/]+)\/(u?)$/.exec(text);
+
+    if ($) {
+      try {
+        new RegExp($[1], 'i' + $[2]);
+        input.style.color = 'green';
+      }
+      catch {
+        input.style.color = 'red';
+      }
+    }
+    else
+      input.style.color = '';
+  };
+
+  private renderAlertFilterList(alertFilters: AlertFilter[]): void {
+    this.filterList.find('input[type="text"]').each((_index, elem) => elem.removeEventListener('input', this.filterTextCheck));
+
+    const filters = alertFilters.map((filter, index) => renderFilterHtml(filter, index)).join('');
 
     this.filterList.html(filters);
+    this.filterList.find('input[type="text"]').each((_index, elem) => {
+      elem.addEventListener('input', this.filterTextCheck);
+      elem.dispatchEvent(new InputEvent('input'));
+    });
   }
 
   private updateWeatherServiceSelection(): void {
@@ -1137,13 +1173,16 @@ export class SettingsDialog {
 
   private doOK = (): void => {
     this.stopAudio();
+    const newSettings = new Settings();
 
-    if (this.alarmEditing) {
-      this.abortForUnsavedAlarm(abort => abort || this.doOK());
+    newSettings.alertFilters = this.getAlertFilters();
+
+    if (!newSettings.alertFilters)
+      return;
+    else if (this.alarmEditing) {
+      this.abortForUnsavedAlarmOrBadRegex(abort => abort || this.doOK());
       return;
     }
-
-    const newSettings = new Settings();
 
     newSettings.background = this.background.val() as string;
     newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
@@ -1212,21 +1251,35 @@ export class SettingsDialog {
     newSettings.recentLocations = this.recentLocations;
     newSettings.alarms = this.newAlarms;
 
-    newSettings.alertFilters = [];
-    this.filterList.find('select').each(function () {
-      const checkDescription = (this.parentElement.querySelector('input[type="checkbox"]') as HTMLInputElement).checked;
-      const content = (this.parentElement.querySelector('input[type="text"]') as HTMLInputElement).value.trim();
-
-      if (content)
-        newSettings.alertFilters.push({ checkDescription, content, type: toNumber(this.value) });
-    });
-
     decrementDialogCounter();
     popKeydownListener();
     this.okButton.off('click', this.doOK);
     this.dialog.css('display', 'none');
     this.appService.updateSettings(newSettings);
   };
+
+  private getAlertFilters(validate = true): AlertFilter[] {
+    const filters: AlertFilter[] = [];
+    let badRegex = false;
+
+    this.filterList.find('select').each(function () {
+      const checkDescription = (this.parentElement.querySelector('input[type="checkbox"]') as HTMLInputElement).checked;
+      const input = this.parentElement.querySelector('input[type="text"]') as HTMLInputElement;
+      const content = input.value.trim();
+
+      if (validate && input.style.color === 'red') {
+        domAlert('Content filter is an invalid regular expression.');
+        badRegex = true;
+      }
+      else if (content || !validate)
+        filters.push({ checkDescription, content, type: toNumber(this.value) });
+    });
+
+    if (badRegex)
+      return null;
+    else
+      return filters;
+  }
 
   private doReturnAction = (): void => {
     if (this.updateFocused)

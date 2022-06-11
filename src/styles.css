@@ -1242,6 +1242,9 @@ ul.my-tabs > li.tab-active {
     gap: 0.5em; }
     .alert-section .filter-item input {
       flex: 1 0 auto; }
+    .alert-section .filter-item .filter-checkbox {
+      display: flex;
+      align-items: center; }
     .alert-section .filter-item span {
       background-color: #BBB;
       border-radius: 50%;

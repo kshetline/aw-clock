@@ -1092,11 +1092,20 @@ export class Forecast {
 
   private alertAllowed(alert: Alert): boolean {
     const title = alert.title.toLowerCase();
-    const text = title + '\n' + alert.description.toLowerCase().replace(/\s+/g, ' ').trim();
+    const fullText = title + '\n' + alert.description.toLowerCase().replace(/\s+/g, ' ').trim();
     const filters = this.appService.getAlertFilters();
 
     return filters.findIndex(filter => {
-      if ((filter.checkDescription ? text : title).includes(filter.content.toLowerCase())) {
+      const text = (filter.checkDescription ? fullText : title);
+      const $ = /^\/([^/]+)\/(u?)$/.exec(filter.content.trim());
+      let matched: boolean;
+
+      if ($)
+        matched = new RegExp($[1], 'i' + $[2]).test(text);
+      else
+        matched = text.includes(filter.content.toLowerCase());
+
+      if (matched) {
         if (filter.type === AlertFilterType.HIDE)
           return true;
         else

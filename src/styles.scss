@@ -1616,6 +1616,11 @@ ul.my-tabs > li.tab-active {
       flex: 1 0 auto;
     }
 
+    .filter-checkbox {
+      display: flex;
+      align-items: center;
+    }
+
     span {
       background-color: #BBB;
       border-radius: 50%;
