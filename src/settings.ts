@@ -43,12 +43,20 @@ export class RecentLocation {
   longitude: number;
 }
 
+export enum AlertFilterType { DOWNGRADE, HIDE }
+
+export class AlertFilter {
+  content: string;
+  type: AlertFilterType;
+}
+
 export const MAX_RECENT_LOCATIONS = 5;
 
 export class Settings {
   alarmDisableDuration = 0;
   alarmDisableStartTime = 0;
   alarms: AlarmInfo[] = [];
+  alertFilters: AlertFilter[] = [];
   background = '#191970';
   celsius = false;
   city = 'New York, NY';

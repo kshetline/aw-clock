@@ -3,8 +3,8 @@ import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import {
-  AlarmInfo, allowAdminFeatures, apiServer, localServer, MAX_RECENT_LOCATIONS, RecentLocation, Settings,
-  toTimeFormat, updateTest
+  AlarmInfo, AlertFilter, AlertFilterType, allowAdminFeatures, apiServer, localServer, MAX_RECENT_LOCATIONS, RecentLocation,
+  Settings, toTimeFormat, updateTest
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
@@ -163,6 +163,17 @@ function soundName(fileName: string): string {
   return (fileName || '???').replace(/^user\//, '✭').replace(/\.[^.]+$/, '').replace(/_/g, ' ');
 }
 
+function filterHtml(filter: AlertFilter, index: number): string {
+  return `<div id="filter-item-${index}" class="filter-item">
+  <select id="filter-type-${index}">
+    <option value="${AlertFilterType.DOWNGRADE}"${filter.type === AlertFilterType.DOWNGRADE ? ' selected' : ''}>Downgrade</option>
+    <option value="${AlertFilterType.HIDE}"${filter.type === AlertFilterType.HIDE ? ' selected' : ''}>Hide</option>
+  </select>
+  <input id="filter-context-${index}" type="text" value="${htmlEscape(filter.content, true)}">
+  <span>✕</span>
+</div>\n`;
+}
+
 const UPDATE_OPTIONS = `<br>
 <input type="checkbox" id="interactive-update" name="interactive-update">
 <label for="interactive-update">Interactive update</label><br>
@@ -211,6 +222,7 @@ export class SettingsDialog {
   private dimming: JQuery;
   private dimmingTo: JQuery;
   private drawConstellations: JQuery;
+  private filterList: JQuery;
   private floatHands: JQuery;
   private format: JQuery;
   private getGps: JQuery;
@@ -289,6 +301,7 @@ export class SettingsDialog {
     this.dimmingStart = $('#dimming-start');
     this.dimmingTo = $('#dimming-to');
     this.drawConstellations = $('#constellations-option');
+    this.filterList = $('#filter-list');
     this.floatHands = $('#float-hands-option');
     this.format = $('#format-option');
     this.getGps = $('#get-gps');
@@ -521,6 +534,40 @@ export class SettingsDialog {
     });
     this.alarmDelete.on('click', () => this.deleteSelectedAlarm());
     this.alarmEdit.on('click', () => this.editSelectedAlarm());
+
+    $('#add-filter').on('click', () => this.addAlertFilter());
+
+    this.filterList.on('click', evt => {
+      let target = evt.target;
+
+      if (target.localName !== 'span')
+        return;
+
+      do {
+        if (target.classList.contains('filter-item')) {
+          this.deleteAlertFilter(toNumber(target.id.replace(/^\D+/, ''), -1));
+          break;
+        }
+        else
+          target = target.parentElement;
+      } while (target);
+    });
+  }
+
+  private addAlertFilter(): void {
+    this.previousSettings.alertFilters.push({ content: '', type: AlertFilterType.HIDE });
+    this.renderAlertFilterList(this.previousSettings);
+  }
+
+  private deleteAlertFilter(index: number): void {
+    if (index >= 0) {
+      domConfirm('Delete the selected filter?', yep => {
+        if (yep) {
+          this.previousSettings.alertFilters.splice(index, 1);
+          this.renderAlertFilterList(this.previousSettings);
+        }
+      });
+    }
   }
 
   private updateAudioChoices(): void {
@@ -1023,6 +1070,8 @@ export class SettingsDialog {
     this.clearAlarmTime();
     this.renderAlarmList(this.newAlarms);
 
+    this.renderAlertFilterList(previousSettings);
+
     const defaults = this.appService.getLatestDefaults();
     const updateVersionInfo = $('#update-version-info');
 
@@ -1065,6 +1114,12 @@ export class SettingsDialog {
     this.alarmDay.val(p2(now.day));
     this.alarmMonth.val(now.month);
     this.alarmYear.val(now.year);
+  }
+
+  private renderAlertFilterList(settings: Settings): void {
+    const filters = settings.alertFilters.map((filter, index) => filterHtml(filter, index)).join('');
+
+    this.filterList.html(filters);
   }
 
   private updateWeatherServiceSelection(): void {
@@ -1152,6 +1207,15 @@ export class SettingsDialog {
 
     newSettings.recentLocations = this.recentLocations;
     newSettings.alarms = this.newAlarms;
+
+    newSettings.alertFilters = [];
+    this.filterList.find('select').each(function () {
+      const content = this.parentElement.querySelector('input').value.trim();
+
+      if (content)
+        newSettings.alertFilters.push({ content, type: toNumber(this.value) });
+    });
+
     decrementDialogCounter();
     popKeydownListener();
     this.okButton.off('click', this.doOK);

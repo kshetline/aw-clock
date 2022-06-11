@@ -431,11 +431,12 @@
             <li>Options</li>
             <li>Location Search</li>
             <li>Alarms</li>
+            <li>Alert Filters</li>
             <li>Update</li>
           </ul>
-          <span style="white-space: nowrap;">
+          <span class="keyboard-option">
             <input type="checkbox" id="onscreen-kb" name="onscreen-kb">
-            <label for="onscreen-kb">Onscreen keyboard</label>
+            <label for="onscreen-kb">Onscreen<br>keyboard</label>
           </span>
         </div>
         <div class="tab-wrapper">
@@ -633,6 +634,10 @@
                 <button id="alarm-delete">Delete</button>
               </div>
             </div>
+          </div>
+          <div class="tab-panel alert-section">
+            <button id="add-filter"><img src="assets/filter.svg" width="16" height="16" alt="filter"> Add Filter</button>
+            <div id="filter-list"></div>
           </div>
           <div class="tab-panel update-section">
             <div class="update-header">

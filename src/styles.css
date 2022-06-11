@@ -339,6 +339,13 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   display: flex;
   justify-content: space-between; }
 
+.keyboard-option {
+  align-items: center;
+  display: flex;
+  gap: 0.5em;
+  position: relative;
+  top: -0.5em; }
+
 .compact-ui input[type='text'], .compact-ui select, .compact-ui input[type='button'], .compact-ui input[type='submit'], .compact-ui button {
   -webkit-appearance: none;
   appearance: none;
@@ -1202,6 +1209,47 @@ ul.my-tabs > li.tab-active {
     display: inline-block;
     position: relative;
     top: -0.25vw; }
+
+.alert-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em; }
+  .alert-section button {
+    align-self: center;
+    position: relative; }
+    .alert-section button img {
+      margin-top: -5px;
+      position: relative;
+      top: 4px; }
+  .alert-section #filter-list {
+    border: 1px solid #AAA;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    height: 100%;
+    justify-content: stretch;
+    overflow: auto;
+    padding: 4px;
+    width: 100%; }
+  .alert-section .filter-item {
+    display: flex;
+    gap: 0.5em; }
+    .alert-section .filter-item input {
+      flex: 1 0 auto; }
+    .alert-section .filter-item span {
+      background-color: #BBB;
+      border-radius: 50%;
+      box-sizing: border-box;
+      cursor: pointer;
+      display: inline-block;
+      font-size: 11.2px;
+      height: 18px;
+      margin: 0 0.33em;
+      padding: 0.3em;
+      position: relative;
+      text-align: center;
+      top: 0.2em;
+      width: 18px; }
 
 .update-section {
   display: flex;

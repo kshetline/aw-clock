@@ -72,7 +72,7 @@ export class Clock {
   private inMinuteOfLeapSecond = false;
   private pendingLeapSecondForMonth = 0;
   private firstLeapSecondPoll = true;
-  private lastLeapSecondCheckDay = -1;
+  private lastLeapSecondCheckHour = -1;
   private upcomingLeapSecond: CurrentDelta;
   private dut1PositionAdjustmentNeeded = true;
 
@@ -341,8 +341,8 @@ export class Clock {
     const leapSecondForMonth = (minuteOfLeapSecond && timeInfo.leapSecond) ||
       this.checkPendingLeapSecondForMonth(wallTimeUtc);
 
-    if (this.lastLeapSecondCheckDay !== wallTimeUtc.d) {
-      this.lastLeapSecondCheckDay = wallTimeUtc.d;
+    if (this.lastLeapSecondCheckHour !== wallTimeUtc.hour) {
+      this.lastLeapSecondCheckHour = wallTimeUtc.hour;
       this.getLeapSecondInfo();
       this.adjustTimeFontSize();
     }
@@ -529,12 +529,12 @@ export class Clock {
         this.upcomingLeapSecond = data;
 
         if (data.delta === 0 || !data.dut1)
-          this.lastLeapSecondCheckDay = -1;
+          this.lastLeapSecondCheckHour = -1;
       }
       catch {
         setTimeout(() => {
           this.upcomingLeapSecond = undefined;
-          this.lastLeapSecondCheckDay = -1;
+          this.lastLeapSecondCheckHour = -1;
         }, LEAP_SECOND_RETRY_DELAY);
       }
       // Randomly delay polling so that multiple clock instances don't all poll at the same time every day.
