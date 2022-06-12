@@ -37,14 +37,14 @@ const MAX_MARK_TIME_DELAY = 100;
 const NO_OP = (): void => {};
 
 export function stripFormatting(s: string): string {
-  return s?.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
+  return s?.replace(/\x1B\[[\d;]*[A-Za-z]/g, '');
 }
 
 function errorish(s: string): boolean {
   s = stripFormatting(s);
 
   return /\b(failed|exception|invalid|operation not permitted|isn't a valid|Cannot resolve|must be specified|must implement|need to install|doesn't exist|are required|should be strings?)\b/i.test(s) ||
-         /[_0-9a-z](Error|Exception|Invalid)\b/.test(s) || /\[ERR_|code: 'ERR/.test(s);
+         /[_\da-z](Error|Exception|Invalid)\b/.test(s) || /\[ERR_|code: 'ERR/.test(s);
 }
 
 export function spawn(command: string, args: string[], options?: any): ChildProcess;

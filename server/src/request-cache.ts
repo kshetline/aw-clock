@@ -17,7 +17,7 @@ const REQUEST_TIMEOUT = 55000; // 55 seconds
 const REQUEST_TIMEOUT_CHECK = 90; // seconds
 
 function filterUrl(url: string): string {
-  return url.replace(/(?<=\?key=)\w+(?=&)/, '...').replace(/(?<=\/forecast\/)[0-9A-F]+(?=\/)/i, '...')
+  return url.replace(/(?<=\?key=)\w+(?=&)/, '...').replace(/(?<=\/forecast\/)[\dA-F]+(?=\/)/i, '...')
     .replace(/(?<=&id=)\w+(?=[& ])/, '...');
 }
 

@@ -1223,6 +1223,7 @@ ul.my-tabs > li.tab-active {
       top: 4px; }
   .alert-section #filter-list-wrapper {
     border: 1px solid #AAA;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -1231,6 +1232,7 @@ ul.my-tabs > li.tab-active {
     padding: 4px;
     width: 100%; }
     .alert-section #filter-list-wrapper #filter-list {
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       gap: 0.5em;
@@ -1254,7 +1256,7 @@ ul.my-tabs > li.tab-active {
       font-size: 11.2px;
       height: 18px;
       margin: 0 0.33em;
-      padding: 0.3em;
+      padding: 0.2em;
       position: relative;
       text-align: center;
       top: 0.2em;

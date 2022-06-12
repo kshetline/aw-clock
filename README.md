@@ -143,6 +143,18 @@ When an alarm is coming up within the next 24 hours a green alarm indicator is d
 
 If you tap/click on this indicator, alarms will be temporarily disabled for the next 3, 6, 12, or 24 hours, increasing with each tap. (Tap once more in this sequence to re-enable alarms.) The time when alarms will resume again is displayed.
 
+### Weather Alert Filters
+
+It’s a really good idea to look out for water that might be very cold, even though high air temperatures might fool you into thinking the water might be warmer and safe for a swim.
+
+I get that. I don't need a scrolling banner warning me everytime this situation arises, however. I'm also not personally particularly concerned about airport weather warnings either.
+
+This is where weather alert filters come in. You can enter a word or phrase, either found in the title of an alert, or in the full description of the alert, and either have that alert hidden from the banner at the bottom of the screen, or have the alert downgraded to general information without an associated alert color.
+
+A color coded icon will be appended to the banner for each hidden alert. If you tap/click on the banner for the full-text display, all alerts will be shown.
+
+The filter text you enter is case-insensitive. Advanced users can enter *regular expressions* for complex matching by enclosing their filter text in slashes (with an optional `u` flag after the last slash for Unicode regular expression features).
+
 ### Wind speed
 
 <img src="https://shetline.com/readme/aw-clock/3.3.0/wind_barbs.png" width=820 height=55 alt="wind barbs">
@@ -298,7 +310,7 @@ To build and run this project you can use the following commands:
 To build the server along with the web client, use `npm run build`, possibly followed by `‑‑` and other options listed below:
 
 | &nbsp;           | &nbsp;                                                                                                                                                                                                            |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `‑‑acu`          | Install support for wireless temperature/humidity sensors using a 433 MHz receiver module.                                                                                                                        |
 | `‑‑acu‑`         | Clears saved `‑‑acu` setting when not using interactive mode.                                                                                                                                                     |
 | `‑‑admin`        | Enables the user actions “Update”, “Shut down”, “Reboot”, and “Quit” in the Settings dialog.                                                                                                                      |
