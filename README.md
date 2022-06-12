@@ -1,10 +1,10 @@
 ## Astronomy/Weather Clock
 
-![raspberry pi logo](https://shetline.com/readme/aw-clock/3.0.0/rpi_logo.svg)
+![raspberry pi logo](https://shetline.com/readme/aw-clock/3.3.0/rpi_logo.svg)
 
 This project is designed to create a desktop clock which provides weather and astronomical information while additionally functioning as an alarm clock. Although primarily designed to run on a Raspberry Pi, the project generates a Node.js server and a client web app which can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors. GPS support is also primarily aimed at the Raspberry Pi, but might work with other Linux variants if similarly configured.
 
-The clock displays the time and date in both analog and digital form, in 12- or 24-hour format, and has a special display mode for the occasional leap second. The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, weather alerts, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
+The clock displays the time and date in both analog and digital form, in 12- or 24-hour format, and has a special display mode for the occasional leap second. The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, filterable weather alerts, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
 When displaying 24-hour time, that time can either be local time or UTC.
 
@@ -16,15 +16,15 @@ When viewing the sky map feature you can choose to see a multicolor sky, shaded 
 
 *&#42;A touchscreen or mouse is required to display the last two or three days of the seven-day forecast, to switch the display from sunrise/sunset to moonrise/moonset, from clock face to sky map, or to switch from hourly temperatures to hourly probability-of-precipitation.*
 
-![finished project](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-12.jpg)
+![finished project](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-12.jpg)
 
-![app screenshot](https://shetline.com/readme/aw-clock/3.0.0/awc_screenshot.png)
+![app screenshot](https://shetline.com/readme/aw-clock/3.3.0/awc_screenshot.png)
 
-![night sky](https://shetline.com/readme/aw-clock/3.0.0/sky-map-night.jpg)
+![night sky](https://shetline.com/readme/aw-clock/3.3.0/sky-map-night.jpg)
 
-![day sky](https://shetline.com/readme/aw-clock/3.0.0/sky-map-day.jpg)
+![day sky](https://shetline.com/readme/aw-clock/3.3.0/sky-map-day.jpg)
 
-![app dst animation](https://shetline.com/readme/aw-clock/3.0.0/spring-forward-480.gif)
+![app dst animation](https://shetline.com/readme/aw-clock/3.3.0/spring-forward-480.gif)
 
 <br/>
 
@@ -70,7 +70,7 @@ Having a back-up weather data source is still, therefore, a good idea. For that 
 
 By default, this application uses GPS-synced system time, if available, or uses a default pool of NTP time servers (keeping its own time via NTP, rather than using the system clock). You can configure the use of different time servers, however, you should not choose Google or Facebook time servers, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
 
-![Hypothetical leap second](https://shetline.com/readme/aw-clock/3.0.0/moment_of_leap_second.jpg)
+![Hypothetical leap second](https://shetline.com/readme/aw-clock/3.3.0/moment_of_leap_second.jpg)
 
 *This image is hypothetical — the pictured moment in time was not an actual leap second. Video here: <https://shetline.com/video/leap_second_display.mp4>*
 
@@ -80,9 +80,10 @@ As soon as you’ve got the Astronomy/Weather Clock up and running the first tim
 
 Your city might be filled in automatically by using your IP address &mdash; but then again, it might not. If you’re using this clock in a bedroom you might find the **Dimming** options very useful, as they establish a schedule during which the display will be reduced in brightness.
 
-![user settings screenshot - options](https://shetline.com/readme/aw-clock/3.0.0/awc-dlog-options.jpg)
-![user settings screenshot - locations](https://shetline.com/readme/aw-clock/3.0.0/awc-dlog-locations.jpg)
-![user settings screenshot - alarms](https://shetline.com/readme/aw-clock/3.0.0/awc-dlog-alarms.jpg)
+![user settings screenshot - options](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-options.jpg)
+![user settings screenshot - locations](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-locations.jpg)
+![user settings screenshot - alarms](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-alarms.jpg)
+![user settings screenshot - alert-filters](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-alert-filters.jpg)
 
 To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
 
@@ -94,7 +95,7 @@ With your Raspberry Pi shut down and disconnected from power, connect the DHT22/
 
 *&#42;This default was GPIO 4 (physical pin 7) before version 2.4.0, but the Adafruit GPS HAT is pre-wired to use that pin, hence the new default.*
 
-![Picture of wiring to GPS HAT](https://shetline.com/readme/aw-clock/3.0.0/rpi_with_gps_hat.jpg)
+![Picture of wiring to GPS HAT](https://shetline.com/readme/aw-clock/3.3.0/rpi_with_gps_hat.jpg)
 
 Also for the Raspberry Pi you have the option to provide wireless indoor conditions and outdoor weather data using [433 MHz Acu Rite 06002M wireless temperature and humidity sensors](https://www.amazon.com/gp/product/B00T0K8NXC/) paired with a [433 MHz receiver module](https://www.amazon.com/gp/product/B00HEDRHG6/).
 
@@ -134,7 +135,7 @@ When you perform the standard dedicated device installation, a folder will be cr
 
 ### Temporarily disabling upcoming alarms
 
-<img src="https://shetline.com/readme/aw-clock/3.0.0/alarm-indicator.jpg" width=105 height=85 alt="alarm indicator">&nbsp;&nbsp;&nbsp;<img src="https://shetline.com/readme/aw-clock/3.0.0/alarm-disabled.jpg" width=105 height=85 alt="alarm indicator">
+<img src="https://shetline.com/readme/aw-clock/3.3.0/alarm-indicator.jpg" width=105 height=85 alt="alarm indicator">&nbsp;&nbsp;&nbsp;<img src="https://shetline.com/readme/aw-clock/3.3.0/alarm-disabled.jpg" width=105 height=85 alt="alarm indicator">
 
 Ever wake up before your alarm goes off, don’t walk to worry about the alarm going off when you aren’t around, but you're also worried that if you turn the alarm off you’ll forget to turn it back on again for when you need it next?
 
@@ -142,9 +143,21 @@ When an alarm is coming up within the next 24 hours a green alarm indicator is d
 
 If you tap/click on this indicator, alarms will be temporarily disabled for the next 3, 6, 12, or 24 hours, increasing with each tap. (Tap once more in this sequence to re-enable alarms.) The time when alarms will resume again is displayed.
 
+### Weather Alert Filters
+
+It’s a really good idea to look out for water that might be very cold, even though high air temperatures might fool you into thinking the water might be warmer and safe for a swim.
+
+I get that. I don't need a scrolling banner warning me everytime this situation arises, however. I'm also not personally particularly concerned about airport weather warnings either.
+
+This is where weather alert filters come in. You can enter a word or phrase, either found in the title of an alert, or in the full description of the alert, and either have that alert hidden from the banner at the bottom of the screen, or have the alert downgraded to general information without an associated alert color.
+
+A color coded icon will be appended to the banner for each hidden alert. If you tap/click on the banner for the full-text display, all alerts will be shown.
+
+The filter text you enter is case-insensitive. Advanced users can enter *regular expressions* for complex matching by enclosing their filter text in slashes (with an optional `u` flag after the last slash for Unicode regular expression features).
+
 ### Wind speed
 
-<img src="https://shetline.com/readme/aw-clock/3.0.0/wind_barbs.png" width=820 height=55 alt="wind barbs">
+<img src="https://shetline.com/readme/aw-clock/3.3.0/wind_barbs.png" width=820 height=55 alt="wind barbs">
 
 Wind speed is displayed using *wind barbs*. When using imperial units, the wind barbs represent wind speed in knots, rounded to the nearest multiple of 5 knots, up to a maximum of 100 knots. In metric mode the wind barbs, by default, represent wind speed in meters per second, in increments of 2.5 m/s (in the diagram above, divide the captions by 2 for m/s).
 
@@ -177,7 +190,7 @@ If an arc becomes a full circle, that means the corresponding planet on that tra
 
 The 3D model for this stand is provided by the project file `raspberry_pi_setup/monitor_stand.stl`. Below is how that model came out when printed using black ABS, 20% infill, at a cost of about $28 USD.
 
-![3D stand rear view](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-01.jpg)
+![3D stand rear view](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-01.jpg)
 
 This is my second design of this stand, after making a few improvements from my first design. I made this version shorter, improved wire routing, and added an access hole where (using tweezers) it’s possible to access the SD card slot without disassembling the clock.
 
@@ -187,7 +200,7 @@ This is my second design of this stand, after making a few improvements from my 
 
 #### Front view
 
-![3D stand front view](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-02.jpg)
+![3D stand front view](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-02.jpg)
 
 <br>
 
@@ -195,7 +208,7 @@ This is my second design of this stand, after making a few improvements from my 
 
 The side panel has a place to attach a quarter-wave 433 MHz antenna, a clip to hold a 433 MHz receiving module, a hole for a female SMA coaxial connector for GPS, and (on the reverse side) a mounting position for a DHT22/AM2302 temperature/humidity sensor.
 
-![3D stand side panel](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-03.jpg)
+![3D stand side panel](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-03.jpg)
 
 <br>
 
@@ -203,7 +216,7 @@ The side panel has a place to attach a quarter-wave 433 MHz antenna, a clip to h
 
 This is the original stand that came with the 2560x1600 ELECROW 10.1" touchscreen monitor. It’s not a bad stand in general, but, with the Raspberry Pi attached to the back of the monitor, the cables and wires were an awkward fit. The stand had to be skewed off-center quite a bit for it to work at all.
 
-![Original monitor stand](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-04.jpg)
+![Original monitor stand](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-04.jpg)
 
 <br>
 
@@ -211,13 +224,13 @@ This is the original stand that came with the 2560x1600 ELECROW 10.1" touchscree
 
 The stand is attached using 4 M3 x 10 mm wafer-head machine screws. Please note that M4 is the typical size screw for a VESA mount of this size (75 mm square spacing), so it’s a little unusual M3s were needed instead.
 
-![Stand attached to monitor](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-05.jpg)
+![Stand attached to monitor](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-05.jpg)
 
 <br>
 
 #### Stand attached to monitor, side view
 
-![Stand attached to monitor, side view](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-06.jpg)
+![Stand attached to monitor, side view](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-06.jpg)
 
 <br>
 
@@ -227,8 +240,8 @@ The long arm that reaches out from the side panel is designed so the temperature
 
 A small piece of non-conductive foam wedged behind the RF module helps keep the module in place.
 
-![Side panel with components attached](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-07.jpg)<br>
-![Side panel with components attached, temp/humidity sensor](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-07b.jpg)
+![Side panel with components attached](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-07.jpg)<br>
+![Side panel with components attached, temp/humidity sensor](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-07b.jpg)
 
 <br>
 
@@ -236,13 +249,13 @@ A small piece of non-conductive foam wedged behind the RF module helps keep the 
 
 I was a bit uncertain how well machine screws would work with the stand-offs that I’d designed, since I wanted them to function like self-tapping screws. As it turned out, the four M2.5 x 6 mm pan-head machine screws fit quite nicely and snugly, without being difficult to turn. If the Pi were to be repeatedly removed and reattached, however, this design might not be durable enough. For my current purposes, it’s just fine.
 
-![Raspberry Pi Model 4 attached to stand-offs](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-08.jpg)
+![Raspberry Pi Model 4 attached to stand-offs](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-08.jpg)
 
 <br>
 
 #### GPS HAT added, and components wired together
 
-![GPS HAT added, and components wired together](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-09.jpg)
+![GPS HAT added, and components wired together](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-09.jpg)
 
 <br>
 
@@ -256,13 +269,13 @@ The odd reddish-brown object at the end of the USB cable is an adapter that bloc
 
 While this would actually be a good thing if it meant I could hook up the clock with only one power cable, not two, the power from the monitor only keeps the Raspberry Pi running *after* the Pi has been separately powered up using its own power supply. The result is no simplification of the power connections, but merely making it harder to shut the clock down without adding this power isolating adapter.
 
-![Monitor connections for HDMI video and USB touchscreen](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-10.jpg)
+![Monitor connections for HDMI video and USB touchscreen](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-10.jpg)
 
 <br>
 
 #### Rearview of completed clock project
 
-![finished project](https://shetline.com/readme/aw-clock/3.0.0/aw-clock-w-stand-11.jpg)
+![finished project](https://shetline.com/readme/aw-clock/3.3.0/aw-clock-w-stand-11.jpg)
 
 <br>
 
@@ -297,7 +310,7 @@ To build and run this project you can use the following commands:
 To build the server along with the web client, use `npm run build`, possibly followed by `‑‑` and other options listed below:
 
 | &nbsp;           | &nbsp;                                                                                                                                                                                                            |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `‑‑acu`          | Install support for wireless temperature/humidity sensors using a 433 MHz receiver module.                                                                                                                        |
 | `‑‑acu‑`         | Clears saved `‑‑acu` setting when not using interactive mode.                                                                                                                                                     |
 | `‑‑admin`        | Enables the user actions “Update”, “Shut down”, “Reboot”, and “Quit” in the Settings dialog.                                                                                                                      |
@@ -371,7 +384,7 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 
 When using a high resolution display like the 2560x1600 ELECROW 10.1" monitor I chose to use, which is nearly 300 ppi (~120 pixels per cm) you’ll often want to apply a scaling/zooming factor to the display, otherwise text and other details will be impractically small to see. Before the Bullseye release of Debian Linux for the Raspberry Pi, this kind of scaling was typically done using the pixel doubling option below:
 
-![Stand attached to monitor](https://shetline.com/readme/aw-clock/3.0.0/config-pixel-dbl.jpg)
+![Stand attached to monitor](https://shetline.com/readme/aw-clock/3.3.0/config-pixel-dbl.jpg)
 
 When I set this mode after a fresh installation of Bullseye, however, I ended up with a blank screen, had to reboot via SSH, and was back to squinting at my screen. The above method turns out to not be the best way to handle display scaling with Bullseye’s new GTK+3 UI toolkit.
 

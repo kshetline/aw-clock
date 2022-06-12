@@ -1,3 +1,7 @@
+## 3.3.0
+
+* Added weather alert filters.
+
 ## 3.2.4
 
 * Fixed iOS Safari layout bug. This bug might have affected the layout of the planet symbols on other displays.

@@ -428,6 +428,14 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   justify-content: space-between;
 }
 
+.keyboard-option {
+  align-items: center;
+  display: flex;
+  gap: 0.5em;
+  position: relative;
+  top: -0.5em;
+}
+
 .compact-ui {
   input[type='text'], select, input[type='button'], input[type='submit'], button {
     -webkit-appearance: none;
@@ -1561,6 +1569,75 @@ ul.my-tabs > li.tab-active {
     display: inline-block;
     position: relative;
     top: -0.25vw;
+  }
+}
+
+.alert-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+
+  button {
+    align-self: center;
+    position: relative;
+
+    img {
+      margin-top: -5px;
+      position: relative;
+      top: 4px;
+    }
+  }
+
+  #filter-list-wrapper {
+    border: 1px solid #AAA;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: stretch;
+    overflow: hidden;
+    padding: 4px;
+    width: 100%;
+
+    #filter-list {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      justify-content: stretch;
+      overflow: auto;
+      width: 100%;
+    }
+  }
+
+  .filter-item {
+    display: flex;
+    gap: 0.5em;
+
+    input {
+      flex: 1 0 auto;
+    }
+
+    .filter-checkbox {
+      display: flex;
+      align-items: center;
+    }
+
+    span {
+      background-color: #BBB;
+      border-radius: 50%;
+      box-sizing: border-box;
+      cursor: pointer;
+      display: inline-block;
+      font-size: 11.2px;
+      height: 18px;
+      margin: 0 0.33em;
+      padding: 0.2em;
+      position: relative;
+      text-align: center;
+      top: 0.2em;
+      width: 18px;
+    }
   }
 }
 

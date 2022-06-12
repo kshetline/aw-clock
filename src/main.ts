@@ -28,7 +28,7 @@ import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePolle
 import { abs, ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
 import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
-import { allowAdminFeatures, apiServer, localServer, runningDev, Settings } from './settings';
+import { AlertFilter, allowAdminFeatures, apiServer, localServer, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
@@ -571,6 +571,10 @@ class AwClockApp implements AppService {
 
   updateMarqueeState(isScrolling: boolean): void {
     this.clock.hasCompletingAnimation = isScrolling;
+  }
+
+  getAlertFilters(): AlertFilter[] {
+    return this.settings.alertFilters || [];
   }
 
   getIndoorOption(): string {

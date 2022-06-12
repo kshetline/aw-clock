@@ -643,7 +643,7 @@ function portValidate(s: string): boolean {
 }
 
 const DOMAIN_PATTERN =
-  /^(((?!-))(xn--|_)?[-a-z0-9]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][-a-z0-9]{0,60}|[-a-z0-9]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i;
+  /^(((?!-))(xn--|_)?[-a-z\d]{0,61}[a-z\d]\.)*(xn--)?([a-z\d][-a-z\d]{0,60}|[-a-z\d]{1,30}\.[a-z]{2,})(:\d{1,5})?$/i;
 
 function ntpValidate(s: string): boolean {
   const domains = s.split(',').map(d => d.trim());
