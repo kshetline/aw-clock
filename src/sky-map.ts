@@ -7,10 +7,10 @@ import { getBinary } from './awc-util';
 import ttime from '@tubular/time';
 import julianDay = ttime.julianDay;
 import {
-  abs, Angle, atan2_deg, cos_deg, floor, intersects, max, min, mod, mod2, Point, pow, Rectangle, round, sin_deg, SphericalPosition,
-  SphericalPosition3D, sqrt, TWO_PI, Unit
+  abs, Angle, atan2_deg, cos_deg, floor, intersects, max, min, mod, mod2, PI, Point, pow, Rectangle, round, sin_deg, SphericalPosition,
+  SphericalPosition3D, sqrt, to_radian, TWO_PI, Unit
 } from '@tubular/math';
-import { colorFromRGB, getFontMetrics, getTextWidth, strokeLine } from '@tubular/util';
+import { blendColors, colorFromRGB, fillCircle, getFontMetrics, getTextWidth, strokeLine } from '@tubular/util';
 
 export interface LabelInfo {
   bodyIndex: number;
@@ -68,9 +68,9 @@ const planetColors = [
 ];
 
 // These color specifications are left incomplete so that the alpha value can be varied.
-const SHADED_MOON            = 'rgba(102,153,204,';
-const INTERMEDIATE_MOON      = 'rgba(178,204,229,';
-const ILLUMINATED_MOON       = 'rgba(255,255,255,';
+const SHADED_MOON            = '#69C';
+const ILLUMINATED_MOON       = 'white';
+const ECLIPSED_MOON          = '#850';
 
 const CONSTELLATION_LINE_COLOR = '#0000FF';
 
@@ -298,59 +298,45 @@ export class SkyMap {
       label.offsetX += max(0, size - LABEL_X_OFFSET);
     }
 
-    const r0 = floor(size / 2);
+    let r0 = floor(size / 2);
 
     if (planet === MOON) {
       const phase = this.solarSystem.getLunarPhase(dc.jde);
-      const coverage = (cos_deg(phase) + 1.0) / 2.0;
+      let coverage = (cos_deg(phase) + 1.0) / 2.0;
       const shadeAngle = this.getMoonShadingOrientation(dc);
-      const sin_sa = sin_deg(shadeAngle);
-      const cos_sa = cos_deg(shadeAngle);
-      const r02 = r0 * r0;
 
-      for (let dy = -r0 - 1; dy <= r0 + 1; ++dy) {
-        for (let dx = -r0 - 1; dx <= r0 + 1; ++dx) {
-          const rot_x = dx * cos_sa + dy * sin_sa;
-          const rot_y = dy * cos_sa - dx * sin_sa;
-          const r = sqrt(rot_x * rot_x + rot_y * rot_y);
+      if (abs(mod2(phase, 360)) < 20.0)
+        color = SHADED_MOON;
+      else {
+        color = ILLUMINATED_MOON;
 
-          if (r <= r0 + 1) {
-            let alpha = 1.0;
+        if (abs(phase - 180.0) < 3.0) {
+          const ei = this.solarSystem.getLunarEclipseInfo(dc.jde);
 
-            if (r > r0)
-              alpha = 1.0 - r + r0;
-
-            if (abs(mod2(phase, 360)) < 20.0) {
-              color = SHADED_MOON;
-            }
-            else if (abs(phase - 180.0) < 20.0)
-              color = ILLUMINATED_MOON;
-            else {
-              const lineWidth = 2 * sqrt(max(r02 - rot_y * rot_y, 0.0)) + 1.0;
-              const inset = rot_x + (lineWidth - 1.0) / 2;
-              const shadowWidth = coverage * lineWidth;
-              let leftSpan: number;
-
-              if (phase <= 180.0)
-                leftSpan = shadowWidth - 0.5;
-              else
-                leftSpan = lineWidth - shadowWidth - 0.5;
-
-              if ((phase <= 180.0 && inset < leftSpan + 0.25) ||
-                  (phase > 180.0 && inset > leftSpan + 0.25))
-                color = SHADED_MOON;
-              else if (abs(inset - leftSpan) <= 0.5) {
-                color = INTERMEDIATE_MOON;
-              }
-              else
-                color = ILLUMINATED_MOON;
-            }
-
-            dc.context.fillStyle = color + alpha + ')';
-            dc.context.fillRect(x + dx, y + dy, 1, 1);
-          }
+          if (ei.inUmbra)
+            color = blendColors(ECLIPSED_MOON, color, ei.totality);
         }
+
+        if (abs(phase - 180.0) < 20.0)
+          coverage = -1;
       }
+
+      dc.context.save();
+      dc.context.translate(x, y);
+      dc.context.rotate(to_radian(shadeAngle));
+      dc.context.fillStyle = color;
+      fillCircle(dc.context, 0, 0, r0);
+
+      if (coverage > 0) {
+        r0 *= 1.01;
+        dc.context.beginPath();
+        dc.context.fillStyle = SHADED_MOON;
+        dc.context.ellipse(0, 0, r0, r0, 0, PI / 2, PI * 3 / 2, phase > 180);
+        dc.context.ellipse(0, 0, r0 * abs(1 - coverage * 2), r0, 0, PI * 3 / 2, PI * 5 / 2, !!(floor(phase / 90) % 2));
+        dc.context.fill();
+      }
+
+      dc.context.restore();
     }
     else {
       // If scaled drawing is being done, draw potentially bright planets as stars before drawing them in the
