@@ -1,3 +1,8 @@
+## 3.3.1
+
+* Slightly improved rendering of moon in sky map, with lunar eclipse darkening.
+* New backup data source for IERS Bulletin A.
+
 ## 3.3.0
 
 * Added weather alert filters.

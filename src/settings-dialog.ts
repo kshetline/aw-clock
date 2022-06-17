@@ -52,7 +52,7 @@ async function callSearchApi(query: string): Promise<SearchResults> {
   // is subject to future change and access restrictions. Users of this code should strongly consider substituting
   // a different API.
   const results = await getJson<SearchResults>('https://skyviewcafe.com/atlas',
-    { jsonp: true, params: { q: query, client: 'web', pt: 'false' } });
+    { jsonp: true, params: { q: query, client: 'awc', pt: 'false' } });
   const matches = results.matches ?? [];
   const sameNames = new Map<string, number[]>();
   const deletions: number[] = [];

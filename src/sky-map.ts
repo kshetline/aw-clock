@@ -292,8 +292,8 @@ export class SkyMap {
         size += (size + 1) % 2;
       }
 
-      if (size < 6)
-        size = 6;
+      if (size < 12)
+        size = 12;
 
       label.offsetX += max(0, size - LABEL_X_OFFSET);
     }
