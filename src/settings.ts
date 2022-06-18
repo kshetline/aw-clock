@@ -4,10 +4,11 @@ import Cookies from 'js-cookie';
 import { isChromium, isRaspbian, toBoolean, toNumber } from '@tubular/util';
 import { parseJson } from './awc-util';
 
-const docPort = document.location.port;
+const docPort = location.port;
 
 export const runningDev = (docPort === '3000' || docPort === '4200');
 export const localServer = (docPort && docPort !== '80' && docPort !== '443');
+export const demoServer = /\bshetline\.com\b/.test(location.host);
 export const updateTest = toBoolean(new URLSearchParams(window.location.search).get('ut'), false, true);
 
 const apiParam = new URLSearchParams(window.location.search).get('api');

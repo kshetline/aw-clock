@@ -15,7 +15,7 @@ import {
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
-import { AlertFilterType } from './settings';
+import { AlertFilterType, demoServer } from './settings';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
@@ -1043,6 +1043,18 @@ export class Forecast {
           }
         }
       });
+    }
+
+    if (demoServer) {
+      const indoor = this.appService.getIndoorOption() !== 'X';
+      const outdoor = this.appService.getOutdoorOption() !== 'F';
+
+      if (indoor && outdoor)
+        alerts.push('{{NOTE: Indoor/outdoor temperature and humidity are simulated}}');
+      else if (indoor)
+        alerts.push('{{NOTE: Indoor temperature and humidity are simulated}}');
+      else if (outdoor)
+        alerts.push('{{NOTE: Outdoor temperature and humidity are simulated}}');
     }
 
     const alertText = concatenateAlerts(alerts) + droppedAlertSymbols.trimEnd();

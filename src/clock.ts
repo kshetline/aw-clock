@@ -8,6 +8,7 @@ import { getCssValue, isRaspbian, padLeft } from '@tubular/util';
 import { TimeFormat } from './shared-types';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
 import { getJson, setSignalLevel } from './awc-util';
+import { demoServer } from './settings';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -499,7 +500,9 @@ export class Clock {
       }
 
       if (mins !== this.lastMinute || this.lastTick + 60_000 <= now) {
-        this.checkGps().finally();
+        if (!demoServer)
+          this.checkGps().finally();
+
         this.appService.updateTime(hour, mins, this.lastMinute < 0);
         this.lastMinute = mins;
         this.lastTick = now;

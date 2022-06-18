@@ -3,7 +3,7 @@ import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import { Keyboard } from './keyboard';
 import {
-  AlarmInfo, AlertFilter, AlertFilterType, allowAdminFeatures, apiServer, localServer, MAX_RECENT_LOCATIONS, RecentLocation,
+  AlarmInfo, AlertFilter, AlertFilterType, allowAdminFeatures, apiServer, demoServer, localServer, MAX_RECENT_LOCATIONS, RecentLocation,
   Settings, toTimeFormat, updateTest
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
@@ -249,6 +249,7 @@ export class SettingsDialog {
   private searchMessage: JQuery;
   private seconds: JQuery;
   private showSkyMap: JQuery;
+  private simWarning: JQuery;
   private skyColors: JQuery;
   private skyFacing: JQuery;
   private submitSearch: JQuery;
@@ -327,6 +328,7 @@ export class SettingsDialog {
     this.seconds = $('#seconds-option');
     this.showSkyMap = $('#sky-map-option');
     this.shutdownButton = $('#settings-shutdown');
+    this.simWarning = $('#temp-simulation-warning');
     this.skyColors = $('#sky-colors-option');
     this.skyFacing = $('#sky-facing-option');
     this.submitSearch = $('#submit-search');
@@ -556,6 +558,9 @@ export class SettingsDialog {
           target = target.parentElement;
       } while (target);
     });
+
+    this.indoor.on('change', () => this.checkTempHumiditySimulationWarning());
+    this.outdoor.on('change', () => this.checkTempHumiditySimulationWarning());
   }
 
   private addAlertFilter(): void {
@@ -1098,6 +1103,7 @@ export class SettingsDialog {
       safeCompareVersions(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
     this.hideUpdate = $('#hide-update');
     this.hideUpdate.prop('checked', previousSettings.updateToHide === defaults?.latestVersion);
+    this.checkTempHumiditySimulationWarning();
 
     getText(this.appService.getApiServer() + '/changelog').then(text => updateVersionInfo.html(text)).catch(noop);
   }
@@ -1352,5 +1358,10 @@ export class SettingsDialog {
       texts.removeAttr('autocomplete');
     else
       texts.attr('autocomplete', 'off');
+  }
+
+  private checkTempHumiditySimulationWarning(): void {
+    if (demoServer)
+      this.simWarning.css('display', this.indoor.val() !== 'X' || this.outdoor.val() !== 'F' ? 'block' : 'none');
   }
 }

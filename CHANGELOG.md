@@ -1,3 +1,7 @@
+## 3.3.1-wo.1
+
+* Web-only update to emphasize that real indoor/outdoor temperature and humidity sensor data is available only via the Raspberry Pi project, and not available on the demo website.
+
 ## 3.3.1
 
 * Slightly improved rendering of moon in sky map, with lunar eclipse darkening.

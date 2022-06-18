@@ -1321,3 +1321,12 @@ ul.my-tabs > li.tab-active {
 
 .firefox-mods .user-options > .colspan-full #user-id {
   margin: 0; }
+
+#temp-simulation-warning {
+  bottom: 0;
+  color: magenta;
+  display: none;
+  font-size: 0.9em;
+  font-style: italic;
+  padding: 0 1em 0.25em 1em;
+  position: absolute; }
