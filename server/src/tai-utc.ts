@@ -28,8 +28,8 @@ interface DebugTime {
   leapUtc: number;
 }
 
-const IERS_BULLETIN_A_HTTPS_URL =  'https://maia.usno.navy.mil/ser7/finals.all';
-const IERS_BULLETIN_A_FTP_URL = 'ftp://ftp.iers.org/products/eop/rapid/daily/finals.daily';
+const IERS_BULLETIN_A_URL = 'https://maia.usno.navy.mil/ser7/finals.all';
+const IERS_BULLETIN_A_URL_2 = 'https://datacenter.iers.org/data/9/finals2000A.all';
 
 const DAYS_BETWEEN_POLLS = 7;
 const FTP_TIMEOUT = 7500;
@@ -228,15 +228,15 @@ export class TaiUtc {
     const newDeltas: DeltaUt1Utc[] = [];
 
     try {
-      lines = asLines(await requestText(IERS_BULLETIN_A_HTTPS_URL));
+      lines = asLines(await requestText(IERS_BULLETIN_A_URL));
     }
     catch (err) {
-      console.error('%s -- Failed to retrieve IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_HTTPS_URL);
+      console.error('%s -- Failed to retrieve IERS Bulletin A from %s', timeStamp(), IERS_BULLETIN_A_URL);
 
       if (os.uptime() > 90)
         console.error(err);
 
-      lines = asLines((await TaiUtc.getFtpText(IERS_BULLETIN_A_FTP_URL)).toString());
+      lines = asLines(await requestText(IERS_BULLETIN_A_URL_2));
     }
 
     lines.forEach(line => {
