@@ -1059,7 +1059,7 @@ export class SettingsDialog {
       this.dialog.css('display', 'none');
     });
 
-    this.reloadButton.on('click', () => setTimeout(() => window.location.reload()));
+    this.reloadButton.on('click', () => setTimeout(() => location.reload()));
 
     let recentHtml = '<label>Recent locations:</label>';
 
