@@ -104,7 +104,7 @@ export class Gps extends TimePoller {
           this.gpsData.latitude = toNumber(obj.lat.toFixed(5));
           this.gpsData.longitude = toNumber(obj.lon.toFixed(5));
           this.gpsData.altitude = obj.altHAE ?? obj.alt ?? 0;
-          this.gpsData.fix = obj.status ?? this.gpsData.fix ?? 0;
+          this.gpsData.fix = obj.mode ?? this.gpsData.fix ?? 0;
           this.gpsData.pps = this.systemTimeIsGps;
 
           if (obj.epx != null && obj.epy != null)

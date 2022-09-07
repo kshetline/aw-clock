@@ -81,7 +81,7 @@ export class Clock {
   private _hideSeconds = false;
 
   public timezone = Timezone.OS_ZONE;
-  public hasCompletingAnimation = false;
+  public hasCompetingAnimation = false;
 
   constructor(private appService: AppService) {
     this.secHand = document.getElementById('sec-hand');
@@ -323,7 +323,7 @@ export class Clock {
     };
 
     const doMechanicalSecondHandEffect = this.hasBeginElement && !this.appService.isTimeAccelerated() &&
-            (!isRaspbian() || !this.hasCompletingAnimation);
+            (!isRaspbian() || !this.hasCompetingAnimation);
     const animationTime = (doMechanicalSecondHandEffect ? SECOND_HAND_ANIMATION_TIME : 0);
     const timeInfo = this.appService.getTimeInfo(animationTime);
     const now = timeInfo.time;

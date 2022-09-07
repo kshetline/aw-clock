@@ -1,3 +1,8 @@
+## 3.3.2
+
+* Improve GPS signal fix detection.
+* Select Location tab after clicking "Get GPS Location" to make acquisition of GPS coordinates more obvious.
+
 ## 3.3.1-wo.1
 
 * Web-only update to emphasize that real indoor/outdoor temperature and humidity sensor data is available only via the Raspberry Pi project, and not available on the demo website.
