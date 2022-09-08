@@ -1340,7 +1340,7 @@ export class SettingsDialog {
 
   private fillInGpsLocation(): void {
     if (this.defaultLocation) {
-      this.selectTab(Tab.LOCATION);
+      this.selectTab(Tab.OPTIONS);
       this.currentCity.val(adjustCityName(this.defaultLocation.city));
       this.latitude.val(this.defaultLocation.latitude.toString());
       this.longitude.val(this.defaultLocation.longitude.toString());
