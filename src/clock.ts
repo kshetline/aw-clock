@@ -8,6 +8,7 @@ import { getCssValue, isRaspbian, padLeft } from '@tubular/util';
 import { TimeFormat } from './shared-types';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
 import { getJson, setSignalLevel } from './awc-util';
+import { demoServer } from './settings';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -80,7 +81,7 @@ export class Clock {
   private _hideSeconds = false;
 
   public timezone = Timezone.OS_ZONE;
-  public hasCompletingAnimation = false;
+  public hasCompetingAnimation = false;
 
   constructor(private appService: AppService) {
     this.secHand = document.getElementById('sec-hand');
@@ -322,7 +323,7 @@ export class Clock {
     };
 
     const doMechanicalSecondHandEffect = this.hasBeginElement && !this.appService.isTimeAccelerated() &&
-            (!isRaspbian() || !this.hasCompletingAnimation);
+            (!isRaspbian() || !this.hasCompetingAnimation);
     const animationTime = (doMechanicalSecondHandEffect ? SECOND_HAND_ANIMATION_TIME : 0);
     const timeInfo = this.appService.getTimeInfo(animationTime);
     const now = timeInfo.time;
@@ -499,7 +500,9 @@ export class Clock {
       }
 
       if (mins !== this.lastMinute || this.lastTick + 60_000 <= now) {
-        this.checkGps().finally();
+        if (!demoServer)
+          this.checkGps().finally();
+
         this.appService.updateTime(hour, mins, this.lastMinute < 0);
         this.lastMinute = mins;
         this.lastTick = now;

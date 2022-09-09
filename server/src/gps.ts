@@ -104,7 +104,7 @@ export class Gps extends TimePoller {
           this.gpsData.latitude = toNumber(obj.lat.toFixed(5));
           this.gpsData.longitude = toNumber(obj.lon.toFixed(5));
           this.gpsData.altitude = obj.altHAE ?? obj.alt ?? 0;
-          this.gpsData.fix = obj.status ?? this.gpsData.fix ?? 0;
+          this.gpsData.fix = max(0, obj.mode - 1, obj.status ?? 0, this.gpsData.fix ?? 0);
           this.gpsData.pps = this.systemTimeIsGps;
 
           if (obj.epx != null && obj.epy != null)
@@ -258,8 +258,10 @@ export class Gps extends TimePoller {
         `&result_type=locality|administrative_area_level_3&latlng=${coords.latitude},${coords.longitude}`;
       const data = await requestJson(LOCATION_CACHE_TIME, url);
 
-      if (data?.status === 'OK' && data.results?.length > 0)
-        coords.city = data.results[0].formatted_address;
+      if (data?.status === 'OK' && data.results?.length > 0) {
+        coords.city = (data.plus_code?.compound_code || '').replace(/^\S+\s+/, '') ||
+          data.results[0].formatted_address;
+      }
       else if (data?.errorMessage) {
         if (os.uptime() > 90)
           console.error('%s -- Google location check: %s', timeStamp(), filterError(data.errorMessage));

@@ -570,7 +570,7 @@ class AwClockApp implements AppService {
   }
 
   updateMarqueeState(isScrolling: boolean): void {
-    this.clock.hasCompletingAnimation = isScrolling;
+    this.clock.hasCompetingAnimation = isScrolling;
   }
 
   getAlertFilters(): AlertFilter[] {

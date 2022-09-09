@@ -4,21 +4,22 @@ import Cookies from 'js-cookie';
 import { isChromium, isRaspbian, toBoolean, toNumber } from '@tubular/util';
 import { parseJson } from './awc-util';
 
-const docPort = document.location.port;
+const docPort = location.port;
 
 export const runningDev = (docPort === '3000' || docPort === '4200');
 export const localServer = (docPort && docPort !== '80' && docPort !== '443');
-export const updateTest = toBoolean(new URLSearchParams(window.location.search).get('ut'), false, true);
+export const demoServer = /\bshetline\.com\b/.test(location.host);
+export const updateTest = toBoolean(new URLSearchParams(location.search).get('ut'), false, true);
 
-const apiParam = new URLSearchParams(window.location.search).get('api');
+const apiParam = new URLSearchParams(location.search).get('api');
 const apiPort = apiParam || (runningDev ? (docPort === '3000' ? '3002' : '4201') : docPort || '8080');
-const apiHost = ((document.location.hostname || '').startsWith('192.') ? document.location.hostname : 'localhost');
+const apiHost = ((location.hostname || '').startsWith('192.') ? location.hostname : 'localhost');
 
 // noinspection HttpUrlsUsage
-export const apiServer = new URL(window.location.href).searchParams.get('weather_server') ||
+export const apiServer = new URL(location.href).searchParams.get('weather_server') ||
   (runningDev ? `http://${apiHost}:${apiPort}` : '');
 export const raspbianChromium = (isRaspbian() && isChromium()) || runningDev;
-export const runningLocally = runningDev || (document.location.hostname || '').match(/\b(localhost|127\.0\.0\.0)\b/);
+export const runningLocally = runningDev || (location.hostname || '').match(/\b(localhost|127\.0\.0\.0)\b/);
 export const allowAdminFeatures = raspbianChromium || runningLocally;
 
 export function toTimeFormat(s: string, deflt = TimeFormat.UTC): TimeFormat {
