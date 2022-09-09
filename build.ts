@@ -1245,8 +1245,8 @@ async function doServiceDeployment(): Promise<void> {
       await sleep(500, spin);
       const args = launchChromium.split(/\s/).slice(1);
       args.splice(args.length - 1, 0, `--user-data-dir='${userHome}'`);
-      spawn(chromium, uid, args, { detached: true });
-      await sleep(1000);
+      setTimeout(() => process.exit(0), 5000);
+      await monitorProcess(spawn(chromium, uid, args, { detached: true }));
     }
 
     if (doReboot) {
