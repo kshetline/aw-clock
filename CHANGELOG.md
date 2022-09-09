@@ -2,6 +2,7 @@
 
 * Improve GPS signal fix detection.
 * Select Location tab after clicking "Get GPS Location" to make acquisition of GPS coordinates more obvious.
+* Fix installation `--launch` option.
 
 ## 3.3.1-wo.1
 
