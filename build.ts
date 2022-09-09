@@ -1243,8 +1243,9 @@ async function doServiceDeployment(): Promise<void> {
       await monitorProcess(spawn('pkill', uid, ['-o', chromium]), spin, ErrorMode.NO_ERRORS);
       await monitorProcess(spawn('pkill', uid, ['-o', chromium.substr(0, 15)]), spin, ErrorMode.NO_ERRORS);
       await sleep(500, spin);
-      const display = process.env.DISPLAY;
-      exec(`su -c "DISPLAY=${display} ${launchChromium} --user-data-dir='${userHome}' &" ${user}`);
+      const args = launchChromium.split(/\s/).slice(1);
+      args.splice(args.length - 1, 0, `--user-data-dir='${userHome}'`);
+      spawn(chromium, uid, args, { detached: true });
       await sleep(1000);
     }
 
