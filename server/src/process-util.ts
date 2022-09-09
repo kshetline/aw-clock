@@ -156,11 +156,11 @@ export async function monitorProcessLines(proc: ChildProcess, markTime: () => vo
 
 export function sleep(delay: number, markTime: () => void = undefined, stopOnKeypress = false): Promise<boolean> {
   return new Promise<boolean>(resolve => {
-    const slowSpin = unref(setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY));
-    const timeout = unref(setTimeout(() => {
+    const slowSpin = setInterval(markTime || NO_OP, MAX_MARK_TIME_DELAY);
+    const timeout = setTimeout(() => {
       clearInterval(slowSpin);
       resolve(false);
-    }, delay));
+    }, delay);
 
     if (stopOnKeypress) {
       readline.emitKeypressEvents(process.stdin);
