@@ -16,6 +16,7 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
   return {
     mode: (env && env.mode) === 'prod' ? 'production' : 'development',
     performance: { hints: false },
+    target: 'web',
     resolve: {
       extensions: [
         '.ts',

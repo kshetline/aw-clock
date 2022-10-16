@@ -1,3 +1,9 @@
+## 3.4.0
+
+* Use local storage instead of cookies to save user settings.
+* Remove debugging alert accidentally left in code.
+* Smarter default settings for remote temperature/humidity sensors.
+
 ## 3.3.2
 
 * Improve GPS signal fix detection.

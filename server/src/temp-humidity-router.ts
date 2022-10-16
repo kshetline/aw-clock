@@ -14,6 +14,8 @@ let addSensorDataListener: (pin: number | string, callback: (data: any) => void)
 let removeSensorDataListener: (id: number) => void;
 let lastDeadAir = -1;
 
+export let defaultOutdoorChannel = 'A';
+
 function removeOldData(): void {
   const oldestAllowed = Date.now() - MAX_DATA_AGE;
 
@@ -65,9 +67,7 @@ if (process.env.AWC_WIRELESS_TH_GPIO && !process.env.AWC_ALT_DEV_SERVER) {
   }
 }
 
-router.get('/', async (req: Request, res: Response) => {
-  noCache(res);
-
+export async function getTempHumidityData(): Promise<TempHumidityData> {
   let result: TempHumidityData;
 
   if (process.env.AWC_ALT_DEV_SERVER) {
@@ -78,7 +78,7 @@ router.get('/', async (req: Request, res: Response) => {
     }
     catch (err) {
       purgeCache(url);
-      res.status(500).send('Error connecting to development server: ' + err);
+      result = { error: err };
     }
   }
   else if (callbackId >= 0) {
@@ -92,7 +92,27 @@ router.get('/', async (req: Request, res: Response) => {
   else
     result = { error: 'n/a' };
 
-  jsonOrJsonp(req, res, result);
+  defaultOutdoorChannel = 'A';
+
+  for (const chan of ['A', 'B', 'C']) {
+    if ((result as any)[chan]?.reliable) {
+      defaultOutdoorChannel = chan;
+      break;
+    }
+  }
+
+  return result;
+}
+
+router.get('/', async (req: Request, res: Response) => {
+  noCache(res);
+
+  const result: TempHumidityData = await getTempHumidityData();
+
+  if (result.error)
+    res.status(500).send('Error connecting to development server: ' + result.error);
+  else
+    jsonOrJsonp(req, res, result);
 });
 
 export function cleanUp(): void {

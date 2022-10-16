@@ -33,7 +33,7 @@ import logger from 'morgan';
 import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
-import { router as tempHumidityRouter, cleanUp } from './temp-humidity-router';
+import { router as tempHumidityRouter, cleanUp, defaultOutdoorChannel, getTempHumidityData } from './temp-humidity-router';
 import { router as changelogRouter } from './changelog-router';
 import { hasGps, jsonOrJsonp, noCache, normalizePort, safeCompareVersions, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
@@ -227,6 +227,7 @@ function createAndStartServer(): void {
   httpServer.on('error', onError);
   httpServer.on('listening', onListening);
   httpServer.listen(httpPort);
+  getTempHumidityData().finally();
 }
 
 function onError(error: any): void {
@@ -410,7 +411,7 @@ function getApp(): Express {
       ip,
       latestVersion,
       latestVersionInfo,
-      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO ? 'A' : 'F'),
+      outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO || process.env.AWC_ALT_DEV_SERVER ? defaultOutdoorChannel : 'F'),
       services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : ''),
       updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && safeCompareVersions(latestVersion, AWC_VERSION, '>', false)
     };

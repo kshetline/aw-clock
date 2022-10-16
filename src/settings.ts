@@ -1,7 +1,7 @@
 import { HourlyForecast, TimeFormat } from './shared-types';
 import $ from 'jquery';
 import Cookies from 'js-cookie';
-import { isChromium, isRaspbian, toBoolean, toNumber } from '@tubular/util';
+import { forEach, isChromium, isRaspbian, toBoolean, toNumber } from '@tubular/util';
 import { parseJson } from './awc-util';
 
 const docPort = location.port;
@@ -87,45 +87,69 @@ export class Settings {
   userId = '';
 
   public defaultsSet(): boolean {
-    return !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
+    return !!localStorage.getItem('aw-clock-settings') || !!(Cookies.get('indoor') || Cookies.get('outdoor') || Cookies.get('city'));
   }
 
   public load(): void {
-    this.alarmDisableDuration = Number(Cookies.get('alarm_disable_duration')) || defaultSettings.alarmDisableDuration;
-    this.alarmDisableStartTime = Number(Cookies.get('alarm_disable_start_time')) || defaultSettings.alarmDisableStartTime;
-    this.alarms = parseJson(Cookies.get('alarms')) || defaultSettings.alarms;
-    this.alertFilters = parseJson(Cookies.get('alert-filters')) || defaultSettings.alertFilters;
-    this.background = Cookies.get('background') || defaultSettings.background;
-    this.celsius = toBoolean(Cookies.get('celsius'), false);
-    this.city = Cookies.get('city') || defaultSettings.city;
-    this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
-    this.dimming = Number(Cookies.get('dimming')) || 0;
-    this.dimmingEnd = Cookies.get('dimming_end') || defaultSettings.dimmingEnd;
-    this.dimmingStart = Cookies.get('dimming_start') || defaultSettings.dimmingStart;
-    this.drawConstellations = toBoolean(Cookies.get('draw_constellations'), defaultSettings.drawConstellations);
-    this.floatHands = Cookies.get('float_hands') || defaultSettings.floatHands;
-    this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
-    this.hideSeconds = toBoolean(Cookies.get('hides'), false);
-    this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) || defaultSettings.hourlyForecast;
-    this.indoorOption = Cookies.get('indoor') || this.indoorOption;
-    this.knots = toBoolean(Cookies.get('knots'), false);
-    this.latitude = Number(Cookies.get('latitude')) || defaultSettings.latitude;
-    this.longitude = Number(Cookies.get('longitude')) || defaultSettings.longitude;
-    this.onscreenKB = toBoolean(Cookies.get('oskb'), false);
-    this.outdoorOption = Cookies.get('outdoor') || 'F';
-    this.recentLocations = parseJson(Cookies.get('recent_locations')) || defaultSettings.recentLocations;
-    this.service = Cookies.get('service') || defaultSettings.service;
-    this.showSkyColors = toBoolean(Cookies.get('show_sky_colors'), defaultSettings.showSkyColors);
-    this.showSkyMap = toBoolean(Cookies.get('show_sky_map'), defaultSettings.showSkyMap);
-    this.skyFacing = toNumber(Cookies.get('sky_facing'), defaultSettings.skyFacing);
-    this.timeFormat = toTimeFormat(Cookies.get('ampm'), defaultSettings.timeFormat);
-    this.updateToHide = Cookies.get('update-to-hide') || '';
-    this.userId = Cookies.get('id') || '';
+    let saved: any;
 
-    if (this.floatHands === 'true')
-      this.floatHands = 'T';
-    else if (this.floatHands === 'false')
-      this.floatHands = 'N';
+    try {
+      saved = JSON.parse(localStorage.getItem('aw-clock-settings'));
+    }
+    catch {}
+
+    if (saved) {
+      const _this = this as any;
+
+      forEach(_this, key => {
+        if (_this[key] != null)
+          _this[key] = saved[key] ?? defaultSettings[key];
+      });
+    }
+    else if (Cookies.get('latitude')) {
+      this.alarmDisableDuration = Number(Cookies.get('alarm_disable_duration')) || defaultSettings.alarmDisableDuration;
+      this.alarmDisableStartTime = Number(Cookies.get('alarm_disable_start_time')) || defaultSettings.alarmDisableStartTime;
+      this.alarms = parseJson(Cookies.get('alarms')) || defaultSettings.alarms;
+      this.alertFilters = parseJson(Cookies.get('alert-filters')) || defaultSettings.alertFilters;
+      this.background = Cookies.get('background') || defaultSettings.background;
+      this.celsius = toBoolean(Cookies.get('celsius'), false);
+      this.city = Cookies.get('city') || defaultSettings.city;
+      this.clockFace = Cookies.get('clock_face') || defaultSettings.clockFace;
+      this.dimming = Number(Cookies.get('dimming')) || 0;
+      this.dimmingEnd = Cookies.get('dimming_end') || defaultSettings.dimmingEnd;
+      this.dimmingStart = Cookies.get('dimming_start') || defaultSettings.dimmingStart;
+      this.drawConstellations = toBoolean(Cookies.get('draw_constellations'), defaultSettings.drawConstellations);
+      this.floatHands = Cookies.get('float_hands') || defaultSettings.floatHands;
+      this.hidePlanets = toBoolean(Cookies.get('hidep'), false);
+      this.hideSeconds = toBoolean(Cookies.get('hides'), false);
+      this.hourlyForecast = (Cookies.get('hourly_forecast') as HourlyForecast) || defaultSettings.hourlyForecast;
+      this.indoorOption = Cookies.get('indoor') || this.indoorOption;
+      this.knots = toBoolean(Cookies.get('knots'), false);
+      this.latitude = Number(Cookies.get('latitude')) || defaultSettings.latitude;
+      this.longitude = Number(Cookies.get('longitude')) || defaultSettings.longitude;
+      this.onscreenKB = toBoolean(Cookies.get('oskb'), false);
+      this.outdoorOption = Cookies.get('outdoor') || 'F';
+      this.recentLocations = parseJson(Cookies.get('recent_locations')) || defaultSettings.recentLocations;
+      this.service = Cookies.get('service') || defaultSettings.service;
+      this.showSkyColors = toBoolean(Cookies.get('show_sky_colors'), defaultSettings.showSkyColors);
+      this.showSkyMap = toBoolean(Cookies.get('show_sky_map'), defaultSettings.showSkyMap);
+      this.skyFacing = toNumber(Cookies.get('sky_facing'), defaultSettings.skyFacing);
+      this.timeFormat = toTimeFormat(Cookies.get('ampm'), defaultSettings.timeFormat);
+      this.updateToHide = Cookies.get('update-to-hide') || '';
+      this.userId = Cookies.get('id') || '';
+
+      if (this.floatHands === 'true')
+        this.floatHands = 'T';
+      else if (this.floatHands === 'false')
+        this.floatHands = 'N';
+
+      // Convert cookies to local storage, then clean up cookies.
+      this.save();
+      ['alarm_disable_duration', 'alarm_disable_start_time', 'alarms', 'alert-filters', 'ampm', 'background', 'celsius', 'city',
+       'clock_face', 'dimming_end', 'dimming_start', 'dimming', 'draw_constellations', 'float_hands', 'hidep', 'hides',
+       'hourly_forecast', 'id', 'indoor', 'knots', 'latitude', 'longitude', 'oskb', 'outdoor', 'recent_locations', 'service',
+       'show_sky_colors', 'show_sky_map', 'sky_facing', 'update-to-hide'].forEach(name => Cookies.remove(name));
+    }
 
     const body = $('body');
 
@@ -134,38 +158,7 @@ export class Settings {
   }
 
   public save(): void {
-    const expiration = { expires: 36525 }; // One century from now.
-
-    Cookies.set('alarm_disable_duration', this.alarmDisableDuration.toString(), expiration);
-    Cookies.set('alarm_disable_start_time', this.alarmDisableStartTime.toString(), expiration);
-    Cookies.set('alarms', JSON.stringify(this.alarms), expiration);
-    Cookies.set('alert-filters', JSON.stringify(this.alertFilters), expiration);
-    Cookies.set('background', this.background, expiration);
-    Cookies.set('celsius', this.celsius.toString(), expiration);
-    Cookies.set('city', this.city, expiration);
-    Cookies.set('clock_face', this.clockFace, expiration);
-    Cookies.set('dimming', this.dimming.toString(), expiration);
-    Cookies.set('dimming_end', this.dimmingEnd, expiration);
-    Cookies.set('dimming_start', this.dimmingStart, expiration);
-    Cookies.set('draw_constellations', this.drawConstellations.toString(), expiration);
-    Cookies.set('float_hands', this.floatHands, expiration);
-    Cookies.set('hidep', this.hidePlanets.toString(), expiration);
-    Cookies.set('hides', this.hideSeconds.toString(), expiration);
-    Cookies.set('hourly_forecast', this.hourlyForecast, expiration);
-    Cookies.set('indoor', this.indoorOption, expiration);
-    Cookies.set('knots', this.knots.toString(), expiration);
-    Cookies.set('latitude', this.latitude.toString(), expiration);
-    Cookies.set('longitude', this.longitude.toString(), expiration);
-    Cookies.set('oskb', this.onscreenKB.toString(), expiration);
-    Cookies.set('outdoor', this.outdoorOption, expiration);
-    Cookies.set('recent_locations', JSON.stringify(this.recentLocations));
-    Cookies.set('service', this.service, expiration);
-    Cookies.set('show_sky_colors', this.showSkyColors.toString(), expiration);
-    Cookies.set('show_sky_map', this.showSkyMap.toString(), expiration);
-    Cookies.set('sky_facing', this.skyFacing.toString(), expiration);
-    Cookies.set('ampm', ['24', 'ampm', 'utc'][this.timeFormat] ?? '24', expiration);
-    Cookies.set('update-to-hide', this.updateToHide, expiration);
-    Cookies.set('id', this.userId, expiration);
+    localStorage.setItem('aw-clock-settings', JSON.stringify(this));
 
     const body = $('body');
 
