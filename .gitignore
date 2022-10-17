@@ -12,17 +12,5 @@ Thumbs.db
 tmp
 tsc-out
 
-/.idea
-!/.idea/aw-clock.iml
-!/.idea/codeStyles/**
-!/.idea/compiler.xml
-!/.idea/dictionaries/**
-!/.idea/encodings.xml
-!/.idea/inspectionProfiles/**
-!/.idea/jsLibraryMappings.xml
-!/.idea/markdown.xml
-!/.idea/modules.xml
-!/.idea/vcs.xml
-
 /.vscode/*
 !/.vscode/settings.json
