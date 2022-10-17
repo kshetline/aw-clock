@@ -1221,7 +1221,7 @@ export class Forecast {
     const narrativeEvening = day?.narrativeEvening;
 
     if (!narrativeDay && !narrativeEvening) {
-      alert('No forecast details available');
+      // No forecast details available
       return;
     }
 
