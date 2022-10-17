@@ -134,6 +134,7 @@ export interface TempHumidityData {
   C?: TempHumidityItem;
   deadAir?: boolean;
   error?: string;
+  serverError?: string;
 }
 
 export interface GpsData {

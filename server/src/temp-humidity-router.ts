@@ -78,7 +78,7 @@ export async function getTempHumidityData(): Promise<TempHumidityData> {
     }
     catch (err) {
       purgeCache(url);
-      result = { error: err };
+      result = { serverError: err.message ?? err.toString() };
     }
   }
   else if (callbackId >= 0) {
@@ -109,8 +109,8 @@ router.get('/', async (req: Request, res: Response) => {
 
   const result: TempHumidityData = await getTempHumidityData();
 
-  if (result.error)
-    res.status(500).send('Error connecting to development server: ' + result.error);
+  if (result.serverError)
+    res.status(500).send('Error connecting to development server: ' + result.serverError);
   else
     jsonOrJsonp(req, res, result);
 });
