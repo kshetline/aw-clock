@@ -1,50 +1,42 @@
-# See http://help.github.com/ignore-files/ for more about ignoring files.
+**/*
 
-# compiled output
-/dist
-/tsc-out
-/server/dist
-/server/tsc-out
-/tmp
+!/.editorconfig
+!/.eslint*
+!/.gitignore
+!/.gitmodules
+!/.npmignore
+!/.sasslint*
+!/ambient.d.ts
+!/build*
+!/CHANGELOG*
+!/LICENSE*
+!/package*
+!/README*
+!/src/
+!/tsconfig*
+!/webpack*
 
-# dependencies
-/node_modules
-/sass/node_modules
-/server/node_modules
+!.idea/aw-clock.iml
+!.idea/codeStyles/
+!.idea/compiler.xml
+!.idea/dictionaries/
+!.idea/encodings.xml
+!.idea/inspectionProfiles/
+!.idea/jsLibraryMappings.xml
+!.idea/markdown.xml
+!.idea/modules.xml
+!.idea/vcs.xml
 
-# IDEs and editors
-/.idea
-/server/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+!.vscode/settings.json
 
-# IDE - VSCode
-.vscode/*
-!.vscode/tasks.json
-!.vscode/extensions.json
+!/e2e/
+!/img/
+!/raspberry_pi_setup/
 
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
-.first-time-install
-node_path.txt
-/src/assets/audio/user
-/src/assets/audio/user/
+!/sass/package*
 
-# e2e
-/e2e/*.js
-/e2e/*.map
-
-# System Files
-.DS_Store
-Thumbs.db
+!/server/.eslint*
+!/server/package*
+!/server/src/**/*
+!/server/tsconfig*
+!/server/webpack*
