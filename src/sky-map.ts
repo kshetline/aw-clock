@@ -132,7 +132,7 @@ export class SkyMap {
     const radius = floor(min(width, height) / 2 * 0.95);
     const canvasScaling = canvas.width / width;
     const dc = {
-      context: canvas.getContext('2d'),
+      context: canvas.getContext('2d', { willReadFrequently: true }),
       facing: this.appService.skyFacing,
       labels: [],
       jde: ttime.utToTdt(jdu),
