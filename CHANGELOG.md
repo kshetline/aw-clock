@@ -1,3 +1,7 @@
+## 3.4.1
+
+* Fix a Daylight Saving Time bug that caused the displayed time for an upcoming alarm the day after a clock change to be off by an hour. (This self-corrected after midnight, and did not affect when the alarm actually went off.)
+
 ## 3.4.0
 
 * Use local storage instead of cookies to save user settings.

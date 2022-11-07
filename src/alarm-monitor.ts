@@ -8,7 +8,6 @@ import { domAlert } from './awc-util';
 import { TimeFormat } from './shared-types';
 
 const FALLBACK_AUDIO = 'Beep-beep-beep-beep.mp3';
-const MINUTES_PER_DAY = 1440;
 const NOTHING_PENDING = Number.MAX_SAFE_INTEGER;
 
 export class AlarmMonitor {
@@ -56,6 +55,9 @@ export class AlarmMonitor {
   checkAlarms(alarmCheckTime: number, alarms: AlarmInfo[]): AlarmInfo[] {
     let updatePrefs = false;
     const now = new DateTime(alarmCheckTime, this.appService.timezone);
+    const minutesInDay = now.getMinutesInDay();
+    const wt = now.wallTime;
+    const midnight = new DateTime([wt.y, wt.m, wt.d, 0, 0, 0], this.appService.timezone);
     const nowMinutes = floor(now.utcSeconds / 60);
     const newActiveAlarms = [];
     let sound = '';
@@ -77,8 +79,7 @@ export class AlarmMonitor {
       if (snoozed)
         alarmTime = snoozed.restartAt;
       else if (isDaily)
-        alarmTime = floor(new DateTime([now.wallTime.y, now.wallTime.m, now.wallTime.d], this.appService.timezone).utcSeconds / 60) +
-          alarmTime;
+        alarmTime = floor(midnight.utcSeconds / 60) + alarmTime;
       else
         alarmTime -= floor(now.utcOffsetSeconds / 60);
 
@@ -94,16 +95,16 @@ export class AlarmMonitor {
           const tomorrow = now.clone().add('day', 1).format('dd', 'en').toUpperCase();
 
           if (alarm.days?.includes(tomorrow) && alarmTime < nowMinutes)
-            next24Hours = min(alarmTime + MINUTES_PER_DAY, next24Hours);
+            next24Hours = min(alarmTime + minutesInDay, next24Hours);
 
           const today = now.format('dd', 'en').toUpperCase();
 
           if (!alarm.days?.includes(today))
             continue;
-          else if (alarmTime > nowMinutes && alarmTime < nowMinutes + MINUTES_PER_DAY)
+          else if (alarmTime > nowMinutes && alarmTime < nowMinutes + minutesInDay)
             next24Hours = min(alarmTime, next24Hours);
         }
-        else if (alarmTime > nowMinutes && alarmTime < nowMinutes + MINUTES_PER_DAY)
+        else if (alarmTime > nowMinutes && alarmTime < nowMinutes + minutesInDay)
           next24Hours = min(alarmTime, next24Hours);
       }
 
