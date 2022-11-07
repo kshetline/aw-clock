@@ -56,8 +56,6 @@ export class AlarmMonitor {
     let updatePrefs = false;
     const now = new DateTime(alarmCheckTime, this.appService.timezone);
     const minutesInDay = now.getMinutesInDay();
-    const wt = now.wallTime;
-    const midnight = new DateTime([wt.y, wt.m, wt.d, 0, 0, 0], this.appService.timezone);
     const nowMinutes = floor(now.utcSeconds / 60);
     const newActiveAlarms = [];
     let sound = '';
@@ -78,10 +76,18 @@ export class AlarmMonitor {
 
       if (snoozed)
         alarmTime = snoozed.restartAt;
-      else if (isDaily)
-        alarmTime = floor(midnight.utcSeconds / 60) + alarmTime;
-      else
-        alarmTime -= floor(now.utcOffsetSeconds / 60);
+      else if (isDaily) {
+        const wt = now.wallTime;
+        const alarmDT = new DateTime([wt.y, wt.m, wt.d, floor(alarmTime / 60), alarmTime % 60], this.appService.timezone);
+
+        alarmTime = floor(alarmDT.utcSeconds / 60);
+      }
+      else {
+        const wt = new DateTime(alarmTime * 60000, 'UTC').wallTime;
+        const alarmDT = new DateTime([wt.y, wt.m, wt.d, wt.hrs, wt.min], this.appService.timezone);
+
+        alarmTime = floor(alarmDT.utcSeconds / 60);
+      }
 
       if (!snoozed) {
         if (!isDaily && alarmTime < nowMinutes - 65 && processMillis() > this.startTime + 60000) { // Expired alarm?
