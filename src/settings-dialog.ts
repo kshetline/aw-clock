@@ -870,7 +870,7 @@ export class SettingsDialog {
       this.dayOfWeekPanel.css('display', daily ? 'flex' : 'none');
       this.alarmHour.val(time.substring(0, 2));
       this.alarmMinute.val(time.substring(3, 5));
-      this.alarmMeridiem.val(time.substring(7, 8));
+      this.alarmMeridiem.val(time.substring(6, 7));
       this.alarmAudio.val(alarm.sound);
       this.alarmMessage.val(alarm.message);
 
@@ -1089,7 +1089,8 @@ export class SettingsDialog {
     this.alarmDelete.prop('disabled', true);
     this.alarmEdit.prop('disabled', true);
     this.clearAlarmTime();
-    this.renderAlarmList(this.newAlarms);
+    this.renderAlarmList([]);
+    setTimeout(() => this.renderAlarmList(this.newAlarms));
 
     this.renderAlertFilterList(previousSettings.alertFilters);
 

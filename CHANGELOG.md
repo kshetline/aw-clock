@@ -1,3 +1,8 @@
+## 3.4.2
+
+* That bug fix in 3.4.1? Turns out an alarm going off on the _same day_ clocks are changed could go off at the wrong time, not merely be displayed incorrectly. That's fixed now too.
+* Fix initial AM/PM state of edited alarm.
+
 ## 3.4.1
 
 * Fix a Daylight Saving Time bug that caused the displayed time for an upcoming alarm the day after a clock change to be off by an hour. (This self-corrected after midnight, and did not affect when the alarm actually went off.)
