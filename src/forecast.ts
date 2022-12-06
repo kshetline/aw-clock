@@ -4,8 +4,8 @@ import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
 import {
-  blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isObject, last,
-  processMillis, toNumber
+  blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
+  processMillis, regex, toNumber
 } from '@tubular/util';
 import { Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
@@ -19,6 +19,13 @@ import { AlertFilterType, demoServer } from './settings';
 
 interface SVGAnimationElementPlus extends SVGAnimationElement {
   beginElement: () => void;
+}
+
+interface DisplayedAlert {
+  alert?: Alert;
+  altText?: string;
+  asError?: boolean;
+  asNotification?: boolean;
 }
 
 const DEFAULT_BACKGROUND = 'inherit';
@@ -61,7 +68,7 @@ let SUBJECT_INTRO_PATTERN: RegExp;
 try {
   // Firefox fails on this pattern.
   // eslint-disable-next-line prefer-regex-literals
-  SUBJECT_INTRO_PATTERN = new RegExp('^((• )?\\p{Lu}{4,}[ \\p{Lu}]*)\\.\\.\\.(?!\\.)', 'gmu');
+  SUBJECT_INTRO_PATTERN = regex`^((• )?\p{Lu}{4,}[ \p{Lu}]*)\.\.\.(?!\.)${'gmu'}`;
 }
 catch {
   SUBJECT_INTRO_PATTERN = /^((• )?[A-Z]{4,}[ A-Z]*)\.\.\.(?!\.)/gmu;
@@ -88,11 +95,43 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
   return rect.x <= x && x <= rect.right && rect.y <= y && y <= rect.bottom;
 }
 
-function concatenateAlerts(alerts: string[]): string {
-  return alerts.map(a => a.replace(/\r\n|\r/g, '\n').trim()
-    .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '') // Remove seemingly random trailing characters from alerts.
-    .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
-  ).join(BULLET_SPACER);
+function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false): string {
+  return (alerts ?? []).map(a => {
+    const alert: Alert = a.alert ?? (a.title ? a : null);
+    const dialogAlert = forDialog && alert?.id;
+    let text: string;
+
+    if (alert && !a.altText) {
+      text = (dialogAlert ? `<div class="alarm-wrapper" id="X${alert.id}_aw">` +
+          `<div class="alarm-toggle" id="X${alert.id}_at">` +
+          `<input type="checkbox" id="X${alert.id}_cb"><label for="X${alert.id}_cb">Acknowledge</label></div>`
+        : '') +
+        htmlEscape(`${alert.title}: ${alert.description}`.replace(/\r\n|\r/g, '\n').trim())
+          .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '') // Remove seemingly random trailing characters from alerts.
+          .replace(/^\* /gm, '• ') // Replace asterisks used as bullets with real bullets.
+          .replace(SUBJECT_INTRO_PATTERN, '$1: '); // Improve alert formatting.
+
+      if (dialogAlert) {
+        text += '</div>';
+        text = text.replace(/<\/div>(.+?)\n\n/s, '</div><div class="alert-first-line">$1</div>\n');
+      }
+    }
+    else
+      text = htmlEscape(a.altText || '');
+
+    if (a?.asError || a?.asNotification)
+      text = START_ERROR_TAG + text + CLOSE_ERROR_TAG;
+
+    return text;
+  }).join(BULLET_SPACER);
+}
+
+function droppedAlertSymbols(droppedAlerts: Alert[]): string {
+  return (droppedAlerts ?? []).map(a => ({ advisory: '🔵', watch: '🟠', warning: '🔴' })[a.severity] || '').join('');
+}
+
+function convertForWidthMeasurement(s: string): string {
+  return s.replace(/<[^>]+>/g, '').replace(/[ \n\r\t]+/g, ' ');
 }
 
 export class Forecast {
@@ -135,9 +174,9 @@ export class Forecast {
   private forecastDaysVisible = 4;
   private _hasGoodData = false;
 
-  private marqueeText = ' ';
   private marqueeDialogText = '';
   private marqueeBackground = DEFAULT_BACKGROUND;
+  private currentAlerts: { alerts?: DisplayedAlert[], droppedAlerts?: Alert[] };
   private animationStart: number;
   private animationWidth: number;
   private animationDuration: number;
@@ -723,7 +762,7 @@ export class Forecast {
       this.marqueeOuterWrapper.css('color', DEFAULT_FOREGROUND);
     }
 
-    this.updateMarqueeAnimation(error || '\u00A0');
+    this.updateMarqueeAnimation([{ altText: error || '\u00A0' }]);
   }
 
   getTimezone(): Timezone {
@@ -1009,18 +1048,16 @@ export class Forecast {
   }
 
   refreshAlerts(forecastData = this.lastForecastData): void {
-    let newText: string;
     let maxSeverity = 0;
-    const alerts: string[] = [];
-    let droppedAlertSymbols = ' ';
-    const droppedAlerts: string[] = [];
+    const alerts: DisplayedAlert[] = [];
+    const droppedAlerts: Alert[] = [];
     const now = this.appService.getCurrentTime();
 
     if (this.appService.sensorDeadAir())
-      alerts.push('{{WIRELESS TEMPERATURE/HUMIDITY SIGNAL NOT PRESENT - possible disconnect or bad pin assignment}}');
+      alerts.push({ asError: true, altText: 'WIRELESS TEMPERATURE/HUMIDITY SIGNAL NOT PRESENT - possible disconnect or bad pin assignment' });
 
     if (forecastData?.daily.summary)
-      alerts.push(forecastData.daily.summary);
+      alerts.push({ altText: forecastData.daily.summary });
 
     if (forecastData?.alerts) {
       forecastData.alerts.forEach(alert => {
@@ -1035,12 +1072,10 @@ export class Forecast {
 
           if (allowed) {
             maxSeverity = max(severity, maxSeverity);
-            alerts.push(alert.title + ': ' + alert.description);
+            alerts.push({ alert });
           }
-          else {
-            droppedAlertSymbols += ['🔵', '🟠', '🔴'][severity - 1] || '';
-            droppedAlerts.push(alert.title + ': ' + alert.description);
-          }
+          else
+            droppedAlerts.push(alert);
         }
       });
     }
@@ -1050,18 +1085,17 @@ export class Forecast {
       const outdoor = this.appService.getOutdoorOption() !== 'F';
 
       if (indoor && outdoor)
-        alerts.push('{{NOTE: Indoor/outdoor temperature and humidity are simulated}}');
+        alerts.push({ altText: 'NOTE: Indoor/outdoor temperature and humidity are simulated', asNotification: true });
       else if (indoor)
-        alerts.push('{{NOTE: Indoor temperature and humidity are simulated}}');
+        alerts.push({ altText: 'NOTE: Indoor temperature and humidity are simulated', asNotification: true });
       else if (outdoor)
-        alerts.push('{{NOTE: Outdoor temperature and humidity are simulated}}');
+        alerts.push({ altText: 'NOTE: Outdoor temperature and humidity are simulated', asNotification: true });
     }
 
-    const alertText = concatenateAlerts(alerts) + droppedAlertSymbols.trimEnd();
     let background: string;
     let color: string;
 
-    if (alertText) {
+    if (alerts.length + droppedAlerts.length > 0) {
       switch (maxSeverity) {
         case 0:
           background = document.defaultView.getComputedStyle(document.body, null).getPropertyValue('background-color');
@@ -1083,11 +1117,8 @@ export class Forecast {
           color = WARNING_FOREGROUND;
           break;
       }
-
-      newText = alertText;
     }
     else {
-      newText = '\u00A0';
       background = DEFAULT_BACKGROUND;
       color = DEFAULT_FOREGROUND;
     }
@@ -1099,7 +1130,7 @@ export class Forecast {
     this.marqueeWrapper.css('background-color', background);
     this.marqueeOuterWrapper.css('color', color);
     this.marqueeWrapper.css('color', color);
-    this.updateMarqueeAnimation(newText, concatenateAlerts(droppedAlerts));
+    this.updateMarqueeAnimation(alerts, droppedAlerts);
   }
 
   private alertAllowed(alert: Alert): boolean {
@@ -1149,30 +1180,29 @@ export class Forecast {
     }
   }
 
-  private updateMarqueeAnimation(newText: string, droppedAlerts?: string): void {
-    if (newText !== null) {
-      if (newText === this.marqueeText)
+  private updateMarqueeAnimation(alerts: DisplayedAlert[], droppedAlerts?: Alert[]): void {
+    const newAlerts = { alerts, droppedAlerts };
+
+    if (alerts !== null || droppedAlerts != null) {
+      if (isEqual(this.currentAlerts, newAlerts))
         return;
       else
-        this.marqueeText = newText;
+        this.currentAlerts = newAlerts;
     }
-    else
-      newText = this.marqueeText;
 
+    const newText = concatenateAlerts(alerts) + droppedAlertSymbols(droppedAlerts);
     const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
-    const textWidth = getTextWidth(newText.replace(/{{|}}/g, '\u00A0'), this.marquee[0]);
+    const textWidth = getTextWidth(convertForWidthMeasurement(newText), this.marquee[0]);
 
-    newText = htmlEscape(newText).replace(/{{/g, START_ERROR_TAG).replace(/}}/g, CLOSE_ERROR_TAG);
     this.marquee.css('width', marqueeWidth + 'px');
     this.marquee.css('text-indent', '0');
 
-    // Try to undo hard word-wrap.
-    this.marqueeDialogText = (newText + (droppedAlerts ? BULLET_SPACER + droppedAlerts : ''))
+    // Create alert dialog text, trying to undo hard word-wrap.
+    this.marqueeDialogText = (concatenateAlerts(alerts, true)
+        + (droppedAlerts ? BULLET_SPACER + concatenateAlerts(droppedAlerts) : ''))
       .replace(BULLET_REGEX, '\n<hr>').replace(/([-\da-z,])\n(?=[a-z]|(\d[^.#*)\]]))/gi, '$1 ')
       // No more than one blank line, and no trailing blank lines.
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
-      // Improve alert formatting.
-      .replace(SUBJECT_INTRO_PATTERN, '$1: ')
       // Remove hidden alert icons.
       .replace(/ (\uD83D[\uDD34-\uDD35\uDFe0])+/, '');
 
@@ -1185,16 +1215,15 @@ export class Forecast {
         window.cancelAnimationFrame(this.animationRequestId);
         this.animationRequestId = 0;
       }
-
-      return;
     }
-
-    this.marquee.html(newText + MARQUEE_JOINER + newText);
-    this.animationStart = performance.now();
-    this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
-    this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
-    this.animationRequestId = window.requestAnimationFrame(() => this.animate());
-    this.appService.updateMarqueeState(true);
+    else {
+      this.marquee.html(newText + MARQUEE_JOINER + newText);
+      this.animationStart = performance.now();
+      this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
+      this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
+      this.animationRequestId = window.requestAnimationFrame(() => this.animate());
+      this.appService.updateMarqueeState(true);
+    }
   }
 
   private animate(): void {
@@ -1213,7 +1242,45 @@ export class Forecast {
     const color = (this.marqueeBackground === 'inherit' ? $('body').css('--background-color') : this.marqueeBackground);
 
     displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25));
+
+    let tries = 0;
+    const addAlertButtonListeners = (): void => {
+      let needed = 0;
+      const found = new Map<string, HTMLInputElement>();
+
+      for (const alert of this.currentAlerts?.alerts ?? []) {
+        if (alert.alert?.id) {
+          const id = alert.alert.id;
+          const cb = document.querySelector(`#X${id}_cb`) as HTMLInputElement;
+
+          ++needed;
+
+          if (cb)
+            found.set(id, cb);
+        }
+      }
+
+      if (found.size < needed && ++tries < 20)
+        setTimeout(addAlertButtonListeners, 100);
+      else {
+        found.forEach((elem, id) => {
+          elem.addEventListener('click', this.alertAcknowledgeClick);
+          document.querySelector(`#X${id}_at`)?.addEventListener('click', this.alertAcknowledgeClick);
+        });
+      }
+    };
+
+    addAlertButtonListeners();
   }
+
+  private alertAcknowledgeClick = (evt: MouseEvent): void => {
+    const id = (evt.target as HTMLElement).id?.slice(1, -3);
+
+    if (id && (evt.target as HTMLElement).localName !== 'input')
+      (document.querySelector(`#X${id}_cb`) as HTMLInputElement)?.click();
+
+    evt.stopPropagation();
+  };
 
   private showDayForecast(dayIndex: number): void {
     const day = this.todayIndex >= 0 && this.lastForecastData?.daily?.data[this.todayIndex + dayIndex];

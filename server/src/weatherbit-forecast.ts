@@ -339,6 +339,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
       forecast.alerts.push({
         description: alertCleanUp(alert.description),
         expires: Date.parse(alert.expires_utc) / 1000,
+        id: (/:oid:(.+)$/i.exec(alert.uri) ?? [])[1] ?? alert.uri,
         severity: alert.severity.toLowerCase() as Alert['severity'],
         time: Date.parse(alert.effective_utc) / 1000,
         title: alert.title,

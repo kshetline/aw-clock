@@ -1,3 +1,7 @@
+## 3.5.0
+
+* Added ability to hide weather alerts after they have been seen.
+
 ## 3.4.2
 
 * That bug fix in 3.4.1? Turns out an alarm going off on the _same day_ clocks are changed could go off at the wrong time, not merely be displayed incorrectly. That's fixed now too.

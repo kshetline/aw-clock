@@ -8,7 +8,7 @@ const docPort = location.port;
 
 export const runningDev = (docPort === '3000' || docPort === '4200');
 export const localServer = (docPort && docPort !== '80' && docPort !== '443');
-export const demoServer = /\bshetline\.com\b/.test(location.host);
+export const demoServer = /\bshetline\.com\b/.test(location.host) || true;
 export const updateTest = toBoolean(new URLSearchParams(location.search).get('ut'), false, true);
 
 const apiParam = new URLSearchParams(location.search).get('api');
@@ -46,10 +46,15 @@ export class RecentLocation {
 
 export enum AlertFilterType { DOWNGRADE, HIDE }
 
-export class AlertFilter {
+export interface AlertFilter {
   checkDescription: boolean;
   content: string;
   type: AlertFilterType;
+}
+
+export interface HiddenAlert {
+  expires: number;
+  id: string;
 }
 
 export const MAX_RECENT_LOCATIONS = 5;
@@ -68,6 +73,7 @@ export class Settings {
   dimmingStart = '23:00';
   drawConstellations = true;
   floatHands = 'T';
+  hiddenAlerts: HiddenAlert[] = [];
   hidePlanets = false;
   hideSeconds = false;
   hourlyForecast = HourlyForecast.VERTICAL;

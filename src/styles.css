@@ -1330,3 +1330,24 @@ ul.my-tabs > li.tab-active {
   font-style: italic;
   padding: 0 1em 0.25em 1em;
   position: absolute; }
+
+.alarm-wrapper {
+  position: relative; }
+  .alarm-wrapper .alarm-toggle {
+    background: rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    padding: 0.25em 0.5em;
+    position: absolute;
+    right: 1em;
+    top: -0.25em; }
+    .alarm-wrapper .alarm-toggle input {
+      cursor: pointer;
+      height: 20px;
+      margin-right: 0.5em;
+      position: relative;
+      width: 20px; }
+    .alarm-wrapper .alarm-toggle label {
+      font-size: 0.8em;
+      pointer-events: none; }
+  .alarm-wrapper .alert-first-line {
+    width: calc(100% - 8em); }

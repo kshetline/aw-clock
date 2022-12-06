@@ -292,6 +292,7 @@ function convertAlerts(forecast: ForecastData, wa: any): void {
 
     alert.description = '';
     alert.expires = wuAlert.expireTimeUTC;
+    alert.id = wuAlert.identifier;
     alert.severity = 'advisory';
     alert.time = Math.floor(Date.parse(wuAlert.issueTimeLocal) / 1000);
     alert.title = wuAlert.headlineText;
