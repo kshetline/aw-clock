@@ -1741,8 +1741,21 @@ ul.my-tabs > li.tab-active {
 .alarm-wrapper {
   position: relative;
 
+  &.collapsed {
+    color: transparent;
+    height: 1.2em;
+
+    .alert-first-line {
+      color: black;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
   .alarm-toggle {
     background: rgba(black, 0.25);
+    color: black;
     cursor: pointer;
     padding: 0.25em 0.5em;
     position: absolute;

@@ -1062,15 +1062,24 @@ export class SettingsDialog {
     this.reloadButton.on('click', () => setTimeout(() => location.reload()));
 
     let recentHtml = '<label>Recent locations:</label>';
+    const namesInUse = new Set<string>();
 
     this.recentLocations.forEach(loc => {
-      recentHtml += `<div class="recent-location">${htmlEscape(loc.city)}<span>✕</span></div>`;
+      let name = loc.city;
+      let index = 1;
+
+      while (namesInUse.has(name)) {
+        name = `${loc.city} (${++index})`;
+      }
+
+      namesInUse.add(name);
+      recentHtml += `<div class="recent-location">${htmlEscape(name)}<span>✕</span></div>`;
     });
 
     $('.recent-locations').html(recentHtml).find('.recent-location').each((index, elem) => {
       elem.addEventListener('click', evt => {
         if ((evt.target as HTMLElement).localName === 'span') {
-          this.recentLocations.splice(index, 1);
+          this.recentLocations[index] = null;
           (evt.target as HTMLElement).parentElement.remove();
         }
         else {
@@ -1255,7 +1264,7 @@ export class SettingsDialog {
 
     newSettings.updateToHide = this.hideUpdate.prop('checked') ? (this.appService.getLatestDefaults()?.latestVersion || '') : '';
 
-    newSettings.recentLocations = this.recentLocations;
+    newSettings.recentLocations = this.recentLocations.filter(loc => loc != null);
     newSettings.alarms = this.newAlarms;
 
     decrementDialogCounter();

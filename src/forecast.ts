@@ -5,7 +5,7 @@ import { DateTime, Timezone } from '@tubular/time';
 import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
 import {
   blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
-  processMillis, regex, toNumber
+  processMillis, push, regex, toNumber
 } from '@tubular/util';
 import { Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
@@ -22,6 +22,7 @@ interface SVGAnimationElementPlus extends SVGAnimationElement {
 }
 
 interface DisplayedAlert {
+  acknowledged?: boolean;
   alert?: Alert;
   altText?: string;
   asError?: boolean;
@@ -97,8 +98,11 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
 
 function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false): string {
   return (alerts ?? []).map(a => {
+    if (a.acknowledged && !forDialog)
+      return null;
+
     const alert: Alert = a.alert ?? (a.title ? a : null);
-    const dialogAlert = forDialog && alert?.id;
+    const dialogAlert = alert?.id && forDialog;
     let text: string;
 
     if (alert && !a.altText) {
@@ -123,7 +127,7 @@ function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false
       text = START_ERROR_TAG + text + CLOSE_ERROR_TAG;
 
     return text;
-  }).join(BULLET_SPACER);
+  }).filter(t => t != null).join(BULLET_SPACER);
 }
 
 function droppedAlertSymbols(droppedAlerts: Alert[]): string {
@@ -1071,8 +1075,10 @@ export class Forecast {
           const severity = severities.indexOf(alert.severity) + 1;
 
           if (allowed) {
-            maxSeverity = max(severity, maxSeverity);
-            alerts.push({ alert });
+            if (!this.isAlertAcknowledged(alert.id))
+              maxSeverity = max(severity, maxSeverity);
+
+            alerts.push({ alert, acknowledged: this.isAlertAcknowledged(alert.id) });
           }
           else
             droppedAlerts.push(alert);
@@ -1238,10 +1244,32 @@ export class Forecast {
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
   }
 
+  private acknowledgeAlert(id: string, state?: boolean): void {
+    const alerts = this.appService.getHiddenAlerts();
+    const acknowledged = this.isAlertAcknowledged(id);
+
+    if (state == null)
+      state = !acknowledged;
+
+    if (state && !acknowledged) {
+      this.appService.updateHiddenAlerts(push(alerts,
+        { id, expires: this.currentAlerts.alerts?.find(a => a.alert?.id === id)?.alert.expires ?? 0 }));
+      document.querySelector(`#X${id}_aw`)?.classList.add('collapsed');
+    }
+    else if (!state && acknowledged) {
+      this.appService.updateHiddenAlerts(alerts.filter(a => a.id !== id));
+      document.querySelector(`#X${id}_aw`)?.classList.remove('collapsed');
+    }
+  }
+
+  private isAlertAcknowledged(id: string): boolean {
+    return !!this.appService.getHiddenAlerts().find(a => a.id === id);
+  }
+
   private showMarqueeDialog(): void {
     const color = (this.marqueeBackground === 'inherit' ? $('body').css('--background-color') : this.marqueeBackground);
 
-    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25));
+    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25), () => this.refreshAlerts());
 
     let tries = 0;
     const addAlertButtonListeners = (): void => {
@@ -1264,8 +1292,12 @@ export class Forecast {
         setTimeout(addAlertButtonListeners, 100);
       else {
         found.forEach((elem, id) => {
+          const ack = this.isAlertAcknowledged(id);
+
           elem.addEventListener('click', this.alertAcknowledgeClick);
+          $(elem).prop('checked', ack);
           document.querySelector(`#X${id}_at`)?.addEventListener('click', this.alertAcknowledgeClick);
+          document.querySelector(`#X${id}_aw`)?.classList[ack ? 'add' : 'remove']('collapsed');
         });
       }
     };
@@ -1274,10 +1306,16 @@ export class Forecast {
   }
 
   private alertAcknowledgeClick = (evt: MouseEvent): void => {
-    const id = (evt.target as HTMLElement).id?.slice(1, -3);
+    const target = (evt.target as HTMLElement);
+    const id = target.id?.slice(1, -3);
 
-    if (id && (evt.target as HTMLElement).localName !== 'input')
+    if (id && target.localName !== 'input')
       (document.querySelector(`#X${id}_cb`) as HTMLInputElement)?.click();
+    else {
+      const checked = $(target).prop('checked');
+
+      this.acknowledgeAlert(id, checked);
+    }
 
     evt.stopPropagation();
   };
