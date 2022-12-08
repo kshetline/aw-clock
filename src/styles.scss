@@ -1830,7 +1830,7 @@ ul.my-tabs > li.tab-active {
   }
 }
 
-.bead {
+.bead, .check-icon {
   background-image: linear-gradient(-45deg, rgba(white, 0.25) 0%, transparent 100%);
   border: 0.5px solid gray;
   border-radius: 50%;
@@ -1841,4 +1841,15 @@ ul.my-tabs > li.tab-active {
   position: relative;
   top: 0.05em;
   width: 1em;
+}
+
+.check-icon {
+  border-radius: 12.5%;
+  color: white;
+  text-align: center;
+
+  span {
+    position: relative;
+    top: -0.2em;
+  }
 }

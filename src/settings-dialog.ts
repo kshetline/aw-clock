@@ -1192,6 +1192,7 @@ export class SettingsDialog {
     const newSettings = new Settings();
 
     newSettings.alertFilters = this.getAlertFilters();
+    newSettings.hiddenAlerts = this.appService.getHiddenAlerts();
 
     if (!newSettings.alertFilters)
       return;

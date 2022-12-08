@@ -136,11 +136,19 @@ function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false
   }).filter(t => t != null).join(BULLET_SPACER);
 }
 
-function droppedAlertSymbols(droppedAlerts: Alert[]): string {
-  return (droppedAlerts ?? []).map(a => ({
+function droppedAlertSymbols(alerts: Alert[]): string {
+  return (alerts ?? []).map(a => ({
     advisory: '<div class="bead" style="background-color: blue">&nbsp;</div>',   // 🔵
     watch:    '<div class="bead" style="background-color: orange">&nbsp;</div>', // 🟠
     warning:  '<div class="bead" style="background-color: red">&nbsp;</div>'     // 🔴
+  })[a.severity] || '').join('');
+}
+
+function acknowledgedAlertSymbols(alerts: Alert[]): string {
+  return (alerts ?? []).map(a => ({
+    advisory: '<div class="check-icon" style="background-color: blue"><span>✓</span></div>',
+    watch:    '<div class="check-icon" style="background-color: orange"><span>✓</span></div>',
+    warning:  '<div class="check-icon" style="background-color: red"><span>✓</span></div>'
   })[a.severity] || '').join('');
 }
 
@@ -1206,7 +1214,9 @@ export class Forecast {
         this.currentAlerts = newAlerts;
     }
 
-    const newText = concatenateAlerts(alerts) + droppedAlertSymbols(droppedAlerts);
+    const acknowledgedAlerts = (alerts || []).filter(a => a.alert && this.isAlertAcknowledged(a.alert.id)).map(a => a.alert);
+    const symbols = acknowledgedAlertSymbols(acknowledgedAlerts) + droppedAlertSymbols(droppedAlerts);
+    const newText = concatenateAlerts(alerts) + (symbols ? BULLET_SPACER + symbols : '');
     const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
     const textWidth = getTextWidth(convertForWidthMeasurement(newText), this.marquee[0]);
 
