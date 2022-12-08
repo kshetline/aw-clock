@@ -46,10 +46,15 @@ export class RecentLocation {
 
 export enum AlertFilterType { DOWNGRADE, HIDE }
 
-export class AlertFilter {
+export interface AlertFilter {
   checkDescription: boolean;
   content: string;
   type: AlertFilterType;
+}
+
+export interface HiddenAlert {
+  expires: number;
+  id: string;
 }
 
 export const MAX_RECENT_LOCATIONS = 5;
@@ -68,6 +73,7 @@ export class Settings {
   dimmingStart = '23:00';
   drawConstellations = true;
   floatHands = 'T';
+  hiddenAlerts: HiddenAlert[] = [];
   hidePlanets = false;
   hideSeconds = false;
   hourlyForecast = HourlyForecast.VERTICAL;
@@ -158,6 +164,11 @@ export class Settings {
   }
 
   public save(): void {
+    const dayAgo = Date.now() / 1000 - 86400;
+
+    // Filter out well-expired hidden alerts
+    this.hiddenAlerts = this.hiddenAlerts.filter(a => a.expires > dayAgo);
+
     localStorage.setItem('aw-clock-settings', JSON.stringify(this));
 
     const body = $('body');

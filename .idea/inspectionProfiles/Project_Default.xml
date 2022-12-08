@@ -23,6 +23,7 @@
         </value>
       </option>
     </inspection_tool>
+    <inspection_tool class="CssUnknownTarget" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="CssUnusedSymbol" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="DeprecatedClassUsageInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="SVG files" level="WARNING" enabled="false" />
@@ -79,6 +80,11 @@
           <option value="http://example.com" />
         </list>
       </option>
+    </inspection_tool>
+    <inspection_tool class="JSSuspiciousNameCombination" enabled="false" level="WARNING" enabled_by_default="false">
+      <group names="x,width,left,right" />
+      <group names="y,height,top,bottom" />
+      <exclude classes="Math" />
     </inspection_tool>
     <inspection_tool class="JSUnresolvedFunction" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <scope name="webpack" level="WEAK WARNING" enabled="false" />

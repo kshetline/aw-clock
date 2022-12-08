@@ -82,11 +82,12 @@ export interface DailySummaryConditions {
   data: DailyConditions[];
 }
 
-export const AlertKeys = ['description', 'expires', 'severity', 'title', 'url'];
+export const AlertKeys = ['description', 'expires', 'id', 'severity', 'title', 'url'];
 
 export interface Alert {
   description: string;
   expires: number;    // See CommonConditions
+  id: string;
   severity: 'info' | 'advisory' | 'watch' | 'warning';
   time: number;       // See CommonConditions
   title: string;

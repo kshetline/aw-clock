@@ -2,7 +2,9 @@ import { purgeCache, requestJson } from './request-cache';
 import { Request } from 'express';
 import { last, toBoolean, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { alertCleanUp, checkForecastIntegrity, escapeForRegex, filterError, fToC, hpaToInHg, inchesToCm, milesToKm } from './awcs-util';
+import {
+  alertCleanUp, checkForecastIntegrity, checksum53, escapeForRegex, filterError, fToC, hpaToInHg, inchesToCm, milesToKm
+} from './awcs-util';
 
 interface WeatherBitCurrent {
   data: {
@@ -339,6 +341,7 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
       forecast.alerts.push({
         description: alertCleanUp(alert.description),
         expires: Date.parse(alert.expires_utc) / 1000,
+        id: checksum53((/:oid:(.+)$/i.exec(alert.uri) ?? [])[1] ?? alert.uri),
         severity: alert.severity.toLowerCase() as Alert['severity'],
         time: Date.parse(alert.effective_utc) / 1000,
         title: alert.title,

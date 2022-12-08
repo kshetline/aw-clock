@@ -28,7 +28,7 @@ import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePolle
 import { abs, ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
 import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
-import { AlertFilter, allowAdminFeatures, apiServer, localServer, runningDev, Settings } from './settings';
+import { AlertFilter, allowAdminFeatures, apiServer, HiddenAlert, localServer, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
 import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { reflow, updateSvgFlowItems } from './svg-flow';
@@ -491,7 +491,7 @@ class AwClockApp implements AppService {
     this.lastForecast = this.getCurrentTime();
   }
 
-  updateSettings(newSettings: Settings): void {
+  updateSettings(newSettings = this.settings): void {
     const oldSettings = this.settings;
 
     this.settings = newSettings;
@@ -575,6 +575,14 @@ class AwClockApp implements AppService {
 
   getAlertFilters(): AlertFilter[] {
     return this.settings.alertFilters || [];
+  }
+
+  getHiddenAlerts(): HiddenAlert[] {
+    return this.settings.hiddenAlerts || [];
+  }
+
+  updateHiddenAlerts(hidden: HiddenAlert[]): void {
+    this.settings.hiddenAlerts = hidden || [];
   }
 
   getIndoorOption(): string {

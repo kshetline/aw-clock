@@ -372,7 +372,7 @@ function checkFont(): void {
 
 window.addEventListener('resize', checkFont);
 
-export function displayHtml(dialogId: string, html: string, background = 'white'): void {
+export function displayHtml(dialogId: string, html: string, background = 'white', callback?: () => void): void {
   openTime = processMillis();
 
   const id = '#' + dialogId;
@@ -405,6 +405,9 @@ export function displayHtml(dialogId: string, html: string, background = 'white'
     popKeydownListener();
     dialogStack.pop();
     dialog.hide();
+
+    if (callback)
+      callback();
   };
 
   pushKeydownListener((evt: KeyboardEvent) => {
