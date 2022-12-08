@@ -1,6 +1,8 @@
 ## 3.5.0
 
-* Added ability to hide weather alerts after they have been seen.
+* Added ability to acknowledge and hide weather alerts after they have been seen.
+* Filtered alerts are collapsed by default in the alerts display.
+* Fixed bug caused by selecting a previous location after deleting another previous location.
 
 ## 3.4.2
 

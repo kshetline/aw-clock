@@ -1200,6 +1200,8 @@ export class SettingsDialog {
       return;
     }
 
+    this.recentLocations = this.recentLocations.filter(loc => loc != null);
+
     newSettings.background = this.background.val() as string;
     newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
     newSettings.city = (this.currentCity.val() as string).trim();
@@ -1264,7 +1266,7 @@ export class SettingsDialog {
 
     newSettings.updateToHide = this.hideUpdate.prop('checked') ? (this.appService.getLatestDefaults()?.latestVersion || '') : '';
 
-    newSettings.recentLocations = this.recentLocations.filter(loc => loc != null);
+    newSettings.recentLocations = this.recentLocations;
     newSettings.alarms = this.newAlarms;
 
     decrementDialogCounter();

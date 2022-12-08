@@ -164,6 +164,11 @@ export class Settings {
   }
 
   public save(): void {
+    const dayFromNow = Date.now() / 1000 + 86400;
+
+    // Filter out well-expired hidden alerts
+    this.hiddenAlerts = this.hiddenAlerts.filter(a => a.expires > dayFromNow);
+
     localStorage.setItem('aw-clock-settings', JSON.stringify(this));
 
     const body = $('body');

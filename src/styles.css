@@ -1331,32 +1331,75 @@ ul.my-tabs > li.tab-active {
   padding: 0 1em 0.25em 1em;
   position: absolute; }
 
-.alarm-wrapper {
-  position: relative; }
-  .alarm-wrapper.collapsed {
-    color: transparent;
-    height: 1.2em; }
-    .alarm-wrapper.collapsed .alert-first-line {
-      color: black;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap; }
-  .alarm-wrapper .alarm-toggle {
-    background: rgba(0, 0, 0, 0.25);
-    color: black;
+.alert-wrapper {
+  position: relative;
+  transition: height 1s ease-in-out; }
+  .alert-wrapper.collapsed {
+    height: 1.2em !important; }
+    .alert-wrapper.collapsed .alert-filtered img {
+      transform: rotate(0deg); }
+    .alert-wrapper.collapsed .alert-inner-wrapper .alert-first-line-shortened {
+      opacity: 1; }
+    .alert-wrapper.collapsed .alert-inner-wrapper .alert-first-line {
+      opacity: 0; }
+  .alert-wrapper .alert-filtered, .alert-wrapper .alert-toggle {
     cursor: pointer;
+    min-width: 6.1em;
     padding: 0.25em 0.5em;
     position: absolute;
     right: 1em;
     top: -0.25em; }
-    .alarm-wrapper .alarm-toggle input {
+  .alert-wrapper .alert-filtered {
+    background: rgba(255, 255, 255, 0.25); }
+    .alert-wrapper .alert-filtered img {
+      height: 0.8em;
+      margin-right: 0.5em;
+      position: relative;
+      top: 0.1em;
+      transform: rotate(90deg);
+      transition: transform 1s ease-in-out;
+      width: 0.8em; }
+    .alert-wrapper .alert-filtered span {
+      font-size: 0.8em;
+      font-style: italic; }
+  .alert-wrapper .alert-toggle {
+    background: rgba(0, 0, 0, 0.25); }
+    .alert-wrapper .alert-toggle input {
       cursor: pointer;
       height: 20px;
       margin-right: 0.5em;
       position: relative;
       width: 20px; }
-    .alarm-wrapper .alarm-toggle label {
+    .alert-wrapper .alert-toggle label {
       font-size: 0.8em;
       pointer-events: none; }
-  .alarm-wrapper .alert-first-line {
-    width: calc(100% - 8em); }
+  .alert-wrapper .alert-inner-wrapper {
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    position: relative; }
+    .alert-wrapper .alert-inner-wrapper .alert-first-line-shortened {
+      opacity: 0;
+      overflow: hidden;
+      position: absolute;
+      text-overflow: ellipsis;
+      top: 0;
+      transition: opacity 1s ease-in-out;
+      white-space: nowrap;
+      width: calc(100% - 8.75em); }
+    .alert-wrapper .alert-inner-wrapper .alert-first-line {
+      opacity: 1;
+      transition: opacity 1s ease-in-out;
+      width: calc(100% - 8.75em); }
+
+.bead {
+  background-image: linear-gradient(-45deg, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+  border: 0.5px solid gray;
+  border-radius: 50%;
+  box-shadow: inset -0.125em -0.125em 0.2em rgba(0, 0, 0, 0.5);
+  display: inline-block;
+  height: 1em;
+  margin: 0 0.25em;
+  position: relative;
+  top: 0.05em;
+  width: 1em; }

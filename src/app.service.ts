@@ -28,7 +28,7 @@ export interface AppService {
   updateCurrentTemp(cth: CurrentTemperatureHumidity): void;
   updateHiddenAlerts(hidden: HiddenAlert[]): void;
   updateTime(hour: number, minute: number, forceRefresh: boolean): void;
-  updateSettings(newSettings: Settings): void;
+  updateSettings(newSettings?: Settings): void;
   updateSunriseAndSunset(rise: string, set: string): void;
   updateMarqueeState(isScrolling: boolean): void;
 }

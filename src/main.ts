@@ -491,7 +491,7 @@ class AwClockApp implements AppService {
     this.lastForecast = this.getCurrentTime();
   }
 
-  updateSettings(newSettings: Settings): void {
+  updateSettings(newSettings = this.settings): void {
     const oldSettings = this.settings;
 
     this.settings = newSettings;

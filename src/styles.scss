@@ -1738,29 +1738,58 @@ ul.my-tabs > li.tab-active {
   position: absolute;
 }
 
-.alarm-wrapper {
+.alert-wrapper {
   position: relative;
+  transition: height 1s ease-in-out;
 
   &.collapsed {
-    color: transparent;
-    height: 1.2em;
+    height: 1.2em !important;
 
-    .alert-first-line {
-      color: black;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .alert-filtered img {
+      transform: rotate(0deg);
+    }
+
+    .alert-inner-wrapper {
+      .alert-first-line-shortened {
+        opacity: 1;
+      }
+
+      .alert-first-line {
+        opacity: 0;
+      }
     }
   }
 
-  .alarm-toggle {
-    background: rgba(black, 0.25);
-    color: black;
+  .alert-filtered, .alert-toggle {
     cursor: pointer;
+    min-width: 6.1em;
     padding: 0.25em 0.5em;
     position: absolute;
     right: 1em;
     top: -0.25em;
+  }
+
+  .alert-filtered {
+    background: rgba(white, 0.25);
+
+    img {
+      height: 0.8em;
+      margin-right: 0.5em;
+      position: relative;
+      top: 0.1em;
+      transform: rotate(90deg);
+      transition: transform 1s ease-in-out;
+      width: 0.8em;
+    }
+
+    span {
+      font-size: 0.8em;
+      font-style: italic;
+    }
+  }
+
+  .alert-toggle {
+    background: rgba(black, 0.25);
 
     input {
       cursor: pointer;
@@ -1776,7 +1805,40 @@ ul.my-tabs > li.tab-active {
     }
   }
 
-  .alert-first-line {
-    width: calc(100% - 8em);
+  .alert-inner-wrapper {
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    position: relative;
+
+    .alert-first-line-shortened {
+      opacity: 0;
+      overflow: hidden;
+      position: absolute;
+      text-overflow: ellipsis;
+      top: 0;
+      transition: opacity 1s ease-in-out;
+      white-space: nowrap;
+      width: calc(100% - 8.75em);
+    }
+
+    .alert-first-line {
+      opacity: 1;
+      transition: opacity 1s ease-in-out;
+      width: calc(100% - 8.75em);
+    }
   }
+}
+
+.bead {
+  background-image: linear-gradient(-45deg, rgba(white, 0.25) 0%, transparent 100%);
+  border: 0.5px solid gray;
+  border-radius: 50%;
+  box-shadow: inset -0.125em -0.125em 0.2em rgba(black, 0.5);
+  display: inline-block;
+  height: 1em;
+  margin: 0 0.25em;
+  position: relative;
+  top: 0.05em;
+  width: 1em;
 }

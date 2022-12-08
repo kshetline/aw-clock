@@ -96,7 +96,7 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
   return rect.x <= x && x <= rect.right && rect.y <= y && y <= rect.bottom;
 }
 
-function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false): string {
+function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false, dropped = false): string {
   return (alerts ?? []).map(a => {
     if (a.acknowledged && !forDialog)
       return null;
@@ -106,9 +106,14 @@ function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false
     let text: string;
 
     if (alert && !a.altText) {
-      text = (dialogAlert ? `<div class="alarm-wrapper" id="X${alert.id}_aw">` +
-          `<div class="alarm-toggle" id="X${alert.id}_at">` +
-          `<input type="checkbox" id="X${alert.id}_cb"><label for="X${alert.id}_cb">Acknowledge</label></div>`
+      const collapsed = (dropped ? ' collapsed' : '');
+
+      text = (dialogAlert ? `<div class="alert-wrapper${collapsed}" id="X${alert.id}_aw">` +
+          (dropped ?
+            '<div class="alert-filtered"><img src="assets/chevron-right.svg" alt="chevron-right"><span>filtered</span></div>' :
+            `<div class="alert-toggle" id="X${alert.id}_at">` +
+            `<input type="checkbox" id="X${alert.id}_cb"><label for="X${alert.id}_cb">Acknowledge</label></div>`) +
+          '<div class="alert-inner-wrapper"><!-- start -->'
         : '') +
         htmlEscape(`${alert.title}: ${alert.description}`.replace(/\r\n|\r/g, '\n').trim())
           .replace(/\s[\s\x23-\x2F\x3A-\x40]+$/, '') // Remove seemingly random trailing characters from alerts.
@@ -116,8 +121,9 @@ function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false
           .replace(SUBJECT_INTRO_PATTERN, '$1: '); // Improve alert formatting.
 
       if (dialogAlert) {
-        text += '</div>';
-        text = text.replace(/<\/div>(.+?)\n\n/s, '</div><div class="alert-first-line">$1</div>\n');
+        text += '</div></div>';
+        text = text.replace(/<!-- start -->(.+?)\n\n/s,
+          '<div class="alert-first-line-shortened">$1</div><div class="alert-first-line">$1</div>\n');
       }
     }
     else
@@ -131,7 +137,11 @@ function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false
 }
 
 function droppedAlertSymbols(droppedAlerts: Alert[]): string {
-  return (droppedAlerts ?? []).map(a => ({ advisory: '🔵', watch: '🟠', warning: '🔴' })[a.severity] || '').join('');
+  return (droppedAlerts ?? []).map(a => ({
+    advisory: '<div class="bead" style="background-color: blue">&nbsp;</div>',   // 🔵
+    watch:    '<div class="bead" style="background-color: orange">&nbsp;</div>', // 🟠
+    warning:  '<div class="bead" style="background-color: red">&nbsp;</div>'     // 🔴
+  })[a.severity] || '').join('');
 }
 
 function convertForWidthMeasurement(s: string): string {
@@ -1205,7 +1215,7 @@ export class Forecast {
 
     // Create alert dialog text, trying to undo hard word-wrap.
     this.marqueeDialogText = (concatenateAlerts(alerts, true)
-        + (droppedAlerts ? BULLET_SPACER + concatenateAlerts(droppedAlerts) : ''))
+        + (droppedAlerts ? BULLET_SPACER + concatenateAlerts(droppedAlerts, true, true) : ''))
       .replace(BULLET_REGEX, '\n<hr>').replace(/([-\da-z,])\n(?=[a-z]|(\d[^.#*)\]]))/gi, '$1 ')
       // No more than one blank line, and no trailing blank lines.
       .replace(/\n{3,}/g, '\n\n').trim().replace(/\n/g, '<br>\n')
@@ -1247,6 +1257,7 @@ export class Forecast {
   private acknowledgeAlert(id: string, state?: boolean): void {
     const alerts = this.appService.getHiddenAlerts();
     const acknowledged = this.isAlertAcknowledged(id);
+    const wrapper = document.querySelector(`#X${id}_aw`) as HTMLElement;
 
     if (state == null)
       state = !acknowledged;
@@ -1254,11 +1265,15 @@ export class Forecast {
     if (state && !acknowledged) {
       this.appService.updateHiddenAlerts(push(alerts,
         { id, expires: this.currentAlerts.alerts?.find(a => a.alert?.id === id)?.alert.expires ?? 0 }));
-      document.querySelector(`#X${id}_aw`)?.classList.add('collapsed');
+
+      if (wrapper)
+        wrapper.style.height = wrapper.getBoundingClientRect().height + 'px';
+
+      setTimeout(() => wrapper?.classList.add('collapsed'));
     }
     else if (!state && acknowledged) {
       this.appService.updateHiddenAlerts(alerts.filter(a => a.id !== id));
-      document.querySelector(`#X${id}_aw`)?.classList.remove('collapsed');
+      wrapper.classList.remove('collapsed');
     }
   }
 
@@ -1269,7 +1284,10 @@ export class Forecast {
   private showMarqueeDialog(): void {
     const color = (this.marqueeBackground === 'inherit' ? $('body').css('--background-color') : this.marqueeBackground);
 
-    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25), () => this.refreshAlerts());
+    displayHtml('big-text-dialog', this.marqueeDialogText, blendColors(color, 'white', 0.25), () => {
+      this.refreshAlerts();
+      this.appService.updateSettings();
+    });
 
     let tries = 0;
     const addAlertButtonListeners = (): void => {
@@ -1300,10 +1318,31 @@ export class Forecast {
           document.querySelector(`#X${id}_aw`)?.classList[ack ? 'add' : 'remove']('collapsed');
         });
       }
+
+      Array.from(document.querySelectorAll('.alert-wrapper .alert-filtered') || []).forEach(elem => {
+        elem.addEventListener('click', this.toggleAlertCollapse);
+        elem.parentElement.classList.add('collapsed');
+      });
     };
 
     addAlertButtonListeners();
   }
+
+  private toggleAlertCollapse = (evt: MouseEvent): void => {
+    let elem = evt.target as (HTMLElement);
+
+    while (elem && !elem.classList.contains('alert-wrapper'))
+      elem = elem.parentElement;
+
+    if (elem) {
+      const collapsed = elem.classList.contains('collapsed');
+
+      if (!collapsed)
+        elem.style.height = elem.getBoundingClientRect().height + 'px';
+
+      setTimeout(() => $(elem).toggleClass('collapsed'));
+    }
+  };
 
   private alertAcknowledgeClick = (evt: MouseEvent): void => {
     const target = (evt.target as HTMLElement);
