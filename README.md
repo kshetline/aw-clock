@@ -36,7 +36,7 @@ The first step, if you want GPS support, is to install a GPS device according to
 
 In my own case I needed to use an active GPS antenna to get a good signal, but you might not need one, depending on where you locate your device.
 
-The next step (or the first, if you’re skipping GPS) is to clone the repository and perform the initial set-up:
+The next step (or the first, if you’re skipping GPS) is to clone the repository into your home directory (typically `/home/pi`, but any other user-owned directory will do) and perform the initial set-up:
 
 ```shell script
 $ git clone https://github.com/kshetline/aw-clock.git
@@ -44,13 +44,13 @@ $ cd aw-clock
 $ sudo ./build.sh -i
 ```
 
-There will possibly be a long delay the first time you run this script while Node.js (if necessary) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
+There will possibly be a long delay the first time you run this script while Node.js (if not already present) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
 
 You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the `build.sh` command above, and add `--ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled, no alternative weather services beyond Weather Underground, and no geocoding support.
 
 If you want to use the **alarm clock** feature, **it’s important that you use the default kiosk mode**. This ensures that audio can be played by the Chrome web browser without you having to interact with the browser first (working around a web browser safety feature designed to protect you from annoying ads on websites that could otherwise suddenly blast you with sound).
 
-Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and don’t want to have to use SSH or VNC to perform these operations.
+Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and you don’t want to have to use SSH or VNC to perform these operations.
 
 ### Weather
 
@@ -118,7 +118,7 @@ A touchscreen is the most practical way to use the alarm features of this clock,
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
 * Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation and wind speed. Tap/click again to toggle back to weather icons and temperatures. *After one minute, the display reverts to weather icons and hourly temperatures.*
-* Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for it to scroll by.
+* Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for all of the text to scroll by. In this full text view you can acknowledge alerts and thus remove them from the banner.
 * Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
 
 ### Alarm keyboard control
