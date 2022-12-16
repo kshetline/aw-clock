@@ -1,3 +1,7 @@
+## 3.5.1-do
+
+* Documentation-only update: no code changes or bug fixes, just more clarity on the installation process.
+
 ## 3.5.0
 
 * Added ability to acknowledge and hide weather alerts after they have been seen.
