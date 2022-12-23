@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { last, toBoolean, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
 import {
-  alertCleanUp, checkForecastIntegrity, checksum53, escapeForRegex, filterError, fToC, hpaToInHg, inchesToCm, milesToKm
+  alertCleanUp, checkForecastIntegrity, escapeForRegex, filterError, fToC, hpaToInHg, inchesToCm, milesToKm, setAlertId
 } from './awcs-util';
 
 interface WeatherBitCurrent {
@@ -338,15 +338,14 @@ function convertForecast(current: WeatherBitCurrent, hourly: WeatherBitHourly, d
       else if (/\badvisory\b/i.test(alert.title))
         alert.severity = 'advisory';
 
-      forecast.alerts.push({
+      forecast.alerts.push(setAlertId({
         description: alertCleanUp(alert.description),
         expires: Date.parse(alert.expires_utc) / 1000,
-        id: checksum53((/:oid:(.+)$/i.exec(alert.uri) ?? [])[1] ?? alert.uri),
         severity: alert.severity.toLowerCase() as Alert['severity'],
         time: Date.parse(alert.effective_utc) / 1000,
         title: alert.title,
         url: alert.uri
-      });
+      }));
     });
   }
 

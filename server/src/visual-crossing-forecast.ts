@@ -6,7 +6,7 @@ import {
   Alert, CommonConditions, CommonConditionsKeys, CurrentConditions, CurrentConditionsKeys, DailyConditions, DailyConditionsKeys,
   DailySummaryConditions, ForecastData, ForecastDataKeys, HourlyConditions, PressureTrend
 } from './shared-types';
-import { alertCleanUp, checkForecastIntegrity, checksum53, filterError, hpaToInHg } from './awcs-util';
+import { alertCleanUp, checkForecastIntegrity, filterError, hpaToInHg, setAlertId } from './awcs-util';
 import { clone, isNumber, push } from '@tubular/util';
 import { floor } from '@tubular/math';
 
@@ -304,10 +304,9 @@ function convertAlerts(vcAlerts: VCAlert[]): Alert[] {
 
     alert.title = vcAlert.headline;
     alert.description = alertCleanUp(vcAlert.description);
-    alert.id = checksum53(vcAlert.id);
     alert.time = nullIfError(floor(new Date(vcAlert.onset).getTime() / 1000));
     alert.expires = nullIfError(floor(new Date(vcAlert.ends).getTime() / 1000));
 
-    return alert;
+    return setAlertId(alert);
   });
 }

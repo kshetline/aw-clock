@@ -1,3 +1,7 @@
+## 3.5.2
+
+* Fixed problem acknowledging alerts when alerts had non-unique ID codes.
+
 ## 3.5.1-do
 
 * Documentation-only update: no code changes or bug fixes, just more clarity on the installation process.

@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { max } from '@tubular/math';
 import { isObject, toNumber } from '@tubular/util';
 import { Alert, ForecastData, PressureTrend } from './shared-types';
-import { alertCleanUp, autoHpa, autoInHg, checkForecastIntegrity, checksum53, filterError } from './awcs-util';
+import { alertCleanUp, autoHpa, autoInHg, checkForecastIntegrity, filterError, setAlertId } from './awcs-util';
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const url = `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`;
@@ -292,7 +292,6 @@ function convertAlerts(forecast: ForecastData, wa: any): void {
 
     alert.description = '';
     alert.expires = wuAlert.expireTimeUTC;
-    alert.id = checksum53(wuAlert.identifier);
     alert.severity = 'advisory';
     alert.time = Math.floor(Date.parse(wuAlert.issueTimeLocal) / 1000);
     alert.title = wuAlert.headlineText;
@@ -310,6 +309,6 @@ function convertAlerts(forecast: ForecastData, wa: any): void {
         alert.severity = 'watch';
     }
 
-    return alert;
+    return setAlertId(alert);
   });
 }
