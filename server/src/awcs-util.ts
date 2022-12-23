@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { acos, cos_deg, PI, sin_deg } from '@tubular/math';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
-import { ForecastData } from './shared-types';
+import { Alert, ForecastData } from './shared-types';
 import { isNumber, isString } from '@tubular/util';
 import compareVersions, { CompareOperator } from 'compare-versions';
 
@@ -225,6 +225,12 @@ export function checksum53(s: string, seed = 0): string {
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
 
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).toUpperCase().padStart(14, '0');
+}
+
+export function setAlertId(alert: Alert): Alert {
+  alert.id = checksum53(`${alert.title}\t${alert.description}\t${alert.severity}`);
+
+  return alert;
 }
 
 export function safeCompareVersions(firstVersion: string, secondVersion: string, defValue?: number): number;
