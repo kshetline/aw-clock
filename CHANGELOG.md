@@ -1,8 +1,3 @@
-## 3.5.4
-
-* Fix Bookworm installation issues.
-* Document Bookworm/Raspberry Pi 5 issues.
-
 ## 3.5.3
 
 * Allow up to three outdoor remote temperature/humidity sensors.

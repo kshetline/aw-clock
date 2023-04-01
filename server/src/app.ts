@@ -1,6 +1,6 @@
 // #!/usr/bin/env node
 /*
-  Copyright © 2018-2025 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2023 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
