@@ -1411,6 +1411,12 @@ ul.my-tabs > li.tab-active {
         }
       }
 
+      #advanced-date-panel {
+        display: none; // Updated to flex when active
+        flex-direction: row;
+        min-height: 55px;
+      }
+
       .audio-selection {
         align-items: center;
         display: flex;
@@ -1726,6 +1732,16 @@ ul.my-tabs > li.tab-active {
       margin: 0;
     }
   }
+}
+
+#channel-conflict-warning {
+  bottom: 1.2em;
+  color: #E06;
+  display: none;
+  font-size: 0.9em;
+  font-style: italic;
+  padding: 0 1em 0.25em 1em;
+  position: absolute;
 }
 
 #temp-simulation-warning {

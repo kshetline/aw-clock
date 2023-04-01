@@ -199,6 +199,8 @@ export class SettingsDialog {
   private readonly updateButton: JQuery;
 
   private addAlarm: JQuery;
+  private advancedAlarmBtn: JQuery;
+  private advancedDatePanel: JQuery;
   private alarmAudio: JQuery;
   private alarmCancel: JQuery;
   private alarmDay: JQuery;
@@ -215,6 +217,7 @@ export class SettingsDialog {
   private alarmYear: JQuery;
   private background: JQuery;
   private cancelButton: JQuery;
+  private chanWarning: JQuery;
   private cityTable: JQuery;
   private cityTableWrapper: JQuery;
   private clockFace: JQuery;
@@ -278,6 +281,8 @@ export class SettingsDialog {
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
 
+    this.advancedAlarmBtn = $('#advanced-alarm');
+    this.advancedDatePanel = $('#advanced-date-panel');
     this.alarmCancel = $('#alarm-cancel');
     this.alarmDay = $('#alarm-day');
     this.alarmDelete = $('#alarm-delete');
@@ -293,6 +298,7 @@ export class SettingsDialog {
     this.alarmYear = $('#alarm-year');
     this.background = $('#app-background');
     this.cancelButton = $('#settings-cancel');
+    this.chanWarning = $('#channel-conflict-warning');
     this.cityTable = $('#city-table > tbody');
     this.cityTableWrapper = $('.city-table-wrapper');
     this.clockFace = $('#clock-background');
@@ -477,18 +483,32 @@ export class SettingsDialog {
 
     this.dailyAlarmBtn.on('click', () => {
       this.dailyAlarm = true;
+      this.advancedDatePanel.css('display', 'none');
       this.datePanel.css('display', 'none');
       this.dayOfWeekPanel.css('display', 'flex');
+      this.advancedAlarmBtn.prop('checked', false);
       this.dailyAlarmBtn.prop('checked', true);
       this.oneTimeAlarmBtn.prop('checked', false);
     });
 
     this.oneTimeAlarmBtn.on('click', () => {
       this.dailyAlarm = false;
+      this.advancedDatePanel.css('display', 'none');
       this.datePanel.css('display', 'flex');
       this.dayOfWeekPanel.css('display', 'none');
+      this.advancedAlarmBtn.prop('checked', false);
       this.dailyAlarmBtn.prop('checked', false);
       this.oneTimeAlarmBtn.prop('checked', true);
+    });
+
+    this.advancedAlarmBtn.on('click', () => {
+      this.dailyAlarm = false;
+      this.advancedDatePanel.css('display', 'flex');
+      this.datePanel.css('display', 'none');
+      this.dayOfWeekPanel.css('display', 'none');
+      this.advancedAlarmBtn.prop('checked', true);
+      this.dailyAlarmBtn.prop('checked', false);
+      this.oneTimeAlarmBtn.prop('checked', false);
     });
 
     const self = this;
@@ -559,8 +579,8 @@ export class SettingsDialog {
       } while (target);
     });
 
-    this.indoor.on('change', () => this.checkTempHumiditySimulationWarning());
-    this.outdoor.on('change', () => this.checkTempHumiditySimulationWarning());
+    this.indoor.on('change', () => this.checkSensorWarnings());
+    this.outdoor.on('change', () => this.checkSensorWarnings());
   }
 
   private addAlertFilter(): void {
@@ -682,7 +702,7 @@ export class SettingsDialog {
     </span>
   </div>
   <div>
-    <span class="sound">${alarm.sound ? '🔈' : '🔇'} ${soundName(alarm.sound)}</span>
+    <span class="sound">${alarm.sound ? '🔈' : '🔇'} ${alarm.sound ? soundName(alarm.sound) : '(silent)'}</span>
     <span class="message">${alarm.message ? '📜 ' + htmlEscape(alarm.message) : ''}</span>
   </div>
 </div>
@@ -1113,7 +1133,7 @@ export class SettingsDialog {
       safeCompareVersions(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
     this.hideUpdate = $('#hide-update');
     this.hideUpdate.prop('checked', previousSettings.updateToHide === defaults?.latestVersion);
-    this.checkTempHumiditySimulationWarning();
+    this.checkSensorWarnings();
 
     getText(this.appService.getApiServer() + '/changelog').then(text => updateVersionInfo.html(text)).catch(noop);
   }
@@ -1374,7 +1394,14 @@ export class SettingsDialog {
       texts.attr('autocomplete', 'off');
   }
 
-  private checkTempHumiditySimulationWarning(): void {
+  private checkSensorWarnings(): void {
+    const indoor = this.indoor.val().toString();
+    const conflict = this.outdoor.val().toString().includes(indoor);
+
+    this.chanWarning.children('span').text(indoor);
+    this.chanWarning.css('display', conflict ? 'block' : 'none');
+    this.indoor.css('background-color', conflict ? '#FFCCD4' : 'inherit');
+
     if (demoServer)
       this.simWarning.css('display', this.indoor.val() !== 'X' || this.outdoor.val() !== 'F' ? 'block' : 'none');
   }

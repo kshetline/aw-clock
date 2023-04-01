@@ -18,6 +18,7 @@ export class Sensors {
   private readonly lowBatteryText: JQuery;
   private readonly outdoorMeter: JQuery;
   private readonly outdoorMeter2: JQuery;
+  private readonly outdoorMeter3: JQuery;
 
   private indoorAvailable: boolean;
   private wiredAvailable = false;
@@ -29,6 +30,7 @@ export class Sensors {
     this.lowBatteryText = $('#low-battery-text');
     this.outdoorMeter = $('#outdoor-meter');
     this.outdoorMeter2 = $('#outdoor-meter-2');
+    this.outdoorMeter3 = $('#outdoor-meter-3');
 
     if (localServer)
       this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = true;
@@ -37,6 +39,7 @@ export class Sensors {
       this.indoorMeter.css('display', 'none');
       this.outdoorMeter.css('display', 'none');
       this.outdoorMeter2.css('display', 'none');
+      this.outdoorMeter3.css('display', 'none');
 
       appService.proxySensorUpdate().then(available =>
         this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = available);
@@ -92,6 +95,7 @@ export class Sensors {
           setSignalLevel(this.outdoorMeter, -1);
           this.outdoorMeter.css('display', 'none');
           this.outdoorMeter2.css('display', 'none');
+          this.outdoorMeter3.css('display', 'none');
         }
         else if (wireless instanceof Error || wireless?.error) {
           err = errorText(wireless);
@@ -99,6 +103,7 @@ export class Sensors {
           setSignalLevel(this.indoorMeter, -1);
           setSignalLevel(this.outdoorMeter, -1);
           setSignalLevel(this.outdoorMeter2, -1);
+          setSignalLevel(this.outdoorMeter3, -1);
           this.wirelessAvailable = !(/not found/i.test(err));
         }
         else if (wireless) {
@@ -158,13 +163,17 @@ export class Sensors {
             cth.outdoorTemp = temperature;
             signalQs[0] = signalQs[0] ?? -1;
             signalQs[1] = signalQs[1] ?? -1;
+            signalQs[2] = signalQs[2] ?? -1;
             setSignalLevel(this.outdoorMeter, signalQs[0]);
             setSignalLevel(this.outdoorMeter2, signalQs[1]);
+            setSignalLevel(this.outdoorMeter3, signalQs[2]);
 
             this.outdoorMeter.toggleClass('meter-tint',
               signalQs[0] >= 0 && outdoorOption.length !== 1 && selectedChannel !== outdoorOption.charAt(0));
             this.outdoorMeter2.toggleClass('meter-tint',
               signalQs[1] >= 0 && outdoorOption.length !== 1 && selectedChannel !== outdoorOption.charAt(1));
+            this.outdoorMeter3.toggleClass('meter-tint',
+              signalQs[2] >= 0 && outdoorOption.length !== 1 && selectedChannel !== outdoorOption.charAt(2));
           }
         }
 
@@ -188,14 +197,21 @@ export class Sensors {
     let newFlowSpec: string;
 
     this.indoorMeter.css('display', this.wirelessAvailable && /[ABC]/.test(indoorOption) ? 'block' : 'none');
-    this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,2}/.test(outdoorOption) ? 'block' : 'none');
+    this.outdoorMeter.css('display', this.wirelessAvailable && /[ABC]{1,3}/.test(outdoorOption) ? 'block' : 'none');
 
-    if (outdoorOption.length === 2 && this.wirelessAvailable) {
+    if (outdoorOption.length === 3 && this.wirelessAvailable) {
       this.outdoorMeter2.css('display', 'block');
+      this.outdoorMeter3.css('display', 'block');
+      newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
+    }
+    else if (outdoorOption.length === 2 && this.wirelessAvailable) {
+      this.outdoorMeter2.css('display', 'block');
+      this.outdoorMeter3.css('display', 'none');
       newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-6.3$2');
     }
     else {
       this.outdoorMeter2.css('display', 'none');
+      this.outdoorMeter3.css('display', 'none');
       newFlowSpec = flowSpec.replace(/(.*\bdx=)[-.\d]+(\b.*)/, '$1-5$2');
     }
 

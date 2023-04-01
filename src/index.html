@@ -206,6 +206,9 @@
           <svg id="outdoor-meter-2" class="svg-flow" svg-flow="current-temp,dx=-3.5,dy=-3.5" width="2" height="1.6">
             <use href="#signal-meter"/>
           </svg>
+          <svg id="outdoor-meter-3" class="svg-flow" svg-flow="current-temp,dx=-0.7,dy=-3.5" width="2" height="1.6">
+            <use href="#signal-meter"/>
+          </svg>
           <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-3.5,dy=-2" width="2" height="1.6">
             <use href="#signal-meter"/>
           </svg>
@@ -469,6 +472,7 @@
               <option value="AB">Wireless channels A &amp; B</option>
               <option value="AC">Wireless channels A &amp; C</option>
               <option value="BC">Wireless channels B &amp; C</option>
+              <option value="ABC">Wireless channels A, B, &amp; C</option>
             </select>
             <label for="dimming">Dimming:</label>
             <span class="colspan">
@@ -553,6 +557,8 @@
                 <option value="S">Show solid clock hands over sky map</option>
               </select>
             </span>
+            <span id="channel-conflict-warning">Warning: Channel <span>A</span> is selected for both indoor and
+              outdoor use.</span>
             <span id="temp-simulation-warning">Only using Raspberry Pi project, not web demo, provides real
               indoor/outdoor temperature and humidity values.</span>
           </div>
@@ -582,9 +588,12 @@
                 <div class="alarm-type-buttons">
                   <input type="radio" id='daily-alarm' checked>
                   <label for="daily-alarm">Daily</label>
-                  <span>&nbsp;&nbsp;</span>
+                  <span>&nbsp;</span>
                   <input type="radio" id='one-time-alarm'>
                   <label for="one-time-alarm">One time</label>
+                  <!-- <span>&nbsp;</span>
+                  <input type="radio" id='advanced-alarm'>
+                  <label for="advanced-alarm">Advanced</label> -->
                 </div>
                 <div class="hour-minute-panel">
                   <input id="alarm-hour" type="text">
@@ -613,6 +622,23 @@
                     <option value="12">Dec</option>
                   </select>
                   <input id="alarm-year" type="text" class="year">
+                </div>
+                <div id="advanced-date-panel">
+                  <select id="date-frequency">
+                    <option value="1">Biweekly</option>
+                    <option value="2">Triweekly</option>
+                    <option value="3">Monthly</option>
+                    <option value="4">Bimonthly</option>
+                    <option value="5">Trimonthly</option>
+                    <option value="6">Triannually</option>
+                    <option value="7">Semiannually</option>
+                    <option value="8">Yearly</option>
+                    <option value="9">Bienially</option>
+                    <option value="10">Trienially</option>
+                    <option value="11">Quadrennially</option>
+                    <option value="12">Quinquennially</option>
+                    <option value="13">Sexennially</option>
+                  </select>
                 </div>
                 <div class="audio-selection">
                   <select></select>

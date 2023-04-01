@@ -1095,6 +1095,10 @@ ul.my-tabs > li.tab-active {
           width: 2.2ch; }
         .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel .year {
           width: 4.4ch; }
+      .alarm-section .alarm-entry-panel #alarm-set-panel #advanced-date-panel {
+        display: none;
+        flex-direction: row;
+        min-height: 55px; }
       .alarm-section .alarm-entry-panel #alarm-set-panel .audio-selection {
         align-items: center;
         display: flex;
@@ -1321,6 +1325,15 @@ ul.my-tabs > li.tab-active {
 
 .firefox-mods .user-options > .colspan-full #user-id {
   margin: 0; }
+
+#channel-conflict-warning {
+  bottom: 1.2em;
+  color: #E06;
+  display: none;
+  font-size: 0.9em;
+  font-style: italic;
+  padding: 0 1em 0.25em 1em;
+  position: absolute; }
 
 #temp-simulation-warning {
   bottom: 0;
