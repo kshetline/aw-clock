@@ -1,6 +1,6 @@
 import { AppService } from './app.service';
 /*
-  Copyright © 2018-2022 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2023 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -26,7 +26,7 @@ import { HttpTimePoller } from './http-time-poller';
 import $ from 'jquery';
 import { DateTime, Timezone, parseISODateTime, pollForTimezoneUpdates, zonePollerBrowser } from '@tubular/time';
 import { abs, ceil, floor, irandom, max, min, sqrt } from '@tubular/math';
-import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, setFullScreen } from '@tubular/util';
+import { eventToKey, isBoolean, isEffectivelyFullScreen, isEqual, isFirefox, isObject, processMillis, setFullScreen } from '@tubular/util';
 import { Sensors } from './sensors';
 import { AlertFilter, allowAdminFeatures, apiServer, HiddenAlert, localServer, runningDev, Settings } from './settings';
 import { SettingsDialog } from './settings-dialog';
@@ -44,6 +44,8 @@ const baseTime = ntpPoller.getTimeInfo().time;
 const debugTime = 0; // +new Date(2018, 6, 2, 22, 30, 0, 0);
 const debugTimeRate = 60;
 let sensorDeadAirState = false;
+
+const MOUSE_DOWN_BRIGHTEN_TIME = 30_000; // 30 seconds
 
 function parseTime(s: string): number {
   const parts = s.split(':');
@@ -88,6 +90,10 @@ class AwClockApp implements AppService {
   private lastCursorMove = 0;
   private lastForecast = 0;
   private lastHour = -1;
+  private lastMouseDown = Number.MIN_SAFE_INTEGER;
+  private lastMouseDownTimer: any;
+  private lastRiseTime: string;
+  private lastSetTime: string;
   private lastTimezone: Timezone;
   private latestDefaults: AwcDefaults;
   private proxyStatus: boolean | Promise<boolean> = undefined;
@@ -243,6 +249,23 @@ class AwClockApp implements AppService {
         }
       });
     }
+
+    window.addEventListener('mousedown', () => {
+      if (this.lastRiseTime) {
+        this.lastMouseDown = processMillis();
+        this.dimmer.css('transition-duration', '500ms');
+        this.updateDimming(this.getCurrentTime(), this.lastRiseTime, this.lastSetTime);
+
+        if (this.lastMouseDownTimer)
+          clearTimeout(this.lastMouseDownTimer);
+
+        this.lastMouseDownTimer = setTimeout(() => {
+          this.lastMouseDownTimer = undefined;
+          setTimeout(() => this.dimmer.css('transition-duration', '5s'), 750);
+          this.updateDimming(this.getCurrentTime(), this.lastRiseTime, this.lastSetTime);
+        }, MOUSE_DOWN_BRIGHTEN_TIME);
+      }
+    });
 
     window.addEventListener('resize', this.findSkyMapArea);
   }
@@ -602,7 +625,12 @@ class AwClockApp implements AppService {
   }
 
   private updateDimming(now: number, todayRise: string, todaySet: string): void {
-    if (this.settings.dimming) {
+    const procNow = processMillis();
+
+    this.lastRiseTime = todayRise;
+    this.lastSetTime = todaySet;
+
+    if (this.settings.dimming && procNow > this.lastMouseDown + MOUSE_DOWN_BRIGHTEN_TIME) {
       let start = this.settings.dimmingStart;
       let end = this.settings.dimmingEnd;
 

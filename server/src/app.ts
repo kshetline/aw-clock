@@ -1,6 +1,6 @@
 // #!/usr/bin/env node
 /*
-  Copyright © 2018-2022 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2023 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -94,25 +94,32 @@ if (process.env.AWC_WIRED_TH_GPIO || process.env.AWC_ALT_DEV_SERVER) {
 
 // Poll for software updates
 const UPDATE_POLL_INTERVAL = 7200000; // 2 hours
-const UPDATE_POLL_RETRY_TIME = 60_000; // 10 minutes
+const UPDATE_POLL_RETRY_TIME = 600_000; // 10 minutes
 let updatePollTimer: any;
 let latestVersion = process.env.AWC_FAKE_UPDATE_VERSION ?? AWC_VERSION;
 let latestVersionInfo = '';
 let lastUpdateCheck = Number.MIN_SAFE_INTEGER;
+let updateApiToggle = false;
 
 async function checkForUpdate(): Promise<void> {
   updatePollTimer = undefined;
 
   let delay = UPDATE_POLL_INTERVAL;
+  let url = 'https://api.github.com/repos/kshetline/aw-clock/releases/latest';
   const options = { headers: { 'User-Agent': 'Astronomy/Weather Clock ' + AWC_VERSION } as any };
   const gitHubToken = process.env.AWC_GITHUB_TOKEN;
 
   if (gitHubToken)
     options.headers.Authorization = 'token ' + gitHubToken;
+  else if (updateApiToggle)
+    url = 'https://weather.shetline.com/latest-version';
+
+  updateApiToggle = !updateApiToggle;
 
   try {
-    const repoInfo = await requestJson('https://api.github.com/repos/kshetline/aw-clock/releases/latest', options);
-    const currentVersion = process.env.AWC_FAKE_UPDATE_VERSION || repoInfo?.tag_name?.replace(/^\D+/, '').replace(/_nu_.*$/i, '');
+    const repoInfo = await requestJson(url, options);
+    const currentVersion = process.env.AWC_FAKE_UPDATE_VERSION || isString(repoInfo) ? repoInfo :
+      repoInfo?.tag_name?.replace(/^\D+/, '').replace(/_nu_.*$/i, '');
 
     if (currentVersion) {
       latestVersion = currentVersion;
@@ -487,6 +494,11 @@ function getApp(): Express {
     }
 
     jsonOrJsonp(req, res, result);
+  });
+
+  theApp.get('/latest-version', async (req, res) => {
+    noCache(res);
+    jsonOrJsonp(req, res, latestVersion);
   });
 
   return theApp;

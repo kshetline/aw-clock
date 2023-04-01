@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "3.5.2",
+  "version": "3.5.3",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -18,9 +18,9 @@
   },
   "private": true,
   "dependencies": {
-    "@tubular/astronomy": "^3.5.0",
+    "@tubular/astronomy": "^3.5.1",
     "@tubular/math": "^3.3.1",
-    "@tubular/time": "^3.8.9",
+    "@tubular/time": "^3.8.14",
     "@tubular/util": "^4.13.1",
     "compare-versions": "^4.1.3",
     "jquery": "^3.6.0",

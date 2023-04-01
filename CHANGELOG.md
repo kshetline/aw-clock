@@ -1,3 +1,8 @@
+## 3.5.3
+
+* Allow up to three outdoor remote temperature/humidity sensors.
+* Improve polling for software updates.
+
 ## 3.5.2
 
 * Fixed problem acknowledging alerts when alerts had non-unique ID codes.
