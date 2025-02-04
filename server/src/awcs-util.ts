@@ -129,7 +129,7 @@ export function getRemoteAddress(req: Request): string {
 }
 
 export function checkForecastIntegrity(forecast: ForecastData, currentOnly = false): boolean {
-  return forecast && forecast.currently && isNumber(forecast.currently.temperature) &&
+  return forecast?.currently && isNumber(forecast.currently.temperature) &&
     (currentOnly || (
       forecast.hourly && forecast.hourly.length > 23 && isNumber(forecast.hourly[0].temperature) &&
       forecast.daily && forecast.daily.data && forecast.daily.data.length > 3 && isNumber(forecast.daily.data[0].time)));

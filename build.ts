@@ -1,5 +1,5 @@
 /// <reference path="./ambient.d.ts" />
-import * as Chalk from 'chalk';
+import Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -569,7 +569,7 @@ async function checkForGps(): Promise<void> {
 
     for (const line of gpsInfo) {
       try {
-        const obj = JSON.parse(line);
+        const obj = JSON.parse(line) as { lat: number, lon: number };
 
         if (isObject(obj) && isNumber(obj.lat) && isNumber(obj.lon)) {
           gpsLocationIsWorking = true;
@@ -1090,8 +1090,8 @@ async function doServiceDeployment(): Promise<void> {
     const nodeVersionStr = (await monitorProcess(spawn('node', uid, ['--version']))).trim();
     const nodeVersion = toNumber((/v(\d+)/.exec(nodeVersionStr) ?? [])[1]);
 
-    if (isRaspberryPi && (nodeVersion < 10 || nodeVersion > 14)) {
-      console.error(chalk.redBright(`Node.js version 10.x-14.x required. Version ${nodeVersionStr} found.`));
+    if (isRaspberryPi && (nodeVersion < 10)) {
+      console.error(chalk.redBright(`Node.js version 10 or later required. Version ${nodeVersionStr} found.`));
       process.exit(1);
     }
 

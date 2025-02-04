@@ -14,3 +14,5 @@ tsc-out
 
 /.vscode/*
 !/.vscode/settings.json
+/.idea/nx-console.xml
+/src/styles.css.map
