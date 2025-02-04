@@ -1602,6 +1602,15 @@ ul.my-tabs > li.tab-active::after {
   position: absolute;
 }
 
+#channel-conflict-warning {
+  bottom: 1.2em;
+  color: #E06;
+  display: none;
+  font-size: 0.9em;
+  font-style: italic;
+  padding: 0 1em 0.25em 1em;
+  position: absolute; }
+
 #temp-simulation-warning {
   bottom: 0;
   color: magenta;
