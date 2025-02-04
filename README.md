@@ -32,6 +32,10 @@ When viewing the sky map feature you can choose to see a multicolor sky, shaded 
 
 The following instructions are primarily aimed at turning a Raspberry Pi into a *dedicated* Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
 
+> Note: If you're running Raspbian "Bookworm" or later, ensure that you are using the X11 desktop option (set via raspi-config). Wayfire and Wayland are not yet supported.
+
+> Also note: Temperature/humidity sensors are not yet supported with the Raspberry Pi 5 due to a major change in the way the 5 handles GPIO.
+
 The first step, if you want GPS support, is to install a GPS device according to the manufacturer’s instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested. I’ve also provided [notes on the Adafruit GPS HAT installation](#adafruit-gps-hat-installation-notes) at the end of this document.
 
 In my own case I needed to use an active GPS antenna to get a good signal, but you might not need one, depending on where you locate your device.
@@ -408,7 +412,7 @@ sudo apt-get update
 sudo apt install pps-tools gpsd gpsd-clients ntp
 ```
 
-I added the following lines to the end of `/boot/config.txt` (`enable_uart=1` is probably already there due to `raspi-config`):
+I added the following lines to the end of `/boot/firmware/config.txt` (`/boot/config.txt` in earlier versions of Raspbian) (`enable_uart=1` is probably already there due to `raspi-config`):
 
 ```text
 enable_uart=1
@@ -417,7 +421,7 @@ enable_uart=1
 dtoverlay=pps-gpio,gpiopin=4
 ```
 
-I added the following lines to the end of `/etc/ntp.conf`:
+I added the following lines to the end of `/etc/ntpsec/ntp.conf` (`/etc/ntp.conf` in earlier versions of Raspbian):
 
 ```text
 # GPS PPS reference

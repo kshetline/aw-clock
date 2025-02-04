@@ -64,7 +64,7 @@ install_nvm() {
   bashrcBackup="$HOME/.bashrc".bak
   export NVM_DIR=
   cp "$HOME/.bashrc" "$bashrcBackup"
-  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.37.2/install.sh | bash
+  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
   # shellcheck disable=SC2155
   export NVM_DIR="$(nvm_install_dir)"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -74,7 +74,8 @@ install_nvm() {
 # Sync version changes with build.ts
 sadVersion=10
 minVersion=14
-maxVersion=14
+maxVersion=18
+absMaxVersion=20
 free=$(free || echo "4194304")
 pattern='([0-9]+)'
 [[ $free =~ $pattern ]]
@@ -84,12 +85,17 @@ free="${BASH_REMATCH[1]}"
 if (( free < 1500000 ));then
   minVersion=12
   maxVersion=12
+  absMaxVersion=12
+elif (( free > 8000000 ));then
+  minVersion=14
+  maxVersion=22
+  absMaxVersion=999
 fi
 
 version="$(current_node_version)"
 origVersion="$version"
 
-if (( version > maxVersion )) && [ ! -s "$NVM_DIR/nvm.sh" ]; then
+if (( version > absMaxVersion )) && [ ! -s "$NVM_DIR/nvm.sh" ]; then
   install_nvm
 fi
 

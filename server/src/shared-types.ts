@@ -5,7 +5,7 @@ const { version } = require('../package.json');
 
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
-                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed'];
+                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqiEur', 'aqiUs'];
 let altVersion = '';
 
 try {
@@ -42,6 +42,8 @@ export interface CommonConditions {
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
+  aqiEur?: number;
+  aqiUs?: number;
 }
 
 export const CurrentConditionsKeys = [...CommonConditionsKeys, 'feelsLikeTemperature'];
@@ -62,6 +64,8 @@ export interface HourlyConditions {
   windGust?: number;          // In kph or mph
   windPhrase?: string;
   windSpeed?: number;         // In kph or mph
+  aqiEur?: number;
+  aqiUs?: number;
 }
 
 export const DailyConditionsKeys = [...CommonConditionsKeys,

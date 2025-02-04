@@ -36,6 +36,8 @@ interface VCCommonConditions {
   windir: number;
   windgust: number;
   windspeed: number;
+  aqieur?: number;
+  aqius?: number;
 }
 
 interface VCCurrentConditions extends VCCommonConditions {
@@ -44,6 +46,10 @@ interface VCCurrentConditions extends VCCommonConditions {
 }
 
 const VCDailyConditionsKeys = push(clone(DailyConditionsKeys), 'hours').filter(key => key !== 'narrativeEvening');
+const INCLUDE = 'fcst,hours,alerts,current'.replace(/,/g, '%2C');
+const ELEMENTS = 'aqieur,aqius,cloudcover,conditions,datetimeEpoch,description,feelslike,humidity,icon,precip,' +
+                 'precipcover,precipprob,preciptype,pressure,snow,snowdepth,temp,tempmax,tempmin,visibility,winddir,windgust,windspeed'
+                   .replace(/,/g, '%2C');
 
 interface VCHourlyConditions extends VCCommonConditions {
 }
@@ -82,7 +88,9 @@ const conditionNames: Record<string, string> = {
   narrativeDay: 'description',
   temperatureHigh: 'tempmax',
   temperatureLow: 'tempmin',
-  precipAccumulation: 'precip'
+  precipAccumulation: 'precip',
+  aqiEur: 'aqieur',
+  aqiUs: 'aqius'
 };
 
 function nullIfError(time: number): number | null {
@@ -96,8 +104,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');
   const url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline' +
     `/${req.query.lat}%2C${req.query.lon}?unitGroup=${isMetric ? 'metric' : 'us'}&lang=en&iconSet=icons2` +
-    /* cspell:disable-next-line */ // noinspection SpellCheckingInspection
-    `&key=${process.env.AWC_VISUAL_CROSSING_API_KEY}&include=fcst%2Chours%2Calerts%2Ccurrent`;
+    `&key=${process.env.AWC_VISUAL_CROSSING_API_KEY}&include=${INCLUDE}&elements=${ELEMENTS}`;
 
   try {
     const origForecast = (await requestJson(240, url)) as VisualCrossingForecast;
@@ -222,6 +229,24 @@ function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean):
     }
   }
 
+  if (forecast.currently.aqiEur == null) {
+    if (forecast.hourly && forecast.hourly.length > 0 && forecast.hourly[0].aqiEur != null)
+      forecast.currently.aqiEur = forecast.hourly[0].aqiEur;
+    else if (forecast.hourly && forecast.hourly.length > 1 && forecast.hourly[1].aqiEur != null)
+      forecast.currently.aqiEur = forecast.hourly[1].aqiEur;
+    else if (forecast.daily?.data && forecast.daily.data.length > 0 && forecast.daily.data[0].aqiEur != null)
+      forecast.currently.aqiEur = forecast.daily.data[0].aqiEur;
+  }
+
+  if (forecast.currently.aqiUs == null) {
+    if (forecast.hourly && forecast.hourly.length > 0 && forecast.hourly[0].aqiUs != null)
+      forecast.currently.aqiUs = forecast.hourly[0].aqiUs;
+    else if (forecast.hourly && forecast.hourly.length > 1 && forecast.hourly[1].aqiUs != null)
+      forecast.currently.aqiUs = forecast.hourly[1].aqiUs;
+    else if (forecast.daily?.data && forecast.daily.data.length > 0 && forecast.daily.data[0].aqiUs != null)
+      forecast.currently.aqiUs = forecast.daily.data[0].aqiUs;
+  }
+
   return forecast;
 }
 
@@ -284,8 +309,10 @@ function convertDaily(vcDaily: VCDailyConditions[], isMetric: boolean, root: For
   if (!root.hourly)
     root.hourly = [];
 
-  for (const day of vcDaily)
+  for (const day of vcDaily) {
     daily.data.push(convertConditions(day, VCDailyConditionsKeys, 24, isMetric, root) as DailyConditions);
+    root.hourly.push(...convertHourly(day.hours, isMetric));
+  }
 
   return daily;
 }

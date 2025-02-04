@@ -3,6 +3,8 @@
     <words>
       <w>accums</w>
       <w>ampm</w>
+      <w>aqieur</w>
+      <w>aqius</w>
       <w>arksky</w>
       <w>aunch</w>
       <w>autoprefixer</w>
@@ -34,6 +36,7 @@
       <w>flaticon</w>
       <w>gitkeep</w>
       <w>gpio</w>
+      <w>gpspipe</w>
       <w>hadn</w>
       <w>hidep</w>
       <w>humidities</w>
@@ -44,6 +47,7 @@
       <w>larr</w>
       <w>latlng</w>
       <w>lxde</w>
+      <w>lxpanel</w>
       <w>lxsession</w>
       <w>lxterminal</w>
       <w>miso</w>
@@ -55,14 +59,17 @@
       <w>nodemon</w>
       <w>nostop</w>
       <w>nsec</w>
+      <w>ntpq</w>
       <w>oskb</w>
       <w>overstriking</w>
       <w>owmproxy</w>
       <w>pasv</w>
+      <w>pcmanfm</w>
       <w>pigpio</w>
       <w>pigpiod</w>
       <w>polkit</w>
       <w>pollers</w>
+      <w>ppstest</w>
       <w>precip</w>
       <w>precips</w>
       <w>proxied</w>
@@ -85,6 +92,7 @@
       <w>trienially</w>
       <w>triweekly</w>
       <w>unsynchronized</w>
+      <w>wayfire</w>
       <w>wbproxy</w>
       <w>wddp</w>
       <w>weatherbit</w>
@@ -93,6 +101,7 @@
       <w>wwvb</w>
       <w>xexternal</w>
       <w>xhost</w>
+      <w>xscreensaver</w>
       <w>δtai</w>
     </words>
   </dictionary>
