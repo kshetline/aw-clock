@@ -7,7 +7,7 @@ import { monitorProcess, spawn } from './process-util';
 
 export const router = Router();
 
-router.post('/*', async (req: Request, res: Response) => {
+router.post('/*name', async (req: Request, res: Response) => {
   noCache(res);
 
   const command = req.url.replace(/^\//, '').replace(/\?.*$/, '');
