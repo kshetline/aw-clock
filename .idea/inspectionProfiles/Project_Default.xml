@@ -89,6 +89,9 @@
     <inspection_tool class="JSUnresolvedFunction" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <scope name="webpack" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
+    <inspection_tool class="JSUnresolvedReference" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="myStrictlyCheckProperties" value="false" />
+    </inspection_tool>
     <inspection_tool class="JSValidateTypes" enabled="false" level="WEAK WARNING" enabled_by_default="false">
       <scope name="webpack" level="WEAK WARNING" enabled="false" />
     </inspection_tool>

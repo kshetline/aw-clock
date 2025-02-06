@@ -6,6 +6,9 @@
       <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/server/dist" />
       <excludeFolder url="file://$MODULE_DIR$/server/tsc-out" />
+      <excludeFolder url="file://$MODULE_DIR$/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/sass/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/server/node_modules" />
       <excludePattern pattern="package-lock.json" />
     </content>
     <orderEntry type="inheritedJdk" />

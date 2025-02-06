@@ -10,6 +10,7 @@ import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
+import { existsSync } from 'fs';
 
 const enoughRam = os.totalmem() / 0x40000000 > 1.5;
 
@@ -107,6 +108,7 @@ const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
 const lxdePiCheck = '.config/lxpanel/LXDE-pi';
+const wayfireIni = '.config/wayfire.ini';
 let nodePath = process.env.PATH;
 
 if (process.platform === 'linux') {
@@ -994,6 +996,7 @@ async function doServerBuild(): Promise<void> {
 
 async function doServiceDeployment(): Promise<void> {
   let autostartDir = path.join(userHome, autostartDst);
+  const wayfireIniPath = path.join(userHome, wayfireIni);
   let morePi_ish = false;
 
   if (!autostartDir.endsWith('-pi')) {
@@ -1011,7 +1014,8 @@ async function doServiceDeployment(): Promise<void> {
   await monitorProcess(spawn('chmod', ['+x', serviceDstFull], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   const settingsText =
-    `# If you edit AWC_PORT below, be sure to update\n# ${userHome}/${autostartDst}/autostart accordingly.\n` +
+    `# If you edit AWC_PORT below, be sure to update\n#   ${userHome}/${autostartDst}/autostart` +
+    (existsSync(wayfireIniPath) ? ` and\n#   ${wayfireIniPath}` : '') + ' accordingly.\n' +
     Object.keys(settings).sort().map(key => key + '=' + settings[key]).join('\n') + '\n';
 
   fs.writeFileSync(settingsPath, settingsText);
@@ -1069,6 +1073,32 @@ async function doServiceDeployment(): Promise<void> {
 
   if (update)
     fs.writeFileSync(autostartPath, lines.join('\n') + '\n');
+
+  // Extra autostart setup for Wayfire
+  if (existsSync(wayfireIniPath)) {
+    try {
+      lines = asLines(fs.readFileSync(wayfireIniPath).toString()).filter(line => !!line.trimEnd());
+
+      let autoIndex = lines.findIndex(l => l.startsWith('[autostart]'));
+
+      if (autoIndex < 0) {
+        lines.push('');
+        lines.push('[autostart]');
+        autoIndex = lines.length - 1;
+      }
+      else
+        while (lines[++autoIndex]) {}
+
+      lines.splice(autoIndex, 0,
+        'clock1 = ' + autostartLine1,
+        'clock2 = ' + autostartLine2.substring(1));
+      fs.writeFileSync(wayfireIniPath, lines.join('\n') + '\n');
+    }
+    catch (e) {
+      console.error(chalk.redBright('Error: failed to update .config/wayfire.ini to autostart AW-Clock'));
+      console.error(chalk.redBright('   ' + e.message));
+    }
+  }
 
   await monitorProcess(spawn('chown', 0, [sudoUser, autostartDir + '/autostart*'],
     { shell: true }), spin, ErrorMode.ANY_ERROR);
