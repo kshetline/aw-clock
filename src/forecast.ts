@@ -245,6 +245,9 @@ export class Forecast {
     this.detectGestures();
 
     window.addEventListener('resize', () => {
+      if (this.animationStart)
+        this.animationStart = max(performance.now() - 1000, 1);
+
       this.checkAspectRatio();
       this.updateMarqueeAnimation(null);
     });
@@ -1247,7 +1250,7 @@ export class Forecast {
     }
     else {
       this.marquee.html(newText + MARQUEE_JOINER + newText);
-      this.animationStart = performance.now();
+      this.animationStart = max(performance.now(), 1);
       this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
       this.animationRequestId = window.requestAnimationFrame(() => this.animate());
       this.appService.updateMarqueeState(true);
@@ -1259,7 +1262,7 @@ export class Forecast {
       return;
 
     const now = performance.now();
-    const timeIntoScroll = now - this.animationStart;
+    const timeIntoScroll = max(now - this.animationStart, 0);
     const scrollOffset = (timeIntoScroll / 1000 * MARQUEE_SPEED) % this.animationWidth;
 
     if (isChrome()) {
