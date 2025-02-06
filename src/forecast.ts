@@ -205,6 +205,7 @@ export class Forecast {
   private animationRequestId = 0;
   private rainGlyph: string;
   private snowGlyph: string;
+  private absurdHeightToggle = false;
 
   constructor(private appService: AppService) {
     this.currentIcon = $('#current-icon');
@@ -1260,6 +1261,8 @@ export class Forecast {
     const timeIntoScroll = now - this.animationStart;
     const scrollOffset = (timeIntoScroll / 1000 * MARQUEE_SPEED) % this.animationWidth;
 
+    this.absurdHeightToggle = !this.absurdHeightToggle;
+    this.marquee.css('height', this.absurdHeightToggle ? '100%' : '99.99%');
     this.marquee.css('text-indent', `-${scrollOffset}px`);
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
   }
