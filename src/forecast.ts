@@ -204,7 +204,6 @@ export class Forecast {
   private animationRequestId = 0;
   private rainGlyph: string;
   private snowGlyph: string;
-  private absurdHeightToggle = false;
 
   constructor(private appService: AppService) {
     this.currentIcon = $('#current-icon');
@@ -1220,7 +1219,7 @@ export class Forecast {
     const acknowledgedAlerts = (alerts || []).filter(a => a.alert && this.isAlertAcknowledged(a.alert.id)).map(a => a.alert);
     const symbols = acknowledgedAlertSymbols(acknowledgedAlerts) + droppedAlertSymbols(droppedAlerts);
     const newText = concatenateAlerts(alerts) + (symbols ? BULLET_SPACER + symbols : '');
-    const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
+    const marqueeWidth = floor(this.marqueeWrapper[0].offsetWidth);
     const textWidth = getTextWidth(convertForWidthMeasurement(newText), this.marquee[0]);
 
     this.marquee.css('width', marqueeWidth + 'px');
@@ -1263,8 +1262,11 @@ export class Forecast {
     const scrollOffset = (timeIntoScroll / 1000 * MARQUEE_SPEED) % this.animationWidth;
 
     if (isChrome()) {
-      this.absurdHeightToggle = !this.absurdHeightToggle;
-      this.marquee.css('height', this.absurdHeightToggle ? '100%' : '99.99%');
+      // This is a silly game of tweaking the width of the marquee to work around a Chrome bug
+      //   where changes in CSS text-indent are otherwise ignored.
+      const cw = toNumber(this.marquee.css('width').replace('px', ''));
+
+      this.marquee.css('width', cw === floor(cw) ? cw + '.1px' : floor(cw) + 'px');
     }
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
