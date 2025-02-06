@@ -244,6 +244,9 @@ export class Forecast {
     this.detectGestures();
 
     window.addEventListener('resize', () => {
+      if (this.animationStart)
+        this.animationStart = performance.now();
+
       this.checkAspectRatio();
       this.updateMarqueeAnimation(null);
     });
@@ -1259,14 +1262,14 @@ export class Forecast {
 
     const now = performance.now();
     const timeIntoScroll = now - this.animationStart;
-    const scrollOffset = (timeIntoScroll / 1000 * MARQUEE_SPEED) % this.animationWidth;
+    const scrollOffset = ((timeIntoScroll < 10 ? 0 : timeIntoScroll) / 1000 * MARQUEE_SPEED) % this.animationWidth;
 
     if (isChrome()) {
       // This is a silly game of tweaking the width of the marquee to work around a Chrome bug
       //   where changes in CSS text-indent are otherwise ignored.
       const cw = toNumber(this.marquee.css('width').replace('px', ''));
 
-      this.marquee.css('width', cw === floor(cw) ? cw + '.1px' : floor(cw) + 'px');
+      this.marquee.css('width', cw === floor(cw) && scrollOffset !== 0 ? cw + '.1px' : floor(cw) + 'px');
     }
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
