@@ -97,7 +97,7 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
 }
 
 function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false, dropped = false): string {
-  return (alerts ?? []).map(a => {
+  return (alerts ?? []).map((a : Alert & DisplayedAlert) => {
     if (a.acknowledged && !forDialog)
       return null;
 
@@ -195,13 +195,13 @@ export class Forecast {
   private hourInfoTimer: any;
   private forecastDaysVisible = 4;
   private _hasGoodData = false;
+  private marqueeText = '';
 
   private marqueeDialogText = '';
   private marqueeBackground = DEFAULT_BACKGROUND;
   private currentAlerts: { alerts?: DisplayedAlert[], droppedAlerts?: Alert[] };
   private animationStart: number;
   private animationWidth: number;
-  private animationDuration: number;
   private animationRequestId = 0;
   private rainGlyph: string;
   private snowGlyph: string;
@@ -835,7 +835,7 @@ export class Forecast {
   }
 
   private displayForecast(forecastData: ForecastData): void {
-    this.timezone = Timezone.getTimezone(forecastData.timezone);
+    this.timezone = (Timezone.getTimezone)(forecastData.timezone);
 
     const now = this.appService.getCurrentTime();
     const today = new DateTime(now, this.timezone).wallTime;
@@ -1202,6 +1202,7 @@ export class Forecast {
       $('#end-of-week').attr('to', `-${(7 - this.forecastDaysVisible) * FORECAST_DAY_WIDTH} 0`);
       $('#forecast-week').attr('clip-path', `url(#forecast-clip-${this.forecastDaysVisible})`);
       $('#week-forward').attr('transform', `translate(${extraWidth})`);
+      this.marquee.html(this.marqueeText);
     }
   }
 
@@ -1234,7 +1235,8 @@ export class Forecast {
       .replace(/ (\uD83D[\uDD34-\uDD35\uDFe0])+/, '');
 
     if (textWidth <= marqueeWidth) {
-      this.marquee.html(newText);
+      this.marqueeText = newText;
+      this.marquee.html(this.marqueeText);
       this.animationStart = 0;
       this.appService.updateMarqueeState(false);
 
@@ -1244,10 +1246,10 @@ export class Forecast {
       }
     }
     else {
-      this.marquee.html(newText + MARQUEE_JOINER + newText);
+      this.marqueeText = newText + MARQUEE_JOINER + newText;
+      this.marquee.html(this.marqueeText);
       this.animationStart = performance.now();
       this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
-      this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
       this.animationRequestId = window.requestAnimationFrame(() => this.animate());
       this.appService.updateMarqueeState(true);
     }
@@ -1261,8 +1263,11 @@ export class Forecast {
     const timeIntoScroll = now - this.animationStart;
     const scrollOffset = (timeIntoScroll / 1000 * MARQUEE_SPEED) % this.animationWidth;
 
-    this.absurdHeightToggle = !this.absurdHeightToggle;
-    this.marquee.css('height', this.absurdHeightToggle ? '100%' : '99.99%');
+    if (isChrome()) {
+      this.absurdHeightToggle = !this.absurdHeightToggle;
+      this.marquee.css('height', this.absurdHeightToggle ? '100%' : '99.99%');
+    }
+
     this.marquee.css('text-indent', `-${scrollOffset}px`);
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
   }
