@@ -195,7 +195,6 @@ export class Forecast {
   private hourInfoTimer: any;
   private forecastDaysVisible = 4;
   private _hasGoodData = false;
-  private marqueeText = '';
 
   private marqueeDialogText = '';
   private marqueeBackground = DEFAULT_BACKGROUND;
@@ -1202,7 +1201,6 @@ export class Forecast {
       $('#end-of-week').attr('to', `-${(7 - this.forecastDaysVisible) * FORECAST_DAY_WIDTH} 0`);
       $('#forecast-week').attr('clip-path', `url(#forecast-clip-${this.forecastDaysVisible})`);
       $('#week-forward').attr('transform', `translate(${extraWidth})`);
-      this.marquee.html(this.marqueeText);
     }
   }
 
@@ -1215,6 +1213,9 @@ export class Forecast {
       else
         this.currentAlerts = newAlerts;
     }
+
+    if (!alerts)
+      alerts = this.currentAlerts.alerts;
 
     const acknowledgedAlerts = (alerts || []).filter(a => a.alert && this.isAlertAcknowledged(a.alert.id)).map(a => a.alert);
     const symbols = acknowledgedAlertSymbols(acknowledgedAlerts) + droppedAlertSymbols(droppedAlerts);
@@ -1235,8 +1236,7 @@ export class Forecast {
       .replace(/ (\uD83D[\uDD34-\uDD35\uDFe0])+/, '');
 
     if (textWidth <= marqueeWidth) {
-      this.marqueeText = newText;
-      this.marquee.html(this.marqueeText);
+      this.marquee.html(newText);
       this.animationStart = 0;
       this.appService.updateMarqueeState(false);
 
@@ -1246,8 +1246,7 @@ export class Forecast {
       }
     }
     else {
-      this.marqueeText = newText + MARQUEE_JOINER + newText;
-      this.marquee.html(this.marqueeText);
+      this.marquee.html(newText + MARQUEE_JOINER + newText);
       this.animationStart = performance.now();
       this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
       this.animationRequestId = window.requestAnimationFrame(() => this.animate());
