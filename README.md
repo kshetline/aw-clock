@@ -32,9 +32,7 @@ When viewing the sky map feature you can choose to see a multicolor sky, shaded 
 
 The following instructions are primarily aimed at turning a Raspberry Pi into a *dedicated* Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
 
-> Note: If you're running Raspbian "Bookworm" or later, ensure that you are using the X11 desktop option (set via raspi-config). Wayfire and Wayland are not yet supported.
-
-> Also note: Temperature/humidity sensors are not yet supported with the Raspberry Pi 5 due to a major change in the way the 5 handles GPIO.
+> Note: Temperature/humidity sensors are not yet supported with the Raspberry Pi 5 due to a major change in the way the 5 handles GPIO.
 
 The first step, if you want GPS support, is to install a GPS device according to the manufacturer’s instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested. I’ve also provided [notes on the Adafruit GPS HAT installation](#adafruit-gps-hat-installation-notes) at the end of this document.
 
