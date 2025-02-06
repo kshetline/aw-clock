@@ -5,7 +5,7 @@ import { DateTime, Timezone } from '@tubular/time';
 import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
 import {
   blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
-  processMillis, push, regex, toInt, toNumber
+  processMillis, push, regex, toNumber
 } from '@tubular/util';
 import { Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
@@ -1265,7 +1265,7 @@ export class Forecast {
     if (isChrome()) {
       // This is a silly game of tweaking the width of the marquee to work around a Chrome bug
       //   where changes in CSS text-indent are otherwise ignored.
-      const cw = toInt(this.marquee.css('width').replace('px', ''));
+      const cw = floor(toNumber(this.marquee.css('width').replace('px', '')));
 
       this.absurdWidthToggle = !this.absurdWidthToggle;
       this.marquee.css('width', this.absurdWidthToggle ? cw + '.1px' : floor(cw) + 'px');
