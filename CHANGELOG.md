@@ -1,3 +1,8 @@
+## 3.6.0
+
+* Now works with Bookworm/Wayland autostart.
+* Work-around for a Chromium browser bug that broke scrolling of the weather alert marquee.
+
 ## 3.5.4
 
 * Fix Bookworm installation issues.

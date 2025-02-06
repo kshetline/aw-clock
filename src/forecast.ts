@@ -97,7 +97,7 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
 }
 
 function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false, dropped = false): string {
-  return (alerts ?? []).map(a => {
+  return (alerts ?? []).map((a : Alert & DisplayedAlert) => {
     if (a.acknowledged && !forDialog)
       return null;
 
@@ -195,13 +195,13 @@ export class Forecast {
   private hourInfoTimer: any;
   private forecastDaysVisible = 4;
   private _hasGoodData = false;
+  private absurdHeightToggle = false;
 
   private marqueeDialogText = '';
   private marqueeBackground = DEFAULT_BACKGROUND;
   private currentAlerts: { alerts?: DisplayedAlert[], droppedAlerts?: Alert[] };
   private animationStart: number;
   private animationWidth: number;
-  private animationDuration: number;
   private animationRequestId = 0;
   private rainGlyph: string;
   private snowGlyph: string;
@@ -834,7 +834,7 @@ export class Forecast {
   }
 
   private displayForecast(forecastData: ForecastData): void {
-    this.timezone = Timezone.getTimezone(forecastData.timezone);
+    this.timezone = (Timezone.getTimezone)(forecastData.timezone);
 
     const now = this.appService.getCurrentTime();
     const today = new DateTime(now, this.timezone).wallTime;
@@ -1214,10 +1214,13 @@ export class Forecast {
         this.currentAlerts = newAlerts;
     }
 
+    if (!alerts)
+      alerts = this.currentAlerts.alerts;
+
     const acknowledgedAlerts = (alerts || []).filter(a => a.alert && this.isAlertAcknowledged(a.alert.id)).map(a => a.alert);
     const symbols = acknowledgedAlertSymbols(acknowledgedAlerts) + droppedAlertSymbols(droppedAlerts);
     const newText = concatenateAlerts(alerts) + (symbols ? BULLET_SPACER + symbols : '');
-    const marqueeWidth = this.marqueeWrapper[0].offsetWidth;
+    const marqueeWidth = floor(this.marqueeWrapper[0].offsetWidth);
     const textWidth = getTextWidth(convertForWidthMeasurement(newText), this.marquee[0]);
 
     this.marquee.css('width', marqueeWidth + 'px');
@@ -1244,9 +1247,8 @@ export class Forecast {
     }
     else {
       this.marquee.html(newText + MARQUEE_JOINER + newText);
-      this.animationStart = performance.now();
+      this.animationStart = performance.now() + 1000;
       this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
-      this.animationDuration = this.animationWidth / MARQUEE_SPEED * 1000;
       this.animationRequestId = window.requestAnimationFrame(() => this.animate());
       this.appService.updateMarqueeState(true);
     }
@@ -1257,8 +1259,15 @@ export class Forecast {
       return;
 
     const now = performance.now();
-    const timeIntoScroll = now - this.animationStart;
+    const timeIntoScroll = max(now - this.animationStart, 0);
     const scrollOffset = (timeIntoScroll / 1000 * MARQUEE_SPEED) % this.animationWidth;
+
+    if (isChrome()) {
+      // This is a silly game of tweaking the height of the marquee to work around a Chrome bug
+      //   where changes in CSS text-indent are otherwise ignored.
+      this.absurdHeightToggle = !this.absurdHeightToggle;
+      this.marquee.css('height', this.absurdHeightToggle ? '100%' : '99%');
+    }
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
     this.animationRequestId = window.requestAnimationFrame(() => this.animate());
