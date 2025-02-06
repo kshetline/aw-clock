@@ -246,7 +246,7 @@ export class Forecast {
 
     window.addEventListener('resize', () => {
       if (this.animationStart)
-        this.animationStart = max(performance.now() - 1000, 1);
+        this.animationStart = performance.now() + 1000;
 
       this.checkAspectRatio();
       this.updateMarqueeAnimation(null);
