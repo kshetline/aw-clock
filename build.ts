@@ -1084,10 +1084,13 @@ async function doServiceDeployment(): Promise<void> {
       if (autoIndex < 0) {
         lines.push('');
         lines.push('[autostart]');
-        autoIndex = lines.length - 1;
+        autoIndex = lines.length;
       }
       else
-        while (lines[++autoIndex]) {}
+        while (lines[++autoIndex] && !/^clock[12] = /.test(lines[autoIndex])) {}
+
+      // Prevent duplicate entries
+      lines = lines.filter((l, i) => i < autoIndex || !/^clock[12] = /.test(l));
 
       lines.splice(autoIndex, 0,
         'clock1 = ' + autostartLine1,
