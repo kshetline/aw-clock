@@ -245,9 +245,6 @@ export class Forecast {
     this.detectGestures();
 
     window.addEventListener('resize', () => {
-      if (this.animationStart)
-        this.animationStart = performance.now() + 1000;
-
       this.checkAspectRatio();
       this.updateMarqueeAnimation(null);
     });
@@ -1250,7 +1247,7 @@ export class Forecast {
     }
     else {
       this.marquee.html(newText + MARQUEE_JOINER + newText);
-      this.animationStart = max(performance.now(), 1);
+      this.animationStart = performance.now() + 1000;
       this.animationWidth = textWidth + getTextWidth(MARQUEE_JOINER, this.marquee[0]);
       this.animationRequestId = window.requestAnimationFrame(() => this.animate());
       this.appService.updateMarqueeState(true);
@@ -1269,7 +1266,7 @@ export class Forecast {
       // This is a silly game of tweaking the height of the marquee to work around a Chrome bug
       //   where changes in CSS text-indent are otherwise ignored.
       this.absurdHeightToggle = !this.absurdHeightToggle;
-      this.marquee.css('width', this.absurdHeightToggle ? '100%' : '99%');
+      this.marquee.css('height', this.absurdHeightToggle ? '100%' : '99%');
     }
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
