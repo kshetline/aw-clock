@@ -41,9 +41,9 @@ let clearFirefox = false;
 let doAdmin: boolean;
 let doDht = false;
 let clearDht = false;
-let doFirefox: boolean;
-let doFullscreen = false;
-let doKiosk: boolean;
+let doFirefox: boolean | null = null;
+let doFullscreen: boolean | null = null;
+let doKiosk: boolean | null = null;
 let clearFullscreen = false;
 let clearKiosk = false;
 let doStdDeploy = false;
@@ -381,7 +381,7 @@ if (treatAsRaspberryPi) {
 
       if (clearFirefox)
         doFirefox = false;
-      else if (!doFirefox)
+      else if (doFirefox == null)
         doFirefox = toBoolean(oldSettings.AWC_USE_FIREFOX);
 
       settings.AWC_USE_FIREFOX = doFirefox.toString();
@@ -766,17 +766,34 @@ function dhtValidate(s: string): boolean {
   return yesOrNo(s, isYes => doDht = isYes);
 }
 
-function firefoxValidate(s: string): boolean {
-  if (/^[cf]/i.test(s))
-    return true;
+function firefoxValidate(s: string): boolean | string {
+  if (/^[cf]/i.test(s)) {
+    doFirefox = /^f/i.test(s);
+    return doFirefox.toString();
+  }
 
   console.log(chalk.redBright('Response must be (C)hrome or (F)irefox'));
   return false;
 }
 
-function kioskValidate(s: string): boolean {
-  if (/^[kfn]/i.test(s))
-    return true;
+function kioskValidate(s: string): boolean | string {
+  if (/^[kfn]/i.test(s)) {
+    if (/^k/i.test(s)) {
+      doKiosk = true;
+      doFullscreen = false;
+      return 'kiosk';
+    }
+    else if (/^f/i.test(s)) {
+      doKiosk = false;
+      doFullscreen = true;
+      return 'full-screen';
+    }
+    else {
+      doKiosk = false;
+      doFullscreen = false;
+      return 'no';
+    }
+  }
 
   console.log(chalk.redBright('Response must be (k)iosk, (f)ullscreen, or (n)either'));
   return false;
@@ -816,7 +833,18 @@ function finalActionValidate(s: string): boolean {
 const finalAction = (doReboot ? 'R' : doLaunch ? 'L' : '#');
 const finalOptions = '(l/r/n)'.replace(finalAction.toLowerCase(), finalAction);
 
-let questions = [
+interface Question {
+  after?: (s: string) => void;
+  ask?: boolean | (() => boolean);
+  deflt?: string;
+  name?: string;
+  opts?: string;
+  prompt: string;
+  validate?: (s: string) => boolean | string;
+  yn?: boolean;
+}
+
+let questions: Question[] = [
   { prompt: 'Perform initial update/upgrade?', ask: true, yn: true, deflt: doUpdateUpgrade ? 'Y' : 'N', validate: upgradeValidate },
   { prompt: 'Perform npm install? (N option for debug only)', ask: true, yn: true, deflt: doNpmI ? 'Y' : 'N', validate: npmIValidate },
   { name: 'AWC_PORT', prompt: 'HTTP server port.', ask: true, validate: portValidate },
@@ -859,23 +887,23 @@ let questions = [
   }
 ];
 
-if (doDedicated) {
-  if (hasFirefox)
-    questions.splice(questions.length - 1, 0,
-      { prompt: 'Launch browser with (C)hrome or (F)irefox?', ask: true,
-        deflt: doFirefox ? 'F' : 'C', validate: firefoxValidate }
-    );
-
-  questions.splice(questions.length - 1, 0,
-    { prompt: 'Launch browser in kiosk mode, full-screen, or neither?', ask: true,
-      deflt: doKiosk ? 'K' : doFullscreen ? 'F' : 'N', validate: kioskValidate }
-  );
-}
-
-if (noStop)
-  questions = questions.slice(0, -1);
-
 async function promptForConfiguration(): Promise<void> {
+  if (doDedicated) {
+    if (hasFirefox)
+      questions.splice(questions.length - 1, 0,
+        { prompt: 'Launch browser with (C)hrome or (F)irefox?', ask: true, opts: 'cf',
+          deflt: doFirefox ? 'F' : 'C', validate: firefoxValidate, name: 'AWC_USE_FIREFOX' }
+      );
+
+    questions.splice(questions.length - 1, 0,
+      { prompt: 'Launch browser in (k)iosk mode, (f)ull-screen, or (n)either?', ask: true, opts: 'kfn',
+        deflt: doKiosk ? 'K' : (doFullscreen ? 'F' : 'N'), validate: kioskValidate, name: 'AWC_KIOSK_MODE' }
+    );
+  }
+
+  if (noStop)
+    questions = questions.slice(0, -1);
+
   console.log(chalk.cyan(sol + '- Configuration -'));
 
   for (let i = 0; i < questions.length; ++i) {
@@ -884,7 +912,7 @@ async function promptForConfiguration(): Promise<void> {
     if (!(isFunction(q.ask) ? q.ask() : q.ask))
       continue;
 
-    if (q.name) {
+    if (q.name && !q.opts) {
       write(chalk.bold(q.name) + ' - ' + q.prompt + '\n    ' +
         (settings[q.name] ? '(default: ' + chalk.paleYellow(settings[q.name]) + ')' : '') + ': ');
     }
@@ -893,6 +921,9 @@ async function promptForConfiguration(): Promise<void> {
 
       if (q.yn)
         write(q.deflt === 'Y' ? ' (Y/n)' : ' (y/N)');
+      else if (q.opts && q.deflt)
+        write(' (' + q.opts.split('')
+          .map(c => c === q.deflt.toLowerCase() ? c.toUpperCase() : c).join('/') + ')');
 
       write(': ');
     }
@@ -1041,7 +1072,7 @@ async function doServerBuild(): Promise<void> {
   if (doAcu || doDht) {
     showStep();
 
-    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor@0.4'];
+    const args = ['i', '-P', 'rpi-acu-rite-temperature@3.0.0-alpha.0', 'node-dht-sensor@0.4'];
 
     if (doAcu && doDht)
       write('Adding wireless and wired temp/humidity sensor support' + trailingSpace);
@@ -1091,7 +1122,7 @@ async function doServiceDeployment(): Promise<void> {
   await monitorProcess(spawn('cp', uid, [rpiSetupStuff + '/autostart_extra.sh', autostartDir]),
     spin, ErrorMode.ANY_ERROR);
 
-  let launchCmd = doFirefox ? launchChromium : launchFirefox;
+  let launchCmd = doFirefox ? launchFirefox : launchChromium;
 
   if (doFullscreen && !doFirefox)
     launchCmd = launchCmd.replace(/\s+/, ' --start-fullscreen --start-maximized --autoplay-policy=no-user-gesture-required ');
@@ -1190,6 +1221,8 @@ async function doServiceDeployment(): Promise<void> {
 
 (async (): Promise<void> => {
   try {
+    hasFirefox = await isInstalled('firefox');
+
     uid = Number((await monitorProcess(spawn('id', ['-u', user]))).trim() || '1000');
 
     const nodeVersionStr = (await monitorProcess(spawn('node', uid, ['--version']))).trim();
@@ -1217,8 +1250,6 @@ async function doServiceDeployment(): Promise<void> {
       await promptForConfiguration();
 
     process.stdin.setRawMode(false);
-
-    hasFirefox = await isInstalled('firefox');
 
     totalSteps += hasFirefox ? 1 : 0;
     totalSteps += noStop ? 0 : 1;

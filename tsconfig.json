@@ -9,6 +9,7 @@
     "experimentalDecorators": true,
     "target": "ES2018",
     "allowSyntheticDefaultImports": true,
+    "strictNullChecks": false,
     "lib": [
       "es2020",
       "dom"
