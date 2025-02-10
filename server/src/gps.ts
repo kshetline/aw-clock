@@ -251,6 +251,9 @@ export class Gps extends TimePoller {
   }
 
   private async googleLocationCheck(coords: GpsData, now: number): Promise<void> {
+    if (coords?.latitude == null || coords?.longitude == null)
+      return;
+
     this.checkLocationRetry = Number.MAX_SAFE_INTEGER;
 
     try {
@@ -319,6 +322,9 @@ export class Gps extends TimePoller {
   }
 
   private async weatherbitLocationCheck(coords: GpsData, now: number): Promise<void> {
+    if (coords?.latitude == null || coords?.longitude == null)
+      return;
+
     let forecast: ForecastData | Error;
     const lat = coords.latitude.toString();
     const lon = coords.longitude.toString();

@@ -195,7 +195,6 @@ export class Forecast {
   private hourInfoTimer: any;
   private forecastDaysVisible = 4;
   private _hasGoodData = false;
-  private absurdHeightToggle = false;
 
   private marqueeDialogText = '';
   private marqueeBackground = DEFAULT_BACKGROUND;
@@ -1265,10 +1264,10 @@ export class Forecast {
     if (isChrome()) {
       // This is a silly game of tweaking the height of the marquee to work around a Chrome bug
       //   where changes in CSS text-indent are otherwise ignored.
-      const height = (this.marquee.parent().height() - (this.absurdHeightToggle ? 0 : 0.25)) + 'px';
+      const parentHeight = this.marquee.parent().height();
+      const height = this.marquee.height();
 
-      this.marquee.css('height', height);
-      this.absurdHeightToggle = !this.absurdHeightToggle;
+      this.marquee.css('height', (height === parentHeight ? parentHeight - 0.25 : parentHeight) + 'px');
     }
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
