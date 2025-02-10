@@ -55,6 +55,6 @@
     "webpack-node-externals": "^3.0.0"
   },
   "optionalDependencies": {
-    "rpi-acu-rite-temperature": "^2.1.1"
+    "rpi-acu-rite-temperature": "^3.0.0-alpha.0"
   }
 }

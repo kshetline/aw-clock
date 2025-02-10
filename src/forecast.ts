@@ -1265,8 +1265,10 @@ export class Forecast {
     if (isChrome()) {
       // This is a silly game of tweaking the height of the marquee to work around a Chrome bug
       //   where changes in CSS text-indent are otherwise ignored.
+      const height = (this.marquee.parent().height() - (this.absurdHeightToggle ? 0 : 0.25)) + 'px';
+
+      this.marquee.css('height', height);
       this.absurdHeightToggle = !this.absurdHeightToggle;
-      this.marquee.css('height', this.absurdHeightToggle ? '100%' : '99%');
     }
 
     this.marquee.css('text-indent', `-${scrollOffset}px`);
