@@ -1094,7 +1094,7 @@ async function doServerBuild(): Promise<void> {
   if (doAcu || doDht) {
     showStep();
 
-    const args = ['i', '-P', 'rpi-acu-rite-temperature@3.0.0-alpha.0', 'node-dht-sensor@0.4'];
+    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor@0.4'];
 
     if (doAcu && doDht)
       write('Adding wireless and wired temp/humidity sensor support' + trailingSpace);
