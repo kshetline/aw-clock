@@ -78,7 +78,7 @@ chalk.paleYellow = chalk.hex('#FFFFAA');
 let backspace = '\x08';
 let sol = '\x1B[1G';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 2;
+let totalSteps = 3;
 let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
@@ -411,12 +411,15 @@ function stepDone(): void {
 }
 
 async function isInstalled(command: string): Promise<boolean> {
-  return !!(await monitorProcess(spawn('command', ['-v', command], { shell: true }), null, ErrorMode.ANY_ERROR))?.trim();
+  if (command === 'libgpiod-dev')
+    return existsSync('/usr/include/gpiod.h');
+  else
+    return !!(await monitorProcess(spawn('command', ['-v', command], { shell: true }), null, ErrorMode.ANY_ERROR))?.trim();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function install(cmdPkg: string, viaNpm = false, realOnly = false, quiet = false): Promise<boolean> {
-  let packageArgs = [cmdPkg];
+  const packageArgs = [cmdPkg];
   let name = cmdPkg;
 
   if (!quiet)
@@ -428,10 +431,8 @@ async function install(cmdPkg: string, viaNpm = false, realOnly = false, quiet =
     return false;
   }
 
-  if (cmdPkg === 'pigpio') {
-    packageArgs = ['pigpio', 'python-pigpio', 'python3-pigpio'];
-    name = 'pigpiod';
-  }
+  if (cmdPkg === 'gpiod')
+    name = 'gpioinfo';
 
   if (await isInstalled(name)) {
     if (quiet)
@@ -1199,7 +1200,8 @@ async function doServiceDeployment(): Promise<void> {
         stepDone();
       }
 
-      await install('pigpio', false, true);
+      await install('gpiod', false, true);
+      await install('libgpiod-dev', false, true);
       await install(chromium);
       await install('unclutter');
 

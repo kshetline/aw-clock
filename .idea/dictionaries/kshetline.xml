@@ -36,6 +36,8 @@
       <w>flaticon</w>
       <w>gitkeep</w>
       <w>gpio</w>
+      <w>gpiod</w>
+      <w>gpioinfo</w>
       <w>gpspipe</w>
       <w>hadn</w>
       <w>hidep</w>
@@ -46,6 +48,7 @@
       <w>kjhtml</w>
       <w>larr</w>
       <w>latlng</w>
+      <w>libgpiod</w>
       <w>lxde</w>
       <w>lxpanel</w>
       <w>lxsession</w>
