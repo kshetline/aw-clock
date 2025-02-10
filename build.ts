@@ -375,7 +375,7 @@ if (treatAsRaspberryPi) {
       if (doKiosk)
         settings.AWC_KIOSK_MODE = 'kiosk';
       else if (doFullscreen)
-        settings.AWC_KIOSK_MODE = 'full';
+        settings.AWC_KIOSK_MODE = 'full-screen';
       else
         settings.AWC_KIOSK_MODE = 'no';
 
@@ -383,6 +383,12 @@ if (treatAsRaspberryPi) {
         doFirefox = false;
       else if (doFirefox == null)
         doFirefox = toBoolean(oldSettings.AWC_USE_FIREFOX);
+
+      if (doFirefox && settings.AWC_KIOSK_MODE === 'full-screen') {
+        settings.AWC_KIOSK_MODE = 'kiosk';
+        doKiosk = true;
+        doFullscreen = false;
+      }
 
       settings.AWC_USE_FIREFOX = doFirefox.toString();
     }
@@ -836,7 +842,7 @@ const finalOptions = '(l/r/n)'.replace(finalAction.toLowerCase(), finalAction);
 interface Question {
   after?: (s: string) => void;
   ask?: boolean | (() => boolean);
-  deflt?: string;
+  deflt?: string | (() => string);
   name?: string;
   opts?: string;
   prompt: string;
@@ -888,17 +894,23 @@ let questions: Question[] = [
 ];
 
 async function promptForConfiguration(): Promise<void> {
+  let altKioskQuestion: Question;
+
   if (doDedicated) {
     if (hasFirefox)
       questions.splice(questions.length - 1, 0,
         { prompt: 'Launch browser with (C)hrome or (F)irefox?', ask: true, opts: 'cf',
-          deflt: doFirefox ? 'F' : 'C', validate: firefoxValidate, name: 'AWC_USE_FIREFOX' }
+          deflt: () => doFirefox ? 'F' : 'C', validate: firefoxValidate, name: 'AWC_USE_FIREFOX' }
       );
 
     questions.splice(questions.length - 1, 0,
       { prompt: 'Launch browser in (k)iosk mode, (f)ull-screen, or (n)either?', ask: true, opts: 'kfn',
-        deflt: doKiosk ? 'K' : (doFullscreen ? 'F' : 'N'), validate: kioskValidate, name: 'AWC_KIOSK_MODE' }
+        deflt: () => doKiosk ? 'K' : (doFullscreen ? 'F' : 'N'), validate: kioskValidate, name: 'AWC_KIOSK_MODE' }
     );
+
+    altKioskQuestion =
+      { prompt: 'Launch browser in kiosk mode?', ask: true, yn: true,
+        deflt: () => doKiosk || doFullscreen ? 'Y' : 'N', name: 'AWC_KIOSK_MODE' };
   }
 
   if (noStop)
@@ -907,12 +919,17 @@ async function promptForConfiguration(): Promise<void> {
   console.log(chalk.cyan(sol + '- Configuration -'));
 
   for (let i = 0; i < questions.length; ++i) {
-    const q = questions[i];
+    let q = questions[i];
+
+    if (q.name === 'AWC_KIOSK_MODE' && doFirefox)
+      q = altKioskQuestion;
+
+    const deflt = isFunction(q.deflt) ? q.deflt() : q.deflt;
 
     if (!(isFunction(q.ask) ? q.ask() : q.ask))
       continue;
 
-    if (q.name && !q.opts) {
+    if (q.name && !q.opts && !q.yn) {
       write(chalk.bold(q.name) + ' - ' + q.prompt + '\n    ' +
         (settings[q.name] ? '(default: ' + chalk.paleYellow(settings[q.name]) + ')' : '') + ': ');
     }
@@ -920,15 +937,18 @@ async function promptForConfiguration(): Promise<void> {
       write(q.prompt);
 
       if (q.yn)
-        write(q.deflt === 'Y' ? ' (Y/n)' : ' (y/N)');
-      else if (q.opts && q.deflt)
+        write(deflt === 'Y' ? ' (Y/n)' : ' (y/N)');
+      else if (q.opts && deflt)
         write(' (' + q.opts.split('')
-          .map(c => c === q.deflt.toLowerCase() ? c.toUpperCase() : c).join('/') + ')');
+          .map(c => c === deflt.toLowerCase() ? c.toUpperCase() : c).join('/') + ')');
 
       write(': ');
     }
 
-    const response = await readUserInput();
+    let response = await readUserInput();
+
+    if (!response && q.yn)
+      response = deflt;
 
     if (response === '\x18') {
       i = Math.max(i - 2, -1);
@@ -946,6 +966,8 @@ async function promptForConfiguration(): Promise<void> {
       else if (q.name) {
         if (response === '-')
           delete settings[q.name];
+        else if (q.yn)
+          settings[q.name] = toBoolean(response).toString();
         else
           settings[q.name] = response;
       }
