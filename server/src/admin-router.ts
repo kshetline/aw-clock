@@ -28,6 +28,11 @@ router.post('/*name', async (req: Request, res: Response) => {
       args = ['-o', 'chromium'];
       break;
 
+    case 'quit-firefox':
+      cmd = 'pkill';
+      args = ['-o', 'firefox'];
+      break;
+
     case 'update':
       if (!fs.existsSync(process.env.AWC_GIT_REPO_PATH) && !fs.lstatSync(process.env.AWC_GIT_REPO_PATH).isDirectory()) {
         res.status(400).send("Can't find Git repository. Invalid AWC_GIT_REPO_PATH");

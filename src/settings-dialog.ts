@@ -12,7 +12,7 @@ import {
   popKeydownListener, pushKeydownListener, safeCompareVersions
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
-import { beep, clone, eventToKey, htmlEscape, isEqual, noop, toBoolean, toNumber } from '@tubular/util';
+import { beep, clone, eventToKey, htmlEscape, isEqual, isFirefox, noop, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -374,6 +374,9 @@ export class SettingsDialog {
     });
 
     const adminAction = (btn: JQuery, msg: string, cmd: string, optionalHtml?: string): void => {
+      if (cmd === 'quit' && isFirefox())
+        cmd = 'quit-firefox';
+
       btn.on('click', () => {
         const message = msg.replace(/%v/g, this.latestVersion);
 
@@ -405,7 +408,7 @@ export class SettingsDialog {
       'Your system will be rebooted.', 'update' + (updateTest ? '?ut=true' : ''), UPDATE_OPTIONS);
     adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
     adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
-    adminAction(this.quitButton, 'Are you sure you want to quit the Chromium web browser?', 'quit');
+    adminAction(this.quitButton, 'Are you sure you want to quit this web browser?', 'quit');
 
     if (!localServer) {
       // Hide indoor/outdoor options by default if this isn't a local server, but check if proxied data

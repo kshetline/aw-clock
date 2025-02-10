@@ -363,7 +363,7 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 1. If running in interactive mode (`‑i`), the user is queried about various configuration and installation options.
 1. If the `weatherService` service is running, it’s stopped.
 1. `apt-get update` and `apt-get upgrade` are executed, unless defeated with the `‑‑skip‑upgrade` option.
-1. The following packages are installed, if not already present: `pigpio`, `chromium-browser` (just plain `chromium` on Debian), `unclutter`, `forever` (a global npm package, not via apt-get), and a few fonts as well.
+1. The following packages are installed, if not already present: `gpiod`, `libgpiod-dev`, `chromium-browser` (just plain `chromium` on Debian), `unclutter`, `forever` (a global npm package, not via apt-get), and a few fonts as well.
 1. `xscreensaver` is then disabled. Why install a screen saver just to turn around and disable it? To make sure no other screen saver blanks the screen - the display of the clock is intended to stay on 24/7.
 1. The application client is built.
 1. The application server is built.

@@ -3,6 +3,7 @@
     <option name="myName" value="Project Default" />
     <option name="scopesOrder">
       <list>
+        <option value="build.ts" />
         <option value="All Changed Files" />
         <option value="Nx Apps" />
         <option value="Nx Apps&amp;Libs" />
@@ -102,6 +103,9 @@
         </list>
       </option>
     </inspection_tool>
+    <inspection_tool class="JSDeprecatedSymbols" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="build.ts" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="JSSuspiciousNameCombination" enabled="false" level="WARNING" enabled_by_default="false">
       <group names="x,width,left,right" />
       <group names="y,height,top,bottom" />
@@ -134,6 +138,9 @@
       <option name="processComments" value="true" />
     </inspection_tool>
     <inspection_tool class="TsLint" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="TypeScriptValidateJSTypes" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="build.ts" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="WebpackConfigHighlighting" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="XmlDefaultAttributeValue" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="SVG files" level="WARNING" enabled="false" />

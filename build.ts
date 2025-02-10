@@ -37,15 +37,20 @@ let doNpmI = true;
 let npmInitDone = false;
 let doAcu = false;
 let clearAcu = false;
+let clearFirefox = false;
 let doAdmin: boolean;
 let doDht = false;
 let clearDht = false;
-let doKiosk = true;
+let doFirefox: boolean;
+let doFullscreen = false;
+let doKiosk: boolean;
+let clearFullscreen = false;
 let clearKiosk = false;
 let doStdDeploy = false;
 let doDedicated = false;
 let doLaunch = false;
 let doReboot = false;
+let hasFirefox = false;
 let noStop = false;
 let prod = false;
 let viaBash = false;
@@ -83,11 +88,12 @@ let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
   AWC_ALLOW_CORS: 'true',
-  AWC_KIOSK_MODE: 'true',
+  AWC_KIOSK_MODE: 'kiosk',
   AWC_LOG_CACHE_ACTIVITY: 'false',
   AWC_NTP_SERVERS: '',
   AWC_PORT: '8080',
   AWC_PREFERRED_WS: 'wunderground',
+  AWC_USE_FIREFOX: 'false',
   AWC_WIRED_TH_GPIO: '17',
   AWC_WIRELESS_TH_GPIO: '27'
 };
@@ -138,8 +144,9 @@ if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
   process.env.DISPLAY = ':0.0';
 }
 
-let launchChromium = chromium + ' http://localhost:8080/';
-const launchChromiumPattern = new RegExp(`^@${chromium}\\b.*\\bhttp:\\/\\/localhost:\\d+\\/$`);
+const launchChromium = chromium + ' http://localhost:8080/';
+const launchFirefox = 'firefox -new-window http://localhost:8080/';
+const launchCommandPattern = new RegExp(`^@(${chromium}|firefox)\\b.*\\bhttp:\\/\\/localhost:\\d+\\/$`);
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
@@ -200,6 +207,23 @@ process.argv.forEach(arg => {
       doDht = false;
       clearDht = true;
       break;
+    case '--firefox':
+      doFirefox = true;
+      clearFirefox = false;
+      break;
+    case '--firefox-':
+      doFirefox = false;
+      clearFirefox = true;
+      break;
+    case '--fullscreen':
+      doFullscreen = true;
+      doKiosk = false;
+      clearFullscreen = false;
+      break;
+    case '--fullscreen-':
+      doFullscreen = false;
+      clearFullscreen = true;
+      break;
     case '-i':
       interactive = doStdDeploy = doDedicated = true;
       onlyOnRaspberryPi.push(arg);
@@ -207,6 +231,7 @@ process.argv.forEach(arg => {
       break;
     case '--kiosk':
       doKiosk = true;
+      doFullscreen = false;
       clearKiosk = false;
       break;
     case '--kiosk-':
@@ -254,13 +279,15 @@ process.argv.forEach(arg => {
     case '--tarp':
       break; // ignore - already handled
     default:
-    {
+    { // ///////////////////////////////////////////////////////////////////////////////
       helpMsg =
-        'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--gps] [--help] [-i]\n' +
-        '                       [--launch] [--kiosk] [-p] [--pt] [--reboot] [--sd]\n' +
+        'Usage: sudo ./build.sh [--acu] [--admin] [--ddev] [--dht] [--firefox]\n' +
+        '                       [--fullscreen] [--gps] [--help] [-i] [--launch]\n' +
+        '                       [--kiosk] [-p] [--pt] [--reboot] [--sd]\n' +
         '                       [--skip-upgrade] [--tarp]\n\n' +
-        'The options --acu, --admin, --dht, and --kiosk can be followed by an extra\n' +
-        'dash (e.g. --acu-) to clear a previously enabled option.';
+        'The options --acu, --admin, --dht, --firefox, --fullscreen, and --kiosk\n' +
+        'can be followed by an extra dash (e.g. --acu-) to clear a previously\n' +
+        'enabled option.';
 
       if (!viaBash)
         helpMsg = helpMsg.replace('sudo ./build.sh', 'npm run build').replace(/\n {2}/g, '\n');
@@ -333,12 +360,31 @@ if (treatAsRaspberryPi) {
       delete settings.AWC_WIRELESS_TEMP;
       delete settings.AWC_NTP_SERVER;
 
+      const oldKiosk = oldSettings.AWC_KIOSK_MODE?.toLowerCase().charAt(0);
+
       if (clearKiosk)
         doKiosk = false;
       else
-        doKiosk = toBoolean(oldSettings.AWC_KIOSK_MODE, doKiosk);
+        doKiosk = (doKiosk != null ? doKiosk : !oldKiosk || /[kt]/.test(oldKiosk));
 
-      settings.AWC_KIOSK_MODE = doKiosk.toString();
+      if (clearFullscreen)
+        doFullscreen = false;
+      else
+        doFullscreen = (doFullscreen != null ? doFullscreen : (oldKiosk === 'f'));
+
+      if (doKiosk)
+        settings.AWC_KIOSK_MODE = 'kiosk';
+      else if (doFullscreen)
+        settings.AWC_KIOSK_MODE = 'full';
+      else
+        settings.AWC_KIOSK_MODE = 'no';
+
+      if (clearFirefox)
+        doFirefox = false;
+      else if (!doFirefox)
+        doFirefox = toBoolean(oldSettings.AWC_USE_FIREFOX);
+
+      settings.AWC_USE_FIREFOX = doFirefox.toString();
     }
   }
   catch (err) {
@@ -720,8 +766,20 @@ function dhtValidate(s: string): boolean {
   return yesOrNo(s, isYes => doDht = isYes);
 }
 
+function firefoxValidate(s: string): boolean {
+  if (/^[cf]/i.test(s))
+    return true;
+
+  console.log(chalk.redBright('Response must be (C)hrome or (F)irefox'));
+  return false;
+}
+
 function kioskValidate(s: string): boolean {
-  return yesOrNo(s, isYes => doKiosk = isYes);
+  if (/^[kfn]/i.test(s))
+    return true;
+
+  console.log(chalk.redBright('Response must be (k)iosk, (f)ullscreen, or (n)either'));
+  return false;
 }
 
 function pinValidate(s: string): boolean {
@@ -802,8 +860,15 @@ let questions = [
 ];
 
 if (doDedicated) {
+  if (hasFirefox)
+    questions.splice(questions.length - 1, 0,
+      { prompt: 'Launch browser with (C)hrome or (F)irefox?', ask: true,
+        deflt: doFirefox ? 'F' : 'C', validate: firefoxValidate }
+    );
+
   questions.splice(questions.length - 1, 0,
-    { prompt: 'Launch browser in kiosk mode?', ask: true, yn: true, deflt: doKiosk ? 'Y' : 'N', validate: kioskValidate }
+    { prompt: 'Launch browser in kiosk mode, full-screen, or neither?', ask: true,
+      deflt: doKiosk ? 'K' : doFullscreen ? 'F' : 'N', validate: kioskValidate }
   );
 }
 
@@ -1026,12 +1091,18 @@ async function doServiceDeployment(): Promise<void> {
   await monitorProcess(spawn('cp', uid, [rpiSetupStuff + '/autostart_extra.sh', autostartDir]),
     spin, ErrorMode.ANY_ERROR);
 
-  if (doKiosk)
-    launchChromium = launchChromium.replace(/\s+/, ' --start-fullscreen --start-maximized --autoplay-policy=no-user-gesture-required ');
+  let launchCmd = doFirefox ? launchChromium : launchFirefox;
+
+  if (doFullscreen && !doFirefox)
+    launchCmd = launchCmd.replace(/\s+/, ' --start-fullscreen --start-maximized --autoplay-policy=no-user-gesture-required ');
+  else if (doKiosk && !doFirefox)
+    launchCmd = launchCmd.replace(/\s+/, ' --kiosk --start-maximized --autoplay-policy=no-user-gesture-required ');
+  else if ((doKiosk || doFullscreen) && doFirefox)
+    launchCmd = launchCmd.replace('-new-window', '--kiosk');
 
   const autostartPath = autostartDir + '/autostart';
   const autostartLine1 = autostartDir + '/autostart_extra.sh';
-  const autostartLine2 = '@' + launchChromium.replace(/:8080\b/, ':' + settings.AWC_PORT);
+  const autostartLine2 = '@' + launchCmd.replace(/:8080\b/, ':' + settings.AWC_PORT);
   let lines: string[] = [];
 
   try {
@@ -1065,7 +1136,7 @@ async function doServiceDeployment(): Promise<void> {
     }
     else if (lines[i] === autostartLine2)
       break;
-    else if (launchChromiumPattern.test(lines[i])) {
+    else if (launchCommandPattern.test(lines[i])) {
       lines[i] = autostartLine2;
       update = true;
       break;
@@ -1147,6 +1218,9 @@ async function doServiceDeployment(): Promise<void> {
 
     process.stdin.setRawMode(false);
 
+    hasFirefox = await isInstalled('firefox');
+
+    totalSteps += hasFirefox ? 1 : 0;
     totalSteps += noStop ? 0 : 1;
     totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
     totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;

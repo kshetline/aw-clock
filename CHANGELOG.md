@@ -1,3 +1,8 @@
+## 3.7.0
+
+* Now (at last!) works with Raspberry Pi 5.
+* Option to launch clock in Firefox instead of Chrome.
+
 ## 3.6.0
 
 * Now works with Bookworm/Wayland autostart.
