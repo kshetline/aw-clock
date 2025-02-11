@@ -6,6 +6,12 @@ fi
 
 /usr/bin/unclutter -d :0 -idle 30 &
 
+if [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
+  maxarg="--start-maximized"
+else
+  maxarg=""
+fi
+
 (( n = 0 ))
 (( max = 30 ))
 

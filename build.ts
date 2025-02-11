@@ -1149,9 +1149,11 @@ async function doServiceDeployment(): Promise<void> {
   let launchCmd = doFirefox ? launchFirefox : launchChromium;
 
   if (doFullscreen && !doFirefox)
-    launchCmd = launchCmd.replace(/\s+/, ' --new-window --start-fullscreen --autoplay-policy=no-user-gesture-required ');
+    // eslint-disable-next-line no-template-curly-in-string
+    launchCmd = launchCmd.replace(/\s+/, ' --new-window --start-fullscreen "${maxarg}" --autoplay-policy=no-user-gesture-required ');
   else if (doKiosk && !doFirefox)
-    launchCmd = launchCmd.replace(/\s+/, ' --kiosk --start-maximized --autoplay-policy=no-user-gesture-required ');
+    // eslint-disable-next-line no-template-curly-in-string
+    launchCmd = launchCmd.replace(/\s+/, ' --kiosk "${maxarg}" --autoplay-policy=no-user-gesture-required ');
   else if ((doKiosk || doFullscreen) && doFirefox)
     launchCmd = launchCmd.replace('-new-window', '--kiosk');
 
