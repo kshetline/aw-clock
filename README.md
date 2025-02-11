@@ -30,9 +30,7 @@ When viewing the sky map feature you can choose to see a multicolor sky, shaded 
 
 ### Getting started
 
-The following instructions are primarily aimed at turning a Raspberry Pi into a *dedicated* Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode running the Astronomy/Weather Clock software.
-
-> Note: Temperature/humidity sensors are not yet supported with the Raspberry Pi 5 due to a major change in the way the 5 handles GPIO.
+The following instructions are primarily aimed at turning a Raspberry Pi into a *dedicated* Astronomy/Weather Clock, meaning serving as a clock will be the Raspberry Pi’s primary, if not sole, function. The Pi will boot up directly into full-screen kiosk mode, running the Astronomy/Weather Clock software.
 
 The first step, if you want GPS support, is to install a GPS device according to the manufacturer’s instructions. This device must provide a PPS (Pulse Per Second) signal for precise time keeping (something USB dongles do not provide), and must be configured to work with `ntpd`. I recommend the [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324), not only because it works well, but because it’s the only GPS hardware I’ve tested. I’ve also provided [notes on the Adafruit GPS HAT installation](#adafruit-gps-hat-installation-notes) at the end of this document.
 
@@ -46,11 +44,17 @@ $ cd aw-clock
 $ sudo ./build.sh -i
 ```
 
-There will possibly be a long delay the first time you run this script while Node.js (if not already present) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
+There will possibly be a long delay the first time you run this script while an appropriate version of Node.js (if not already present) and various npm packages are installed as a prerequisite to running the rest of the installation procedure.
 
-You’ll then be prompted in the console for the initial configuration you desire. If you leave the `-i` off the end of the `build.sh` command above, and add `--ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled, no alternative weather services beyond Weather Underground, and no geocoding support.
+You’ll then be prompted in the console for the initial configuration you desire. If you leave the `‑i` off the end of the `build.sh` command above, and add `‑‑ddev`, an all-defaults installation will be performed automatically, with support for wired and wireless temperature/humidity sensors initially disabled, no alternative weather services beyond Weather Underground, and no geocoding support.
 
 If you want to use the **alarm clock** feature, **it’s important that you use the default kiosk mode**. This ensures that audio can be played by the Chrome web browser without you having to interact with the browser first (working around a web browser safety feature designed to protect you from annoying ads on websites that could otherwise suddenly blast you with sound).
+
+If you choose to launch the clock with Firefox, and also want audio alarms to work, you will have to configure Firefox to allow autoplay.
+
+<img src="https://shetline.com/readme/aw-clock/3.3.0/firefox-autoplay.jpg" alt="drawing" width="600"/>
+
+You can be pickier than this, narrowing the autoplay permission to localhost, but this is the easiest way to ensure audio playback.
 
 Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and you don’t want to have to use SSH or VNC to perform these operations.
 
@@ -87,7 +91,7 @@ Your city might be filled in automatically by using your IP address &mdash; but 
 ![user settings screenshot - alarms](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-alarms.jpg)
 ![user settings screenshot - alert-filters](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-alert-filters.jpg)
 
-To close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
+Using Chromium, you can close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
 
 ### Hardware set-up for temperature/humidity sensors
 
@@ -99,7 +103,7 @@ With your Raspberry Pi shut down and disconnected from power, connect the DHT22/
 
 ![Picture of wiring to GPS HAT](https://shetline.com/readme/aw-clock/3.3.0/rpi_with_gps_hat.jpg)
 
-Also for the Raspberry Pi you have the option to provide wireless indoor conditions and outdoor weather data using [433 MHz Acu Rite 06002M wireless temperature and humidity sensors](https://www.amazon.com/gp/product/B00T0K8NXC/) paired with a [433 MHz receiver module](https://www.amazon.com/gp/product/B00HEDRHG6/).
+Also for the Raspberry Pi you have the option to provide wireless indoor conditions and outdoor weather data using [433 MHz Acu Rite 06002M wireless temperature and humidity sensors](https://www.amazon.com/gp/product/B00T0K8NXC/) paired with a [433 MHz receiver module](https://www.amazon.com/D-FLIFE-Wireless-Transmitter-Receiver-Antenna/dp/B0BZRRBBNK/).
 
 You can use one wireless sensor in lieu of a wired DHT22/AM2302 for indoor temperature and humidity, and you can use one, two, or three wireless sensors for outdoor temperature and humidity. (When using multiple sensors, each must be set to a different channel — A, B, or C. No more than two wireless sensors can be used for outdoor readings if one is used for indoor readings.)
 
@@ -120,7 +124,7 @@ A touchscreen is the most practical way to use the alarm features of this clock,
 * Tap/click on a forecast day, and a textual summary (if available) of that day’s weather will appear.
 * Tap/click on the rise/set icon, or the rise/set times, to switch between sun and moon rise and set times. *After one minute, the display reverts to sunrise/sunset.*
 * Tap/click on the hourly weather icons, or the hourly temperatures, to see hourly probabilities of precipitation and wind speed. Tap/click again to toggle back to weather icons and temperatures. *After one minute, the display reverts to weather icons and hourly temperatures.*
-* Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for all of the text to scroll by. In this full text view you can acknowledge alerts and thus remove them from the banner.
+* Tap/click on the (sometimes) scrolling banner at the bottom of the screen to see the full text of alert messages without having to wait for all the text to scroll by. In this full text view you can acknowledge alerts and thus remove them from the banner.
 * Tap/click on the gear icon in the lower right corner of the display to bring up the Settings dialog. An onscreen keyboard option is available. If you answered “Yes” to the set-up question “Allow user to reboot, shutdown, update, etc.?”, extra options for managing your Raspberry Pi will be available.
 
 ### Alarm keyboard control
@@ -166,7 +170,7 @@ Wind speed is displayed using *wind barbs*. When using imperial units, the wind 
 In the Settings dialog, however, you can choose to display wind speed in knots while still using metric (°C, cm) for temperature and precipitation. When using imperial units (°F, in) wind speed (apart from wind barbs) is by default shown in mph, but you can optionally use knots for the textual display of wind speed as well.
 
 | &nbsp;    | Imperial | Metric  |
-| --------- | -------- | ------- |
+|-----------|----------|---------|
 | Half barb | 5 knots  | 2.5 m/s |
 | Full barb | 10 knots | 5 m/s   |
 | Pennant   | 50 knots | 25 m/s  |
@@ -302,9 +306,9 @@ While this would actually be a good thing if it meant I could hook up the clock 
 
 To build and run this project you can use the following commands:
 
-* “`sudo ./build.sh`” &#x5B; *various-options* &#x5D;” to run the installer.
+* “`sudo ./build.sh` &#x5B; *various-options* &#x5D;” to run the installer.
 * “`npm run first-install`” to install all npm packages needed for both the client and the server (a separate, inner project) with one command.
-* “`npm run build`” &#x5B;‑‑ *various-options* &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
+* “`npm run build` &#x5B;‑‑ *various-options* &#x5D;” to build. (Please note the `‑‑` (double-dash) all by itself, which must come before all other options.)
 * “`npm run start-server`” to start the data server for this project (except on Windows) on `localhost:4201`. (You may need to make this precede this command with `sudo`.) The server will be automatically restarted whenever you edit the code.
 * “`npm run start-server-win`” to start the data server for this project (on Windows) on `localhost:4201`.
 * “`npm start`” to serve the web client using webpack-dev-server on `localhost:4200`. The client will be automatically restarted whenever you edit the code. *(Note that for development and testing, two different ports are used (4200, 4201), but that when the server is deployed, all content and data is served on a single port, by default 8080.)*
@@ -312,7 +316,7 @@ To build and run this project you can use the following commands:
 To build the server along with the web client, use `npm run build`, possibly followed by `‑‑` and other options listed below:
 
 | &nbsp;           | &nbsp;                                                                                                                                                                                                            |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `‑‑acu`          | Install support for wireless temperature/humidity sensors using a 433 MHz receiver module.                                                                                                                        |
 | `‑‑acu‑`         | Clears saved `‑‑acu` setting when not using interactive mode.                                                                                                                                                     |
 | `‑‑admin`        | Enables the user actions “Update”, “Shut down”, “Reboot”, and “Quit” in the Settings dialog.                                                                                                                      |
@@ -320,6 +324,10 @@ To build the server along with the web client, use `npm run build`, possibly fol
 | `‑‑ddev`         | This stands for “dedicated device”. This is for setting up a Raspberry Pi to primarily serve as an Astronomy/Weather Clock, automatically booting as a clock in full-screen mode. This implies the `‑‑sd` option. |
 | `‑‑dht`          | Install support for a wired DHT22/AM2302 temperature/humidity sensor.                                                                                                                                             |
 | `‑‑dht‑`         | Clears saved `‑‑dht` setting when not using interactive mode.                                                                                                                                                     |
+| `‑‑firefox`      | Launch clock display using Firefox browser instead of Chromium.                                                                                                                                                   |
+| `‑‑firefox-`     | Clears `--firefox` setting when not using interactive mode.                                                                                                                                                       |
+| `‑‑fullscreen`   | Launch Chromium in full-screen mode without full kiosk restrictions. Same as `‑‑kiosk` for Firefox.                                                                                                               |
+| `‑‑fullscreen-`  | Clears `-fullscreen` setting when not using interactive mode.                                                                                                                                                     |
 | `‑‑help`         | Display brief help message.                                                                                                                                                                                       |
 | `‑i`             | Interactive mode. This prompts you to enter various configuration options, and implies the `‑‑ddev` option.                                                                                                       |
 | `‑‑launch`       | When installation is finished, launch the software.                                                                                                                                                               |
@@ -339,7 +347,7 @@ The following environment variables affect how the server part of this software 
 * `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `/etc/defaults/weatherService` file, or by setting it to `false`.
 * `AWC_GIT_REPO_PATH`: The path to your aw-clock Git repository.
 * `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or in addition, you can set up `AWC_WEATHERBIT_API_KEY` for both geocoding and weather data.
-* `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not. *(Note: Changing this setting alone will not change kiosk behavior. If you want to change kiosk mode without running `build.sh` again, you must edit the file `/home/pi/.config/lxsession/LXDE-pi/autostart` to add or remove the `--kiosk` parameter from the `chromium-browser` command.)*
+* `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not. *(Note: Changing this setting alone will not change kiosk behavior. If you want to change kiosk mode without running `build.sh` again, you must edit the file `/home/pi/.config/lxsession/LXDE-pi/autostart` to add or remove the `‑‑kiosk` parameter from the `chromium-browser` command.)*
 * `AWC_LOG_CACHE_ACTIVITY`: As a debugging/development aid, set to `true` to enable additional logging of the server’s web cache behavior.
 * `AWC_NTP_SERVERS`: Optional alternate NTP servers used by this software, as a comma-separated list of domain names. (See previous comments about selecting alternate servers.)
 * `AWC_PORT`: By default the deployed server runs on localhost port 8080, but you can use a different port if you prefer.
@@ -356,21 +364,21 @@ Don’t forget to run `sudo update-rc.d weatherService defaults` after editing t
 For reference, here’s a breakdown of the steps performed by a full installation:
 
 1. Node.js is installed if not present, or updated if earlier than version 14. A switch to Node 14 using nvm (Node Version Manager) may occur if nvm is installed.
-1. If Node.js is greater than version 14, nvm will be used to step down to version 14, installing nvm if necessary to do so.
-1. For Node.js version 14, substitute version 12 in the descriptions above for a Raspberry Pi with less than 2 GB RAM.
-1. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time.
-1. A check for GPS configuration is performed.
-1. If running in interactive mode (`‑i`), the user is queried about various configuration and installation options.
-1. If the `weatherService` service is running, it’s stopped.
-1. `apt-get update` and `apt-get upgrade` are executed, unless defeated with the `‑‑skip‑upgrade` option.
-1. The following packages are installed, if not already present: `gpiod`, `libgpiod-dev`, `chromium-browser` (just plain `chromium` on Debian), `unclutter`, `forever` (a global npm package, not via apt-get), and a few fonts as well.
-1. `xscreensaver` is then disabled. Why install a screen saver just to turn around and disable it? To make sure no other screen saver blanks the screen - the display of the clock is intended to stay on 24/7.
-1. The application client is built.
-1. The application server is built.
-1. If you’re running `build.sh`, your Git branch was clean before running the installer, and the only thing that changes as far as Git is concerned are your `package-lock.json` files, a `git --reset hard` will be performed to revert those changes and keep your branch clean.
-1. If specified, server options for wired and/or wireless sensors are installed.
-1. A combined client/server distribution directory is created.
-1. If any of the options `‑‑ddev`, `‑i`, or `‑‑sd` are used, the distribution is copied to the `~/weather` directory (typically `/home/pi/weather`), deleting anything which might have previously been present in that directory.
+2. If Node.js is greater than version 14, nvm will be used to step down to version 14, installing nvm if necessary to do so.
+3. For Node.js version 14, substitute version 12 in the descriptions above for a Raspberry Pi with less than 2 GB RAM.
+4. An `npm install` is performed to bootstrap the rest of the installation process, which is written in TypeScript and requires Node.js and several npm packages to function. This can be very slow the first time.
+5. A check for GPS configuration is performed.
+6. If running in interactive mode (`‑i`), the user is queried about various configuration and installation options.
+7. If the `weatherService` service is running, it’s stopped.
+8. `apt-get update` and `apt-get upgrade` are executed, unless defeated with the `‑‑skip‑upgrade` option.
+9. The following packages are installed, if not already present: `gpiod`, `libgpiod-dev`, `chromium-browser` (just plain `chromium` on Debian), `unclutter`, `forever` (a global npm package, not via apt-get), and a few fonts as well.
+10. `xscreensaver` is then disabled. Why install a screen saver just to turn around and disable it? To make sure no other screen saver blanks the screen - the display of the clock is intended to stay on 24/7.
+11. The application client is built.
+12. The application server is built.
+13. If you’re running `build.sh`, your Git branch was clean before running the installer, and the only thing that changes as far as Git is concerned are your `package-lock.json` files, a `git --reset hard` will be performed to revert those changes and keep your branch clean.
+14. If specified, server options for wired and/or wireless sensors are installed.
+15. A combined client/server distribution directory is created.
+16. If any of the options `‑‑ddev`, `‑i`, or `‑‑sd` are used, the distribution is copied to the `~/weather` directory (typically `/home/pi/weather`), deleting anything which might have previously been present in that directory.
 
 <br>*No further steps listed below are performed except as part of dedicated device set-up (options `‑‑ddev` or `‑i`)*.<br>
 
@@ -378,7 +386,7 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 17. The file `weatherService` (located in the `raspberry_pi_setup` folder) is copied to `/etc/init.d/`, and changed to root ownership.
 1. Server set-up options are saved to `/etc/defaults/weatherService`, which is also owned by root. Rather than re-running the installer to change the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
 1. The commands `sudo update-rc.d weatherService defaults` and `sudo systemctl enable weatherService` are performed to establish and enable the service.
-1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `-pi` on the end for Debian), or the existing `autostart` file is modified, to launch the Chromium web browser in kiosk mode, displaying the Astronomy/Weather Clock.
+1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `‑pi` on the end for Debian), or the existing `autostart` file is modified, to launch the Chromium web browser in kiosk mode, displaying the Astronomy/Weather Clock.
 1. The included file `autostart_extra.sh` is also copied to the above directory. This adds code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up.
 . The options `‑‑launch` or `‑‑reboot` are performed if specified.
 

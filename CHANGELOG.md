@@ -2,6 +2,9 @@
 
 * Now (at last!) works with Raspberry Pi 5.
 * Option to launch clock in Firefox instead of Chrome.
+* Option to launch clock (in Chromium) browser in a full-screen mode which is less restrictive than kiosk mode.
+
+> Note: The work-around for a Chromium CSS text-indent bug, introduced in v3.6.0, doesn't always do the job. The Firefox launch mode can help get around that if your weather alerts are not scrolling properly. My Chromium bug report has, thankfully, been acknowledged, confirmed, set to P1 priority, and assigned to a developer. Perhaps a real fix for this bug will be available soon.
 
 ## 3.6.0
 
