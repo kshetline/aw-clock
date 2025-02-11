@@ -146,8 +146,8 @@ if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
 }
 
 const autostartScriptFile = 'autostart_extra.sh';
-const launchChromium = chromium + ' http://localhost:8080/ &';
-const launchFirefox = 'firefox -new-window http://localhost:8080/ &';
+const launchChromium = chromium + ' http://localhost:8080/';
+const launchFirefox = 'firefox -new-window http://localhost:8080/';
 const autostartEntryPattern = new RegExp('^\\/.*\\b' + escapeForRegex(autostartScriptFile) + '\\b');
 const oldAutostartEntryPattern = new RegExp(`^@(${chromium}|firefox)\\b.*\\bhttp:\\/\\/localhost:\\d+\\/$`);
 
@@ -1149,7 +1149,7 @@ async function doServiceDeployment(): Promise<void> {
   let launchCmd = doFirefox ? launchFirefox : launchChromium;
 
   if (doFullscreen && !doFirefox)
-    launchCmd = launchCmd.replace(/\s+/, ' --start-fullscreen --start-maximized --autoplay-policy=no-user-gesture-required ');
+    launchCmd = launchCmd.replace(/\s+/, ' --new-window --start-fullscreen --autoplay-policy=no-user-gesture-required ');
   else if (doKiosk && !doFirefox)
     launchCmd = launchCmd.replace(/\s+/, ' --kiosk --start-maximized --autoplay-policy=no-user-gesture-required ');
   else if ((doKiosk || doFullscreen) && doFirefox)
