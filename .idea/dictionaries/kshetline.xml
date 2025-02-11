@@ -23,8 +23,10 @@
       <w>deflt</w>
       <w>devicetree</w>
       <w>dgps</w>
+      <w>dialout</w>
       <w>doesn</w>
       <w>dtai</w>
+      <w>dtoverlay</w>
       <w>eboot</w>
       <w>elecrow</w>
       <w>elems</w>
@@ -38,6 +40,8 @@
       <w>gpio</w>
       <w>gpiod</w>
       <w>gpioinfo</w>
+      <w>gpiopin</w>
+      <w>gpsdctl</w>
       <w>gpspipe</w>
       <w>hadn</w>
       <w>hidep</w>
@@ -85,6 +89,7 @@
       <w>rapidapi</w>
       <w>rarr</w>
       <w>raspbian</w>
+      <w>refid</w>
       <w>repoll</w>
       <w>resync</w>
       <w>rotanimate</w>
@@ -99,6 +104,7 @@
       <w>triweekly</w>
       <w>ullscreen</w>
       <w>unsynchronized</w>
+      <w>usbauto</w>
       <w>wayfire</w>
       <w>wbproxy</w>
       <w>wddp</w>

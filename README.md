@@ -56,6 +56,8 @@ If you choose to launch the clock with Firefox, and also want audio alarms to wo
 
 You can be pickier than this, narrowing the autoplay permission to localhost, but this is the easiest way to ensure audio playback.
 
+> Note: If you switch browsers, your alarms and many other preferences DON'T come along for the ride! These things are saved in each browser’s *local storage*, which is not shared between browsers.
+
 Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and you don’t want to have to use SSH or VNC to perform these operations.
 
 ### Weather

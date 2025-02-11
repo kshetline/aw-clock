@@ -11,6 +11,7 @@ import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
+import { escapeForRegex } from './server/src/awcs-util';
 
 const enoughRam = os.totalmem() / 0x40000000 > 1.5;
 
@@ -144,9 +145,11 @@ if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
   process.env.DISPLAY = ':0.0';
 }
 
+const autostartScriptFile = 'autostart_extra.sh';
 const launchChromium = chromium + ' http://localhost:8080/';
 const launchFirefox = 'firefox -new-window http://localhost:8080/';
-const launchCommandPattern = new RegExp(`^@(${chromium}|firefox)\\b.*\\bhttp:\\/\\/localhost:\\d+\\/$`);
+const autostartEntryPattern = new RegExp('^\\/.*\\b' + escapeForRegex(autostartScriptFile) + '\\b');
+const oldAutostartEntryPattern = new RegExp(`^@(${chromium}|firefox)\\b.*\\bhttp:\\/\\/localhost:\\d+\\/$`);
 
 // Remove extraneous command line args, if present.
 if (/\b(ts-)?node\b/.test(process.argv[0] ?? ''))
@@ -1141,9 +1144,8 @@ async function doServiceDeployment(): Promise<void> {
   await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']), spin);
   await monitorProcess(spawn('systemctl', ['enable', 'weatherService']), spin);
   await monitorProcess(spawn('mkdir', uid, ['-p', autostartDir]), spin);
-  await monitorProcess(spawn('cp', uid, [rpiSetupStuff + '/autostart_extra.sh', autostartDir]),
-    spin, ErrorMode.ANY_ERROR);
 
+  let autoScript = fs.readFileSync(path.join(rpiSetupStuff, autostartScriptFile)).toString();
   let launchCmd = doFirefox ? launchFirefox : launchChromium;
 
   if (doFullscreen && !doFirefox)
@@ -1153,16 +1155,21 @@ async function doServiceDeployment(): Promise<void> {
   else if ((doKiosk || doFullscreen) && doFirefox)
     launchCmd = launchCmd.replace('-new-window', '--kiosk');
 
+  autoScript = (autoScript + '\n\n' + launchCmd).replace(/:8080\b/, ':' + settings.AWC_PORT);
+  fs.writeFileSync(path.join(autostartDir, autostartScriptFile), autoScript);
+
   const autostartPath = autostartDir + '/autostart';
-  const autostartLine1 = autostartDir + '/autostart_extra.sh';
-  const autostartLine2 = '@' + launchCmd.replace(/:8080\b/, ':' + settings.AWC_PORT);
+  const autostartEntry = autostartDir + '/autostart_extra.sh' + (doFirefox ? ' -f' : '');
   let lines: string[] = [];
+  let update = false;
+  let found = false;
 
   try {
     lines = asLines(fs.readFileSync(autostartPath).toString()).filter(line => !!line.trim());
   }
   catch (err) {
     if (isRaspberryPi || morePi_ish) {
+      update = true;
       lines = [
         '@lxpanel --profile LXDE-pi',
         '@pcmanfm --desktop --profile LXDE-pi',
@@ -1174,25 +1181,16 @@ async function doServiceDeployment(): Promise<void> {
     }
   }
 
-  let update = false;
-
-  if (!lines.includes(autostartLine1)) {
-    lines.push(autostartLine1);
-    update = true;
-  }
-
   for (let i = 0; i <= lines.length; ++i) {
-    if (i === lines.length) {
-      lines.push(autostartLine2);
+    if (i === lines.length && !found) {
+      lines.push(autostartEntry);
       update = true;
-      break;
     }
-    else if (lines[i] === autostartLine2)
-      break;
-    else if (launchCommandPattern.test(lines[i])) {
-      lines[i] = autostartLine2;
+    else if (autostartEntryPattern.test(lines[i]))
+      found = true;
+    else if (oldAutostartEntryPattern.test(lines[i])) {
+      lines.splice(i--, 1);
       update = true;
-      break;
     }
   }
 
@@ -1214,12 +1212,9 @@ async function doServiceDeployment(): Promise<void> {
       else
         while (lines[++autoIndex] && !/^clock[12] = /.test(lines[autoIndex])) {}
 
-      // Prevent duplicate entries
+      // Prevent duplicate entries, remove old entries
       lines = lines.filter((l, i) => i < autoIndex || !/^clock[12] = /.test(l));
-
-      lines.splice(autoIndex, 0,
-        'clock1 = ' + autostartLine1,
-        'clock2 = ' + autostartLine2.substring(1));
+      lines.splice(autoIndex, 0, 'clock1 = ' + autostartEntry);
       fs.writeFileSync(wayfireIniPath, lines.join('\n') + '\n');
     }
     catch (e) {
@@ -1320,8 +1315,6 @@ async function doServiceDeployment(): Promise<void> {
             console.log('    sudo ./build.sh --nostop -ddev     (for automated set-up)');
             process.exit(1);
           }
-          // TODO: else? Probably just weatherService not installed yet
-          // Might check /unrecognized service|not loaded/ to be more certain.
         }
 
         stepDone();
