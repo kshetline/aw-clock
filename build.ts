@@ -146,8 +146,8 @@ if ((isRaspberryPi || treatAsRaspberryPi) && !process.env.DISPLAY) {
 }
 
 const autostartScriptFile = 'autostart_extra.sh';
-const launchChromium = chromium + ' http://localhost:8080/';
-const launchFirefox = 'firefox -new-window http://localhost:8080/';
+const launchChromium = chromium + ' http://localhost:8080/ &';
+const launchFirefox = 'firefox -new-window http://localhost:8080/ &';
 const autostartEntryPattern = new RegExp('^\\/.*\\b' + escapeForRegex(autostartScriptFile) + '\\b');
 const oldAutostartEntryPattern = new RegExp(`^@(${chromium}|firefox)\\b.*\\bhttp:\\/\\/localhost:\\d+\\/$`);
 
@@ -1155,7 +1155,7 @@ async function doServiceDeployment(): Promise<void> {
   else if ((doKiosk || doFullscreen) && doFirefox)
     launchCmd = launchCmd.replace('-new-window', '--kiosk');
 
-  autoScript = (autoScript + '\n\n' + launchCmd).replace(/:8080\b/, ':' + settings.AWC_PORT);
+  autoScript = (autoScript + '\n' + launchCmd + '\n').replace(/:8080\b/, ':' + settings.AWC_PORT);
   fs.writeFileSync(path.join(autostartDir, autostartScriptFile), autoScript);
 
   const autostartPath = autostartDir + '/autostart';
