@@ -1185,6 +1185,7 @@ async function doServiceDeployment(): Promise<void> {
     if (i === lines.length && !found) {
       lines.push(autostartEntry);
       update = true;
+      break;
     }
     else if (autostartEntryPattern.test(lines[i]))
       found = true;
