@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -31,7 +31,7 @@
   "devDependencies": {
     "@types/copyfiles": "^2.4.1",
     "@types/follow-redirects": "^1.14.1",
-    "@types/jquery": "^3.5.14",
+    "@types/jquery": "^3.5.32",
     "@types/js-cookie": "^3.0.2",
     "@types/node": "^16.11.39",
     "@typescript-eslint/eslint-plugin": "^5.28.0",

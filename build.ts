@@ -1155,7 +1155,10 @@ async function doServiceDeployment(): Promise<void> {
   else if ((doKiosk || doFullscreen) && doFirefox)
     launchCmd = launchCmd.replace('-new-window', '--kiosk');
 
-  autoScript = (autoScript + '\n' + launchCmd + '\n').replace(/:8080\b/, ':' + settings.AWC_PORT);
+  autoScript = autoScript.replace('echo #launch-here', launchCmd)
+    .replace(/:8080\b/, ':' + settings.AWC_PORT)
+    .replace('the-browser', doFirefox ? 'firefox' : chromium);
+
   fs.writeFileSync(path.join(autostartDir, autostartScriptFile), autoScript);
 
   const autostartPath = autostartDir + '/autostart';

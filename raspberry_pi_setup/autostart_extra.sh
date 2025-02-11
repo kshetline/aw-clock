@@ -6,6 +6,16 @@ fi
 
 /usr/bin/unclutter -d :0 -idle 30 &
 
-until curl --head --silent --fail http://localhost:8080/ 1> /dev/null 2>&1; do
+(( n = 0 ))
+(( max = 30 ))
+
+until (curl --head --silent --fail http://localhost:8080/ 1> /dev/null 2>&1) || [[ n -ge max ]]; do
+  (( n = n + 1 ))
   sleep 1
 done
+
+if [[ n -lt max ]]; then
+  echo #launch-here
+else
+  the-browser https://shetline.com/awc-server-error.html
+fi

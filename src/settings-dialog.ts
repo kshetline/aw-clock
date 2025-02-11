@@ -87,7 +87,7 @@ function p2(n: number): string {
   return n.toString().padStart(2, '0');
 }
 
-function formatDegrees(angle, compassPointsPosNeg, degreeDigits): string {
+function formatDegrees(angle: number, compassPointsPosNeg: string, degreeDigits: number): string {
   const compass = compassPointsPosNeg.charAt(angle < 0 ? 1 : 0);
   angle = Math.abs(angle);
   const degrees = angle.toFixed(3);
@@ -836,7 +836,7 @@ export class SettingsDialog {
     this.selectedAlarm = index;
   }
 
-  private adjustAlarmTime(amPm): void {
+  private adjustAlarmTime(amPm: boolean): void {
     const wasAmPm = this.alarmMeridiem.css('display') !== 'none';
 
     if (amPm === wasAmPm)
@@ -1099,6 +1099,7 @@ export class SettingsDialog {
       recentHtml += `<div class="recent-location">${htmlEscape(name)}<span>✕</span></div>`;
     });
 
+    // noinspection TypeScriptValidateJSTypes
     $('.recent-locations').html(recentHtml).find('.recent-location').each((index, elem) => {
       elem.addEventListener('click', evt => {
         if ((evt.target as HTMLElement).localName === 'span') {
@@ -1131,6 +1132,7 @@ export class SettingsDialog {
 
     $('.latest-version-text').text(defaults?.latestVersion || '(unknown)');
     $('.your-version-text').text(AWC_VERSION);
+    // noinspection TypeScriptValidateJSTypes
     updateVersionInfo.html(defaults?.latestVersionInfo || '');
     $('#hide-update-panel').css('display',
       safeCompareVersions(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
@@ -1138,6 +1140,7 @@ export class SettingsDialog {
     this.hideUpdate.prop('checked', previousSettings.updateToHide === defaults?.latestVersion);
     this.checkSensorWarnings();
 
+    // noinspection TypeScriptValidateJSTypes
     getText(this.appService.getApiServer() + '/changelog').then(text => updateVersionInfo.html(text)).catch(noop);
   }
 
