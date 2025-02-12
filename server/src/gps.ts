@@ -2,7 +2,7 @@ import { ChildProcess } from 'child_process';
 import os from 'os';
 import { parseISODate } from '@tubular/time';
 import { abs, floor, max, round } from '@tubular/math';
-import { asLines, processMillis, toNumber } from '@tubular/util';
+import { asLines, processMillis, toInt, toNumber } from '@tubular/util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData, GpsData, TimeInfo } from './shared-types';
@@ -105,7 +105,7 @@ export class Gps extends TimePoller {
           this.gpsData.longitude = toNumber(obj.lon.toFixed(5));
           this.gpsData.altitude = obj.altHAE ?? obj.alt ?? 0;
           this.gpsData.fix = max(0, obj.mode - 1, obj.status ?? 0, this.gpsData.fix ?? 0);
-          this.gpsData.pps = this.systemTimeIsGps;
+          this.gpsData.pps = this.systemTimeIsGps && this.gpsData.goodGpsReach;
 
           if (obj.epx != null && obj.epy != null)
             this.gpsData.estimatedPositionError = max(obj.epx, obj.epy);
@@ -174,14 +174,18 @@ export class Gps extends TimePoller {
     const ntpInfo = asLines(await monitorProcess(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS));
 
     this.systemTimeIsGps = false;
+    this.gpsData.goodGpsReach = false;
     this.gpsData.ntpFallback = false;
 
     for (const line of ntpInfo) {
-      const $ = /^[*+x]SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s([.\d]+)\s+[-+]?[.\d]+\s+[.\d]+\s*$/.exec(line);
+      const $ = /^[*+x]SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s(\d+)\s([.\d]+)\s+[-+]?[.\d]+\s+[.\d]+\s*$/.exec(line);
 
       if ($) {
+        const reach = toInt($[1], 0, 8);
+
         this.systemTimeIsGps = true;
-        this.roundTripDelay = (toNumber($[1], 2) > 1);
+        this.gpsData.goodGpsReach = ((reach & 7) !== 0);
+        this.roundTripDelay = (toNumber($[2], 2) > 1);
       }
       else if (line.startsWith('*') || (this.systemTimeIsGps && line.startsWith('+')))
         this.gpsData.ntpFallback = true;
