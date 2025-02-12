@@ -1,3 +1,5 @@
+// noinspection NonAsciiCharacters
+
 import { AppService } from './app.service';
 import {
   AsteroidCometInfo, AVG_SUN_MOON_RADIUS, Ecliptic, getSkyColor, ISkyObserver, JUPITER, LABEL_ANCHOR, LINE_BREAK, MARS, MERCURY,

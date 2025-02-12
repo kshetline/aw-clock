@@ -1,4 +1,6 @@
 // #!/usr/bin/env node
+// noinspection TypeScriptValidateJSTypes
+
 /*
   Copyright © 2018-2025 Kerry Shetline, kerry@shetline.com
 
@@ -35,11 +37,12 @@ import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp, defaultOutdoorChannel, getTempHumidityData } from './temp-humidity-router';
 import { router as changelogRouter } from './changelog-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, safeCompareVersions, timeStamp, unref } from './awcs-util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
 import { NtpPoolPoller } from './ntp-pool-poller';
 import { HtmlParser } from 'fortissimo-html';
+import { safeCompareVersions } from './shared-utils';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
@@ -248,7 +251,9 @@ function onError(error: any): void {
     case 'EACCES':
       console.error(bind + ' requires elevated privileges');
       process.exit(1);
-      break;
+
+    // There really is no chance of fallthrough, but a break statement produces an unreachable code warning.
+    // eslint-disable-next-line no-fallthrough
     case 'EADDRINUSE':
       console.error(bind + ' is already in use');
 
@@ -464,7 +469,8 @@ function getApp(): Express {
     if (req.query.callback)
       res.jsonp(time);
     else if (req.query.json != null)
-      res.json(time);
+      // noinspection ES6MissingAwait
+      res.json(time); // But this doesn't need an await!
     else
       res.send(time.text);
   });

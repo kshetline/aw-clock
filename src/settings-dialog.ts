@@ -9,11 +9,12 @@ import {
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
   adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, getText, incrementDialogCounter,
-  popKeydownListener, pushKeydownListener, safeCompareVersions
+  popKeydownListener, pushKeydownListener
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
 import { beep, clone, eventToKey, htmlEscape, isEqual, isFirefox, noop, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
+import { safeCompareVersions } from '../server/src/shared-utils';
 
 const ERROR_BACKGROUND = '#FCC';
 const WARNING_BACKGROUND = '#FFC';

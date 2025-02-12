@@ -1,3 +1,5 @@
+// noinspection TypeScriptValidateJSTypes
+// The Typescript typedefs for JQuery aren't working very well.
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, mod, Point, sin_deg } from '@tubular/math';
@@ -5,7 +7,6 @@ import {
   asLines, htmlEscape, isEdge, isFunction, isObject, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
 } from '@tubular/util';
-import compareVersions, { CompareOperator } from 'compare-versions';
 
 export type KeyListener = (event: KeyboardEvent) => void;
 export type ClickishEvent = JQuery.ClickEvent | MouseEvent
@@ -84,7 +85,7 @@ export function getJson<T>(url: string, options?: JsonOptions): Promise<T> {
         if (options)
           options.xhr = jqXHR;
       },
-      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
+      error: (_jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
     });
   });
 }
@@ -111,7 +112,7 @@ export function getText(url: string): Promise<string> {
     $.ajax({
       url,
       success: (data: string, _textStatus: string) => { resolve(data); },
-      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
+      error: (_jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
     });
   });
 }
@@ -483,23 +484,4 @@ export function localDateString(time: number, zone: Timezone): string {
 
   return new Date(wallTime.y, wallTime.m - 1, wallTime.d, 12).toLocaleDateString(undefined,
     { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-export function safeCompareVersions(firstVersion: string, secondVersion: string, defValue?: number): number;
-export function safeCompareVersions(firstVersion: string, secondVersion: string, operator?: CompareOperator, defValue?: boolean): boolean;
-export function safeCompareVersions(firstVersion: string, secondVersion: string,
-                                    operatorOrDefValue: CompareOperator | number, defValue = false): number | boolean {
-  try {
-    if (isString(operatorOrDefValue))
-      return compareVersions.compare(firstVersion, secondVersion, operatorOrDefValue);
-    else {
-      /* false inspection alarm */ // noinspection JSUnusedAssignment
-      operatorOrDefValue = operatorOrDefValue ?? -1;
-
-      return compareVersions(firstVersion, secondVersion);
-    }
-  }
-  catch {}
-
-  return isString(operatorOrDefValue) ? defValue : operatorOrDefValue;
 }

@@ -97,7 +97,7 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
 
   env.DISPLAY = ':0';
 
-  // Get the current display user. Probably "pi", but lets make sure.
+  // Get the current display user. Probably "pi", but let's make sure.
   try {
     const users = (await monitorProcess(spawn('users'))).split(/\s+/);
 
