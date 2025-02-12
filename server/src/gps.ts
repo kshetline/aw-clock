@@ -29,7 +29,7 @@ export class Gps extends TimePoller {
   private gpsData: GpsData = { fix: 0, signalQuality: 0 };
   private googleAccessDenied = false;
   private googleKey: string;
-  private gpsHighDelay = false;
+  private roundTripDelay = false;
   private gpspipe: ChildProcess;
   private lastGpsInfo = 0;
   private leapSecond = 0;
@@ -115,7 +115,7 @@ export class Gps extends TimePoller {
           if ((this.gpsData.fix || 0) === 0)
             this.gpsData.signalQuality = 0;
           else {
-            this.gpsData.signalQuality = (this.gpsData.fix === 1 ? 75 : 100) * (this.gpsHighDelay ? 0.667 : 1);
+            this.gpsData.signalQuality = (this.gpsData.fix === 1 ? 75 : 100) * (this.roundTripDelay ? 0.667 : 1);
 
             if (!this.gpsData.pps)
               this.gpsData.signalQuality /= 2;
@@ -177,11 +177,11 @@ export class Gps extends TimePoller {
     this.gpsData.ntpFallback = false;
 
     for (const line of ntpInfo) {
-      const $ = /^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s([-+]?[.\d]+)\s+[.\d]+\s*$/.exec(line);
+      const $ = /^[*+x]SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s([.\d]+)\s+[-+]?[.\d]+\s+[.\d]+\s*$/.exec(line);
 
       if ($) {
         this.systemTimeIsGps = true;
-        this.gpsHighDelay = (abs(toNumber($[1])) > 1);
+        this.roundTripDelay = (toNumber($[1]) > 1);
         break;
       }
       else if (line.startsWith('*'))
