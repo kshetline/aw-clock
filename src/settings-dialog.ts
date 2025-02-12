@@ -801,19 +801,7 @@ export class SettingsDialog {
           const $this = $(this);
 
           $this.on('click', () => {
-            if (!self.savedLocation) {
-              self.savedLocation = {
-                name: self.currentCity.val().toString(),
-                lat: self.latitude.val().toString(),
-                lon: self.longitude.val().toString()
-              };
-            }
-
-            setTimeout(() => {
-              if (self.savedLocation)
-                self.searchUndo.css('display', 'block');
-            }, 500);
-
+            self.saveLocation();
             self.currentCity.val($this.find('td.name').text().replace(/ \([^)]+\)/g, ''));
             self.latitude.val($this.data('lat'));
             self.longitude.val($this.data('lon'));
@@ -836,6 +824,21 @@ export class SettingsDialog {
         this.searching.css('visibility', 'hidden');
         this.alert(reason || 'Unable to access geographic database.');
       });
+    }
+  }
+
+  private saveLocation(): void {
+    if (!this.savedLocation) {
+      this.savedLocation = {
+        name: this.currentCity.val().toString(),
+        lat: this.latitude.val().toString(),
+        lon: this.longitude.val().toString()
+      };
+
+      setTimeout(() => {
+        if (this.savedLocation)
+          this.searchUndo.css('display', 'block');
+      }, 500);
     }
   }
 
@@ -1411,6 +1414,7 @@ export class SettingsDialog {
 
   private fillInGpsLocation(): void {
     if (this.defaultLocation) {
+      this.saveLocation();
       this.selectTab(Tab.OPTIONS);
       this.currentCity.val(adjustCityName(this.defaultLocation.city));
       this.latitude.val(this.defaultLocation.latitude.toString());
