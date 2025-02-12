@@ -363,7 +363,7 @@ if (treatAsRaspberryPi) {
       delete settings.AWC_WIRELESS_TEMP;
       delete settings.AWC_NTP_SERVER;
 
-      const oldKiosk = oldSettings.AWC_KIOSK_MODE?.toLowerCase().charAt(0);
+      const oldKiosk = /^(fa|0)/i.test(oldSettings.AWC_KIOSK_MODE) ? 'n' : oldSettings.AWC_KIOSK_MODE?.toLowerCase().charAt(0);
 
       if (clearKiosk)
         doKiosk = false;

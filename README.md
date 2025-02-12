@@ -58,7 +58,7 @@ If you choose to launch the clock with Firefox, and also want audio alarms to wo
 
 You can be pickier than this about autoplay privileges, narrowing the autoplay permission to localhost, but this is the easiest way to ensure audio playback.
 
-> Note: If you switch browsers, your alarms and many other preferences DON'T come along for the ride! These things are saved in each browser’s *local storage*, which is not shared between browsers.
+> Note: If you switch browsers your alarms and many other preferences DON’T come along for the ride! These things are saved in each browser’s *local storage*, which is not shared between browsers.
 
 Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if you want to be able to use the clock’s Settings dialog to perform these basic administrative functions. This is especially convenient if you’re using a touchscreen, and you don’t want to have to use SSH or VNC to perform these operations.
 
@@ -95,7 +95,9 @@ Your city might be filled in automatically by using your IP address &mdash; but 
 ![user settings screenshot - alarms](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-alarms.jpg)
 ![user settings screenshot - alert-filters](https://shetline.com/readme/aw-clock/3.3.0/awc-dlog-alert-filters.jpg)
 
-Using Chromium, you can close the web browser while it’s running in full-screen kiosk mode, press `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
+Using Chromium, you can close the web browser while it’s running in full-screen kiosk mode by pressing `Alt-F4`, or use the Settings/Quit button if available. To get out of full screen mode, but leave the browser running, press `Alt-F11`.
+
+Using Firefox you will have to depend on using the Settings dialog to exit the web browser, provided you allowed for that ability during the initial setup &mdash; Firefox is stricter about kiosk limitations. There is no Firefox equivalent for the Chromium `Alt-F11` action.
 
 ### Hardware set-up for temperature/humidity sensors
 
@@ -141,13 +143,13 @@ Stop alarm: &lt;space&gt; *or* Enter<br>Snooze 5 minutes: 5<br>Snooze 10 minutes
 
 ### Custom alarm tones
 
-When you perform the standard dedicated device installation, a folder will be created for your own alarm tones at `/home/pi/awc-alarm-tones`. Simply add MP3, MP4, or OGG audio files to this folder to make them available for alarms.
+When you perform the standard dedicated device installation, a folder will be created for your own alarm tones at `/home/`_username_ `/awc-alarm-tones`. Simply add MP3, MP4, or OGG audio files to this folder to make them available for alarms.
 
 ### Temporarily disabling upcoming alarms
 
 <img src="https://shetline.com/readme/aw-clock/3.3.0/alarm-indicator.jpg" width=105 height=85 alt="alarm indicator">&nbsp;&nbsp;&nbsp;<img src="https://shetline.com/readme/aw-clock/3.3.0/alarm-disabled.jpg" width=105 height=85 alt="alarm indicator">
 
-Ever wake up before your alarm goes off, don’t walk to worry about the alarm going off when you aren’t around, but you're also worried that if you turn the alarm off you’ll forget to turn it back on again for when you need it next?
+Ever wake up before your alarm goes off, don’t want to worry about the alarm going off when you aren’t around, but you’re also worried that if you turn the alarm off you’ll forget to turn it back on again for when you need it next?
 
 When an alarm is coming up within the next 24 hours a green alarm indicator is displayed, as seen above, near the middle of the top of the screen, to the right of the current date. The time of the next upcoming alarm is shown.
 
@@ -157,7 +159,7 @@ If you tap/click on this indicator, alarms will be temporarily disabled for the 
 
 It’s a really good idea to look out for water that might be very cold, even though high air temperatures might fool you into thinking the water might be warmer and safe for a swim.
 
-I get that. I don't need a scrolling banner warning me everytime this situation arises, however. I'm also not personally particularly concerned about airport weather warnings either.
+I get that. I don’t need a scrolling banner warning me everytime this situation arises, however. I’m also not often personally concerned about airport weather warnings either.
 
 This is where weather alert filters come in. You can enter a word or phrase, either found in the title of an alert, or in the full description of the alert, and either have that alert hidden from the banner at the bottom of the screen, or have the alert downgraded to general information without an associated alert color.
 
@@ -181,13 +183,13 @@ In the Settings dialog, however, you can choose to display wind speed in knots w
 
 The barbed ends of the wind barbs point in the direction from which the wind is blowing, with north being upward. Wind gust speed is represented by a red wind barb drawn underneath the non-gust wind barb, such that only the excess gust speed is seen, peeking out from behind.
 
-Current wind speed is also shown as an arc along the edge of the clock face, changing in size and color (from cyan to green, to yellow, to orange, and to red) as wind speed increases. If there is a gust speed, which will show as a second thinner but wider arc. These arcs are centered on the direction from which the wind is coming, with an inward pointer pointing in the direction toward which the wind is blowing. There are no arcs drawn for wind below 2.5 knots (or below 1.25 m/s).
+Current wind speed is also shown as an arc along the edge of the clock face, changing in size and color (from cyan to green, to yellow, to orange, and to red) as wind speed increases. If there is a gust speed, it will show as a second thinner but wider arc. These arcs are centered on the direction from which the wind is coming, with an inward pointer pointing in the direction toward which the wind is blowing. There are no arcs drawn for wind below 2.5 knots (or below 1.25 m/s).
 
 ### How the planet display works
 
 The circular tracks around the center of the clock face display the ecliptic longitude of the Sun, the Moon, Mercury, Venus, Mars, Jupiter, and Saturn (in that order, from the innermost track outward), starting with 0° (the First Point of Aries) at three o’clock, and increasing *counterclockwise* from there. Over time the planets will slowly move around the clock face, mostly moving counterclockwise, but occasionally clockwise when retrograde.
 
-When the symbol for a planet is drawn larger, and it appears on top of one of the green and/or purple arcs along the planet tracks, this indicates the planet is above the local horizon. Otherwise, it is below the horizon. The green/purple arcs turn clockwise, so the clockwise end of each arc represents when a planet rises, and the counter-clockwise end represents when a planet sets. When a planet is on top of the purple portion of an arc, this indicates that the sun is below the horizon at that time &mdash; the planet is therefore in the night sky, and likely visible if twilight doesn’t overpower it.
+When the symbol for a planet is drawn larger, and it appears on top of one of the green and/or purple arcs along the planet tracks, this indicates the planet is above the local horizon. Otherwise, it is below the horizon. The green/purple arcs turn clockwise, so the clockwise end of each arc represents when a planet rises, and the counter-clockwise end represents when a planet sets. When a planet is on top of the purple portion of an arc, this indicates that the sun is below the horizon at that time &mdash; the planet is therefore in the night sky, and likely visible if twilight doesn’t overpower it and clouds don’t get in the way.
 
 For roughly half an hour after a planet sets, its horizon arcs will be colored blue, indicating that the rise-to-set period being displayed is in the past. Arcs in green and purple represent the current or upcoming rise/set period.
 
@@ -293,8 +295,8 @@ While this would actually be a good thing if it meant I could hook up the clock 
 
 * Raspberry Pi 4 with 2 GB RAM
 * [Adafruit Ultimate GPS HAT](https://www.adafruit.com/product/2324) (connected using a stacking header, so it was still easy to attach the leads for the temperature/humidity sensor and the RF receiver)
-* [Active GPS antenna](https://www.amazon.com/Antenna-Active-Aerial-Connector-Stereos/dp/B07RRT615K/)
-* 2560x1600 ELECROW 10.1" touchscreen (in [*pixel doubling mode (see note)*](#pixel-doubling-using-raspbian-bullseye))
+* [Active GPS antenna](https://www.amazon.com/Bingfu-Waterproof-Navigation-Adhesive-Receiver/dp/B083D59N55/)
+* 2560x1600 ELECROW 10.1" touchscreen ([*see note on screen resolution*](#screen-resolution))
 * Custom-printed 3D stand
 * Wired DHT22/AM2302 sensor
 * 2 x 433 MHz Acu Rite 06002M wireless temperature and humidity sensors
@@ -328,7 +330,7 @@ To build the server along with the web client, use `npm run build`, possibly fol
 | `‑‑ddev`         | This stands for “dedicated device”. This is for setting up a Raspberry Pi to primarily serve as an Astronomy/Weather Clock, automatically booting as a clock in full-screen mode. This implies the `‑‑sd` option. |
 | `‑‑dht`          | Install support for a wired DHT22/AM2302 temperature/humidity sensor.                                                                                                                                             |
 | `‑‑dht‑`         | Clears saved `‑‑dht` setting when not using interactive mode.                                                                                                                                                     |
-| `‑‑firefox`      | Launch clock display using Firefox browser instead of Chromium.                                                                                                                                                   |
+| `‑‑firefox`      | Launch clock display using Firefox browser instead of the default of Chromium.                                                                                                                                    |
 | `‑‑firefox-`     | Clears `--firefox` setting when not using interactive mode.                                                                                                                                                       |
 | `‑‑fullscreen`   | Launch Chromium in full-screen mode without full kiosk restrictions. Same as `‑‑kiosk` for Firefox.                                                                                                               |
 | `‑‑fullscreen-`  | Clears `-fullscreen` setting when not using interactive mode.                                                                                                                                                     |
@@ -351,7 +353,7 @@ The following environment variables affect how the server part of this software 
 * `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `/etc/defaults/weatherService` file, or by setting it to `false`.
 * `AWC_GIT_REPO_PATH`: The path to your aw-clock Git repository.
 * `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or in addition, you can set up `AWC_WEATHERBIT_API_KEY` for both geocoding and weather data.
-* `AWC_KIOSK_MODE`: `true` or `false` for whether or not the dedicated-device web browser is launched in kiosk mode (the default) or not. *(Note: Changing this setting alone will not change kiosk behavior. If you want to change kiosk mode without running `build.sh` again, you must edit the file `/home/pi/.config/lxsession/LXDE-pi/autostart` to add or remove the `‑‑kiosk` parameter from the `chromium-browser` command.)*
+* `AWC_KIOSK_MODE`: `kiosk` (AKA `true`), `full-screen`, or `no` (AKA `false`) for whether or the dedicated-device web browser is launched in kiosk mode (the default), non-kiosk full-screen, or with a standard window. When using Firefox, `full-screen` is treated the same as `kiosk`. *(Note: Changing this setting alone will not change kiosk behavior. If you want to change kiosk mode without running `build.sh` again, you must edit the file `/home/pi/.config/lxsession/LXDE-pi/autostart_extra.sh` to add or remove the `‑‑kiosk` parameter from the browser launch command.)*
 * `AWC_LOG_CACHE_ACTIVITY`: As a debugging/development aid, set to `true` to enable additional logging of the server’s web cache behavior.
 * `AWC_NTP_SERVERS`: Optional alternate NTP servers used by this software, as a comma-separated list of domain names. (See previous comments about selecting alternate servers.)
 * `AWC_PORT`: By default the deployed server runs on localhost port 8080, but you can use a different port if you prefer.
@@ -388,26 +390,20 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 
 <!-- markdownlint-disable-next-line MD001 MD029 -->
 17. The file `weatherService` (located in the `raspberry_pi_setup` folder) is copied to `/etc/init.d/`, and changed to root ownership.
-1. Server set-up options are saved to `/etc/defaults/weatherService`, which is also owned by root. Rather than re-running the installer to change the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
+1. Server set-up options are saved to `/etc/defaults/weatherService`, which is also owned by root. Rather than re-running the installer to change most aspects of the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
 1. The commands `sudo update-rc.d weatherService defaults` and `sudo systemctl enable weatherService` are performed to establish and enable the service.
-1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `‑pi` on the end for Debian), or the existing `autostart` file is modified, to launch the Chromium web browser in kiosk mode, displaying the Astronomy/Weather Clock.
-1. The included file `autostart_extra.sh` is also copied to the above directory. This adds code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up.
-. The options `‑‑launch` or `‑‑reboot` are performed if specified.
+1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `‑pi` on the end for Debian), or the existing `autostart` file is modified, to run the following script...
+1. The included file `autostart_extra.sh` is also copied to the above directory. This includes code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up. The code then makes sure the clock server is running before launching your chosen web browser with the clock application.
+1. For Raspbian Bookworm or later, `~/.config/wayfire.ini` is also modified to run `autostart_extra.sh`.
+1. The options `‑‑launch` or `‑‑reboot` are performed if specified.
 
-### Pixel doubling using Raspbian Bullseye
+### Screen Resolution
 
-When using a high resolution display like the 2560x1600 ELECROW 10.1" monitor I chose to use, which is nearly 300 ppi (~120 pixels per cm) you’ll often want to apply a scaling/zooming factor to the display, otherwise text and other details will be impractically small to see. Before the Bullseye release of Debian Linux for the Raspberry Pi, this kind of scaling was typically done using the pixel doubling option below:
+When using a small but high resolution display like the 2560x1600 ELECROW 10.1" monitor I chose to use, which is nearly 300 ppi (~120 pixels per cm) you’ll typically want to apply a scaling/zooming factor to the display, otherwise text and other details will be impractically small to see. With earlier releases of Raspbian this kind of scaling would be done using the pixel doubling option below:
 
-![Stand attached to monitor](https://shetline.com/readme/aw-clock/3.3.0/config-pixel-dbl.jpg)
+![pixel doubling](https://shetline.com/readme/aw-clock/3.3.0/config-pixel-dbl.jpg)
 
-When I set this mode after a fresh installation of Bullseye, however, I ended up with a blank screen, had to reboot via SSH, and was back to squinting at my screen. The above method turns out to not be the best way to handle display scaling with Bullseye’s new GTK+3 UI toolkit.
-
-The generally recommended approach is to go into Preferences/Appearance Settings/Defaults and select “Set Defaults” “For large screens”. This doesn’t scale everything for all apps at once, however, and I found editing the file `/usr/share/dispsetup.sh` as follows to produce better results for me:
-
-```text
-#!/bin/sh
-xrandr --output HDMI-1 --primary --scale 0.5x0.5
-```
+With later versions of Raspbian all you need to do is set a lower display resolution than the native resolution of your display to get sharp but smooth text instead of very tiny text.
 
 ### Adafruit GPS HAT installation notes
 
