@@ -178,7 +178,7 @@ export class Gps extends TimePoller {
     this.gpsData.ntpFallback = false;
 
     for (const line of ntpInfo) {
-      const $ = /^[*+x]SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s+(\d+)\s([.\d]+)\s+[-+]?[.\d]+\s+[.\d]+\s*$/.exec(line);
+      const $ = /^[*+x]SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s+(\d+)\s+([.\d]+)\s+[-+]?[.\d]+\s+[.\d]+\s*$/.exec(line);
 
       if ($) {
         const reach = toInt($[1], 0, 8);
