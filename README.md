@@ -2,7 +2,9 @@
 
 ![raspberry pi logo](https://shetline.com/readme/aw-clock/3.3.0/rpi_logo.svg)
 
-This project is designed to create a desktop clock which provides weather and astronomical information while additionally functioning as an alarm clock. Although primarily designed to run on a Raspberry Pi, the project generates a Node.js server and a client web app which can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors. GPS support is also primarily aimed at the Raspberry Pi, but might work with other Linux variants if similarly configured.
+This project is designed to create a desktop clock that provides weather and astronomical information while additionally functioning as an alarm clock.
+
+Although primarily designed to run on a Raspberry Pi, the project generates a Node.js server and a client web app which can be run on other computers and operating systems, albeit without the Raspberry Pi’s hardware-level support for wired and wireless temperature/humidity sensors. GPS support is also primarily aimed at the Raspberry Pi, but might work with other Linux variants if similarly configured.
 
 The clock displays the time and date in both analog and digital form, in 12- or 24-hour format, and has a special display mode for the occasional leap second. The clock also displays current weather conditions, hourly conditions for 24 hours, a seven*-day forecast, filterable weather alerts, sunrise and sunset times, moonrise and moonset times*, moon phases, equinoxes, solstices, and the positions of the Sun, Moon, and major planets along the ecliptic.
 
@@ -54,7 +56,7 @@ If you choose to launch the clock with Firefox, and also want audio alarms to wo
 
 <img src="https://shetline.com/readme/aw-clock/3.3.0/firefox-autoplay.jpg" alt="drawing" width="600"/>
 
-You can be pickier than this, narrowing the autoplay permission to localhost, but this is the easiest way to ensure audio playback.
+You can be pickier than this about autoplay privileges, narrowing the autoplay permission to localhost, but this is the easiest way to ensure audio playback.
 
 > Note: If you switch browsers, your alarms and many other preferences DON'T come along for the ride! These things are saved in each browser’s *local storage*, which is not shared between browsers.
 

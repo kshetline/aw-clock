@@ -37,12 +37,11 @@ import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp, defaultOutdoorChannel, getTempHumidityData } from './temp-humidity-router';
 import { router as changelogRouter } from './changelog-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, safeCompareVersions, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
 import { NtpPoolPoller } from './ntp-pool-poller';
 import { HtmlParser } from 'fortissimo-html';
-import { safeCompareVersions } from './shared-utils';
 
 const debug = require('debug')('express:server');
 const ENV_FILE = '../.vscode/.env';
