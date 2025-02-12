@@ -19,6 +19,6 @@
     </wildcardResourcePatterns>
   </component>
   <component name="TypeScriptCompiler">
-    <option name="showAllErrors" value="true" />
+    <option name="typeScriptCompilerParams" value="--excludeFiles &quot;build.ts&quot;" />
   </component>
 </project>

@@ -250,6 +250,7 @@ export class SettingsDialog {
   private reloadButton: JQuery;
   private searching: JQuery;
   private searchMessage: JQuery;
+  private searchUndo: JQuery;
   private seconds: JQuery;
   private showSkyMap: JQuery;
   private simWarning: JQuery;
@@ -271,6 +272,7 @@ export class SettingsDialog {
   private nowPlaying: HTMLAudioElement;
   private previousSettings: Settings;
   private recentLocations: RecentLocation[] = [];
+  private savedLocation: { name: string, lat: string, lon: string };
   private searchFieldFocused = false;
   private searchButtonFocused = false;
   private serviceSetting = '';
@@ -331,6 +333,7 @@ export class SettingsDialog {
     this.searchCity = $('#search-city');
     this.searching = $('.searching');
     this.searchMessage = $('#search-message');
+    this.searchUndo = $('#search-undo');
     this.seconds = $('#seconds-option');
     this.showSkyMap = $('#sky-map-option');
     this.shutdownButton = $('#settings-shutdown');
@@ -354,6 +357,7 @@ export class SettingsDialog {
     this.updateButton.on('blur', () => this.updateFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
     this.tabs.on('click', (evt) => this.tabClicked(evt));
+    this.searchUndo.on('click', () => this.restoreSavedLocation());
 
     this.dimming.on('change', () => {
       this.enableDimmingRange(this.dimming.val() !== '0');
@@ -797,9 +801,23 @@ export class SettingsDialog {
           const $this = $(this);
 
           $this.on('click', () => {
+            if (!self.savedLocation) {
+              self.savedLocation = {
+                name: self.currentCity.val().toString(),
+                lat: self.latitude.val().toString(),
+                lon: self.longitude.val().toString()
+              };
+            }
+
+            setTimeout(() => {
+              if (self.savedLocation)
+                self.searchUndo.css('display', 'block');
+            }, 500);
+
             self.currentCity.val($this.find('td.name').text().replace(/ \([^)]+\)/g, ''));
             self.latitude.val($this.data('lat'));
             self.longitude.val($this.data('lon'));
+            self.searchMessage.text(self.currentCity.val() + ' selected');
 
             if (self.lastCityClick)
               self.lastCityClick.removeClass('city-highlight');
@@ -818,6 +836,16 @@ export class SettingsDialog {
         this.searching.css('visibility', 'hidden');
         this.alert(reason || 'Unable to access geographic database.');
       });
+    }
+  }
+
+  private restoreSavedLocation(): void {
+    if (this.savedLocation) {
+      this.currentCity.val(this.savedLocation.name);
+      this.latitude.val(this.savedLocation.lat);
+      this.longitude.val(this.savedLocation.lon);
+      this.searchUndo.css('display', 'none');
+      this.savedLocation = undefined;
     }
   }
 
@@ -1079,6 +1107,8 @@ export class SettingsDialog {
       decrementDialogCounter();
       popKeydownListener();
       this.okButton.off('click', this.doOK);
+      this.savedLocation = undefined;
+      this.searchUndo.css('display', 'none');
       this.dialog.css('display', 'none');
     });
 
@@ -1300,6 +1330,8 @@ export class SettingsDialog {
     popKeydownListener();
     this.okButton.off('click', this.doOK);
     this.dialog.css('display', 'none');
+    this.savedLocation = undefined;
+    this.searchUndo.css('display', 'none');
     this.appService.updateSettings(newSettings);
   };
 

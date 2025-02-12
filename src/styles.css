@@ -603,8 +603,21 @@ input, button, select, textarea, optgroup, option {
   position: relative;
 }
 
-#search-message {
+.search-message-wrapper {
+  display: flex;
+  justify-content: space-between;
   margin: 4px 0;
+  width: 100%;
+}
+
+#search-message {
+  padding: 2px;
+}
+
+#search-undo {
+  color: #D04;
+  cursor: pointer;
+  display: none;
   padding: 2px;
 }
 
