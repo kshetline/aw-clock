@@ -35,6 +35,7 @@ module.exports = {
   externals: {
     'i2c-bus': 'commonjs i2c-bus',
     'node-dht-sensor': 'commonjs node-dht-sensor',
+    'node-dht-sensor-rp5': 'commonjs node-dht-sensor-rp5',
     'rpi-acu-rite-temperature': 'commonjs rpi-acu-rite-temperature'
   },
   optimization: {

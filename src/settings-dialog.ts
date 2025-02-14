@@ -847,6 +847,7 @@ export class SettingsDialog {
       this.currentCity.val(this.savedLocation.name);
       this.latitude.val(this.savedLocation.lat);
       this.longitude.val(this.savedLocation.lon);
+      this.searchMessage.text('');
       this.searchUndo.css('display', 'none');
       this.savedLocation = undefined;
     }
@@ -1419,6 +1420,7 @@ export class SettingsDialog {
       this.currentCity.val(adjustCityName(this.defaultLocation.city));
       this.latitude.val(this.defaultLocation.latitude.toString());
       this.longitude.val(this.defaultLocation.longitude.toString());
+      this.searchMessage.text('GPS location selected');
 
       const gpsFlash = $('.gps-flash');
 
