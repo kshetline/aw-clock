@@ -3,6 +3,7 @@
     <option name="myName" value="Project Default" />
     <option name="scopesOrder">
       <list>
+        <option value="build.ts" />
         <option value="All Changed Files" />
         <option value="Nx Apps" />
         <option value="Nx Apps&amp;Libs" />
@@ -52,9 +53,14 @@
     <inspection_tool class="DuplicatedCode" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <Languages>
         <language minSize="70" name="JavaScript" />
+        <language minSize="98" name="TypeScript" />
       </Languages>
     </inspection_tool>
+    <inspection_tool class="ES6ConvertRequireIntoImport" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="FormSpellChecking" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="SVG files" level="WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
@@ -102,6 +108,9 @@
         </list>
       </option>
     </inspection_tool>
+    <inspection_tool class="JSDeprecatedSymbols" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="build.ts" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="JSSuspiciousNameCombination" enabled="false" level="WARNING" enabled_by_default="false">
       <group names="x,width,left,right" />
       <group names="y,height,top,bottom" />
@@ -111,11 +120,16 @@
       <scope name="webpack" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="JSUnresolvedReference" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="webpack" level="WEAK WARNING" enabled="false">
+        <option name="myStrictlyCheckProperties" value="false" />
+      </scope>
       <option name="myStrictlyCheckProperties" value="false" />
     </inspection_tool>
     <inspection_tool class="JSValidateTypes" enabled="false" level="WEAK WARNING" enabled_by_default="false">
       <scope name="webpack" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
+    <inspection_tool class="MarkdownIncorrectlyNumberedListItem" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NonAsciiCharacters" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RegExpSuspiciousBackref" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RegExpUnnecessaryNonCapturingGroup" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="SpellCheckingInspection" enabled="true" level="TYPO" enabled_by_default="true">
@@ -134,6 +148,9 @@
       <option name="processComments" value="true" />
     </inspection_tool>
     <inspection_tool class="TsLint" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="TypeScriptValidateJSTypes" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="build.ts" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="WebpackConfigHighlighting" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="XmlDefaultAttributeValue" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="SVG files" level="WARNING" enabled="false" />

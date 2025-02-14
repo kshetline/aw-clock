@@ -1,3 +1,4 @@
+// Using `require` causes a warning, but using `import` instead causes webpack to fail.
 const { version } = require('../package.json');
 
 // It's annoying that TypeScript doesn't itself provide a way to create a runtime list of
@@ -144,11 +145,12 @@ export interface TempHumidityData {
 
 export interface GpsData {
   altitude?: number; // in meters
-  averageSNR?: number, // in dBHz
+  averageSNR?: number; // in dBHz
   city?: string;
-  error?: string,
-  estimatedPositionError?: number, // max of epx and epy, in meters.
+  error?: string;
+  estimatedPositionError?: number; // max of epx and epy, in meters.
   fix: number; // 0 = invalid, 1 = GPS, 2 = DGPS
+  goodGpsReach?: boolean; // Did at least one of the last time polls have good PPS?
   latitude?: number;
   longitude?: number;
   ntpFallback?: boolean;

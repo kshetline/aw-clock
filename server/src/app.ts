@@ -1,4 +1,6 @@
 // #!/usr/bin/env node
+// noinspection TypeScriptValidateJSTypes
+
 /*
   Copyright © 2018-2025 Kerry Shetline, kerry@shetline.com
 
@@ -248,7 +250,9 @@ function onError(error: any): void {
     case 'EACCES':
       console.error(bind + ' requires elevated privileges');
       process.exit(1);
-      break;
+
+    // There really is no chance of fallthrough, but a break statement produces an unreachable code warning.
+    // eslint-disable-next-line no-fallthrough
     case 'EADDRINUSE':
       console.error(bind + ' is already in use');
 
@@ -464,7 +468,8 @@ function getApp(): Express {
     if (req.query.callback)
       res.jsonp(time);
     else if (req.query.json != null)
-      res.json(time);
+      // noinspection ES6MissingAwait
+      res.json(time); // But this doesn't need an await!
     else
       res.send(time.text);
   });

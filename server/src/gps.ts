@@ -2,7 +2,7 @@ import { ChildProcess } from 'child_process';
 import os from 'os';
 import { parseISODate } from '@tubular/time';
 import { abs, floor, max, round } from '@tubular/math';
-import { asLines, processMillis, toNumber } from '@tubular/util';
+import { asLines, processMillis, toInt, toNumber } from '@tubular/util';
 import { NtpData } from './ntp-data';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
 import { ForecastData, GpsData, TimeInfo } from './shared-types';
@@ -29,7 +29,7 @@ export class Gps extends TimePoller {
   private gpsData: GpsData = { fix: 0, signalQuality: 0 };
   private googleAccessDenied = false;
   private googleKey: string;
-  private gpsHighDelay = false;
+  private roundTripDelay = false;
   private gpspipe: ChildProcess;
   private lastGpsInfo = 0;
   private leapSecond = 0;
@@ -105,7 +105,7 @@ export class Gps extends TimePoller {
           this.gpsData.longitude = toNumber(obj.lon.toFixed(5));
           this.gpsData.altitude = obj.altHAE ?? obj.alt ?? 0;
           this.gpsData.fix = max(0, obj.mode - 1, obj.status ?? 0, this.gpsData.fix ?? 0);
-          this.gpsData.pps = this.systemTimeIsGps;
+          this.gpsData.pps = this.systemTimeIsGps && this.gpsData.goodGpsReach;
 
           if (obj.epx != null && obj.epy != null)
             this.gpsData.estimatedPositionError = max(obj.epx, obj.epy);
@@ -115,7 +115,7 @@ export class Gps extends TimePoller {
           if ((this.gpsData.fix || 0) === 0)
             this.gpsData.signalQuality = 0;
           else {
-            this.gpsData.signalQuality = (this.gpsData.fix === 1 ? 75 : 100) * (this.gpsHighDelay ? 0.667 : 1);
+            this.gpsData.signalQuality = (this.gpsData.fix === 1 ? 75 : 100) * (this.roundTripDelay ? 0.667 : 1);
 
             if (!this.gpsData.pps)
               this.gpsData.signalQuality /= 2;
@@ -174,17 +174,20 @@ export class Gps extends TimePoller {
     const ntpInfo = asLines(await monitorProcess(spawn('ntpq', ['-p']), null, ErrorMode.NO_ERRORS));
 
     this.systemTimeIsGps = false;
+    this.gpsData.goodGpsReach = false;
     this.gpsData.ntpFallback = false;
 
     for (const line of ntpInfo) {
-      const $ = /^\*SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s([-+]?[.\d]+)\s+[.\d]+\s*$/.exec(line);
+      const $ = /^[*+x]SHM\b.+\.PPS\.\s+0\s+l\s+.+?\s+(\d+)\s+([.\d]+)\s+[-+]?[.\d]+\s+[.\d]+\s*$/.exec(line);
 
       if ($) {
+        const reach = toInt($[1], 0, 8);
+
         this.systemTimeIsGps = true;
-        this.gpsHighDelay = (abs(toNumber($[1])) > 1);
-        break;
+        this.gpsData.goodGpsReach = ((reach & 7) !== 0);
+        this.roundTripDelay = (toNumber($[2], 2) > 1);
       }
-      else if (line.startsWith('*'))
+      else if (!/.SHM\b/.test(line) && (line.startsWith('*') || (this.systemTimeIsGps && line.startsWith('+'))))
         this.gpsData.ntpFallback = true;
     }
 
@@ -251,6 +254,9 @@ export class Gps extends TimePoller {
   }
 
   private async googleLocationCheck(coords: GpsData, now: number): Promise<void> {
+    if (coords?.latitude == null || coords?.longitude == null)
+      return;
+
     this.checkLocationRetry = Number.MAX_SAFE_INTEGER;
 
     try {
@@ -319,6 +325,9 @@ export class Gps extends TimePoller {
   }
 
   private async weatherbitLocationCheck(coords: GpsData, now: number): Promise<void> {
+    if (coords?.latitude == null || coords?.longitude == null)
+      return;
+
     let forecast: ForecastData | Error;
     const lat = coords.latitude.toString();
     const lon = coords.longitude.toString();

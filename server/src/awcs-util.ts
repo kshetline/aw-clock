@@ -36,20 +36,12 @@ export function fToC(f: number): number {
   return (f - 32) / 1.8;
 }
 
-export function cToF(c: number): number {
-  return c * 1.8 + 32;
-}
-
 export function inchesToCm(i: number): number {
   return i * 2.54;
 }
 
 export function milesToKm(m: number): number {
   return m * 1.609344;
-}
-
-export function cmToInches(cm: number): number {
-  return cm / 2.54;
 }
 
 export function inHgToHpa(p: number): number {
@@ -163,6 +155,8 @@ export function alertCleanUp(alertText: string): string {
   if (!/[\u0100-\uFFFF]/.test(alertText) &&
       /[\u00C0-\u00DF][\u0080-\u00BF]|([\u00E0-\u00EF][\u0080-\u00BF]{2})|([\u00F0-\u00F7][\u0080-\u00BF]{3})/.test(alertText)) {
     const bytes = Buffer.from(alertText, 'latin1');
+    // The heck it isn't the right number of arguments!
+    // noinspection TypeScriptValidateJSTypes
     const altText = bytes.toString('utf8');
 
     if (altText.length < alertText.length)

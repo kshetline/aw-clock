@@ -23,8 +23,11 @@
       <w>deflt</w>
       <w>devicetree</w>
       <w>dgps</w>
+      <w>dialout</w>
       <w>doesn</w>
       <w>dtai</w>
+      <w>dtoverlay</w>
+      <w>dtparam</w>
       <w>eboot</w>
       <w>elecrow</w>
       <w>elems</w>
@@ -36,20 +39,29 @@
       <w>flaticon</w>
       <w>gitkeep</w>
       <w>gpio</w>
+      <w>gpiod</w>
+      <w>gpioinfo</w>
+      <w>gpiopin</w>
+      <w>gpsdctl</w>
       <w>gpspipe</w>
       <w>hadn</w>
       <w>hidep</w>
+      <w>hrome</w>
       <w>humidities</w>
       <w>iers</w>
+      <w>iosk</w>
+      <w>irefox</w>
       <w>isual</w>
       <w>jasminewd</w>
       <w>kjhtml</w>
       <w>larr</w>
       <w>latlng</w>
+      <w>libgpiod</w>
       <w>lxde</w>
       <w>lxpanel</w>
       <w>lxsession</w>
       <w>lxterminal</w>
+      <w>maxarg</w>
       <w>miso</w>
       <w>moonset</w>
       <w>mosi</w>
@@ -79,6 +91,7 @@
       <w>rapidapi</w>
       <w>rarr</w>
       <w>raspbian</w>
+      <w>refid</w>
       <w>repoll</w>
       <w>resync</w>
       <w>rotanimate</w>
@@ -91,7 +104,9 @@
       <w>triannually</w>
       <w>trienially</w>
       <w>triweekly</w>
+      <w>ullscreen</w>
       <w>unsynchronized</w>
+      <w>usbauto</w>
       <w>wayfire</w>
       <w>wbproxy</w>
       <w>wddp</w>

@@ -12,7 +12,7 @@ import {
   popKeydownListener, pushKeydownListener, safeCompareVersions
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
-import { beep, clone, eventToKey, htmlEscape, isEqual, noop, toBoolean, toNumber } from '@tubular/util';
+import { beep, clone, eventToKey, htmlEscape, isEqual, isFirefox, noop, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -87,7 +87,7 @@ function p2(n: number): string {
   return n.toString().padStart(2, '0');
 }
 
-function formatDegrees(angle, compassPointsPosNeg, degreeDigits): string {
+function formatDegrees(angle: number, compassPointsPosNeg: string, degreeDigits: number): string {
   const compass = compassPointsPosNeg.charAt(angle < 0 ? 1 : 0);
   angle = Math.abs(angle);
   const degrees = angle.toFixed(3);
@@ -250,6 +250,7 @@ export class SettingsDialog {
   private reloadButton: JQuery;
   private searching: JQuery;
   private searchMessage: JQuery;
+  private searchUndo: JQuery;
   private seconds: JQuery;
   private showSkyMap: JQuery;
   private simWarning: JQuery;
@@ -271,6 +272,7 @@ export class SettingsDialog {
   private nowPlaying: HTMLAudioElement;
   private previousSettings: Settings;
   private recentLocations: RecentLocation[] = [];
+  private savedLocation: { name: string, lat: string, lon: string };
   private searchFieldFocused = false;
   private searchButtonFocused = false;
   private serviceSetting = '';
@@ -331,6 +333,7 @@ export class SettingsDialog {
     this.searchCity = $('#search-city');
     this.searching = $('.searching');
     this.searchMessage = $('#search-message');
+    this.searchUndo = $('#search-undo');
     this.seconds = $('#seconds-option');
     this.showSkyMap = $('#sky-map-option');
     this.shutdownButton = $('#settings-shutdown');
@@ -354,6 +357,7 @@ export class SettingsDialog {
     this.updateButton.on('blur', () => this.updateFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
     this.tabs.on('click', (evt) => this.tabClicked(evt));
+    this.searchUndo.on('click', () => this.restoreSavedLocation());
 
     this.dimming.on('change', () => {
       this.enableDimmingRange(this.dimming.val() !== '0');
@@ -374,6 +378,9 @@ export class SettingsDialog {
     });
 
     const adminAction = (btn: JQuery, msg: string, cmd: string, optionalHtml?: string): void => {
+      if (cmd === 'quit' && isFirefox())
+        cmd = 'quit-firefox';
+
       btn.on('click', () => {
         const message = msg.replace(/%v/g, this.latestVersion);
 
@@ -405,7 +412,7 @@ export class SettingsDialog {
       'Your system will be rebooted.', 'update' + (updateTest ? '?ut=true' : ''), UPDATE_OPTIONS);
     adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
     adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
-    adminAction(this.quitButton, 'Are you sure you want to quit the Chromium web browser?', 'quit');
+    adminAction(this.quitButton, 'Are you sure you want to quit this web browser?', 'quit');
 
     if (!localServer) {
       // Hide indoor/outdoor options by default if this isn't a local server, but check if proxied data
@@ -794,9 +801,11 @@ export class SettingsDialog {
           const $this = $(this);
 
           $this.on('click', () => {
+            self.saveLocation();
             self.currentCity.val($this.find('td.name').text().replace(/ \([^)]+\)/g, ''));
             self.latitude.val($this.data('lat'));
             self.longitude.val($this.data('lon'));
+            self.searchMessage.text(self.currentCity.val() + ' selected');
 
             if (self.lastCityClick)
               self.lastCityClick.removeClass('city-highlight');
@@ -818,6 +827,32 @@ export class SettingsDialog {
     }
   }
 
+  private saveLocation(): void {
+    if (!this.savedLocation) {
+      this.savedLocation = {
+        name: this.currentCity.val().toString(),
+        lat: this.latitude.val().toString(),
+        lon: this.longitude.val().toString()
+      };
+
+      setTimeout(() => {
+        if (this.savedLocation)
+          this.searchUndo.css('display', 'block');
+      }, 500);
+    }
+  }
+
+  private restoreSavedLocation(): void {
+    if (this.savedLocation) {
+      this.currentCity.val(this.savedLocation.name);
+      this.latitude.val(this.savedLocation.lat);
+      this.longitude.val(this.savedLocation.lon);
+      this.searchMessage.text('');
+      this.searchUndo.css('display', 'none');
+      this.savedLocation = undefined;
+    }
+  }
+
   private selectAlarm(index: number): void {
     if (index === this.selectedAlarm || this.editAlarm >= 0)
       return;
@@ -833,7 +868,7 @@ export class SettingsDialog {
     this.selectedAlarm = index;
   }
 
-  private adjustAlarmTime(amPm): void {
+  private adjustAlarmTime(amPm: boolean): void {
     const wasAmPm = this.alarmMeridiem.css('display') !== 'none';
 
     if (amPm === wasAmPm)
@@ -1076,6 +1111,8 @@ export class SettingsDialog {
       decrementDialogCounter();
       popKeydownListener();
       this.okButton.off('click', this.doOK);
+      this.savedLocation = undefined;
+      this.searchUndo.css('display', 'none');
       this.dialog.css('display', 'none');
     });
 
@@ -1096,6 +1133,7 @@ export class SettingsDialog {
       recentHtml += `<div class="recent-location">${htmlEscape(name)}<span>✕</span></div>`;
     });
 
+    // noinspection TypeScriptValidateJSTypes
     $('.recent-locations').html(recentHtml).find('.recent-location').each((index, elem) => {
       elem.addEventListener('click', evt => {
         if ((evt.target as HTMLElement).localName === 'span') {
@@ -1128,6 +1166,7 @@ export class SettingsDialog {
 
     $('.latest-version-text').text(defaults?.latestVersion || '(unknown)');
     $('.your-version-text').text(AWC_VERSION);
+    // noinspection TypeScriptValidateJSTypes
     updateVersionInfo.html(defaults?.latestVersionInfo || '');
     $('#hide-update-panel').css('display',
       safeCompareVersions(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
@@ -1135,6 +1174,7 @@ export class SettingsDialog {
     this.hideUpdate.prop('checked', previousSettings.updateToHide === defaults?.latestVersion);
     this.checkSensorWarnings();
 
+    // noinspection TypeScriptValidateJSTypes
     getText(this.appService.getApiServer() + '/changelog').then(text => updateVersionInfo.html(text)).catch(noop);
   }
 
@@ -1294,6 +1334,8 @@ export class SettingsDialog {
     popKeydownListener();
     this.okButton.off('click', this.doOK);
     this.dialog.css('display', 'none');
+    this.savedLocation = undefined;
+    this.searchUndo.css('display', 'none');
     this.appService.updateSettings(newSettings);
   };
 
@@ -1373,10 +1415,12 @@ export class SettingsDialog {
 
   private fillInGpsLocation(): void {
     if (this.defaultLocation) {
+      this.saveLocation();
       this.selectTab(Tab.OPTIONS);
       this.currentCity.val(adjustCityName(this.defaultLocation.city));
       this.latitude.val(this.defaultLocation.latitude.toString());
       this.longitude.val(this.defaultLocation.longitude.toString());
+      this.searchMessage.text('GPS location selected');
 
       const gpsFlash = $('.gps-flash');
 

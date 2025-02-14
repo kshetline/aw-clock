@@ -1,3 +1,5 @@
+// noinspection TypeScriptValidateJSTypes
+// The Typescript typedefs for JQuery aren't working very well.
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { cos_deg, floor, mod, Point, sin_deg } from '@tubular/math';
@@ -84,7 +86,7 @@ export function getJson<T>(url: string, options?: JsonOptions): Promise<T> {
         if (options)
           options.xhr = jqXHR;
       },
-      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
+      error: (_jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
     });
   });
 }
@@ -111,7 +113,7 @@ export function getText(url: string): Promise<string> {
     $.ajax({
       url,
       success: (data: string, _textStatus: string) => { resolve(data); },
-      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
+      error: (_jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(new Error(textStatus + ': ' + errorThrown))
     });
   });
 }

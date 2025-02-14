@@ -22,7 +22,14 @@ if (sensorGpio >= 0) {
   try {
     indoorSensor = require('node-dht-sensor');
   }
-  catch (err) {}
+  catch {}
+
+  if (!indoorSensor) {
+    try {
+      indoorSensor = require('node-dht-sensor-rp5');
+    }
+    catch {}
+  }
 }
 
 let lastTemp: number;
@@ -30,7 +37,7 @@ let lastHumidity: number;
 let temps: number[] = [];
 let humidities: number[] = [];
 let consecutiveSensorErrors = 0;
-const MAX_ERRORS = 5;
+const MAX_ERRORS = 30;
 const MAX_POINTS = 10;
 
 if (process.env.AWC_WIRED_TH_GPIO && sensorGpio < 0) {
