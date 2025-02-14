@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as readline from 'readline';
 import { Key } from 'readline';
-import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toNumber } from '@tubular/util';
+import { asLines, isFunction, isNumber, isObject, isString, processMillis, toBoolean, toInt, toNumber } from '@tubular/util';
 import * as path from 'path';
 import { convertPinToGpio } from './server/src/rpi-pin-conversions';
 import { ErrorMode, getSudoUser, getUserHome, monitorProcess, monitorProcessLines, sleep, spawn } from './server/src/process-util';
@@ -58,6 +58,7 @@ let viaBash = false;
 let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
+let isRaspberryPi5OrLater = false;
 
 let spin = (): void => {
   const now = processMillis();
@@ -84,7 +85,7 @@ chalk.paleYellow = chalk.hex('#FFFFAA');
 let backspace = '\x08';
 let sol = '\x1B[1G';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 3;
+let totalSteps = 2;
 let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
@@ -131,7 +132,16 @@ if (process.platform === 'linux') {
           isRaspberryPi = treatAsRaspberryPi = true;
           autostartDst += '-pi';
           chromium += '-browser';
-          break;
+
+          if (isRaspberryPi5OrLater)
+            break;
+        }
+
+        if (toInt((/Model\s+:\s+Raspberry Pi (\d+)/.exec(line) || [])[1]) >= 5) {
+          isRaspberryPi5OrLater = true;
+
+          if (isRaspberryPi)
+            break;
         }
       }
     }
@@ -1097,7 +1107,10 @@ async function doServerBuild(): Promise<void> {
   if (doAcu || doDht) {
     showStep();
 
-    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor@0.4'];
+    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor-rp5@0.0.0-alpha'];
+
+    if (isRaspberryPi5OrLater)
+      args.push('--use_libgpiod=true');
 
     if (doAcu && doDht)
       write('Adding wireless and wired temp/humidity sensor support' + trailingSpace);

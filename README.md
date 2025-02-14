@@ -198,6 +198,8 @@ If an arc becomes a full circle, that means the corresponding planet on that tra
 
 ### Construction with 3D-Printed Stand
 
+> Raspberry Pi 5 note: I designed this stand before the Raspberry Pi 5 existed. The newly-added power button is hard to get with this design, so you might want to cut or drill an opening for easier access, expanding the SD card access slot, being carefully not to break through to the hole for the GPS antenna jack.
+
 #### Rearview of stand
 
 The 3D model for this stand is provided by the project file `raspberry_pi_setup/monitor_stand.stl`. Below is how that model came out when printed using black ABS, 20% infill, at a cost of about $28 USD.
@@ -347,10 +349,10 @@ To build the server along with the web client, use `npm run build`, possibly fol
 
 ### Server configuration
 
-The following environment variables affect how the server part of this software runs. They are defined in the file `/etc/defaults/weatherService` for the purposes of the dedicated device set-up.
+The following environment variables affect how the server part of this software runs. They are defined in the file `/etc/default/weatherService` for the purposes of the dedicated device set-up.
 
 * `AWC_ALLOW_ADMIN`: If `true`, an app user on localhost will be able to perform update, shut down, reboot, and quit operations via the Settings dialog.
-* `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `/etc/defaults/weatherService` file, or by setting it to `false`.
+* `AWC_ALLOW_CORS`: CORS stands for “Cross-Origin Resource Sharing”, and is an HTTP security feature. Most HTTP servers disable CORS by default. This software, however, turns CORS on by default (by setting this environment variable to `true`) to allow data sharing when the server is running on port 4201 and the client on port 4200 during development testing. When running the clock as a deployed service, however, you can disable CORS by deleting `AWC_ALLOW_CORS` from the `/etc/default/weatherService` file, or by setting it to `false`.
 * `AWC_GIT_REPO_PATH`: The path to your aw-clock Git repository.
 * `AWC_GOOGLE_API_KEY`: An API key for Google geocoding, used to convert GPS latitude/longitude into city and place names. As an alternative, or in addition, you can set up `AWC_WEATHERBIT_API_KEY` for both geocoding and weather data.
 * `AWC_KIOSK_MODE`: `kiosk` (AKA `true`), `full-screen`, or `no` (AKA `false`) for whether or the dedicated-device web browser is launched in kiosk mode (the default), non-kiosk full-screen, or with a standard window. When using Firefox, `full-screen` is treated the same as `kiosk`. *(Note: Changing this setting alone will not change kiosk behavior. If you want to change kiosk mode without running `build.sh` again, you must edit the file `/home/pi/.config/lxsession/LXDE-pi/autostart_extra.sh` to add or remove the `‑‑kiosk` parameter from the browser launch command.)*
@@ -390,7 +392,7 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 
 <!-- markdownlint-disable-next-line MD001 MD029 -->
 17. The file `weatherService` (located in the `raspberry_pi_setup` folder) is copied to `/etc/init.d/`, and changed to root ownership.
-1. Server set-up options are saved to `/etc/defaults/weatherService`, which is also owned by root. Rather than re-running the installer to change most aspects of the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
+1. Server set-up options are saved to `/etc/default/weatherService`, which is also owned by root. Rather than re-running the installer to change most aspects of the server set-up, you can edit this file directly, update the service with `sudo update-rc.d weatherService defaults`, then restart the server either by rebooting your system, or using the command `sudo service weatherService restart`.
 1. The commands `sudo update-rc.d weatherService defaults` and `sudo systemctl enable weatherService` are performed to establish and enable the service.
 1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `‑pi` on the end for Debian), or the existing `autostart` file is modified, to run the following script...
 1. The included file `autostart_extra.sh` is also copied to the above directory. This includes code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up. The code then makes sure the clock server is running before launching your chosen web browser with the clock application.
@@ -409,7 +411,7 @@ With later versions of Raspbian all you need to do is set a lower display resolu
 
 Adafruit provides its own instructions on initial set-up of their GPS HAT here: https://learn.adafruit.com/adafruit-ultimate-gps-hat-for-raspberry-pi/pi-setup
 
-...but I’m including some extra details and clarifications below for the particular steps that helped with this clock set-up.
+...but I’m including some extra details and clarifications below for the particular steps that helped with this clock set-up. Most important for Raspberry Pi 5 users was my discovery, not yet documented on the Adafruit website, was the need to add `dtparam=uart0_console` at the end of `/boot/firmware/config.txt` in order to get serial data from the GPS HAT.
 
 As documented by Adafruit, I used `sudo raspi-config` to disable shell access via the serial console while leaving the serial hardware enabled. Then I installed GPS and NTP tools as follows:
 
@@ -418,13 +420,16 @@ sudo apt-get update
 sudo apt install pps-tools gpsd gpsd-clients ntp
 ```
 
-I added the following lines to the end of `/boot/firmware/config.txt` (`/boot/config.txt` in earlier versions of Raspbian) (`enable_uart=1` is probably already there due to `raspi-config`):
+I added the following line (or lines, depending on what might already be present) to the end of `/boot/firmware/config.txt` (`/boot/config.txt` in earlier versions of Raspbian) (`enable_uart=1` is probably already there due to `raspi-config`):
 
 ```text
 enable_uart=1
 
 # GPS
 dtoverlay=pps-gpio,gpiopin=4
+
+dtparam=uart0=on
+# dtparam=uart0_console  # uncomment for Raspberry Pi 5
 ```
 
 I added the following lines to the end of `/etc/ntpsec/ntp.conf` (`/etc/ntp.conf` in earlier versions of Raspbian):

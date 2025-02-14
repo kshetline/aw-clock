@@ -187,7 +187,7 @@ export class Gps extends TimePoller {
         this.gpsData.goodGpsReach = ((reach & 7) !== 0);
         this.roundTripDelay = (toNumber($[2], 2) > 1);
       }
-      else if (line.startsWith('*') || (this.systemTimeIsGps && line.startsWith('+')))
+      else if (!/.SHM\b/.test(line) && (line.startsWith('*') || (this.systemTimeIsGps && line.startsWith('+'))))
         this.gpsData.ntpFallback = true;
     }
 
