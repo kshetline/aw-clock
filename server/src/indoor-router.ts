@@ -22,7 +22,9 @@ if (sensorGpio >= 0) {
   try {
     indoorSensor = require('node-dht-sensor');
   }
-  catch {
+  catch {}
+
+  if (!indoorSensor) {
     try {
       indoorSensor = require('node-dht-sensor-rp5');
     }
