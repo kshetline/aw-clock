@@ -128,7 +128,7 @@ if (process.platform === 'linux') {
         lines.push(...asLines(fs.readFileSync(cpuPath2).toString()));
 
       for (const line of lines) {
-        if (/\b(Raspberry Pi|BCM\d+)\b/i.test(line)) {
+        if (!isRaspberryPi && /\b(Raspberry Pi|BCM\d+)\b/i.test(line)) {
           isRaspberryPi = treatAsRaspberryPi = true;
           autostartDst += '-pi';
           chromium += '-browser';
@@ -137,7 +137,7 @@ if (process.platform === 'linux') {
             break;
         }
 
-        if (toInt((/Model\s+:\s+Raspberry Pi (\d+)/.exec(line) || [])[1]) >= 5) {
+        if (!isRaspberryPi5OrLater && toInt((/Model\s+:\s+Raspberry Pi (\d+)/.exec(line) || [])[1]) >= 5) {
           isRaspberryPi5OrLater = true;
 
           if (isRaspberryPi)
