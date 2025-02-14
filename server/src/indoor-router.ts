@@ -22,7 +22,12 @@ if (sensorGpio >= 0) {
   try {
     indoorSensor = require('node-dht-sensor');
   }
-  catch (err) {}
+  catch {
+    try {
+      indoorSensor = require('node-dht-sensor-rp5');
+    }
+    catch {}
+  }
 }
 
 let lastTemp: number;
