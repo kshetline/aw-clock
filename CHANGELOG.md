@@ -1,3 +1,7 @@
+## 3.7.1-do
+
+* Better documentation on installation of the Adafruit GPS HAT.
+
 ## 3.7.0
 
 * Now (at last!) works with Raspberry Pi 5.

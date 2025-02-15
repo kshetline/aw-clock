@@ -101,7 +101,7 @@ Using Firefox you will have to depend on using the Settings dialog to exit the w
 
 ### Hardware set-up for temperature/humidity sensors
 
-If you are running the server on a Raspberry Pi you have the option to display indoor temperature and humidity using a direct-wired DHT22/AM2302 sensor, as seen here: <https://www.amazon.com/HiLetgo-Temperature-Humidity-Electronic-Practice/dp/B01N9BA0O4/>. The wiring I describe below is specifically for the AM2302 version of the DHT22, with a built-in pull-up resistor.
+If you are running the server on a Raspberry Pi you have the option to display indoor temperature and humidity using a direct-wired DHT22/AM2302 sensor, as seen here: <https://www.amazon.com/JESSINIE-DHT22-Temperature-Humidity-Electronic/dp/B0DPG1ZN6T/>. The wiring I describe below is specifically for the AM2302 version of the DHT22, with a built-in pull-up resistor.
 
 With your Raspberry Pi shut down and disconnected from power, connect the DHT22/AM2302 sensor. The code defaults to assuming the signal lead (“out”) of the sensor is connected to GPIO 17* (physical pin 11 on the 40-pin J8 header). The `+` lead from the sensor needs to be connected to 5V (I chose pin 2 on the 40-pin J8 header) and the `-` lead needs to be connected to ground (I chose pin 9). In the image below, the signal lead is orange, the ground is brown, and +5 is the upper red wire.
 
@@ -411,7 +411,7 @@ With later versions of Raspbian all you need to do is set a lower display resolu
 
 Adafruit provides its own instructions on initial set-up of their GPS HAT here: https://learn.adafruit.com/adafruit-ultimate-gps-hat-for-raspberry-pi/pi-setup
 
-...but I’m including some extra details and clarifications below for the particular steps that helped with this clock set-up. Most important for Raspberry Pi 5 users was my discovery, not yet documented on the Adafruit website, was the need to add `dtparam=uart0_console` at the end of `/boot/firmware/config.txt` in order to get serial data from the GPS HAT.
+...but I’m including some clarifications below for the particular steps that helped with this clock set-up. Most important for Raspberry Pi 5 users was learning that, with the Raspberry Pi 5, serial data from the GPS HAT comes in on a differently-name serial port by default if you start with using `sudo raspi-config` as described below.
 
 As documented by Adafruit, I used `sudo raspi-config` to disable shell access via the serial console while leaving the serial hardware enabled. Then I installed GPS and NTP tools as follows:
 
@@ -420,16 +420,16 @@ sudo apt-get update
 sudo apt install pps-tools gpsd gpsd-clients ntp
 ```
 
-I added the following line (or lines, depending on what might already be present) to the end of `/boot/firmware/config.txt` (`/boot/config.txt` in earlier versions of Raspbian) (`enable_uart=1` is probably already there due to `raspi-config`):
+At the end of `/boot/firmware/config.txt` (`/boot/config.txt` in earlier versions of Raspbian) you should see this:
 
 ```text
+[all]
 enable_uart=1
 
 # GPS
 dtoverlay=pps-gpio,gpiopin=4
 
 dtparam=uart0=on
-# dtparam=uart0_console  # uncomment for Raspberry Pi 5
 ```
 
 I added the following lines to the end of `/etc/ntpsec/ntp.conf` (`/etc/ntp.conf` in earlier versions of Raspbian):
@@ -444,7 +444,7 @@ server 127.127.28.0
 fudge  127.127.28.0 refid GPS
 ```
 
-And the entirety of my `/etc/default/gpsd` is as follows:
+And the entirety of my `/etc/default/gpsd` is as follows (replacing `serial0` with `ttyAMA0` for the Raspberry Pi 5):
 
 ```text
 # Devices gpsd should collect to at boot time.
@@ -460,6 +460,8 @@ USBAUTO="false"
 # Start the gpsd daemon automatically at boot time
 START_DAEMON="true"
 ```
+
+As of the time I'm writing this documentation, the most critical advice currently missing from the Adafruit tutorial is the need to **use `ttyAMA0` for the Raspberry Pi 5**.
 
 ### Developer notes
 
