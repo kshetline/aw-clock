@@ -6,7 +6,7 @@ const { version } = require('../package.json');
 
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
-                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqiEu', 'aqiUs'];
+                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqi', 'aqiEu', 'aqiUs'];
 let altVersion = '';
 
 try {
@@ -43,6 +43,7 @@ export interface CommonConditions {
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
+  aqi?: number;
   aqiEu?: number;
   aqiUs?: number;
 }
@@ -65,6 +66,7 @@ export interface HourlyConditions {
   windGust?: number;          // In kph or mph
   windPhrase?: string;
   windSpeed?: number;         // In kph or mph
+  aqi?: number;
   aqiEu?: number;
   aqiUs?: number;
 }
@@ -142,6 +144,7 @@ export interface AirQualityForecast {
     lat: number
   },
   list: AirQualityItem[];
+  unavailable?: boolean;
 }
 
 export interface DhtSensorData {
