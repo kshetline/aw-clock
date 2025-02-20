@@ -1,3 +1,4 @@
+import { getForecast as getOwmForecast } from './open-weather-map-forecast';
 import { getForecast as getVcForecast } from './visual-crossing-forecast';
 import { Request, Response, Router } from 'express';
 import { filterError, jsonOrJsonp, noCache, timeStamp } from './awcs-util';
@@ -42,6 +43,9 @@ router.get('/', async (req: Request, res: Response) => {
   }
   else
     visualCrossingIndex = 0;
+
+  if (process.env.AWC_OPEN_WEATHER_MAP_API_KEY)
+    getOwmForecast(req).then(f => console.log(f));
 
   const forecasts = await Promise.all(promises);
   const pref = (req.query.pws || process.env.AWC_PREFERRED_WS || '').toString().substr(0, 2);
