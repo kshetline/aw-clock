@@ -6,7 +6,7 @@ const { version } = require('../package.json');
 
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
-                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqiEur', 'aqiUs'];
+                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqi', 'aqiEu', 'aqiUs'];
 let altVersion = '';
 
 try {
@@ -43,7 +43,8 @@ export interface CommonConditions {
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
-  aqiEur?: number;
+  aqi?: number;
+  aqiEu?: number;
   aqiUs?: number;
 }
 
@@ -65,7 +66,8 @@ export interface HourlyConditions {
   windGust?: number;          // In kph or mph
   windPhrase?: string;
   windSpeed?: number;         // In kph or mph
-  aqiEur?: number;
+  aqi?: number;
+  aqiEu?: number;
   aqiUs?: number;
 }
 
@@ -80,14 +82,10 @@ export interface DailyConditions extends CommonConditions {
   precipAccumulation: number;   // inches or cm
 }
 
-export const DailySummaryConditionsKeys = ['summary', 'data'];
-
 export interface DailySummaryConditions {
   summary?: string;
   data: DailyConditions[];
 }
-
-export const AlertKeys = ['description', 'expires', 'id', 'severity', 'title', 'url'];
 
 export interface Alert {
   description: string;
@@ -116,6 +114,37 @@ export interface ForecastData {
   isMetric?: boolean;
   knots?: boolean;
   source?: string;
+}
+
+export interface AirQualityComponents { // All in μg/m³
+  co: number;
+  no: number;
+  no2: number;
+  o3: number;
+  so2: number;
+  pm2_5: number;
+  pm10: number;
+  nh3: number;
+}
+
+export interface AirQualityItem {
+  aqi?: number;
+  aqiEu?: number;
+  aqiUs?: number;
+  main?: {
+    aqi: number;
+  },
+  components: AirQualityComponents,
+  dt: 1740009652
+}
+
+export interface AirQualityForecast {
+  coord: {
+    lon: number;
+    lat: number
+  },
+  list: AirQualityItem[];
+  unavailable?: boolean;
 }
 
 export interface DhtSensorData {

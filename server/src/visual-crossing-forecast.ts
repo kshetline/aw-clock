@@ -229,13 +229,13 @@ function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean):
     }
   }
 
-  if (forecast.currently.aqiEur == null) {
-    if (forecast.hourly && forecast.hourly.length > 0 && forecast.hourly[0].aqiEur != null)
-      forecast.currently.aqiEur = forecast.hourly[0].aqiEur;
-    else if (forecast.hourly && forecast.hourly.length > 1 && forecast.hourly[1].aqiEur != null)
-      forecast.currently.aqiEur = forecast.hourly[1].aqiEur;
-    else if (forecast.daily?.data && forecast.daily.data.length > 0 && forecast.daily.data[0].aqiEur != null)
-      forecast.currently.aqiEur = forecast.daily.data[0].aqiEur;
+  if (forecast.currently.aqiEu == null) {
+    if (forecast.hourly && forecast.hourly.length > 0 && forecast.hourly[0].aqiEu != null)
+      forecast.currently.aqiEu = forecast.hourly[0].aqiEu;
+    else if (forecast.hourly && forecast.hourly.length > 1 && forecast.hourly[1].aqiEu != null)
+      forecast.currently.aqiEu = forecast.hourly[1].aqiEu;
+    else if (forecast.daily?.data && forecast.daily.data.length > 0 && forecast.daily.data[0].aqiEu != null)
+      forecast.currently.aqiEu = forecast.daily.data[0].aqiEu;
   }
 
   if (forecast.currently.aqiUs == null) {
