@@ -1106,7 +1106,7 @@ async function doServerBuild(): Promise<void> {
   if (doAcu || doDht) {
     showStep();
 
-    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor-rp5@0'];
+    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor@">=0.4.5 <1.0.0"'];
 
     if (isRaspberryPi5OrLater)
       args.push('--use_libgpiod=true');
