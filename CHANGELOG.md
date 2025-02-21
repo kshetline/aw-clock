@@ -1,3 +1,7 @@
+## 3.7.2
+
+Fix problems starting service under any admin user other than `pi`. 
+
 ## 3.7.1-do
 
 * Better documentation on installation of the Adafruit GPS HAT.
