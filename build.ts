@@ -1232,7 +1232,7 @@ async function doServiceDeployment(): Promise<void> {
         autoIndex = lines.length;
       }
       else
-        while (lines[++autoIndex] && !/^clock[12] = /.test(lines[autoIndex])) {}
+        while (lines[++autoIndex] && !/^(\[|(clock[12] = ))/.test(lines[autoIndex])) {}
 
       // Prevent duplicate entries, remove old entries
       lines = lines.filter((l, i) => i < autoIndex || !/^clock[12] = /.test(l));
