@@ -2,7 +2,7 @@
 
 * Fixed auto-update process to work properly with Wayland.
 
-Note> You may need to manually update to this version by pulling the latest updates into your aw-clock repo and then running `sudo ./build.sh -i` or `sudo ./build.sh --ddev --reboot`.
+> Note: You may need to manually update to this version by pulling the latest updates into your aw-clock repo and then running `sudo ./build.sh -i` or `sudo ./build.sh --ddev --reboot`.
 
 ## 3.7.2
 
