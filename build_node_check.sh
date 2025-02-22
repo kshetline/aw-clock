@@ -73,22 +73,23 @@ install_nvm() {
 
 # Sync version changes with build.ts
 sadVersion=10
-minVersion=14
-maxVersion=18
-absMaxVersion=20
+minAptGetVersion=18
+minVersion=18
+maxVersion=20
+absMaxVersion=24
 free=$(free || echo "4194304")
 pattern='([0-9]+)'
 [[ $free =~ $pattern ]]
 free="${BASH_REMATCH[1]}"
 
 # If less than 2G RAM, go with Node 12 instead
-if (( free < 1500000 ));then
+if (( free < 1500000 )); then
   minVersion=12
   maxVersion=12
   absMaxVersion=12
-elif (( free > 8000000 ));then
-  minVersion=14
-  maxVersion=22
+elif (( free > 8000000 )); then
+  minVersion=20
+  maxVersion=24
   absMaxVersion=999
 fi
 
@@ -111,7 +112,7 @@ if [ "$version" -ne "$maxVersion" ] && [ -s "$NVM_DIR/nvm.sh" ]; then
   version="$(current_node_version)"
 fi
 
-if (( version < minVersion )); then
+if ( (( version < minVersion )) && (( minVersion >= minAptGetVersion )) ); then
   echo "Installing Node.js. This could take several minutes..."
   sudo apt-get update
   curl -sL https://deb.nodesource.com/setup_"$minVersion".x | sudo bash -
@@ -143,7 +144,7 @@ if (( version < 0 )); then
     rm -rf "$NVM_DIR"
   fi
 
-  [ -d "$HOME/.nvm" ] rm -rf "$HOME/.nvm"
+  [ -d "$HOME/.nvm" ] && rm -rf "$HOME/.nvm"
   export PATH="$originalPath"
   version="$(current_node_version)"
 

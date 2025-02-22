@@ -396,7 +396,7 @@ For reference, here’s a breakdown of the steps performed by a full installatio
 1. The commands `sudo update-rc.d weatherService defaults` and `sudo systemctl enable weatherService` are performed to establish and enable the service.
 1. An `autostart` file is created in `~/.config/lxsession/LXDE-pi/` (no `‑pi` on the end for Debian), or the existing `autostart` file is modified, to run the following script...
 1. The included file `autostart_extra.sh` is also copied to the above directory. This includes code to make sure Chromium doesn’t launch complaining it was shut down improperly, which could interfere with an otherwise smooth automatic start-up. The code then makes sure the clock server is running before launching your chosen web browser with the clock application.
-1. For Raspbian Bookworm or later, `~/.config/wayfire.ini` is also modified to run `autostart_extra.sh`.
+1. For Raspbian Bookworm or later, `~/.config/wayfire.ini` and `~/.config/labwc/autostart` are also modified to run `autostart_extra.sh`.
 1. The options `‑‑launch` or `‑‑reboot` are performed if specified.
 
 ### Screen Resolution

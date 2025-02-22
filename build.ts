@@ -109,8 +109,7 @@ const cpuPath2 = '/sys/firmware/devicetree/base/model';
 const settingsPath = '/etc/default/weatherService';
 const rpiSetupStuff = path.join(__dirname, 'raspberry_pi_setup');
 const serviceSrc = rpiSetupStuff + '/weatherService';
-const serviceDst = '/etc/init.d/.';
-const serviceDstFull = '/etc/init.d/weatherService';
+const serviceDst = '/etc/init.d/weatherService';
 const fontSrc = rpiSetupStuff + '/fonts/';
 const fontDst = '/usr/local/share/fonts/';
 let chromium = 'chromium';
@@ -693,7 +692,7 @@ async function checkForGps(): Promise<void> {
       console.log(chalkUp('  [pb]• Install [w]ntpd[/w] and [w]ntpq[/w]'));
 
     if (!hasPpsTools)
-      console.log(chalkUp('  [pb]• Install [w]ppstest[/w]'));
+      console.log(chalkUp('  [pb]• Install [w]pps-tools[/w]'));
   }
   else
     console.log('GPS time and location services found ' + chalk.green(CHECK_MARK));
@@ -1107,7 +1106,7 @@ async function doServerBuild(): Promise<void> {
   if (doAcu || doDht) {
     showStep();
 
-    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor-rp5@0'];
+    const args = ['i', '-P', 'rpi-acu-rite-temperature@3', 'node-dht-sensor'];
 
     if (isRaspberryPi5OrLater)
       args.push('--use_libgpiod=true');
@@ -1145,8 +1144,11 @@ async function doServiceDeployment(): Promise<void> {
 
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
-  await monitorProcess(spawn('cp', [serviceSrc, serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
-  await monitorProcess(spawn('chmod', ['+x', serviceDstFull], { shell: true }), spin, ErrorMode.ANY_ERROR);
+
+  const serviceScript = fs.readFileSync(serviceSrc).toString().replace(/\/pi\//g, `/${user}/`);
+
+  fs.writeFileSync(serviceDst, serviceScript);
+  await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   const settingsText =
     `# If you edit AWC_PORT below, be sure to update\n#   ${userHome}/${autostartDst}/autostart` +
@@ -1172,7 +1174,8 @@ async function doServiceDeployment(): Promise<void> {
 
   autoScript = autoScript.replace('echo #launch-here', launchCmd)
     .replace(/:8080\b/, ':' + settings.AWC_PORT)
-    .replace('the-browser', doFirefox ? 'firefox' : chromium);
+    .replace('the-browser', doFirefox ? 'firefox' : chromium)
+    .replace(/\/pi\//g, `/${user}/`);
 
   fs.writeFileSync(path.join(autostartDir, autostartScriptFile), autoScript);
 
@@ -1182,6 +1185,7 @@ async function doServiceDeployment(): Promise<void> {
   let update = false;
   let found = false;
 
+  // Autostart setup for X11
   try {
     lines = asLines(fs.readFileSync(autostartPath).toString()).filter(line => !!line.trim());
   }
@@ -1216,35 +1220,67 @@ async function doServiceDeployment(): Promise<void> {
   if (update)
     fs.writeFileSync(autostartPath, lines.join('\n') + '\n');
 
-  // Extra autostart setup for Wayfire
-  if (existsSync(wayfireIniPath)) {
-    try {
+  // Autostart setup for Wayland/Wayfire
+  try {
+    if (!existsSync(wayfireIniPath)) {
+      fs.mkdirSync(path.dirname(wayfireIniPath), { recursive:  true });
+      lines = [];
+    }
+    else
       lines = asLines(fs.readFileSync(wayfireIniPath).toString()).filter(line => !!line.trimEnd());
 
-      let autoIndex = lines.findIndex(l => l.startsWith('[autostart]'));
+    let autoIndex = lines.findIndex(l => l.startsWith('[autostart]'));
 
-      if (autoIndex < 0) {
-        lines.push('');
-        lines.push('[autostart]');
-        autoIndex = lines.length;
-      }
-      else
-        while (lines[++autoIndex] && !/^clock[12] = /.test(lines[autoIndex])) {}
+    if (autoIndex < 0) {
+      lines.push('');
+      lines.push('[autostart]');
+      autoIndex = lines.length;
+    }
+    else
+      while (lines[++autoIndex] && !/^((\s*\[)|(clock[12] = ))/.test(lines[autoIndex])) {}
 
-      // Prevent duplicate entries, remove old entries
-      lines = lines.filter((l, i) => i < autoIndex || !/^clock[12] = /.test(l));
-      lines.splice(autoIndex, 0, 'clock1 = ' + autostartEntry);
-      fs.writeFileSync(wayfireIniPath, lines.join('\n') + '\n');
+    // Prevent duplicate entries, remove old entries
+    lines = lines.filter((l, i) => i < autoIndex || !/^clock[12] = /.test(l));
+    lines.splice(autoIndex, 0, 'clock1 = ' + autostartEntry);
+    fs.writeFileSync(wayfireIniPath, lines.join('\n') + '\n');
+  }
+  catch (e) {
+    console.error(chalk.redBright('Error: failed to update .config/wayfire.ini to autostart AW-Clock'));
+    console.error(chalk.redBright('   ' + e.message));
+  }
+
+  // Autostart setup for Wayland/Labwc
+  const labwcAutostartPath = path.join(userHome, '.config/labwc/autostart');
+
+  try {
+    if (!existsSync(labwcAutostartPath)) {
+      fs.mkdirSync(path.dirname(labwcAutostartPath), { recursive:  true });
+      lines = [];
     }
-    catch (e) {
-      console.error(chalk.redBright('Error: failed to update .config/wayfire.ini to autostart AW-Clock'));
-      console.error(chalk.redBright('   ' + e.message));
-    }
+    else
+      lines = asLines(fs.readFileSync(labwcAutostartPath).toString()).filter(line => !!line.trimEnd());
+
+    const autoIndex = lines.findIndex(l => /\bautostart_extra.sh\b/.test(l));
+
+    if (autoIndex < 0)
+      lines.push(autostartEntry);
+    else
+      lines[autoIndex] = autostartEntry;
+
+    fs.writeFileSync(labwcAutostartPath, lines.join('\n') + '\n');
+  }
+  catch (e) {
+    console.error(chalk.redBright('Error: failed to update .config/labwc/autostart to autostart AW-Clock'));
+    console.error(chalk.redBright('   ' + e.message));
   }
 
   await monitorProcess(spawn('chown', 0, [sudoUser, autostartDir + '/autostart*'],
     { shell: true }), spin, ErrorMode.ANY_ERROR);
   await monitorProcess(spawn('chmod', uid, ['+x', autostartDir + '/autostart*'],
+    { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chown', 0, [sudoUser, wayfireIniPath],
+    { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chown', 0, [sudoUser, labwcAutostartPath],
     { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   if (noStop)
