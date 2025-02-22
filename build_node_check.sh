@@ -73,7 +73,7 @@ install_nvm() {
 
 # Sync version changes with build.ts
 sadVersion=10
-minVersion=14
+minVersion=16
 maxVersion=18
 absMaxVersion=20
 free=$(free || echo "4194304")
@@ -87,7 +87,7 @@ if (( free < 1500000 ));then
   maxVersion=12
   absMaxVersion=12
 elif (( free > 8000000 ));then
-  minVersion=14
+  minVersion=16
   maxVersion=22
   absMaxVersion=999
 fi
@@ -143,7 +143,7 @@ if (( version < 0 )); then
     rm -rf "$NVM_DIR"
   fi
 
-  [ -d "$HOME/.nvm" ] rm -rf "$HOME/.nvm"
+  [ -d "$HOME/.nvm" ] && rm -rf "$HOME/.nvm"
   export PATH="$originalPath"
   version="$(current_node_version)"
 

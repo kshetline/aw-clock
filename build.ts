@@ -692,7 +692,7 @@ async function checkForGps(): Promise<void> {
       console.log(chalkUp('  [pb]• Install [w]ntpd[/w] and [w]ntpq[/w]'));
 
     if (!hasPpsTools)
-      console.log(chalkUp('  [pb]• Install [w]ppstest[/w]'));
+      console.log(chalkUp('  [pb]• Install [w]pps-tools[/w]'));
   }
   else
     console.log('GPS time and location services found ' + chalk.green(CHECK_MARK));
@@ -1258,7 +1258,7 @@ async function doServiceDeployment(): Promise<void> {
       lines = [];
     }
     else
-      lines = asLines(fs.readFileSync(wayfireIniPath).toString()).filter(line => !!line.trimEnd());
+      lines = asLines(fs.readFileSync(labwcAutostartPath).toString()).filter(line => !!line.trimEnd());
 
     const autoIndex = lines.findIndex(l => /\bautostart_extra.sh\b/.test(l));
 
@@ -1277,6 +1277,10 @@ async function doServiceDeployment(): Promise<void> {
   await monitorProcess(spawn('chown', 0, [sudoUser, autostartDir + '/autostart*'],
     { shell: true }), spin, ErrorMode.ANY_ERROR);
   await monitorProcess(spawn('chmod', uid, ['+x', autostartDir + '/autostart*'],
+    { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chown', 0, [sudoUser, wayfireIniPath],
+    { shell: true }), spin, ErrorMode.ANY_ERROR);
+  await monitorProcess(spawn('chown', 0, [sudoUser, labwcAutostartPath],
     { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   if (noStop)
