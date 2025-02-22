@@ -415,6 +415,7 @@ function getApp(): Express {
       await checkForUpdate();
 
     const ip = requestIp.getClientIp(req);
+    const fakeUpdate = toBoolean(process.env.AWC_FAKE_UPDATE);
     const defaults: AwcDefaults = {
       allowAdmin: allowAdmin && /^(::1|::ffff:127\.0\.0\.1|127\.0\.0\.1|0\.0\.0\.0|localhost)$/i.test(ip),
       currentVersion: AWC_VERSION,
@@ -424,7 +425,7 @@ function getApp(): Express {
       latestVersionInfo,
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO || process.env.AWC_ALT_DEV_SERVER ? defaultOutdoorChannel : 'F'),
       services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : ''),
-      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && safeCompareVersions(latestVersion, AWC_VERSION, '>', false)
+      updateAvailable: fakeUpdate || /^\d+\.\d+\.\d+$/.test(latestVersion) && safeCompareVersions(latestVersion, AWC_VERSION, '>', false)
     };
 
     if (gps) {

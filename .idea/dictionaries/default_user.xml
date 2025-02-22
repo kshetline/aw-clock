@@ -2,6 +2,7 @@
   <dictionary name="default.user">
     <words>
       <w>labwc</w>
+      <w>loginctl</w>
     </words>
   </dictionary>
 </component>

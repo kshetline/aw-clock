@@ -1,16 +1,28 @@
 import { exec } from 'child_process';
 import { Request, Response, Router } from 'express';
 import fs from 'fs';
-import { asLines, toNumber, toBoolean } from '@tubular/util';
+import { asLines, toInt, toBoolean } from '@tubular/util';
 import { noCache } from './awcs-util';
 import { monitorProcess, spawn } from './process-util';
 
 export const router = Router();
 
+async function assureGitSafeDirectory(path: string): Promise<void> {
+  const lines = asLines(await monitorProcess(spawn('git', ['config', '--system', '--list'])));
+
+  for (const line of lines) {
+    if (line === 'safe.directory=' + path)
+      return;
+  }
+
+  await monitorProcess(spawn('git', ['config', '--system', '--add', 'safe.directory', path]));
+}
+
 router.post('/*name', async (req: Request, res: Response) => {
   noCache(res);
 
   const command = req.url.replace(/^\//, '').replace(/\?.*$/, '');
+  const repo = process.env.AWC_GIT_REPO_PATH;
   let cmd = command;
   let args: string[] = [];
   let options: any;
@@ -34,14 +46,15 @@ router.post('/*name', async (req: Request, res: Response) => {
       break;
 
     case 'update':
-      if (!fs.existsSync(process.env.AWC_GIT_REPO_PATH) && !fs.lstatSync(process.env.AWC_GIT_REPO_PATH).isDirectory()) {
+      if (!fs.existsSync(repo) && !fs.lstatSync(repo).isDirectory()) {
         res.status(400).send("Can't find Git repository. Invalid AWC_GIT_REPO_PATH");
         return;
       }
 
+      await assureGitSafeDirectory(repo);
       cmd = 'git';
       args = ['status', '--porcelain', '-b'];
-      options = { cwd: process.env.AWC_GIT_REPO_PATH };
+      options = { cwd: repo };
       break;
 
     default:
@@ -66,6 +79,32 @@ router.post('/*name', async (req: Request, res: Response) => {
 
   res.send('OK');
 });
+
+async function getDisplayUser(env: NodeJS.ProcessEnv): Promise<number> {
+  let userId = -1;
+
+  // Get the current display user.
+  try {
+    const lines = asLines(await monitorProcess(spawn('loginctl', [], { env })));
+
+    for (const line of lines) {
+      const $ = /^\s*(\d+)\s+(\d+)/.exec(line);
+
+      if ($) {
+        const sessionType = (await monitorProcess(spawn('loginctl', ['show-session', '-p', 'Type', $[1]], { env })))
+          .trim().substring(5);
+
+        if (/^(wayland|x11\b.*)$/.test(sessionType)) {
+          userId = toInt($[2]);
+          break;
+        }
+      }
+    }
+  }
+  catch {}
+
+  return userId;
+}
 
 async function performUpdate(req: Request, res: Response, gitStatus: string): Promise<void> {
   const test = toBoolean(req.query.ut, false, true);
@@ -92,34 +131,11 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
     return;
   }
 
-  let userId = -1;
   const env = Object.assign({}, process.env);
 
   env.DISPLAY = ':0';
 
-  // Get the current display user. Probably "pi", but let's make sure.
-  try {
-    const users = (await monitorProcess(spawn('users'))).split(/\s+/);
-
-    for (const user of users) {
-      const id = toNumber((/uid=(\d+)/.exec(await monitorProcess(spawn('id', [user]))) ?? [])[1], -1);
-
-      if (id >= 0) {
-        try {
-          const lines = asLines(await monitorProcess(spawn('xhost', [], { env, uid: id })));
-
-          for (const line of lines) {
-            if (new RegExp(`\\blocaluser:${user}\\b`).test(line)) {
-              userId = id;
-              break;
-            }
-          }
-        }
-        catch {}
-      }
-    }
-  }
-  catch {}
+  const userId = await getDisplayUser(env);
 
   if (userId < 0) {
     res.status(500).send('Unable to perform update: display user could not be determined');
@@ -136,9 +152,28 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
     }
   }
 
-  spawn('pkill', ['-o', 'chromium'], { uid: userId });
-  exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh ${args}; bash"`,
-    { cwd: path, env, uid: userId });
+  env.XDG_RUNTIME_DIR = '/run/user/' + userId;
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      let error = false;
+
+      monitorProcess(exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh ${args}; bash"`,
+        { cwd: path, env, uid: userId })).catch(err => {
+          error = true;
+          reject(err);
+        });
+
+      setTimeout(() => !error && resolve(), 3000);
+    });
+
+    spawn('pkill', ['-o', 'chromium'], { uid: userId });
+    spawn('pkill', ['-o', 'firefox'], { uid: userId });
+  }
+  catch (e) {
+    res.status(500).send('Failed to start terminal session for update:' + e.message);
+    return;
+  }
 
   res.send('OK');
 }

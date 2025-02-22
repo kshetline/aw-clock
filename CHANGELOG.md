@@ -1,7 +1,13 @@
+## 3.7.3
+
+* Fixed auto-update process to work properly with Wayland.
+
+Note> You may need to manually update to this version by pulling the latest updates into your aw-clock repo and then running `sudo ./build.sh -i` or `sudo ./build.sh --ddev --reboot`.
+
 ## 3.7.2
 
 * Added autostart support for Wayland with Labwc.
-* Fix problems starting service under any admin user other than `pi`.
+* Fixed problems starting service under any admin user other than `pi`.
 
 ## 3.7.1-do
 
