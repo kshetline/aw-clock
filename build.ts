@@ -1185,6 +1185,7 @@ async function doServiceDeployment(): Promise<void> {
   let update = false;
   let found = false;
 
+  // Autostart setup for X11
   try {
     lines = asLines(fs.readFileSync(autostartPath).toString()).filter(line => !!line.trim());
   }
@@ -1219,30 +1220,58 @@ async function doServiceDeployment(): Promise<void> {
   if (update)
     fs.writeFileSync(autostartPath, lines.join('\n') + '\n');
 
-  // Extra autostart setup for Wayfire
-  if (existsSync(wayfireIniPath)) {
-    try {
+  // Autostart setup for Wayland/Wayfire
+  try {
+    if (!existsSync(wayfireIniPath)) {
+      fs.mkdirSync(path.dirname(wayfireIniPath), { recursive:  true });
+      lines = [];
+    }
+    else
       lines = asLines(fs.readFileSync(wayfireIniPath).toString()).filter(line => !!line.trimEnd());
 
-      let autoIndex = lines.findIndex(l => l.startsWith('[autostart]'));
+    let autoIndex = lines.findIndex(l => l.startsWith('[autostart]'));
 
-      if (autoIndex < 0) {
-        lines.push('');
-        lines.push('[autostart]');
-        autoIndex = lines.length;
-      }
-      else
-        while (lines[++autoIndex] && !/^(\[|(clock[12] = ))/.test(lines[autoIndex])) {}
+    if (autoIndex < 0) {
+      lines.push('');
+      lines.push('[autostart]');
+      autoIndex = lines.length;
+    }
+    else
+      while (lines[++autoIndex] && !/^((\s*\[)|(clock[12] = ))/.test(lines[autoIndex])) {}
 
-      // Prevent duplicate entries, remove old entries
-      lines = lines.filter((l, i) => i < autoIndex || !/^clock[12] = /.test(l));
-      lines.splice(autoIndex, 0, 'clock1 = ' + autostartEntry);
-      fs.writeFileSync(wayfireIniPath, lines.join('\n') + '\n');
+    // Prevent duplicate entries, remove old entries
+    lines = lines.filter((l, i) => i < autoIndex || !/^clock[12] = /.test(l));
+    lines.splice(autoIndex, 0, 'clock1 = ' + autostartEntry);
+    fs.writeFileSync(wayfireIniPath, lines.join('\n') + '\n');
+  }
+  catch (e) {
+    console.error(chalk.redBright('Error: failed to update .config/wayfire.ini to autostart AW-Clock'));
+    console.error(chalk.redBright('   ' + e.message));
+  }
+
+  // Autostart setup for Wayland/Labwc
+  const labwcAutostartPath = path.join(userHome, '.config/labwc/autostart');
+
+  try {
+    if (!existsSync(labwcAutostartPath)) {
+      fs.mkdirSync(path.dirname(labwcAutostartPath), { recursive:  true });
+      lines = [];
     }
-    catch (e) {
-      console.error(chalk.redBright('Error: failed to update .config/wayfire.ini to autostart AW-Clock'));
-      console.error(chalk.redBright('   ' + e.message));
-    }
+    else
+      lines = asLines(fs.readFileSync(wayfireIniPath).toString()).filter(line => !!line.trimEnd());
+
+    const autoIndex = lines.findIndex(l => /\bautostart_extra.sh\b/.test(l));
+
+    if (autoIndex < 0)
+      lines.push(autostartEntry);
+    else
+      lines[autoIndex] = autostartEntry;
+
+    fs.writeFileSync(labwcAutostartPath, lines.join('\n') + '\n');
+  }
+  catch (e) {
+    console.error(chalk.redBright('Error: failed to update .config/labwc/autostart to autostart AW-Clock'));
+    console.error(chalk.redBright('   ' + e.message));
   }
 
   await monitorProcess(spawn('chown', 0, [sudoUser, autostartDir + '/autostart*'],

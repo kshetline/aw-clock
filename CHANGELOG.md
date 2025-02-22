@@ -1,6 +1,7 @@
 ## 3.7.2
 
-Fix problems starting service under any admin user other than `pi`. 
+* Fix problems starting service under any admin user other than `pi`.
+* Added autostart support for the Labwc variant of Wayland.
 
 ## 3.7.1-do
 
