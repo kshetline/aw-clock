@@ -96,7 +96,7 @@ fi
 version="$(current_node_version)"
 origVersion="$version"
 
-if ( (( version > absMaxVersion )) || (( version < minAptGetVersion )) ) && [ ! -s "$NVM_DIR/nvm.sh" ]; then
+if (( version > absMaxVersion )) && [ ! -s "$NVM_DIR/nvm.sh" ]; then
   install_nvm
 fi
 
@@ -112,7 +112,7 @@ if [ "$version" -ne "$maxVersion" ] && [ -s "$NVM_DIR/nvm.sh" ]; then
   version="$(current_node_version)"
 fi
 
-if ( (( version < minVersion )) && (( version >= minAptGetVersion )) ); then
+if ( (( version < minVersion )) && (( minVersion >= minAptGetVersion )) ); then
   echo "Installing Node.js. This could take several minutes..."
   sudo apt-get update
   curl -sL https://deb.nodesource.com/setup_"$minVersion".x | sudo bash -
