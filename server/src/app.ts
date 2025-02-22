@@ -424,7 +424,7 @@ function getApp(): Express {
       latestVersionInfo,
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO || process.env.AWC_ALT_DEV_SERVER ? defaultOutdoorChannel : 'F'),
       services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : ''),
-      updateAvailable: /^\d+\.\d+\.\d+$/.test(latestVersion) && safeCompareVersions(latestVersion, AWC_VERSION, '>', false)
+      updateAvailable: Date.now() > 0 || /^\d+\.\d+\.\d+$/.test(latestVersion) && safeCompareVersions(latestVersion, AWC_VERSION, '>', false) // TODO: Remove false positive
     };
 
     if (gps) {
