@@ -45,7 +45,7 @@ interface SearchResults {
 }
 
 // noinspection JSUnusedGlobalSymbols
-enum Tab { OPTIONS, LOCATION, ALARMS, UPDATE }
+enum Tab { OPTIONS, LOCATION, ALARMS, ALERT_FILTERS, UPDATE }
 
 async function callSearchApi(query: string): Promise<SearchResults> {
   // Note: The API below is not meant for high traffic use. Use of this API for looking up geographic locations
