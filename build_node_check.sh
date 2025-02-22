@@ -100,7 +100,7 @@ if (( version > absMaxVersion )) && [ ! -s "$NVM_DIR/nvm.sh" ]; then
   install_nvm
 fi
 
-if [ "$version" -ne "$maxVersion" ] && [ -s "$NVM_DIR/nvm.sh" ]; then
+if (( version < maxVersion )) && [ -s "$NVM_DIR/nvm.sh" ] && [ $(nvm version-remote $maxVersion) != "N/A" ]; then
   if [ "$(nvm use "v$maxVersion")" ]; then
     nvm use "v$maxVersion"
     nvm alias default "$maxVersion"

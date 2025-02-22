@@ -1151,8 +1151,8 @@ async function doServiceDeployment(): Promise<void> {
   await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
   const settingsText =
-    `# If you edit AWC_PORT below, be sure to update\n#   ${userHome}/${autostartDst}/autostart` +
-    (existsSync(wayfireIniPath) ? ` and\n#   ${wayfireIniPath}` : '') + ' accordingly.\n' +
+    `# If you edit AWC_PORT below, be sure to update\n#     ${userHome}/${autostartDst}/autostart_extra.sh` +
+    '\n# accordingly.\n' +
     Object.keys(settings).sort().map(key => key + '=' + settings[key]).join('\n') + '\n';
 
   fs.writeFileSync(settingsPath, settingsText);

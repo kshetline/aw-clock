@@ -3,7 +3,7 @@ import { Request, Response, Router } from 'express';
 import fs from 'fs';
 import { asLines, toInt, toBoolean } from '@tubular/util';
 import { noCache } from './awcs-util';
-import { monitorProcess, spawn } from './process-util';
+import { ErrorMode, monitorProcess, spawn } from './process-util';
 
 export const router = Router();
 
@@ -152,10 +152,18 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
     }
   }
 
-  spawn('pkill', ['-o', 'chromium'], { uid: userId });
-  spawn('pkill', ['-o', 'firefox'], { uid: userId });
-  exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh ${args}; bash"`,
-    { cwd: path, env, uid: userId });
+  env.XDG_RUNTIME_DIR = '/run/user/' + userId;
+
+  try {
+    await monitorProcess(exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh ${args}; bash"`,
+      { cwd: path, env, uid: userId }));
+    spawn('pkill', ['-o', 'chromium'], { uid: userId });
+    spawn('pkill', ['-o', 'firefox'], { uid: userId });
+  }
+  catch (e) {
+    res.status(500).send('Failed to start terminal session for update:' + e.message);
+    return;
+  }
 
   res.send('OK');
 }
