@@ -3,7 +3,7 @@ import { Request, Response, Router } from 'express';
 import fs from 'fs';
 import { asLines, toInt, toBoolean } from '@tubular/util';
 import { noCache } from './awcs-util';
-import { ErrorMode, monitorProcess, spawn } from './process-util';
+import { monitorProcess, spawn } from './process-util';
 
 export const router = Router();
 
@@ -155,8 +155,18 @@ async function performUpdate(req: Request, res: Response, gitStatus: string): Pr
   env.XDG_RUNTIME_DIR = '/run/user/' + userId;
 
   try {
-    await monitorProcess(exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh ${args}; bash"`,
-      { cwd: path, env, uid: userId }));
+    await new Promise<void>((resolve, reject) => {
+      let error = false;
+
+      monitorProcess(exec(`lxterminal -e bash -c "cd ${path} && git pull && sudo ./build.sh ${args}; bash"`,
+        { cwd: path, env, uid: userId })).catch(err => {
+          error = true;
+          reject(err);
+        });
+
+      setTimeout(() => !error && resolve(), 3000);
+    });
+
     spawn('pkill', ['-o', 'chromium'], { uid: userId });
     spawn('pkill', ['-o', 'firefox'], { uid: userId });
   }
