@@ -59,6 +59,7 @@ let interactive = false;
 let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 let isRaspberryPi5OrLater = false;
+let settingsOnly = false;
 
 let spin = (): void => {
   const now = processMillis();
@@ -238,6 +239,11 @@ process.argv.forEach(arg => {
       break;
     case '-i':
       interactive = doStdDeploy = doDedicated = true;
+      onlyOnRaspberryPi.push(arg);
+      delete process.env.SHLVL;
+      break;
+    case '-is':
+      interactive = settingsOnly = noStop = true;
       onlyOnRaspberryPi.push(arg);
       delete process.env.SHLVL;
       break;
@@ -874,7 +880,7 @@ let questions: Question[] = [
       (settings.AWC_GOOGLE_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
-  { // #5
+  {
     name: 'AWC_PREFERRED_WS',
     prompt: 'preferred weather service, (w)underground, weather(b)it,\n      or (v)isual crossing).',
     ask: true,
@@ -887,10 +893,16 @@ let questions: Question[] = [
       (settings.AWC_WEATHERBIT_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
-  { // #7
+  {
     name: 'AWC_VISUAL_CROSSING_API_KEY',
     prompt: 'Optional Visual Crossing weather API key.' +
       (settings.AWC_VISUAL_CROSSING_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
+    ask: true
+  },
+  {
+    name: 'AWC_OPEN_WEATHER_MAP_API_KEY',
+    prompt: 'Optional Open Weather Map API key, for\n      air quality info).' +
+      (settings.AWC_OPEN_WEATHER_MAP_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
   { prompt: 'Use wired DHT temperature/humidity sensor?', ask: true, yn: true, deflt: doDht ? 'Y' : 'N', validate: dhtValidate },
@@ -1128,6 +1140,15 @@ async function doServerBuild(): Promise<void> {
   }
 }
 
+function writeSettings(): void {
+  const settingsText =
+    `# If you edit AWC_PORT below, be sure to update\n#     ${userHome}/${autostartDst}/autostart_extra.sh` +
+    '\n# accordingly.\n' +
+    Object.keys(settings).sort().map(key => key + '=' + settings[key]).join('\n') + '\n';
+
+  fs.writeFileSync(settingsPath, settingsText);
+}
+
 async function doServiceDeployment(): Promise<void> {
   let autostartDir = path.join(userHome, autostartDst);
   const wayfireIniPath = path.join(userHome, wayfireIni);
@@ -1149,13 +1170,7 @@ async function doServiceDeployment(): Promise<void> {
 
   fs.writeFileSync(serviceDst, serviceScript);
   await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
-
-  const settingsText =
-    `# If you edit AWC_PORT below, be sure to update\n#     ${userHome}/${autostartDst}/autostart_extra.sh` +
-    '\n# accordingly.\n' +
-    Object.keys(settings).sort().map(key => key + '=' + settings[key]).join('\n') + '\n';
-
-  fs.writeFileSync(settingsPath, settingsText);
+  writeSettings();
   await monitorProcess(spawn('update-rc.d', ['weatherService', 'defaults']), spin);
   await monitorProcess(spawn('systemctl', ['enable', 'weatherService']), spin);
   await monitorProcess(spawn('mkdir', uid, ['-p', autostartDir]), spin);
@@ -1323,13 +1338,15 @@ async function doServiceDeployment(): Promise<void> {
 
     process.stdin.setRawMode(false);
 
-    totalSteps += hasFirefox ? 1 : 0;
-    totalSteps += noStop ? 0 : 1;
-    totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
-    totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
-    totalSteps += doAcu || doDht ? 1 : 0;
-    totalSteps += (doStdDeploy || doDedicated ? 1 : 0);
-    totalSteps += (doLaunch || doReboot ? 1 : 0);
+    if (!settingsOnly) {
+      totalSteps += hasFirefox ? 1 : 0;
+      totalSteps += noStop ? 0 : 1;
+      totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
+      totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
+      totalSteps += doAcu || doDht ? 1 : 0;
+      totalSteps += (doStdDeploy || doDedicated ? 1 : 0);
+      totalSteps += (doLaunch || doReboot ? 1 : 0);
+    }
 
     if (!doDht)
       delete settings.AWC_WIRED_TH_GPIO;
@@ -1407,21 +1424,25 @@ async function doServiceDeployment(): Promise<void> {
     if (!settings.AWC_GIT_REPO_PATH)
       delete settings.AWC_GIT_REPO_PATH;
 
-    console.log(chalk.cyan(sol + '- Building application -'));
-    const repoStatus1 = await getRepoStatus();
-    await doClientBuild();
-    await doServerBuild();
-    const repoStatus2 = await getRepoStatus();
+    if (!settingsOnly) {
+      console.log(chalk.cyan(sol + '- Building application -'));
+      const repoStatus1 = await getRepoStatus();
+      await doClientBuild();
+      await doServerBuild();
+      const repoStatus2 = await getRepoStatus();
 
-    // If the build process alone is responsible for dirtying the repo, clean it up again.
-    if (viaBash && repoStatus1 === RepoStatus.CLEAN && repoStatus2 === RepoStatus.PACKAGE_LOCK_CHANGES_ONLY)
-      await monitorProcess(spawn('git', ['reset', '--hard']));
+      // If the build process alone is responsible for dirtying the repo, clean it up again.
+      if (viaBash && repoStatus1 === RepoStatus.CLEAN && repoStatus2 === RepoStatus.PACKAGE_LOCK_CHANGES_ONLY)
+        await monitorProcess(spawn('git', ['reset', '--hard']));
 
-    showStep();
-    write('Copying server to top-level dist directory' + trailingSpace);
-    await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
-    await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'], { shell: true }), spin, ErrorMode.ANY_ERROR);
-    stepDone();
+      showStep();
+      write('Copying server to top-level dist directory' + trailingSpace);
+      await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
+      await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'], { shell: true }), spin, ErrorMode.ANY_ERROR);
+      stepDone();
+    }
+    else
+      writeSettings();
 
     if (doStdDeploy) {
       showStep();
