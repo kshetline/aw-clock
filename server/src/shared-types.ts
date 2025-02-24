@@ -6,7 +6,7 @@ const { version } = require('../package.json');
 
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
-                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqi', 'aqiEu', 'aqiUs'];
+                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqiEu', 'aqiUs', 'aqComps'];
 let altVersion = '';
 
 try {
@@ -24,6 +24,28 @@ export const BACK_IN_TIME_THRESHOLD = 4000;
 // translated, but most closely coincides with Weather Underground data, especially the icon code.
 
 export enum PressureTrend { FALLING = -1, STEADY, RISING }
+
+export interface AirQualityComponents { // All in μg/m³
+  co: number;
+  no2: number;
+  o3: number;
+  so2?: number;
+  pm2_5: number;
+  pm10: number;
+}
+
+export interface AirQualityItem {
+  aqiEu?: number;
+  aqiUs?: number;
+  aqComps?: AirQualityComponents,
+  time: number
+}
+
+export interface AirQualityForecast {
+  current: AirQualityItem
+  hours: AirQualityItem[];
+  unavailable?: boolean;
+}
 
 export interface CommonConditions {
   time: number;                   // Seconds since 1970-01-01 00:00 UTC (not counting leap seconds)
@@ -43,9 +65,9 @@ export interface CommonConditions {
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
-  aqi?: number;
   aqiEu?: number;
   aqiUs?: number;
+  aqComps?: AirQualityComponents;
 }
 
 export const CurrentConditionsKeys = [...CommonConditionsKeys, 'feelsLikeTemperature'];
@@ -66,9 +88,9 @@ export interface HourlyConditions {
   windGust?: number;          // In kph or mph
   windPhrase?: string;
   windSpeed?: number;         // In kph or mph
-  aqi?: number;
   aqiEu?: number;
   aqiUs?: number;
+  aqComps?: AirQualityComponents;
 }
 
 export const DailyConditionsKeys = [...CommonConditionsKeys,
@@ -114,37 +136,6 @@ export interface ForecastData {
   isMetric?: boolean;
   knots?: boolean;
   source?: string;
-}
-
-export interface AirQualityComponents { // All in μg/m³
-  co: number;
-  no: number;
-  no2: number;
-  o3: number;
-  so2: number;
-  pm2_5: number;
-  pm10: number;
-  nh3: number;
-}
-
-export interface AirQualityItem {
-  aqi?: number;
-  aqiEu?: number;
-  aqiUs?: number;
-  main?: {
-    aqi: number;
-  },
-  components: AirQualityComponents,
-  dt: 1740009652
-}
-
-export interface AirQualityForecast {
-  coord: {
-    lon: number;
-    lat: number
-  },
-  list: AirQualityItem[];
-  unavailable?: boolean;
 }
 
 export interface DhtSensorData {

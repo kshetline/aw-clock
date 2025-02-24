@@ -1,12 +1,12 @@
-import { getForecast as getOwmForecast } from './open-weather-map-forecast';
+import { getForecast as getOwmForecast } from './air-quality-forecast';
 import { getForecast as getVcForecast } from './visual-crossing-forecast';
 import { Request, Response, Router } from 'express';
 import { filterError, jsonOrJsonp, noCache, timeStamp } from './awcs-util';
-import { AirQualityForecast, CurrentConditions, ForecastData } from './shared-types';
+import { AirQualityComponents, AirQualityForecast, CurrentConditions, ForecastData } from './shared-types';
 import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
 import { max } from '@tubular/math';
-import { toBoolean, toNumber } from '@tubular/util';
+import { clone, forEach, toBoolean, toNumber } from '@tubular/util';
 import { requestJson } from './request-cache';
 
 export const router = Router();
@@ -16,23 +16,37 @@ function forecastBad(forecast: Error | ForecastData): boolean {
 }
 
 interface AQs {
-  aqi?: number;
   aqiUs?: number;
   aqiEu?: number;
+  aqComps?: AirQualityComponents;
+}
+
+function worst(a: AirQualityComponents, b: AirQualityComponents): AirQualityComponents {
+  if (b == null)
+    return a;
+  else if (a == null)
+    a = clone(b);
+
+  const aa = a as any;
+
+  forEach(b as unknown as Record<string, number>, (key, value) =>
+    aa[key] = aa[key] == null ? value : Math.max(aa[key] as number, value));
+
+  return a;
 }
 
 function findMatchingAirQuality(forecast: AirQualityForecast, time: number, span: number): AQs {
   const aqs: AQs = {};
 
-  for (const item of forecast.list) {
-    if (time <= item.dt && item.dt < time + span) {
-      aqs.aqi = aqs.aqi == null ? item.aqi : max(item.aqi, aqs.aqi);
+  for (const item of forecast.hours) {
+    if (time <= item.time && item.time < time + span) {
       aqs.aqiEu = aqs.aqiEu == null ? item.aqiEu : max(item.aqiEu, aqs.aqiEu);
       aqs.aqiUs = aqs.aqiUs == null ? item.aqiUs : max(item.aqiUs, aqs.aqiUs);
+      aqs.aqComps = worst(aqs.aqComps, item.aqComps);
     }
   }
 
-  if (aqs.aqi != null || aqs.aqiEu != null || aqs.aqiUs != null)
+  if (aqs.aqiEu != null || aqs.aqiUs != null)
     return aqs;
   else
     return null;
@@ -93,18 +107,18 @@ router.get('/', async (req: Request, res: Response) => {
     const aqs = findMatchingAirQuality(airQuality, Date.now() / 1000, 3600);
 
     if (aqs) {
-      forecast.currently.aqi = aqs.aqi;
       forecast.currently.aqiEu = aqs.aqiEu;
       forecast.currently.aqiUs = aqs.aqiUs;
+      forecast.currently.aqComps = aqs.aqComps;
     }
 
     for (const hour of forecast.hourly) {
       const aqs = findMatchingAirQuality(airQuality, hour.time, 3600);
 
       if (aqs) {
-        hour.aqi = aqs.aqi;
         hour.aqiEu = aqs.aqiEu;
         hour.aqiUs = aqs.aqiUs;
+        hour.aqComps = aqs.aqComps;
       }
     }
 
@@ -112,9 +126,9 @@ router.get('/', async (req: Request, res: Response) => {
       const aqs = findMatchingAirQuality(airQuality, day.time, 86400);
 
       if (aqs) {
-        day.aqi = aqs.aqi;
         day.aqiEu = aqs.aqiEu;
         day.aqiUs = aqs.aqiUs;
+        day.aqComps = aqs.aqComps;
       }
     }
   }

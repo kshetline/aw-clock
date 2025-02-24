@@ -931,6 +931,7 @@ export class Forecast {
 
       this.displayCurrentWind(forecastData.currently, isMetric, forecastData.knots);
       this.displayCurrentPressure(forecastData.currently, isMetric);
+      this.displayAirQuality(forecastData.currently);
       setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
       this.dayIcons.forEach((dayIcon, index) => {
@@ -1066,6 +1067,17 @@ export class Forecast {
     }
     else
       this.pressure.css('display', 'none');
+  }
+
+  private displayAirQuality(current: CurrentConditions): void {
+    const airQuality = $('#air-quality');
+
+    if (current.aqiUs != null) {
+      airQuality.text(`${current.aqiUs}, ${current.aqiEu} `);
+      airQuality.css('display', 'block');
+    }
+    else
+      airQuality.css('display', 'none');
   }
 
   refreshAlerts(forecastData = this.lastForecastData): void {

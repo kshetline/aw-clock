@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { acos, cos_deg, max, min, PI, sin_deg } from '@tubular/math';
+import { acos, cos_deg, PI, sin_deg } from '@tubular/math';
 import { ErrorMode, monitorProcess, spawn } from './process-util';
-import { AirQualityComponents, Alert, ForecastData } from './shared-types';
-import { forEach, isNumber, isString } from '@tubular/util';
+import { Alert, ForecastData } from './shared-types';
+import { isNumber, isString } from '@tubular/util';
 import compareVersions, { CompareOperator } from 'compare-versions';
 
 export function noCache(res: Response): void {
@@ -244,75 +244,4 @@ export function safeCompareVersions(firstVersion: string, secondVersion: string,
   catch {}
 
   return isString(operatorOrDefValue) ? defValue : operatorOrDefValue;
-}
-
-// https://aqs.epa.gov/aqsweb/documents/codetables/aqi_breakpoints.html
-const aqiUsBounds: Record<string, number[]> = { // μg/m³ unless otherwise noted
-  aqi:   [0, 50, 100, 150, 200, 300, 500],
-  co:    [0, 4.5, 9.5, 12.5, 15.5, 30.5, 50.4],     // ppm
-  no2:   [0, 54, 101, 361, 650, 1250, 2050],        // ppb
-  o3:    [0, 55, 71, 86, 106, 200, 400],            // ppb
-  so2:   [0, 36, 76, 186, 305, 605, 1005],          // ppb
-  pm2_5: [0, 9.1, 35.5, 55.5, 125.5, 225.5, 325.5],
-  pm10:  [0, 55, 155, 255, 355, 425, 605]
-};
-
-// From https://www.breeze-technologies.de/blog/air-pollution-how-to-convert-between-mgm3-%C2%B5gm3-ppm-ppb/
-const conversions: Record<string, number> = {
-  co: 1146, n02: 1.23, o3: 1.96, s02: 2.62
-};
-
-export function calculateAqiUs(comps: AirQualityComponents): number {
-  let aqiMax = 0;
-
-  forEach(comps as unknown as Record<string, number>, (key, value) => {
-    if (aqiUsBounds[key]) {
-      value = value / (conversions[key] ?? 1);
-
-      for (let i = 0; i <= 5; ++i) {
-        if (aqiUsBounds[key][i] <= value && (value < aqiUsBounds[key][i + 1] || i === 5)) {
-          const aqiLow = aqiUsBounds.aqi[i];
-          const aqiRange = aqiUsBounds.aqi[i + 1] - aqiLow;
-          const low = aqiUsBounds[key][i];
-          const valueRange = aqiUsBounds[key][i + 1] - low;
-          const aqi = min(aqiLow + (value - low) * aqiRange / valueRange, 500);
-
-          aqiMax = max(aqi, aqiMax);
-        }
-      }
-    }
-  });
-
-  return aqiMax;
-}
-
-const aqiEuBounds: Record<string, number[]> = { // μg/m³
-  aqi:   [0, 25, 50, 75, 100],
-  co:    [0, 60000, 120000, 180000, 240000],
-  no2:   [0, 50, 100, 200, 400],
-  o3:    [0, 60, 120, 180, 240],
-  pm2_5: [0, 10, 20, 40, 60],
-  pm10:  [0, 25, 50, 90, 180]
-};
-
-export function calculateAqiEu(comps: AirQualityComponents): number {
-  let aqiMax = 0;
-
-  forEach(comps as unknown as Record<string, number>, (key, value) => {
-    if (aqiEuBounds[key]) {
-      for (let i = 0; i <= 4; ++i) {
-        if (aqiEuBounds[key][i] <= value && (value < aqiEuBounds[key][i + 1] || i === 5)) {
-          const aqiLow = aqiEuBounds.aqi[i];
-          const aqiRange = aqiEuBounds.aqi[i + 1] - aqiLow;
-          const low = aqiEuBounds[key][i];
-          const valueRange = aqiEuBounds[key][i + 1] - low;
-          const aqi = aqiLow + (value - low) / valueRange * aqiRange;
-
-          aqiMax = max(aqi, aqiMax);
-        }
-      }
-    }
-  });
-
-  return aqiMax;
 }

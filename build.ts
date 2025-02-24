@@ -844,7 +844,7 @@ function finalActionValidate(s: string): boolean {
       doLaunch = false;
       doReboot = true;
     }
-    else
+    else if (treatAsRaspberryPi)
       doLaunch = doReboot = false;
 
     return true;
@@ -897,12 +897,6 @@ let questions: Question[] = [
     name: 'AWC_VISUAL_CROSSING_API_KEY',
     prompt: 'Optional Visual Crossing weather API key.' +
       (settings.AWC_VISUAL_CROSSING_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
-    ask: true
-  },
-  {
-    name: 'AWC_OPEN_WEATHER_MAP_API_KEY',
-    prompt: 'Optional Open Weather Map API key, for\n      air quality info).' +
-      (settings.AWC_OPEN_WEATHER_MAP_API_KEY ? '\n    Enter - (dash) to remove old API key' : ''),
     ask: true
   },
   { prompt: 'Use wired DHT temperature/humidity sensor?', ask: true, yn: true, deflt: doDht ? 'Y' : 'N', validate: dhtValidate },
