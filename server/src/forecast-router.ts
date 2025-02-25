@@ -2,7 +2,7 @@ import { getForecast as getOwmForecast } from './air-quality-forecast';
 import { getForecast as getVcForecast } from './visual-crossing-forecast';
 import { Request, Response, Router } from 'express';
 import { filterError, jsonOrJsonp, noCache, timeStamp } from './awcs-util';
-import { AirQualityComponents, AirQualityForecast, CurrentConditions, ForecastData } from './shared-types';
+import { AirQualityComponents, AirQualityForecast, AirQualityValues, CurrentConditions, ForecastData } from './shared-types';
 import { getForecast as getWbForecast } from './weatherbit-forecast';
 import { getForecast as getWuForecast } from './wunderground-forecast';
 import { max } from '@tubular/math';
@@ -29,8 +29,8 @@ function worst(a: AirQualityComponents, b: AirQualityComponents): AirQualityComp
 
   const aa = a as any;
 
-  forEach(b as unknown as Record<string, number>, (key, value) =>
-    aa[key] = aa[key] == null ? value : Math.max(aa[key] as number, value));
+  forEach(b as unknown as Record<string, AirQualityValues>, (key, value) =>
+    aa[key] = (aa[key] == null ? value : ((aa[key].raw as number) < value.raw ? value : aa[key])));
 
   return a;
 }
@@ -59,7 +59,7 @@ router.get('/', async (req: Request, res: Response) => {
   const promises: Promise<ForecastData | AirQualityForecast | Error>[] = [];
   let visualCrossingIndex = 1;
   let weatherBitIndex = 1;
-  let openWeatherIndex = 1;
+  let airQualityIndex = 1;
   let sources = 'WU';
 
   noCache(res);
@@ -72,7 +72,7 @@ router.get('/', async (req: Request, res: Response) => {
     promises.push(getWbForecast(req));
     sources += ',WB';
     ++visualCrossingIndex;
-    ++openWeatherIndex;
+    ++airQualityIndex;
   }
   else
     weatherBitIndex = 0;
@@ -80,17 +80,13 @@ router.get('/', async (req: Request, res: Response) => {
   if (process.env.AWC_VISUAL_CROSSING_API_KEY) {
     sources += ',VC';
     promises.push(getVcForecast(req));
-    ++openWeatherIndex;
+    ++airQualityIndex;
   }
   else
     visualCrossingIndex = 0;
 
-  if (process.env.AWC_OPEN_WEATHER_MAP_API_KEY) {
-    sources += ',OW';
-    promises.push(getOwmForecast(req));
-  }
-  else
-    openWeatherIndex = 0;
+  sources += ',OW';
+  promises.push(getOwmForecast(req));
 
   const forecasts = await Promise.all(promises);
   const pref = (req.query.pws || process.env.AWC_PREFERRED_WS || '').toString().substr(0, 2);
@@ -102,8 +98,8 @@ router.get('/', async (req: Request, res: Response) => {
   for (let replaceIndex = 0; replaceIndex < forecasts.length && (!forecast || forecastBad(forecast)); ++replaceIndex)
     forecast = forecasts[usedIndex = replaceIndex] as ForecastData;
 
-  if (openWeatherIndex && !(forecasts[openWeatherIndex] instanceof Error)) {
-    const airQuality = forecasts[openWeatherIndex] as AirQualityForecast;
+  if (airQualityIndex && !(forecasts[airQualityIndex] instanceof Error)) {
+    const airQuality = forecasts[airQualityIndex] as AirQualityForecast;
     const aqs = findMatchingAirQuality(airQuality, Date.now() / 1000, 3600);
 
     if (aqs) {

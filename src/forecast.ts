@@ -66,10 +66,11 @@ const CLOSE_ERROR_TAG = '&nbsp;</span>';
 const REVERT_TO_SUN_INFO_DELAY = 60_000;
 let SUBJECT_INTRO_PATTERN: RegExp;
 
-const airQualityColors = ['lime', 'yellow', 'orange', 'red', 'purple', 'purple', 'maroon', 'maroon', 'maroon', 'maroon'];
+const airQualityColors = ['#00E400', 'yellow', '#ff7E00', 'red',
+                          '#8F3F97', '#8F3F97', '#7E0023', '#7E0023', '#7E0023', '#7E0023'];
 const airQualityCaptions = ['GOOD', 'MODERATE', 'UNHEALTHY\nFOR SENS. GROUPS', 'UNHEALTHY',
                             'VERY\nUNHEALTHY', 'VERY\nUNHEALTHY', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS'];
-const airQualityWhiteText = new Set(['red', 'purple', 'maroon']);
+const airQualityWhiteText = new Set(['red', '#8F3F97', '#7E0023']);
 
 try {
   // Firefox fails on this pattern.

@@ -25,13 +25,28 @@ export const BACK_IN_TIME_THRESHOLD = 4000;
 
 export enum PressureTrend { FALLING = -1, STEADY, RISING }
 
-export interface AirQualityComponents { // All in μg/m³
+export interface AirQualityValues {
+  raw: number; // In μg/m³
+  aqiEu?: number;
+  aqiUs?: number
+}
+
+export interface AirQualityRawComponents { // All in μg/m³
   co: number;
   no2: number;
   o3: number;
   so2?: number;
   pm2_5: number;
   pm10: number;
+}
+
+export interface AirQualityComponents {
+  co: AirQualityValues;
+  no2: AirQualityValues;
+  o3: AirQualityValues;
+  so2?: AirQualityValues;
+  pm2_5: AirQualityValues;
+  pm10: AirQualityValues;
 }
 
 export interface AirQualityItem {
@@ -42,7 +57,12 @@ export interface AirQualityItem {
 }
 
 export interface AirQualityForecast {
-  current: AirQualityItem
+  current: {
+    aqiEu?: number;
+    aqiUs?: number;
+    aqComps?: AirQualityRawComponents,
+    time: number
+  },
   hours: AirQualityItem[];
   unavailable?: boolean;
 }
