@@ -7,7 +7,7 @@ import { abs, cos_deg, floor, interpolate, irandom, max, min, mod2, sin_deg } fr
 import { getCssValue, isRaspbian, padLeft } from '@tubular/util';
 import { TimeFormat } from './shared-types';
 import { CurrentDelta, GpsData } from '../server/src/shared-types';
-import { getJson, setSignalLevel } from './awc-util';
+import { getDayClasses, getJson, setSignalLevel } from './awc-util';
 import { demoServer } from './settings';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -107,12 +107,8 @@ export class Clock {
     this.dut1Caption = document.getElementById('dut1');
     this.dtaiLabel = document.getElementById('dtai-label');
     this.dtaiCaption = document.getElementById('dtai');
-    this.dayHeaders = (Array.from(document.getElementsByClassName('forecast-day-header')) as HTMLElement[])
-      .filter(h => !h.id.includes('dayN'))
-      .sort((a, b) => parseFloat(a.id.substr(3)) - parseFloat(b.id.substr(3)));
-
+    this.dayHeaders = getDayClasses('forecast-day-header');
     this.hasBeginElement = !!this.secTurn.beginElement;
-
     this.decorateClockFace();
   }
 

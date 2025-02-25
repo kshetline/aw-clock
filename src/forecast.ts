@@ -10,7 +10,7 @@ import {
 import { Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getJson,
+  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getDayClasses, getJson,
   JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
@@ -181,6 +181,8 @@ export class Forecast {
   private airQualityText: JQuery;
   private airQualityValue: JQuery;
   private dailyWinds: JQuery[] = [];
+  private dayBackgrounds: HTMLElement[] = [];
+  private dayHeaders: HTMLElement[] = [];
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
   private dayChancePrecips: JQuery[] = [];
@@ -252,6 +254,8 @@ export class Forecast {
     this.airQualityText = $('#air-quality-text');
     this.airQualityValue = $('#air-quality-value');
 
+    this.dayHeaders = getDayClasses('forecast-day-header');
+    this.dayBackgrounds = getDayClasses('forecast-day-background');
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
     if (!isEdge())
@@ -951,7 +955,7 @@ export class Forecast {
 
       this.displayCurrentWind(forecastData.currently, isMetric, forecastData.knots);
       this.displayCurrentPressure(forecastData.currently, isMetric);
-      this.displayAirQuality(forecastData.currently);
+      this.displayAirQuality(forecastData);
       setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
       this.dayIcons.forEach((dayIcon, index) => {
@@ -1089,7 +1093,9 @@ export class Forecast {
       this.pressure.css('display', 'none');
   }
 
-  private displayAirQuality(current: CurrentConditions): void {
+  private displayAirQuality(forecast: ForecastData): void {
+    const current = forecast.currently;
+
     if (current.aqiUs != null) {
       const index = max(floor((current.aqiUs - 1) / 50), 0);
       const color = airQualityColors[index];
@@ -1117,6 +1123,25 @@ export class Forecast {
     else {
       this.pressure.attr('y', '39');
       this.airQuality.css('display', 'none');
+    }
+
+    const daily = forecast.daily?.data.slice(this.todayIndex) ?? [];
+
+    for (let i = 0; i < this.dayBackgrounds.length; ++i) {
+      const background = this.dayBackgrounds[i];
+      const header = this.dayHeaders[i];
+
+      if (i < daily.length && daily[i].aqiUs != null) {
+        const index = max(floor((daily[i].aqiUs - 1) / 50), 0);
+        const color = airQualityColors[index];
+
+        background.setAttribute('fill', color);
+        header.setAttribute('fill', airQualityWhiteText.has(color) ? 'white' : 'black');
+      }
+      else {
+        background.setAttribute('fill', 'none');
+        header.setAttribute('fill', 'white');
+      }
     }
   }
 
@@ -1443,7 +1468,12 @@ export class Forecast {
 
     const tempUnit = this.lastForecastData.isMetric ? 'C' : 'F';
     let text = '¬b¬' + localDateString(day.time * 1000, this.timezone) +
-      `¬b; • ${day.temperatureHigh}°${tempUnit} / ${day.temperatureLow}°${tempUnit}\n\n`;
+      `¬b; • ${day.temperatureHigh}°${tempUnit} / ${day.temperatureLow}°${tempUnit}`;
+
+    if (day.aqiUs)
+      text += `, AQI: ${day.aqiUs}`;
+
+    text += '\n\n';
 
     if (narrativeDay && narrativeEvening)
       text += `${narrativeDay}\n\nEvening: ${narrativeEvening}`;

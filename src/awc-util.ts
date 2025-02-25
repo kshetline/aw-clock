@@ -505,3 +505,9 @@ export function safeCompareVersions(firstVersion: string, secondVersion: string,
 
   return isString(operatorOrDefValue) ? defValue : operatorOrDefValue;
 }
+
+export function getDayClasses(qlass: string): HTMLElement[] {
+  return (Array.from(document.getElementsByClassName(qlass)) as HTMLElement[])
+    .filter(h => !h.id.includes('dayN'))
+    .sort((a, b) => parseFloat(a.id.substr(3)) - parseFloat(b.id.substr(3)));
+}
