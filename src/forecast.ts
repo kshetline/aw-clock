@@ -66,6 +66,11 @@ const CLOSE_ERROR_TAG = '&nbsp;</span>';
 const REVERT_TO_SUN_INFO_DELAY = 60_000;
 let SUBJECT_INTRO_PATTERN: RegExp;
 
+const airQualityColors = ['lime', 'yellow', 'orange', 'red', 'purple', 'purple', 'maroon', 'maroon', 'maroon', 'maroon'];
+const airQualityCaptions = ['GOOD', 'MODERATE', 'UNHEALTHY\nFOR SENS. GROUPS', 'UNHEALTHY',
+                            'VERY\nUNHEALTHY', 'VERY\nUNHEALTHY', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS'];
+const airQualityWhiteText = new Set(['red', 'purple', 'maroon']);
+
 try {
   // Firefox fails on this pattern.
   // eslint-disable-next-line prefer-regex-literals
@@ -167,6 +172,13 @@ export class Forecast {
   private readonly wundergroundLogo: JQuery;
   private readonly windPointer: JQuery;
 
+  private airQuality: JQuery;
+  private airQualityCaption: JQuery;
+  private airQualityCaption1: JQuery;
+  private airQualityCaption2: JQuery;
+  private airQualityColor: JQuery;
+  private airQualityText: JQuery;
+  private airQualityValue: JQuery;
   private dailyWinds: JQuery[] = [];
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
@@ -231,6 +243,13 @@ export class Forecast {
     this.windArc = $('#wind-arc');
     this.windGustArc = $('#wind-gust-arc');
     this.pressure = $('#pressure');
+    this.airQuality = $('#air-quality');
+    this.airQualityCaption = $('#air-quality-caption');
+    this.airQualityCaption1 = $('#air-quality-caption-1');
+    this.airQualityCaption2 = $('#air-quality-caption-2');
+    this.airQualityColor = $('#air-quality-color');
+    this.airQualityText = $('#air-quality-text');
+    this.airQualityValue = $('#air-quality-value');
 
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
@@ -1070,14 +1089,34 @@ export class Forecast {
   }
 
   private displayAirQuality(current: CurrentConditions): void {
-    const airQuality = $('#air-quality');
-
     if (current.aqiUs != null) {
-      airQuality.text(`${current.aqiUs}, ${current.aqiEu} `);
-      airQuality.css('display', 'block');
+      const index = max(floor((current.aqiUs - 1) / 50), 0);
+      const color = airQualityColors[index];
+      const caption = airQualityCaptions[index];
+
+      this.airQuality.css('display', 'block');
+      this.pressure.attr('y', '35');
+      this.airQualityValue.text(current.aqiUs.toString());
+      this.airQualityColor.css('fill', color);
+      this.airQualityText.css('fill', airQualityWhiteText.has(color) ? 'white' : 'black');
+
+      if (caption.includes('\n')) {
+        const [line1, line2] = caption.split('\n');
+
+        this.airQualityCaption.text('');
+        this.airQualityCaption1.text(line1);
+        this.airQualityCaption2.text(line2);
+      }
+      else {
+        this.airQualityCaption.text(caption);
+        this.airQualityCaption1.text('');
+        this.airQualityCaption2.text('');
+      }
     }
-    else
-      airQuality.css('display', 'none');
+    else {
+      this.pressure.attr('y', '39');
+      this.airQuality.css('display', 'none');
+    }
   }
 
   refreshAlerts(forecastData = this.lastForecastData): void {

@@ -227,12 +227,21 @@
             <text id="wind-gust" x="110" y="40" dy="2.2em" class="wind-pressure" text-anchor="start"></text>
           </g>
 
-          <text id="air-quality" x="110" y="40" dy="3.3em" text-anchor="start"></text>
+          <svg id="pressure" x="153" y="35">
+            <text id="pressure-header" x="12" y="1.7" class="wind-pressure" text-anchor="end">Pressure:</text>
+            <text id="pressure-value" x="12" y="1.7" dy="1.1em" class="wind-pressure" text-anchor="end">--</text>
+          </svg>
 
-          <g id="pressure">
-            <text id="pressure-header" x="165" y="40" class="wind-pressure" text-anchor="end">Pressure:</text>
-            <text id="pressure-value" x="165" y="40" dy="1.1em" class="wind-pressure" text-anchor="end">--</text>
-          </g>
+          <svg id="air-quality" x="153" y="41" width=12 height=8 viewBox="0 0 12 8">
+            <rect id="air-quality-color" x="0" y="0" width="12" height="8" fill="gray"/>
+            <g id="air-quality-text">
+              <text id="air-quality-header" x="50%" y="50%" dy="-2.3em" text-anchor="middle">AIR QUALITY INDEX</text>
+              <text id="air-quality-value" x="50%" y="50%" dy="0.33em" text-anchor="middle"></text>
+              <text id="air-quality-caption" x="50%" y="50%" dy="2.3em" text-anchor="middle"></text>
+              <text id="air-quality-caption-1" x="50%" y="50%" dy="2.5em" text-anchor="middle"></text>
+              <text id="air-quality-caption-2" x="50%" y="50%" dy="3.6em" text-anchor="middle"></text>
+            </g>
+          </svg>
 
           <text id="temperature-detail" x="136" y="21.5" text-anchor="start"></text>
           <text x="136" y="25.75" class="small-caption" text-anchor="start">Hum.</text>

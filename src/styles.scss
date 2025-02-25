@@ -329,7 +329,7 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   font-size: 2.5px;
 }
 
-.wind-pressure, #air-quality {
+.wind-pressure {
   font-size: 2.1px;
 }
 
@@ -349,6 +349,24 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   circle.gust {
     stroke: #FF66FF !important;
   }
+}
+
+#air-quality {
+  display: none;
+  fill: black;
+  font-size: 4px;
+}
+
+#air-quality-header {
+  font-size: 1.1px;
+}
+
+#air-quality-caption {
+  font-size: 1.5px;
+}
+
+#air-quality-caption-1, #air-quality-caption-2 {
+  font-size: 1px;
 }
 
 #timezone {

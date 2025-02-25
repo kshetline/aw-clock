@@ -1,4 +1,4 @@
-// Using `require` causes a warning, but using `import` instead causes webpack to fail.
+// Using `import` instead causes webpack to fail.
 const { version } = require('../package.json');
 
 // It's annoying that TypeScript doesn't itself provide a way to create a runtime list of
