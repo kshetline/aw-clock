@@ -5,10 +5,11 @@ import { Timezone } from '@tubular/time';
 
 export interface AppService {
   forecastHasBeenUpdated(): void;
+  getAirQualityOption(): string;
   getAlarmTime(): number;
+  getAlertFilters(): AlertFilter[];
   getApiServer(): string;
   getCurrentTime(bias?: number): number;
-  getAlertFilters(): AlertFilter[];
   getHiddenAlerts(): HiddenAlert[];
   getIndoorOption(): string;
   getLatestDefaults(): AwcDefaults;

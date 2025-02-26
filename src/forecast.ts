@@ -7,7 +7,7 @@ import {
   blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
   processMillis, push, regex, toNumber
 } from '@tubular/util';
-import { Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
+import { AirQualitySource, Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
   ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getDayClasses, getJson,
@@ -66,11 +66,22 @@ const CLOSE_ERROR_TAG = '&nbsp;</span>';
 const REVERT_TO_SUN_INFO_DELAY = 60_000;
 let SUBJECT_INTRO_PATTERN: RegExp;
 
-const airQualityColors = ['#00E400', 'yellow', '#ff7E00', 'red',
+const airQualityColors = ['#00E400', '#FFFF00', '#ff7E00', '#FF0000',
                           '#8F3F97', '#8F3F97', '#7E0023', '#7E0023', '#7E0023', '#7E0023'];
+const euAirQualityColors = ['#6ED958', '#D7F400', '#FFD200', '#FFAD00', '#FF0066'];
 const airQualityCaptions = ['GOOD', 'MODERATE', 'UNHEALTHY\nFOR SENS. GROUPS', 'UNHEALTHY',
                             'VERY\nUNHEALTHY', 'VERY\nUNHEALTHY', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS'];
-const airQualityWhiteText = new Set(['red', '#8F3F97', '#7E0023']);
+const euAirQualityCaptions = ['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'];
+
+function matchingTextColor(color: string): string {
+  const [r, g, b] = color.split('') // Break into individual characters
+    .map((c, i, a) => i % 2 === 1 ? c + a[i + 1] : '') // Create pairs and empty strings
+    .filter(p => !!p) // Filter out empty string
+    .map(p => parseInt(p, 16));
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+  return brightness > 128 ? 'black' : 'white';
+}
 
 try {
   // Firefox fails on this pattern.
@@ -164,6 +175,8 @@ function convertForWidthMeasurement(s: string): string {
 
 export class Forecast {
   private readonly currentIcon: JQuery;
+  private readonly dayBackgrounds: HTMLElement[] = [];
+  private readonly dayHeaders: HTMLElement[] = [];
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
@@ -181,8 +194,6 @@ export class Forecast {
   private airQualityText: JQuery;
   private airQualityValue: JQuery;
   private dailyWinds: JQuery[] = [];
-  private dayBackgrounds: HTMLElement[] = [];
-  private dayHeaders: HTMLElement[] = [];
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
   private dayChancePrecips: JQuery[] = [];
@@ -1093,36 +1104,81 @@ export class Forecast {
       this.pressure.css('display', 'none');
   }
 
-  private displayAirQuality(forecast: ForecastData): void {
-    const current = forecast.currently;
+  private getAirQualityColorAndCaption(valueSource: AirQualitySource, option: string): [number, string, string] {
+    let value: number;
+    let index: number;
+    let color: string;
+    let caption: string;
 
-    if (current.aqiUs != null) {
-      const index = max(floor((current.aqiUs - 1) / 50), 0);
-      const color = airQualityColors[index];
-      const caption = airQualityCaptions[index];
+    if (option === 'E') {
+      value = valueSource.aqiEu;
 
-      this.airQuality.css('display', 'block');
-      this.pressure.attr('y', '35');
-      this.airQualityValue.text(current.aqiUs.toString());
-      this.airQualityColor.css('fill', color);
-      this.airQualityText.css('fill', airQualityWhiteText.has(color) ? 'white' : 'black');
+      if (value == null)
+        return [undefined, 'gray', ''];
 
-      if (caption.includes('\n')) {
-        const [line1, line2] = caption.split('\n');
-
-        this.airQualityCaption.text('');
-        this.airQualityCaption1.text(line1);
-        this.airQualityCaption2.text(line2);
-      }
-      else {
-        this.airQualityCaption.text(caption);
-        this.airQualityCaption1.text('');
-        this.airQualityCaption2.text('');
-      }
+      index = min(floor(value / 25), 4);
+      color = euAirQualityColors[index];
+      caption = euAirQualityCaptions[index];
     }
     else {
+      value = valueSource.aqiUs;
+
+      if (value == null)
+        return [undefined, 'gray', ''];
+
+      index = min(max(floor((value - 1) / 50), 0), 9);
+      color = airQualityColors[index];
+      caption = airQualityCaptions[index];
+    }
+
+    return [value, color, caption];
+  }
+
+  private displayAirQuality(forecast: ForecastData): void {
+    const option = this.appService.getAirQualityOption();
+
+    if (option !== 'E' && option !== 'U') {
       this.pressure.attr('y', '39');
       this.airQuality.css('display', 'none');
+
+      for (let i = 0; i < this.dayBackgrounds.length; ++i) {
+        this.dayBackgrounds[i].setAttribute('fill', 'none');
+        this.dayHeaders[i].setAttribute('fill', 'white');
+      }
+
+      return;
+    }
+
+    this.airQuality.css('display', 'block');
+    this.pressure.attr('y', '35');
+
+    const current = forecast.currently;
+
+    if (option === 'E' && current.aqiEu == null || option === 'U' && current.aqiUs == null) {
+      this.airQualityColor.css('fill', 'gray');
+      this.airQualityValue.text('--');
+      this.airQualityText.css('fill', 'black');
+
+      return;
+    }
+
+    const [value, color, caption] = this.getAirQualityColorAndCaption(current, option);
+
+    this.airQualityValue.text(value.toString());
+    this.airQualityColor.css('fill', color);
+    this.airQualityText.css('fill', matchingTextColor(color));
+
+    if (caption.includes('\n')) {
+      const [line1, line2] = caption.split('\n');
+
+      this.airQualityCaption.text('');
+      this.airQualityCaption1.text(line1);
+      this.airQualityCaption2.text(line2);
+    }
+    else {
+      this.airQualityCaption.text(caption);
+      this.airQualityCaption1.text('');
+      this.airQualityCaption2.text('');
     }
 
     const daily = forecast.daily?.data.slice(this.todayIndex) ?? [];
@@ -1130,13 +1186,11 @@ export class Forecast {
     for (let i = 0; i < this.dayBackgrounds.length; ++i) {
       const background = this.dayBackgrounds[i];
       const header = this.dayHeaders[i];
+      const [value, color] = this.getAirQualityColorAndCaption(daily[i], option);
 
-      if (i < daily.length && daily[i].aqiUs != null) {
-        const index = max(floor((daily[i].aqiUs - 1) / 50), 0);
-        const color = airQualityColors[index];
-
+      if (i < daily.length && value != null) {
         background.setAttribute('fill', color);
-        header.setAttribute('fill', airQualityWhiteText.has(color) ? 'white' : 'black');
+        header.setAttribute('fill', matchingTextColor(color));
       }
       else {
         background.setAttribute('fill', 'none');

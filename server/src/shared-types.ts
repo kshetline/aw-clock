@@ -25,10 +25,13 @@ export const BACK_IN_TIME_THRESHOLD = 4000;
 
 export enum PressureTrend { FALLING = -1, STEADY, RISING }
 
-export interface AirQualityValues {
-  raw: number; // In μg/m³
+export interface AirQualitySource {
   aqiEu?: number;
   aqiUs?: number
+}
+
+export interface AirQualityValues extends AirQualitySource {
+  raw: number; // In μg/m³
 }
 
 export interface AirQualityRawComponents { // All in μg/m³
@@ -49,9 +52,7 @@ export interface AirQualityComponents {
   pm10: AirQualityValues;
 }
 
-export interface AirQualityItem {
-  aqiEu?: number;
-  aqiUs?: number;
+export interface AirQualityItem extends AirQualitySource {
   aqComps?: AirQualityComponents,
   time: number
 }
@@ -67,7 +68,7 @@ export interface AirQualityForecast {
   unavailable?: boolean;
 }
 
-export interface CommonConditions {
+export interface CommonConditions extends AirQualitySource {
   time: number;                   // Seconds since 1970-01-01 00:00 UTC (not counting leap seconds)
   summary: string;
   icon: string;
@@ -85,8 +86,6 @@ export interface CommonConditions {
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
-  aqiEu?: number;
-  aqiUs?: number;
   aqComps?: AirQualityComponents;
 }
 
@@ -96,7 +95,7 @@ export interface CurrentConditions extends CommonConditions {
   feelsLikeTemperature: number; // °C or °F
 }
 
-export interface HourlyConditions {
+export interface HourlyConditions extends AirQualitySource {
   cloudCover?: number;        // 0-1
   icon: string;
   temperature: number;        // °C or °F
@@ -108,8 +107,6 @@ export interface HourlyConditions {
   windGust?: number;          // In kph or mph
   windPhrase?: string;
   windSpeed?: number;         // In kph or mph
-  aqiEu?: number;
-  aqiUs?: number;
   aqComps?: AirQualityComponents;
 }
 

@@ -60,6 +60,7 @@ export interface HiddenAlert {
 export const MAX_RECENT_LOCATIONS = 5;
 
 export class Settings {
+  airQuality = '';
   alarmDisableDuration = 0;
   alarmDisableStartTime = 0;
   alarms: AlarmInfo[] = [];
@@ -157,6 +158,8 @@ export class Settings {
        'show_sky_colors', 'show_sky_map', 'sky_facing', 'update-to-hide'].forEach(name => Cookies.remove(name));
     }
 
+    this.checkDefaultAirQualitySetting();
+
     const body = $('body');
 
     body.css('--background-color', this.background);
@@ -164,6 +167,8 @@ export class Settings {
   }
 
   public save(): void {
+    this.checkDefaultAirQualitySetting();
+
     const dayAgo = Date.now() / 1000 - 86400;
 
     // Filter out well-expired hidden alerts
@@ -180,6 +185,16 @@ export class Settings {
   public requiresWeatherReload(oldSettings: Settings): boolean {
     return this.latitude !== oldSettings.latitude || this.longitude !== oldSettings.longitude ||
       this.service !== oldSettings.service;
+  }
+
+  private checkDefaultAirQualitySetting(): void {
+    if (!this.airQuality) {
+      const countryCode = /\b([A-Z]{3})$/.exec(this.city)?.[1] || '';
+
+      this.airQuality =
+        (this.longitude < -30 && !/\bGRL$/.test(countryCode)) ||
+        (this.longitude > -20 && this.latitude < 40 && !/\b(ALB|ESP|GRC|ITA|PRT|TUR)$/.test(countryCode)) ? 'U' : 'E';
+    }
   }
 }
 

@@ -483,9 +483,6 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type=submi
 .user-options > .colspan-full > select {
   margin-right: 8px;
 }
-.user-options > .colspan-full #weather-service-option {
-  margin-right: 2em;
-}
 .user-options > .options-divider {
   grid-column: 1/span 3;
   height: 0.5em;

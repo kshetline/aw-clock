@@ -201,6 +201,7 @@ export class SettingsDialog {
   private addAlarm: JQuery;
   private advancedAlarmBtn: JQuery;
   private advancedDatePanel: JQuery;
+  private airQuality: JQuery;
   private alarmAudio: JQuery;
   private alarmCancel: JQuery;
   private alarmDay: JQuery;
@@ -285,6 +286,7 @@ export class SettingsDialog {
 
     this.advancedAlarmBtn = $('#advanced-alarm');
     this.advancedDatePanel = $('#advanced-date-panel');
+    this.airQuality = $('#air-quality-option');
     this.alarmCancel = $('#alarm-cancel');
     this.alarmDay = $('#alarm-day');
     this.alarmDelete = $('#alarm-delete');
@@ -1034,6 +1036,7 @@ export class SettingsDialog {
 
     checkUiSizing();
 
+    this.airQuality.val(previousSettings.airQuality || 'X');
     this.background.val(previousSettings.background);
     this.temperature.val(previousSettings.knots ? (previousSettings.celsius ? 'CK' : 'FK') : (previousSettings.celsius ? 'C' : 'F'));
     this.currentCity.val(previousSettings.city);
@@ -1263,6 +1266,7 @@ export class SettingsDialog {
 
     this.recentLocations = this.recentLocations.filter(loc => loc != null);
 
+    newSettings.airQuality = this.airQuality.val() as string;
     newSettings.background = this.background.val() as string;
     newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
     newSettings.city = (this.currentCity.val() as string).trim();

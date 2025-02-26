@@ -345,6 +345,10 @@ class AwClockApp implements AppService {
     return apiServer;
   }
 
+  getAirQualityOption(): string {
+    return this.settings.airQuality;
+  }
+
   isTimeAccelerated(): boolean {
     return (!!debugTime && debugTimeRate > 1);
   }
