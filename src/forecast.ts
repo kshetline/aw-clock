@@ -7,11 +7,12 @@ import {
   blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
   processMillis, push, regex, toNumber
 } from '@tubular/util';
-import { AirQualitySource, Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
+import { AirQualitySource, Alert, CurrentConditions, DailyConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getDayClasses, getJson,
-  JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
+  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getDayClasses,
+  getJson, JsonOptions, kphToKnots, localDateString, localShortDate, localShortDateTime, localShortTime, mphToKnots, setSvgHref,
+  stopPropagation
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
@@ -340,6 +341,8 @@ export class Forecast {
         self.showDayForecast(index);
       });
     }
+
+    this.airQualityColor.on('click', () => this.showAirQualityDetails());
 
     let usingTouch = false;
     let maxInc = 4;
@@ -1570,5 +1573,85 @@ export class Forecast {
     iconElems.toggleClass('hour-info-hide', !this.showingHourTemps).toggleClass('hour-info-show', this.showingHourTemps);
     popElems.toggleClass('hour-info-show', !this.showingHourTemps).toggleClass('hour-info-hide', this.showingHourTemps);
     tempElems.toggleClass('hour-info-hide', !this.showingHourTemps).toggleClass('hour-info-show', this.showingHourTemps);
+  }
+
+  private createAqiTableRow(source: HourlyConditions | DailyConditions, showDate: boolean, showOnlyDate = false): string {
+    let row = '';
+    const am = this.appService.getTimeFormat() === TimeFormat.AMPM;
+    const aqiOption = this.appService.getAirQualityOption();
+
+    const time = source.time * 1000;
+    const timeStamp = showOnlyDate ? localShortDate(time, this.timezone) :
+      showDate ? localShortDateTime(time, this.timezone, am) : localShortTime(time, this.timezone, am);
+    const [aqi, color] = this.getAirQualityColorAndCaption(source, aqiOption);
+    const aqiStyle = `background-color: ${color}; color: ${matchingTextColor(color)}`;
+    const createCell = (pollutant: string, digits: number): string => {
+      const data = source.aqComps[pollutant];
+      const pAqi = aqiOption === 'U' ? data.aqiUs : data.aqiEo;
+      let cell = '<td';
+
+      if (pAqi === aqi)
+        cell += ' style="font-weight: bold;"';
+
+      cell += `>${data.raw.toFixed(digits)}</td>`;
+
+      return cell;
+    };
+
+    row += '  <tr>\n';
+    row += `    <td${showOnlyDate ? ' style="text-align: left"' : ''}>${timeStamp}</td>\n`;
+    row += `    <td style="${aqiStyle}">${aqi}</td>\n`;
+    row += `    ${createCell('o3', 0)}\n`;
+    row += `    ${createCell('pm10', 0)}\n`;
+    row += `    ${createCell('pm2_5', 1)}</td>\n`;
+    row += `    ${createCell('co', 0)}\n`;
+    row += `    ${createCell('so2', 1)}\n`;
+    row += `    ${createCell('no2', 1)}\n`;
+    row += '  </tr>\n';
+
+    return row;
+  }
+
+  private showAirQualityDetails(): void {
+    let html = '';
+    let lastDay = -1;
+    let lastTime = -1;
+    const hours = this.lastForecastData?.hourly;
+    const days = this.lastForecastData?.daily?.data;
+    const now = this.appService.getCurrentTime() / 1000;
+
+    html += '<table>\n';
+    html += '  <tr>\n';
+    html += '    <th>Date/time</th>\n';
+    html += '    <th>AQI</th>\n';
+    html += '    <th>O<sub>3</sub> μg/m³</th>\n';
+    html += '    <th>PM<sub>10</sub> μg/m³</th>\n';
+    html += '    <th>PM<sub>2.5</sub> μg/m³\n';
+    html += '    <th>CO μg/m³</th>\n';
+    html += '    <th>SO<sub>2</sub> μg/m³\n';
+    html += '    <th>NO<sub>2</sub> μg/m³\n';
+    html += '  </tr>\n';
+
+    for (const hour of hours) {
+      if (hour.time < now - 3600 || !hour.aqComps)
+        continue;
+
+      const wallTime = new DateTime(hour.time * 1000, this.timezone).wallTime;
+
+      html += this.createAqiTableRow(hour, lastDay !== wallTime.d);
+      lastDay = wallTime.d;
+      lastTime = hour.time;
+    }
+
+    for (const day of days) {
+      if (day.time < lastTime || !day.aqComps)
+        continue;
+
+      html += this.createAqiTableRow(day, true, true);
+      lastTime = day.time;
+    }
+
+    html += '</table>\n';
+    displayHtml('air-quality-details', html, 'white');
   }
 }

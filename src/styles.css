@@ -340,6 +340,10 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type=submi
   font-size: 1.1px;
 }
 
+#air-quality-text {
+  pointer-events: none;
+}
+
 #air-quality-caption {
   font-size: 1.5px;
 }
@@ -1031,7 +1035,7 @@ input, button, select, textarea, optgroup, option {
   position: relative;
 }
 
-#big-text-dialog > div {
+#big-text-dialog > div, #air-quality-details > div {
   font-size: 3vh;
   line-height: 3.6vh;
   --page-lines: 22;
@@ -1049,7 +1053,7 @@ input, button, select, textarea, optgroup, option {
   color: black;
   z-index: 100;
 }
-#big-text-dialog > div .dialog-text {
+#big-text-dialog > div .dialog-text, #air-quality-details > div .dialog-text {
   max-height: calc(var(--page-lines, 1) * 3.6vh);
   overflow: auto;
   position: relative;
@@ -1058,7 +1062,7 @@ input, button, select, textarea, optgroup, option {
   --top-hr-margin: calc(0.6em - 1px);
   --bottom-hr-margin: calc(0.6em - 1px);
 }
-#big-text-dialog > div .dialog-text .dialog-fader {
+#big-text-dialog > div .dialog-text .dialog-fader, #air-quality-details > div .dialog-text .dialog-fader {
   background-image: linear-gradient(to bottom, var(--fade-from, transparent), var(--fade-to, black));
   bottom: 0;
   height: 1.2em;
@@ -1066,12 +1070,12 @@ input, button, select, textarea, optgroup, option {
   position: sticky;
   right: 0;
 }
-#big-text-dialog > div .dialog-text hr {
+#big-text-dialog > div .dialog-text hr, #air-quality-details > div .dialog-text hr {
   border-width: 1px;
   margin: var(--top-hr-margin) 0.5em var(--bottom-hr-margin);
   padding: 0;
 }
-#big-text-dialog > div .dialog-close {
+#big-text-dialog > div .dialog-close, #air-quality-details > div .dialog-close {
   background-color: white;
   border: 2px solid black;
   cursor: default;
@@ -1083,9 +1087,26 @@ input, button, select, textarea, optgroup, option {
   user-select: none;
   width: 1em;
 }
-#big-text-dialog > div .dialog-close > div {
+#big-text-dialog > div .dialog-close > div, #air-quality-details > div .dialog-close > div {
   position: relative;
   top: -0.06em;
+}
+
+#air-quality-details > div {
+  font-size: 2.5vh;
+  line-height: 3vh;
+  --page-lines: 26;
+}
+#air-quality-details > div .dialog-text {
+  max-height: calc(var(--page-lines, 1) * 3vh);
+}
+#air-quality-details > div table, #air-quality-details > div th, #air-quality-details > div td {
+  border: 1px solid #CCC;
+  border-collapse: collapse;
+  padding: 0.25em 0.5em;
+}
+#air-quality-details > div td {
+  text-align: right;
 }
 
 .moon-info {

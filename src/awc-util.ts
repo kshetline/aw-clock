@@ -487,6 +487,38 @@ export function localDateString(time: number, zone: Timezone): string {
     { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+export function localShortDateTime(time: number, zone: Timezone, amPm: boolean): string {
+  const wallTime = new DateTime(time, zone).wallTime;
+  const options: Intl.DateTimeFormatOptions =
+    { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+
+  if (amPm)
+    options.hourCycle = 'h12';
+  else
+    options.hourCycle = 'h23';
+
+  return new Date(wallTime.y, wallTime.m - 1, wallTime.d, wallTime.hrs, wallTime.min).toLocaleDateString(undefined, options);
+}
+
+export function localShortDate(time: number, zone: Timezone): string {
+  const wallTime = new DateTime(time, zone).wallTime;
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+
+  return new Date(wallTime.y, wallTime.m - 1, wallTime.d).toLocaleDateString(undefined, options);
+}
+
+export function localShortTime(time: number, zone: Timezone, amPm: boolean): string {
+  const wallTime = new DateTime(time, zone).wallTime;
+  const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+
+  if (amPm)
+    options.hourCycle = 'h12';
+  else
+    options.hourCycle = 'h23';
+
+  return new Date(wallTime.y, wallTime.m - 1, wallTime.d, wallTime.hrs, wallTime.min).toLocaleTimeString(undefined, options);
+}
+
 export function safeCompareVersions(firstVersion: string, secondVersion: string, defValue?: number): number;
 export function safeCompareVersions(firstVersion: string, secondVersion: string, operator?: CompareOperator, defValue?: boolean): boolean;
 export function safeCompareVersions(firstVersion: string, secondVersion: string,

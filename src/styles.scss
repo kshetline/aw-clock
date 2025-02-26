@@ -361,6 +361,10 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   font-size: 1.1px;
 }
 
+#air-quality-text {
+  pointer-events: none;
+}
+
 #air-quality-caption {
   font-size: 1.5px;
 }
@@ -1087,7 +1091,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   position: relative;
 }
 
-#big-text-dialog > div {
+#big-text-dialog > div, #air-quality-details > div {
   font-size: 3vh;
   line-height: 3.6vh;
   --page-lines: 22;
@@ -1144,6 +1148,26 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
       position: relative;
       top: -0.06em;
     }
+  }
+}
+
+#air-quality-details > div {
+  font-size: 2.5vh;
+  line-height: 3vh;
+  --page-lines: 26;
+
+  .dialog-text {
+    max-height: calc(var(--page-lines, 1) * 3vh);
+  }
+
+  table, th, td {
+    border: 1px solid #CCC;
+    border-collapse: collapse;
+    padding: 0.25em 0.5em;
+  }
+
+  td {
+    text-align: right;
   }
 }
 
