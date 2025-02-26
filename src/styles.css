@@ -1096,20 +1096,36 @@ input, button, select, textarea, optgroup, option {
   font-size: 2.5vh;
   line-height: 3vh;
   --page-lines: 26;
+  width: 55vw;
 }
 #air-quality-details > div .dialog-text {
   max-height: calc(var(--page-lines, 1) * 3vh);
 }
-#air-quality-details > div table, #air-quality-details > div th, #air-quality-details > div td {
+#air-quality-details > div .table-wrapper {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+#air-quality-details > div .table-wrapper table, #air-quality-details > div .table-wrapper th, #air-quality-details > div .table-wrapper td {
   border: 1px solid #CCC;
   border-collapse: collapse;
   padding: 0.25em 0.5em;
 }
-#air-quality-details > div th {
+#air-quality-details > div .table-wrapper table tr th.title {
+  border: none;
+}
+#air-quality-details > div .table-wrapper table tr th.subtitle {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font-size: 0.6em;
+  font-weight: normal;
+}
+#air-quality-details > div .table-wrapper th {
   vertical-align: top;
   padding-bottom: 0;
 }
-#air-quality-details > div td {
+#air-quality-details > div .table-wrapper td {
   text-align: right;
 }
 

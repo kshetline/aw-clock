@@ -1109,7 +1109,7 @@ export class Forecast {
       this.pressure.css('display', 'none');
   }
 
-  private getAirQualityColorAndCaption(valueSource: AirQualitySource, option: string): [number, string, string] {
+  private getAirQualityColorAndCaption(valueSource: AirQualitySource, option: string, fade = false): [number, string, string] {
     let value: number;
     let index: number;
     let color: string;
@@ -1119,7 +1119,7 @@ export class Forecast {
       value = valueSource.aqiEu;
 
       if (value == null)
-        return [undefined, 'gray', ''];
+        return [undefined, fade ? 'none' : 'gray', ''];
 
       index = min(floor(value / 25), 4);
       color = euAirQualityColors[index];
@@ -1129,12 +1129,15 @@ export class Forecast {
       value = valueSource.aqiUs;
 
       if (value == null)
-        return [undefined, 'gray', ''];
+        return [undefined, fade ? 'none' : 'gray', ''];
 
       index = min(max(floor((value - 1) / 50), 0), 9);
       color = airQualityColors[index];
       caption = airQualityCaptions[index];
     }
+
+    if (fade)
+      color += '55';
 
     return [value, color, caption];
   }
@@ -1589,13 +1592,13 @@ export class Forecast {
     const aqiStyle = `background-color: ${color}; color: ${matchingTextColor(color)}`;
     const createCell = (pollutant: string, digits: number): string => {
       const data = source.aqComps[pollutant] as AirQualityValues;
-      const pAqi = aqiOption === 'U' ? data.aqiUs : data.aqiEu;
-      let cell = '<td';
+      const [pAqi, pColor] = this.getAirQualityColorAndCaption(data, aqiOption, true);
+      let cell = `<td style="background-color: ${pColor};`;
 
       if (pAqi === aqi)
-        cell += ' style="font-weight: bold;"';
+        cell += ' font-weight: bold;';
 
-      cell += `>${data.raw.toFixed(digits)}</td>`;
+      cell += `">${data.raw.toFixed(digits)}</td>`;
 
       return cell;
     };
@@ -1622,16 +1625,21 @@ export class Forecast {
     const days = this.lastForecastData?.daily?.data;
     const now = this.appService.getCurrentTime() / 1000;
 
-    html += '<table>\n';
+    html += '<div class="table-wrapper"><table>\n';
+    html += '  <tr><th class="title" colspan=8>Air Quality Details</th></tr>\n';
+    html += '  <tr>\n';
+    html += '    <th class="subtitle"></th><th class="subtitle"></th>\n';
+    html += '    <th class="subtitle" colspan=6>Pollutant values in μg/m³, key pollutants in bold</th>\n';
+    html += '  </tr>\n';
     html += '  <tr>\n';
     html += '    <th>Date/time</th>\n';
     html += '    <th>AQI</th>\n';
-    html += '    <th>O<sub>3</sub> μg/m³</th>\n';
-    html += '    <th>PM<sub>10</sub> μg/m³</th>\n';
-    html += '    <th>PM<sub>2.5</sub> μg/m³\n';
-    html += '    <th>CO μg/m³</th>\n';
-    html += '    <th>SO<sub>2</sub> μg/m³\n';
-    html += '    <th>NO<sub>2</sub> μg/m³\n';
+    html += '    <th>O<sub>3</sub></th>\n';
+    html += '    <th>PM<sub>10</sub></th>\n';
+    html += '    <th>PM<sub>2.5</sub>\n';
+    html += '    <th>CO</th>\n';
+    html += '    <th>SO<sub>2</sub>\n';
+    html += '    <th>NO<sub>2</sub>\n';
     html += '  </tr>\n';
 
     for (const hour of hours) {
@@ -1653,7 +1661,7 @@ export class Forecast {
       lastTime = day.time;
     }
 
-    html += '</table>\n';
+    html += '</table></div>\n';
     displayHtml('air-quality-details', html, 'white');
   }
 }

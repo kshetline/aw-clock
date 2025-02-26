@@ -1155,24 +1155,43 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   font-size: 2.5vh;
   line-height: 3vh;
   --page-lines: 26;
+  width: 55vw;
 
   .dialog-text {
     max-height: calc(var(--page-lines, 1) * 3vh);
   }
 
-  table, th, td {
-    border: 1px solid #CCC;
-    border-collapse: collapse;
-    padding: 0.25em 0.5em;
-  }
+  .table-wrapper {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
 
-  th {
-    vertical-align: top;
-    padding-bottom: 0;
-  }
+    table, th, td {
+      border: 1px solid #CCC;
+      border-collapse: collapse;
+      padding: 0.25em 0.5em;
+    }
 
-  td {
-    text-align: right;
+    table tr th.title {
+      border: none;
+    }
+
+    table tr th.subtitle {
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      font-size: 0.6em;
+      font-weight: normal;
+    }
+
+    th {
+      vertical-align: top;
+      padding-bottom: 0;
+    }
+
+    td {
+      text-align: right;
+    }
   }
 }
 
