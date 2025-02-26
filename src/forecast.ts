@@ -1580,12 +1580,13 @@ export class Forecast {
     tempElems.toggleClass('hour-info-hide', !this.showingHourTemps).toggleClass('hour-info-show', this.showingHourTemps);
   }
 
-  private createAqiTableRow(source: HourlyConditions | DailyConditions, showDate: boolean, showOnlyDate = false): string {
+  private createAqiTableRow(source: CurrentConditions | HourlyConditions | DailyConditions,
+                            showDate: boolean, showOnlyDate = false): string {
     let row = '';
     const am = this.appService.getTimeFormat() === TimeFormat.AMPM;
     const aqiOption = this.appService.getAirQualityOption();
 
-    const time = source.time * 1000;
+    const time = floor(source.time, 3600) * 1000;
     const timeStamp = showOnlyDate ? localShortDate(time, this.timezone) :
       showDate ? localShortDateTime(time, this.timezone, am) : localShortTime(time, this.timezone, am);
     const [aqi, color] = this.getAirQualityColorAndCaption(source, aqiOption);
@@ -1619,11 +1620,10 @@ export class Forecast {
 
   private showAirQualityDetails(): void {
     let html = '';
-    let lastDay = -1;
+    let lastDay: number;
     let lastTime = -1;
     const hours = this.lastForecastData?.hourly;
     const days = this.lastForecastData?.daily?.data;
-    const now = this.appService.getCurrentTime() / 1000;
 
     html += '<div class="table-wrapper"><table>\n';
     html += '  <tr><th class="title" colspan=8>Air Quality Details</th></tr>\n';
@@ -1642,8 +1642,11 @@ export class Forecast {
     html += '    <th>NO<sub>2</sub>\n';
     html += '  </tr>\n';
 
+    html += this.createAqiTableRow(this.lastForecastData?.currently, true);
+    lastDay = new DateTime(this.lastForecastData?.currently.time * 1000, this.timezone).wallTime.d;
+
     for (const hour of hours) {
-      if (hour.time < now - 3600 || !hour.aqComps)
+      if (hour.time < this.lastForecastData?.currently.time || !hour.aqComps)
         continue;
 
       const wallTime = new DateTime(hour.time * 1000, this.timezone).wallTime;

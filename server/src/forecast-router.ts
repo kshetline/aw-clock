@@ -42,10 +42,13 @@ function findMatchingAirQuality(forecast: AirQualityForecast, time: number, span
   const aqs: AQs = {};
 
   for (const item of forecast.hours) {
-    if (time <= item.time && item.time < time + span) {
+    if (time <= item.time && item.time < time + (span || 3600)) {
       aqs.aqiEu = aqs.aqiEu == null ? item.aqiEu : max(item.aqiEu, aqs.aqiEu);
       aqs.aqiUs = aqs.aqiUs == null ? item.aqiUs : max(item.aqiUs, aqs.aqiUs);
       aqs.aqComps = worst(aqs.aqComps, item.aqComps);
+
+      if (!span)
+        break;
     }
   }
 
@@ -103,7 +106,7 @@ router.get('/', async (req: Request, res: Response) => {
 
   if (airQualityIndex && !(forecasts[airQualityIndex] instanceof Error)) {
     const airQuality = forecasts[airQualityIndex] as AirQualityForecast;
-    const aqs = findMatchingAirQuality(airQuality, Date.now() / 1000, 3600);
+    const aqs = findMatchingAirQuality(airQuality, Date.now() / 1000 - 3600, 0);
 
     if (aqs) {
       forecast.currently.aqiEu = aqs.aqiEu;
