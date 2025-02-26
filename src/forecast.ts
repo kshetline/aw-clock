@@ -7,7 +7,9 @@ import {
   blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
   processMillis, push, regex, toNumber
 } from '@tubular/util';
-import { AirQualitySource, Alert, CurrentConditions, DailyConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
+import {
+  AirQualitySource, AirQualityValues, Alert, CurrentConditions, DailyConditions, ForecastData, HourlyConditions
+} from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
   ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getDayClasses,
@@ -1586,8 +1588,8 @@ export class Forecast {
     const [aqi, color] = this.getAirQualityColorAndCaption(source, aqiOption);
     const aqiStyle = `background-color: ${color}; color: ${matchingTextColor(color)}`;
     const createCell = (pollutant: string, digits: number): string => {
-      const data = source.aqComps[pollutant];
-      const pAqi = aqiOption === 'U' ? data.aqiUs : data.aqiEo;
+      const data = source.aqComps[pollutant] as AirQualityValues;
+      const pAqi = aqiOption === 'U' ? data.aqiUs : data.aqiEu;
       let cell = '<td';
 
       if (pAqi === aqi)

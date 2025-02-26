@@ -29,8 +29,11 @@ function worst(a: AirQualityComponents, b: AirQualityComponents): AirQualityComp
 
   const aa = a as any;
 
-  forEach(b as unknown as Record<string, AirQualityValues>, (key, value) =>
-    aa[key] = (aa[key] == null ? value : ((aa[key].raw as number) < value.raw ? value : aa[key])));
+  forEach(b as unknown as Record<string, AirQualityValues>, (key, value) => {
+    aa[key] = (aa[key] == null ? value : ((aa[key].raw as number) < value.raw ? value : aa[key]));
+    aa[key].aqiEu = max(aa[key].aqiEu, value.aqiEu);
+    aa[key].aqiUs = max(aa[key].aqiUs, value.aqiUs);
+  });
 
   return a;
 }

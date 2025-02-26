@@ -1166,6 +1166,11 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
     padding: 0.25em 0.5em;
   }
 
+  th {
+    vertical-align: top;
+    padding-bottom: 0;
+  }
+
   td {
     text-align: right;
   }

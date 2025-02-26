@@ -1105,6 +1105,10 @@ input, button, select, textarea, optgroup, option {
   border-collapse: collapse;
   padding: 0.25em 0.5em;
 }
+#air-quality-details > div th {
+  vertical-align: top;
+  padding-bottom: 0;
+}
 #air-quality-details > div td {
   text-align: right;
 }
