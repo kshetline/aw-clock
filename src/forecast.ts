@@ -2,7 +2,7 @@ import { AppService } from './app.service';
 import { CLOCK_CENTER } from './clock';
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
-import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
+import { abs, cos_deg, floor, max, min, mod2, round, sign, sin_deg } from '@tubular/math';
 import {
   blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
   processMillis, push, regex, toNumber
@@ -1112,6 +1112,7 @@ export class Forecast {
   private getAirQualityColorAndCaption(valueSource: AirQualitySource, option: string, fade = false): [number, string, string] {
     let value: number;
     let index: number;
+    let iIndex: number;
     let color: string;
     let caption: string;
 
@@ -1121,9 +1122,10 @@ export class Forecast {
       if (value == null)
         return [undefined, fade ? 'none' : 'gray', ''];
 
-      index = min(floor(value / 25), 4);
-      color = euAirQualityColors[index];
-      caption = euAirQualityCaptions[index];
+      index = min(value / 25, 4);
+      iIndex = floor(index);
+      caption = euAirQualityCaptions[iIndex];
+      color = euAirQualityColors[iIndex];
     }
     else {
       value = valueSource.aqiUs;
@@ -1131,9 +1133,25 @@ export class Forecast {
       if (value == null)
         return [undefined, fade ? 'none' : 'gray', ''];
 
-      index = min(max(floor((value - 1) / 50), 0), 9);
-      color = airQualityColors[index];
-      caption = airQualityCaptions[index];
+      index = min(max((value - 1) / 50, 0), 9);
+      iIndex = floor(index);
+      caption = airQualityCaptions[iIndex];
+      color = airQualityColors[iIndex];
+
+      const diff = mod2(index, 1);
+
+      if (option === 'UM' && abs(diff) < 0.25) {
+        let color2: string;
+
+        if (diff < 0)
+          color2 = airQualityColors[iIndex + 1];
+        else {
+          color2 = color;
+          color = airQualityColors[iIndex - 1];
+        }
+
+        color = blendColors(color2, color, (diff + 0.25) * 2);
+      }
     }
 
     if (fade)
@@ -1143,9 +1161,9 @@ export class Forecast {
   }
 
   private displayAirQuality(forecast: ForecastData): void {
-    const option = this.appService.getAirQualityOption();
+    const option = this.appService.getAirQualityOption() || '';
 
-    if (option !== 'E' && option !== 'U') {
+    if (option !== 'E' && !option.startsWith('U')) {
       this.pressure.attr('y', '39');
       this.airQuality.css('display', 'none');
 
@@ -1162,7 +1180,7 @@ export class Forecast {
 
     const current = forecast.currently;
 
-    if (option === 'E' && current.aqiEu == null || option === 'U' && current.aqiUs == null) {
+    if (option === 'E' && current.aqiEu == null || option.startsWith('U') && current.aqiUs == null) {
       this.airQualityColor.css('fill', 'gray');
       this.airQualityValue.text('--');
       this.airQualityText.css('fill', 'black');

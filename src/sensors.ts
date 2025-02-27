@@ -189,7 +189,7 @@ export class Sensors {
         cth.sensorTempDetail = sensorDetail.join(', ');
         this.appService.updateCurrentTemp(cth);
       })
-      .catch(err => console.error('Retrieving sensor data failed:', err));
+      .catch(err => console.info('Retrieving sensor data failed:', err.message));
   }
 
   private configureDisplay(indoorOption: string, outdoorOption: string): void {
