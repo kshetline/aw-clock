@@ -1093,6 +1093,10 @@ export class SettingsDialog {
         event.preventDefault();
         this.okButton.trigger('click');
       }
+      else if (event.code === 'KeyU' && event.ctrlKey && event.shiftKey)
+        this.userId.parent().css('display', 'block');
+      else if (event.code === 'KeyU' && event.ctrlKey && !event.shiftKey)
+        this.userId.parent().css('display', 'none');
     });
 
     this.okButton.on('click', this.doOK);
