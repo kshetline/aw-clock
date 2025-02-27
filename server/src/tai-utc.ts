@@ -33,6 +33,7 @@ const IERS_BULLETIN_A_URL_2 = 'https://datacenter.iers.org/data/9/finals2000A.al
 
 const DAYS_BETWEEN_POLLS = 7;
 const FTP_TIMEOUT = 7500;
+const MAX_FTP_WAIT = 20000;
 const HTTP_TIMEOUT = 5000;
 const MAX_RANDOM_LEAP_SECOND_POLL_DELAY = 180_000; // Three minutes
 const MILLIS_PER_DAY = 86_400_000;
@@ -257,8 +258,6 @@ export class TaiUtc {
   }
 
   private static getFtpText(url: string): Promise<string> {
-    console.log(timeStamp(), url);
-
     const parsed = new URL(url);
     const port = Number(parsed.port || 21);
     const options: PromiseFtp.Options = { host: parsed.hostname, port, connTimeout: FTP_TIMEOUT, pasvTimeout: FTP_TIMEOUT };
@@ -270,8 +269,7 @@ export class TaiUtc {
       options.password = parsed.password;
 
     const ftp = new PromiseFtp();
-
-    return ftp.connect(options)
+    const ftpPromise = ftp.connect(options)
       .then(() => ftp.ascii())
       .then(() => ftp.get(parsed.pathname))
       .then(stream => {
@@ -293,5 +291,10 @@ export class TaiUtc {
       //    TS2741: Property '[Symbol.toStringTag]' is missing in type 'Bluebird<string | Error>'
       //    but required in type 'Promise<string>'.
       .catch(err => Promise.reject(err)) as unknown as Promise<string>;
+
+    return new Promise<string>((resolve, reject) => {
+      ftpPromise.then(text => resolve(text)).catch(err => reject(err));
+      unref(setTimeout(() => reject(new Error(url + ' timed out')), MAX_FTP_WAIT));
+    });
   }
 }
