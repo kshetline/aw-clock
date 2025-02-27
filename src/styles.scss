@@ -1191,6 +1191,13 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
 
     td {
       text-align: right;
+
+      span {
+        display: inline-block;
+        margin: -2px -4px;
+        padding: 2px 4px;
+        width: 100%;
+      }
     }
   }
 }

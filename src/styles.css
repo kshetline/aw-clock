@@ -1128,6 +1128,12 @@ input, button, select, textarea, optgroup, option {
 #air-quality-details > div .table-wrapper td {
   text-align: right;
 }
+#air-quality-details > div .table-wrapper td span {
+  display: inline-block;
+  margin: -2px -4px;
+  padding: 2px 4px;
+  width: 100%;
+}
 
 .moon-info {
   opacity: 0;

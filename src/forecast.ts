@@ -194,6 +194,7 @@ export class Forecast {
   private airQualityCaption1: JQuery;
   private airQualityCaption2: JQuery;
   private airQualityColor: JQuery;
+  private airQualityColor2: JQuery;
   private airQualityText: JQuery;
   private airQualityValue: JQuery;
   private dailyWinds: JQuery[] = [];
@@ -265,6 +266,7 @@ export class Forecast {
     this.airQualityCaption1 = $('#air-quality-caption-1');
     this.airQualityCaption2 = $('#air-quality-caption-2');
     this.airQualityColor = $('#air-quality-color');
+    this.airQualityColor2 = $('#air-quality-color-2');
     this.airQualityText = $('#air-quality-text');
     this.airQualityValue = $('#air-quality-value');
 
@@ -345,6 +347,7 @@ export class Forecast {
     }
 
     this.airQualityColor.on('click', () => this.showAirQualityDetails());
+    this.airQualityColor2.on('click', () => this.showAirQualityDetails());
 
     let usingTouch = false;
     let maxInc = 4;
@@ -1109,55 +1112,60 @@ export class Forecast {
       this.pressure.css('display', 'none');
   }
 
-  private getAirQualityColorAndCaption(valueSource: AirQualitySource, option: string, fade = false): [number, string, string] {
+  private getAirQualityColorAndCaption(valueSource: AirQualitySource, option: string, fade = false): [number, string, string, string] {
     let value: number;
     let index: number;
     let iIndex: number;
     let color: string;
+    let color2: string;
     let caption: string;
+    const neutral = fade ? 'none' : 'gray';
 
     if (option === 'E') {
       value = valueSource.aqiEu;
 
       if (value == null)
-        return [undefined, fade ? 'none' : 'gray', ''];
+        return [undefined, neutral, neutral, ''];
 
       index = min(value / 25, 4);
       iIndex = floor(index);
       caption = euAirQualityCaptions[iIndex];
-      color = euAirQualityColors[iIndex];
+      color = color2 = euAirQualityColors[iIndex];
     }
     else {
       value = valueSource.aqiUs;
 
       if (value == null)
-        return [undefined, fade ? 'none' : 'gray', ''];
+        return [undefined, neutral, neutral, ''];
 
       index = min(max((value - 1) / 50, 0), 9);
       iIndex = floor(index);
       caption = airQualityCaptions[iIndex];
-      color = airQualityColors[iIndex];
+      color = color2 = airQualityColors[iIndex];
 
       const diff = mod2(index, 1);
 
       if (option === 'UM' && abs(diff) < 0.25) {
         let color2: string;
+        let proportion = (diff + 0.25) * 2;
 
         if (diff < 0)
           color2 = airQualityColors[iIndex + 1];
         else {
-          color2 = color;
-          color = airQualityColors[iIndex - 1];
+          color2 = airQualityColors[iIndex - 1];
+          proportion = 1 - proportion;
         }
 
-        color = blendColors(color2, color, (diff + 0.25) * 2);
+        color = blendColors(color2, color, proportion);
       }
     }
 
-    if (fade)
-      color += '55';
+    if (fade) {
+      color = blendColors(color, 'white', 0.4);
+      color2 = blendColors(color2, 'white', 0.4);
+    }
 
-    return [value, color, caption];
+    return [value, color, color2, caption];
   }
 
   private displayAirQuality(forecast: ForecastData): void {
@@ -1188,11 +1196,12 @@ export class Forecast {
       return;
     }
 
-    const [value, color, caption] = this.getAirQualityColorAndCaption(current, option);
+    const [value, color, color2, caption] = this.getAirQualityColorAndCaption(current, option);
 
     this.airQualityValue.text(value.toString());
     this.airQualityColor.css('fill', color);
-    this.airQualityText.css('fill', matchingTextColor(color));
+    this.airQualityColor2.css('fill', color2);
+    this.airQualityText.css('fill', matchingTextColor(color2));
 
     if (caption.includes('\n')) {
       const [line1, line2] = caption.split('\n');
@@ -1212,11 +1221,11 @@ export class Forecast {
     for (let i = 0; i < this.dayBackgrounds.length; ++i) {
       const background = this.dayBackgrounds[i];
       const header = this.dayHeaders[i];
-      const [value, color] = this.getAirQualityColorAndCaption(daily[i], option);
+      const [value, color, color2] = this.getAirQualityColorAndCaption(daily[i], option);
 
       if (i < daily.length && value != null) {
         background.setAttribute('fill', color);
-        header.setAttribute('fill', matchingTextColor(color));
+        header.setAttribute('fill', matchingTextColor(color2));
       }
       else {
         background.setAttribute('fill', 'none');
@@ -1607,17 +1616,21 @@ export class Forecast {
     const time = floor(source.time, 3600) * 1000;
     const timeStamp = showOnlyDate ? localShortDate(time, this.timezone) :
       showDate ? localShortDateTime(time, this.timezone, am) : localShortTime(time, this.timezone, am);
-    const [aqi, color] = this.getAirQualityColorAndCaption(source, aqiOption);
-    const aqiStyle = `background-color: ${color}; color: ${matchingTextColor(color)}`;
+    const [aqi, color, color2] = this.getAirQualityColorAndCaption(source, aqiOption);
+    const aqiStyle = `background-color: ${color}; color: ${matchingTextColor(color2)}`;
     const createCell = (pollutant: string, digits: number): string => {
       const data = source.aqComps[pollutant] as AirQualityValues;
-      const [pAqi, pColor] = this.getAirQualityColorAndCaption(data, aqiOption, true);
-      let cell = `<td style="background-color: ${pColor};`;
+
+      if (data?.raw == null)
+        return '<td>???</td>';
+
+      const [pAqi, pColor, pColor2] = this.getAirQualityColorAndCaption(data, aqiOption, true);
+      let cell = `<td style="background-color: ${pColor2}"><span style="background-color: ${pColor}`;
 
       if (pAqi === aqi)
-        cell += ' font-weight: bold;';
+        cell += '; font-weight: bold';
 
-      cell += `">${data.raw.toFixed(digits)}</td>`;
+      cell += `">${data.raw.toFixed(digits)}</span></td>`;
 
       return cell;
     };
