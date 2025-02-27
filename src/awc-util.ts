@@ -543,3 +543,7 @@ export function getDayClasses(qlass: string): HTMLElement[] {
     .filter(h => !h.id.includes('dayN'))
     .sort((a, b) => parseFloat(a.id.substr(3)) - parseFloat(b.id.substr(3)));
 }
+
+export function fToC(f: number): number {
+  return (f - 32) / 1.8;
+}

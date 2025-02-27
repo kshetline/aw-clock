@@ -1,10 +1,11 @@
 import { AppService } from './app.service';
 import { CurrentTemperatureHumidity } from './shared-types';
 import $ from 'jquery';
-import { apiServer, localServer } from './settings';
+import { apiServer, fakeSensors, localServer } from './settings';
 import { DhtSensorData, TempHumidityData, TempHumidityItem } from '../server/src/shared-types';
 import { updateSvgFlowItems } from './svg-flow';
 import { getJson, setSignalLevel } from './awc-util';
+import { random } from '@tubular/math';
 
 function errorText(err: any): string {
   err = err instanceof Error ? err.message : err.error;
@@ -65,7 +66,7 @@ export class Sensors {
     Promise.all(promises)
       .then(data => {
         const wired = data[0] as DhtSensorData;
-        const wireless = data[1] as TempHumidityData;
+        let wireless = data[1] as TempHumidityData;
         const lowBatteries: string[] = [];
         let thd: TempHumidityItem;
         const cth: CurrentTemperatureHumidity = {
@@ -76,6 +77,31 @@ export class Sensors {
         };
         let err: string;
         const sensorDetail: string[] = [];
+        const [forecastT, forecastH] = this.appService.getLastTAndH();
+
+        if (fakeSensors && forecastT != null && forecastH != null) {
+          wireless = {
+            A: {
+              batteryLow: false,
+              channel: 'A',
+              humidity: forecastH,
+              reliable: true,
+              signalQuality: 90,
+              temperature: forecastT - 1.5 + random() * 3,
+              time: Date.now()
+            },
+            B: {
+              batteryLow: false,
+              channel: 'A',
+              humidity: forecastH,
+              reliable: true,
+              signalQuality: 90,
+              temperature: forecastT - 1.5 + random() * 3,
+              time: Date.now()
+            },
+            C: wireless.C
+          };
+        }
 
         if (wired && !(wired instanceof Error) && wired.error === 'n/a')
           this.wiredAvailable = false;

@@ -10,6 +10,7 @@ export const runningDev = (docPort === '3000' || docPort === '4200');
 export const localServer = (docPort && docPort !== '80' && docPort !== '443');
 export const demoServer = /\bshetline\.com\b/.test(location.host);
 export const updateTest = toBoolean(new URLSearchParams(location.search).get('ut'), false, true);
+export const fakeSensors = toBoolean(new URLSearchParams(location.search).get('fs'), false, true);
 
 const apiParam = new URLSearchParams(location.search).get('api');
 const apiPort = apiParam || (runningDev ? (docPort === '3000' ? '3002' : '4201') : docPort || '8080');

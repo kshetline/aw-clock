@@ -12,7 +12,7 @@ import {
 } from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getDayClasses,
+  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, fToC, getDayClasses,
   getJson, JsonOptions, kphToKnots, localDateString, localShortDate, localShortDateTime, localShortTime, mphToKnots, setSvgHref,
   stopPropagation
 } from './awc-util';
@@ -663,7 +663,9 @@ export class Forecast {
       this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
       this.settingsBtn.css('margin-right', vc || wu || wb ? 0 : 8);
 
-      this.appService.forecastHasBeenUpdated();
+      this.appService.forecastHasBeenUpdated(
+        isMetric ? forecastData.currently.temperature : fToC(forecastData.currently.temperature),
+        forecastData.currently.humidity * 100);
     }).catch(error => {
       this._hasGoodData = false;
 
