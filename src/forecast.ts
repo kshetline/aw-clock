@@ -1617,7 +1617,8 @@ export class Forecast {
     const timeStamp = showOnlyDate ? localShortDate(time, this.timezone) :
       showDate ? localShortDateTime(time, this.timezone, am) : localShortTime(time, this.timezone, am);
     const [aqi, color, color2] = this.getAirQualityColorAndCaption(source, aqiOption);
-    const aqiStyle = `background-color: ${color}; color: ${matchingTextColor(color2)}`;
+    const aqiStyle = `background-color: ${color2}; color: ${matchingTextColor(color2)}`;
+    const aqiStyle2 = `background-color: ${color}; color: ${matchingTextColor(color2)}`;
     const createCell = (pollutant: string, digits: number): string => {
       const data = source.aqComps[pollutant] as AirQualityValues;
 
@@ -1637,7 +1638,7 @@ export class Forecast {
 
     row += '  <tr>\n';
     row += `    <td${showOnlyDate ? ' style="text-align: left"' : ''}>${timeStamp}</td>\n`;
-    row += `    <td style="${aqiStyle}">${aqi}</td>\n`;
+    row += `    <td style="${aqiStyle}"><span style="${aqiStyle2}">${aqi}</span></td>\n`;
     row += `    ${createCell('o3', 0)}\n`;
     row += `    ${createCell('pm10', 0)}\n`;
     row += `    ${createCell('pm2_5', 1)}</td>\n`;
