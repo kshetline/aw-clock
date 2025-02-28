@@ -1,3 +1,9 @@
+## 3.8.0
+
+* Major new feature: Air quality current conditions and forecast.
+* Update button is Settings dialog (if admin features are enabled) is now functional even when an updated software version is not pending, as a convenient way to reinstall the software and/or change installation options.
+* Better handling of an unresponsive FTP connection used (as one option) for retrieving leap second info.
+
 ## 3.7.3
 
 * Fixed auto-update process to work properly with Wayland.
