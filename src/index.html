@@ -46,14 +46,15 @@
 
           <g id="forecast-day">
             <svg viewBox="0 0 12 51">
-              <text id="dayN-caption" x="6" y="2" class="small-caption forecast-day-header"
+              <rect id="dayN-background" x="0" y="0" width=12 height=3 fill="none" class="forecast-day-background"/>
+              <text id="dayN-caption" x="6" y="2.25" class="small-caption forecast-day-header"
                 text-anchor="middle">---</text>
-              <image id="dayN-icon" href="assets/unknown.svg" x="0" y="3" width="12" height="12"/>
-              <svg id="dayN-wind" class="wind-barb" x="0.25" y="3.25" width="3" height="3" viewBox="0 0 100 100"/>
-              <text id="dayN-low-high" x="6" y="17.5" class="small-caption" text-anchor="middle">--°/--°</text>
-              <text id="dayN-chance-precip" x="6" y="20.5" class="small-caption" text-anchor="middle">--<tspan
+              <image id="dayN-icon" href="assets/unknown.svg" x="0" y="4" width="12" height="12"/>
+              <svg id="dayN-wind" class="wind-barb" x="0.25" y="4.25" width="3" height="3" viewBox="0 0 100 100"/>
+              <text id="dayN-low-high" x="6" y="18.5" class="small-caption" text-anchor="middle">--°/--°</text>
+              <text id="dayN-chance-precip" x="6" y="21.5" class="small-caption" text-anchor="middle">--<tspan
                 class="small-percent" dy="-0.2em">%</tspan></text>
-              <text id="dayN-precip-accum" x="6" y="23.5" class="small-caption" text-anchor="middle">--</text>
+              <text id="dayN-precip-accum" x="6" y="24.5" class="small-caption" text-anchor="middle">--</text>
               <text id="dayN-sunrise" x="6" y="28" class="small-caption sun-info" text-anchor="middle">--:--</text>
               <text id="dayN-moonrise" x="6" y="28" class="small-caption moon-info" text-anchor="middle">--:--</text>
               <text id="dayN-sunset" x="6" y="31" class="small-caption sun-info" text-anchor="middle">--:--</text>
@@ -227,10 +228,22 @@
             <text id="wind-gust" x="110" y="40" dy="2.2em" class="wind-pressure" text-anchor="start"></text>
           </g>
 
-          <g id="pressure">
-            <text id="pressure-header" x="165" y="40" class="wind-pressure" text-anchor="end">Pressure:</text>
-            <text id="pressure-value" x="165" y="40" dy="1.1em" class="wind-pressure" text-anchor="end">--</text>
-          </g>
+          <svg id="pressure" x="153" y="35">
+            <text id="pressure-header" x="12" y="1.7" class="wind-pressure" text-anchor="end">Pressure:</text>
+            <text id="pressure-value" x="12" y="1.7" dy="1.1em" class="wind-pressure" text-anchor="end">--</text>
+          </svg>
+
+          <svg id="air-quality" x="153" y="41" width=12 height=8 viewBox="0 0 12 8">
+            <rect id="air-quality-color" x="0" y="0" width="12" height="8" fill="gray" class="ff-click"/>
+            <rect id="air-quality-color-2" x="0" y="5.7" width="12" height="2.3" fill="gray" class="ff-click"/>
+            <g id="air-quality-text">
+              <text id="air-quality-header" x="50%" y="50%" dy="-2.3em" text-anchor="middle">AIR QUALITY INDEX</text>
+              <text id="air-quality-value" x="50%" y="50%" dy="0.33em" text-anchor="middle">--</text>
+              <text id="air-quality-caption" x="50%" y="50%" dy="2.3em" text-anchor="middle"></text>
+              <text id="air-quality-caption-1" x="50%" y="50%" dy="2.5em" text-anchor="middle"></text>
+              <text id="air-quality-caption-2" x="50%" y="50%" dy="3.6em" text-anchor="middle"></text>
+            </g>
+          </svg>
 
           <text id="temperature-detail" x="136" y="21.5" text-anchor="start"></text>
           <text x="136" y="25.75" class="small-caption" text-anchor="start">Hum.</text>
@@ -529,7 +542,15 @@
               <select id="weather-service-option" disabled>
                 <option value="">Default weather service</option>
               </select>
-              <label for="user-id">User ID:</label><input id="user-id" type="text" size="10"><span>(optional)</span>
+              <select id="air-quality-option">
+                <option value="X">Display no air quality info</option>
+                <option value="E">Air quality info, EU standard</option>
+                <option value="U">Air quality info, US standard</option>
+                <option value="UM">Air quality info, US modified</option>
+              </select>
+            </span>
+            <span class="colspan-full" style="display: none">
+              <label for="user-id">User ID:</label><input id="user-id" type="text" size="12">
             </span>
             <span class="options-divider">&nbsp;</span>
             <span class="colspan-full">
@@ -721,6 +742,12 @@
       </div>
     </div>
     <div id="big-text-dialog" class="dialog-wrapper">
+      <div>
+        <div class="dialog-close"><div>✕</div></div>
+        <div class="dialog-text"><div class="dialog-fader">&nbsp;</div></div>
+      </div>
+    </div>
+    <div id="air-quality-details" class="dialog-wrapper">
       <div>
         <div class="dialog-close"><div>✕</div></div>
         <div class="dialog-text"><div class="dialog-fader">&nbsp;</div></div>

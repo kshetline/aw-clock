@@ -201,6 +201,7 @@ export class SettingsDialog {
   private addAlarm: JQuery;
   private advancedAlarmBtn: JQuery;
   private advancedDatePanel: JQuery;
+  private airQuality: JQuery;
   private alarmAudio: JQuery;
   private alarmCancel: JQuery;
   private alarmDay: JQuery;
@@ -280,11 +281,43 @@ export class SettingsDialog {
   private updateFocused = false;
   private weatherServices = '';
 
+  private adminAction = (btn: JQuery, msg: string, cmd: string, optionalHtml?: string): void => {
+    if (cmd === 'quit' && isFirefox())
+      cmd = 'quit-firefox';
+
+    btn.on('click', () => {
+      const message = msg.replace(/%v/g, this.latestVersion);
+
+      domConfirm(message, optionalHtml, yep => {
+        if (yep) {
+          let command = cmd;
+
+          if (/^update\b/.test(cmd)) {
+            const checkbox = $('#interactive-update');
+
+            if (checkbox.prop('checked'))
+              command += (cmd.includes('?') ? '&' : '?') + 'ia=true';
+          }
+
+          $.ajax({
+            type: 'POST',
+            dataType: 'text',
+            url: this.appService.getApiServer() + `/admin/${command}`,
+            error: (jqXHR: JQueryXHR) => {
+              this.alert(jqXHR.responseText);
+            }
+          });
+        }
+      });
+    });
+  };
+
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
 
     this.advancedAlarmBtn = $('#advanced-alarm');
     this.advancedDatePanel = $('#advanced-date-panel');
+    this.airQuality = $('#air-quality-option');
     this.alarmCancel = $('#alarm-cancel');
     this.alarmDay = $('#alarm-day');
     this.alarmDelete = $('#alarm-delete');
@@ -377,42 +410,9 @@ export class SettingsDialog {
       this.doSearch();
     });
 
-    const adminAction = (btn: JQuery, msg: string, cmd: string, optionalHtml?: string): void => {
-      if (cmd === 'quit' && isFirefox())
-        cmd = 'quit-firefox';
-
-      btn.on('click', () => {
-        const message = msg.replace(/%v/g, this.latestVersion);
-
-        domConfirm(message, optionalHtml, yep => {
-          if (yep) {
-            let command = cmd;
-
-            if (/^update\b/.test(cmd)) {
-              const checkbox = $('#interactive-update');
-
-              if (checkbox.prop('checked'))
-                command += (cmd.includes('?') ? '&' : '?') + 'ia=true';
-            }
-
-            $.ajax({
-              type: 'POST',
-              dataType: 'text',
-              url: this.appService.getApiServer() + `/admin/${command}`,
-              error: (jqXHR: JQueryXHR) => {
-                this.alert(jqXHR.responseText);
-              }
-            });
-          }
-        });
-      });
-    };
-
-    adminAction(this.updateButton, 'Are you sure you want to update A/W Clock version %v now?\n\n' +
-      'Your system will be rebooted.', 'update' + (updateTest ? '?ut=true' : ''), UPDATE_OPTIONS);
-    adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
-    adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
-    adminAction(this.quitButton, 'Are you sure you want to quit this web browser?', 'quit');
+    this.adminAction(this.shutdownButton, 'Are you sure you want to shut down?', 'shutdown');
+    this.adminAction(this.rebootButton, 'Are you sure you want to reboot?', 'reboot');
+    this.adminAction(this.quitButton, 'Are you sure you want to quit this web browser?', 'quit');
 
     if (!localServer) {
       // Hide indoor/outdoor options by default if this isn't a local server, but check if proxied data
@@ -1034,6 +1034,7 @@ export class SettingsDialog {
 
     checkUiSizing();
 
+    this.airQuality.val(previousSettings.airQuality || 'X');
     this.background.val(previousSettings.background);
     this.temperature.val(previousSettings.knots ? (previousSettings.celsius ? 'CK' : 'FK') : (previousSettings.celsius ? 'C' : 'F'));
     this.currentCity.val(previousSettings.city);
@@ -1092,6 +1093,10 @@ export class SettingsDialog {
         event.preventDefault();
         this.okButton.trigger('click');
       }
+      else if (event.code === 'KeyU' && event.ctrlKey && event.shiftKey)
+        this.userId.parent().css('display', 'block');
+      else if (event.code === 'KeyU' && event.ctrlKey && !event.shiftKey)
+        this.userId.parent().css('display', 'none');
     });
 
     this.okButton.on('click', this.doOK);
@@ -1263,6 +1268,7 @@ export class SettingsDialog {
 
     this.recentLocations = this.recentLocations.filter(loc => loc != null);
 
+    newSettings.airQuality = this.airQuality.val() as string;
     newSettings.background = this.background.val() as string;
     newSettings.celsius = (this.temperature.val() as string || '').startsWith('C');
     newSettings.city = (this.currentCity.val() as string).trim();
@@ -1379,7 +1385,16 @@ export class SettingsDialog {
   private getDefaults(): void {
     getJson<AwcDefaults>(`${apiServer}/defaults`).then(data => {
       this.updateButton.css('display', (data.allowAdmin && allowAdminFeatures) || updateTest ? 'inline' : 'none');
-      this.updateButton.prop('disabled', !data.updateAvailable && !updateTest);
+
+      if (data.allowAdmin) {
+        const updateMsg = (data.updateAvailable ?
+          'Are you sure you want to update A/W Clock version %v now?' :
+          'No update is currently available but you can reinstall the software and change options.') +
+          '\n\nYour system will be rebooted.';
+
+        this.adminAction(this.updateButton, updateMsg, 'update' + (updateTest ? '?ut=true' : ''), UPDATE_OPTIONS);
+      }
+
       this.shutdownButton.css('display', data.allowAdmin ? 'inline' : 'none');
       this.rebootButton.css('display', data.allowAdmin ? 'inline' : 'none');
       this.quitButton.css('display', data.allowAdmin && allowAdminFeatures ? 'inline' : 'none');

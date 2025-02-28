@@ -1,4 +1,4 @@
-// Using `require` causes a warning, but using `import` instead causes webpack to fail.
+// Using `import` instead causes webpack to fail.
 const { version } = require('../package.json');
 
 // It's annoying that TypeScript doesn't itself provide a way to create a runtime list of
@@ -6,7 +6,7 @@ const { version } = require('../package.json');
 
 export const CommonConditionsKeys = ['time', 'summary', 'icon', 'humidity', 'cloudCover', 'precipIntensity', 'precipIntensityMax',
                                      'precipProbability', 'precipType', 'pressure', 'pressureTrend', 'temperature',
-                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqiEur', 'aqiUs'];
+                                     'windDirection', 'windGust', 'windPhrase', 'windSpeed', 'aqiEu', 'aqiUs', 'aqComps'];
 let altVersion = '';
 
 try {
@@ -25,7 +25,50 @@ export const BACK_IN_TIME_THRESHOLD = 4000;
 
 export enum PressureTrend { FALLING = -1, STEADY, RISING }
 
-export interface CommonConditions {
+export interface AirQualitySource {
+  aqiEu?: number;
+  aqiUs?: number
+}
+
+export interface AirQualityValues extends AirQualitySource {
+  raw: number; // In μg/m³
+}
+
+export interface AirQualityRawComponents { // All in μg/m³
+  co: number;
+  no2: number;
+  o3: number;
+  so2?: number;
+  pm2_5: number;
+  pm10: number;
+}
+
+export interface AirQualityComponents {
+  co: AirQualityValues;
+  no2: AirQualityValues;
+  o3: AirQualityValues;
+  so2?: AirQualityValues;
+  pm2_5: AirQualityValues;
+  pm10: AirQualityValues;
+}
+
+export interface AirQualityItem extends AirQualitySource {
+  aqComps?: AirQualityComponents,
+  time: number
+}
+
+export interface AirQualityForecast {
+  current: {
+    aqiEu?: number;
+    aqiUs?: number;
+    aqComps?: AirQualityRawComponents,
+    time: number
+  },
+  hours: AirQualityItem[];
+  unavailable?: boolean;
+}
+
+export interface CommonConditions extends AirQualitySource {
   time: number;                   // Seconds since 1970-01-01 00:00 UTC (not counting leap seconds)
   summary: string;
   icon: string;
@@ -43,8 +86,7 @@ export interface CommonConditions {
   windGust?: number;              // In kph or mph
   windPhrase?: string;
   windSpeed?: number;             // In kph or mph
-  aqiEur?: number;
-  aqiUs?: number;
+  aqComps?: AirQualityComponents;
 }
 
 export const CurrentConditionsKeys = [...CommonConditionsKeys, 'feelsLikeTemperature'];
@@ -53,7 +95,7 @@ export interface CurrentConditions extends CommonConditions {
   feelsLikeTemperature: number; // °C or °F
 }
 
-export interface HourlyConditions {
+export interface HourlyConditions extends AirQualitySource {
   cloudCover?: number;        // 0-1
   icon: string;
   temperature: number;        // °C or °F
@@ -65,8 +107,7 @@ export interface HourlyConditions {
   windGust?: number;          // In kph or mph
   windPhrase?: string;
   windSpeed?: number;         // In kph or mph
-  aqiEur?: number;
-  aqiUs?: number;
+  aqComps?: AirQualityComponents;
 }
 
 export const DailyConditionsKeys = [...CommonConditionsKeys,
@@ -80,14 +121,10 @@ export interface DailyConditions extends CommonConditions {
   precipAccumulation: number;   // inches or cm
 }
 
-export const DailySummaryConditionsKeys = ['summary', 'data'];
-
 export interface DailySummaryConditions {
   summary?: string;
   data: DailyConditions[];
 }
-
-export const AlertKeys = ['description', 'expires', 'id', 'severity', 'title', 'url'];
 
 export interface Alert {
   description: string;

@@ -351,6 +351,28 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
   }
 }
 
+#air-quality {
+  display: none;
+  fill: black;
+  font-size: 4px;
+}
+
+#air-quality-header {
+  font-size: 1.1px;
+}
+
+#air-quality-text {
+  pointer-events: none;
+}
+
+#air-quality-caption {
+  font-size: 1.5px;
+}
+
+#air-quality-caption-1, #air-quality-caption-2 {
+  font-size: 1px;
+}
+
 #timezone {
   font-size: 2px;
   fill: #888;
@@ -494,10 +516,6 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type="subm
 
     > select {
       margin-right: 8px;
-    }
-
-    #weather-service-option {
-      margin-right: 2em;
     }
   }
 
@@ -1073,7 +1091,7 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
   position: relative;
 }
 
-#big-text-dialog > div {
+#big-text-dialog > div, #air-quality-details > div {
   font-size: 3vh;
   line-height: 3.6vh;
   --page-lines: 22;
@@ -1129,6 +1147,57 @@ input, button, select, textarea, optgroup, option { // Ignored by macOS Chrome f
     > div {
       position: relative;
       top: -0.06em;
+    }
+  }
+}
+
+#air-quality-details > div {
+  font-size: 2.5vh;
+  line-height: 3vh;
+  --page-lines: 26;
+  width: 55vw;
+
+  .dialog-text {
+    max-height: calc(var(--page-lines, 1) * 3vh);
+  }
+
+  .table-wrapper {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+
+    table, th, td {
+      border: 1px solid #CCC;
+      border-collapse: collapse;
+      padding: 0.25em 0.5em;
+    }
+
+    table tr th.title {
+      border: none;
+    }
+
+    table tr th.subtitle {
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      font-size: 0.6em;
+      font-weight: normal;
+    }
+
+    th {
+      vertical-align: top;
+      padding-bottom: 0;
+    }
+
+    td {
+      text-align: right;
+
+      span {
+        display: inline-block;
+        margin: -2px -4px;
+        padding: 2px 4px;
+        width: 100%;
+      }
     }
   }
 }

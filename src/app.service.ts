@@ -4,13 +4,15 @@ import { AwcDefaults, TimeInfo } from '../server/src/shared-types';
 import { Timezone } from '@tubular/time';
 
 export interface AppService {
-  forecastHasBeenUpdated(): void;
+  forecastHasBeenUpdated(lastTemp?: number, lastHumidity?: number): void;
+  getAirQualityOption(): string;
   getAlarmTime(): number;
+  getAlertFilters(): AlertFilter[];
   getApiServer(): string;
   getCurrentTime(bias?: number): number;
-  getAlertFilters(): AlertFilter[];
   getHiddenAlerts(): HiddenAlert[];
   getIndoorOption(): string;
+  getLastTAndH(): [number, number];
   getLatestDefaults(): AwcDefaults;
   getOutdoorOption(): string;
   getTimeFormat(): TimeFormat;

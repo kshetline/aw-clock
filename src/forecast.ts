@@ -2,16 +2,19 @@ import { AppService } from './app.service';
 import { CLOCK_CENTER } from './clock';
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
-import { abs, cos_deg, floor, max, min, round, sign, sin_deg } from '@tubular/math';
+import { abs, cos_deg, floor, max, min, mod2, round, sign, sin_deg } from '@tubular/math';
 import {
   blendColors, clone, doesCharacterGlyphExist, getTextWidth, htmlEscape, isChrome, isChromium, isEdge, isEqual, isObject, last,
   processMillis, push, regex, toNumber
 } from '@tubular/util';
-import { Alert, CurrentConditions, ForecastData, HourlyConditions } from '../server/src/shared-types';
+import {
+  AirQualitySource, AirQualityValues, Alert, CurrentConditions, DailyConditions, ForecastData, HourlyConditions
+} from '../server/src/shared-types';
 import { reflow } from './svg-flow';
 import {
-  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, getJson,
-  JsonOptions, kphToKnots, localDateString, mphToKnots, setSvgHref, stopPropagation
+  ClickishEvent, compassPoint, convertPressure, convertSpeed, convertTemp, describeArc, displayHtml, formatHour, fToC, getDayClasses,
+  getJson, JsonOptions, kphToKnots, localDateString, localShortDate, localShortDateTime, localShortTime, mphToKnots, setSvgHref,
+  stopPropagation
 } from './awc-util';
 import { windBarbsSvg } from './wind-barbs';
 import { CurrentTemperatureHumidity, HourlyForecast, TimeFormat } from './shared-types';
@@ -65,6 +68,23 @@ const START_ERROR_TAG = `<span style="color: ${ERROR_FOREGROUND}; background-col
 const CLOSE_ERROR_TAG = '&nbsp;</span>';
 const REVERT_TO_SUN_INFO_DELAY = 60_000;
 let SUBJECT_INTRO_PATTERN: RegExp;
+
+const airQualityColors = ['#00E400', '#FFFF00', '#ff7E00', '#FF0000',
+                          '#8F3F97', '#8F3F97', '#7E0023', '#7E0023', '#7E0023', '#7E0023'];
+const euAirQualityColors = ['#6ED958', '#D7F400', '#FFD200', '#FFAD00', '#FF0066'];
+const airQualityCaptions = ['GOOD', 'MODERATE', 'UNHEALTHY\nFOR SENS. GROUPS', 'UNHEALTHY',
+                            'VERY\nUNHEALTHY', 'VERY\nUNHEALTHY', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS', 'HAZARDOUS'];
+const euAirQualityCaptions = ['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'];
+
+function matchingTextColor(color: string): string {
+  const [r, g, b] = color.split('') // Break into individual characters
+    .map((c, i, a) => i % 2 === 1 ? c + a[i + 1] : '') // Create pairs and empty strings
+    .filter(p => !!p) // Filter out empty string
+    .map(p => parseInt(p, 16));
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+  return brightness > 128 ? 'black' : 'white';
+}
 
 try {
   // Firefox fails on this pattern.
@@ -158,6 +178,8 @@ function convertForWidthMeasurement(s: string): string {
 
 export class Forecast {
   private readonly currentIcon: JQuery;
+  private readonly dayBackgrounds: HTMLElement[] = [];
+  private readonly dayHeaders: HTMLElement[] = [];
   private readonly marqueeOuterWrapper: JQuery;
   private readonly marqueeWrapper: JQuery;
   private readonly marquee: JQuery;
@@ -167,6 +189,14 @@ export class Forecast {
   private readonly wundergroundLogo: JQuery;
   private readonly windPointer: JQuery;
 
+  private airQuality: JQuery;
+  private airQualityCaption: JQuery;
+  private airQualityCaption1: JQuery;
+  private airQualityCaption2: JQuery;
+  private airQualityColor: JQuery;
+  private airQualityColor2: JQuery;
+  private airQualityText: JQuery;
+  private airQualityValue: JQuery;
   private dailyWinds: JQuery[] = [];
   private dayIcons: JQuery[] = [];
   private dayLowHighs: JQuery[] = [];
@@ -231,7 +261,17 @@ export class Forecast {
     this.windArc = $('#wind-arc');
     this.windGustArc = $('#wind-gust-arc');
     this.pressure = $('#pressure');
+    this.airQuality = $('#air-quality');
+    this.airQualityCaption = $('#air-quality-caption');
+    this.airQualityCaption1 = $('#air-quality-caption-1');
+    this.airQualityCaption2 = $('#air-quality-caption-2');
+    this.airQualityColor = $('#air-quality-color');
+    this.airQualityColor2 = $('#air-quality-color-2');
+    this.airQualityText = $('#air-quality-text');
+    this.airQualityValue = $('#air-quality-value');
 
+    this.dayHeaders = getDayClasses('forecast-day-header');
+    this.dayBackgrounds = getDayClasses('forecast-day-background');
     this.marqueeWrapper.on('click', () => this.showMarqueeDialog());
 
     if (!isEdge())
@@ -305,6 +345,9 @@ export class Forecast {
         self.showDayForecast(index);
       });
     }
+
+    this.airQualityColor.on('click', () => this.showAirQualityDetails());
+    this.airQualityColor2.on('click', () => this.showAirQualityDetails());
 
     let usingTouch = false;
     let maxInc = 4;
@@ -620,7 +663,9 @@ export class Forecast {
       this.marqueeOuterWrapper.css('right', (buttonWidth + logoWidth) + 'px');
       this.settingsBtn.css('margin-right', vc || wu || wb ? 0 : 8);
 
-      this.appService.forecastHasBeenUpdated();
+      this.appService.forecastHasBeenUpdated(
+        isMetric ? forecastData.currently.temperature : fToC(forecastData.currently.temperature),
+        forecastData.currently.humidity * 100);
     }).catch(error => {
       this._hasGoodData = false;
 
@@ -931,6 +976,7 @@ export class Forecast {
 
       this.displayCurrentWind(forecastData.currently, isMetric, forecastData.knots);
       this.displayCurrentPressure(forecastData.currently, isMetric);
+      this.displayAirQuality(forecastData);
       setSvgHref(this.currentIcon, this.getIconSource(forecastData.currently.icon));
 
       this.dayIcons.forEach((dayIcon, index) => {
@@ -1066,6 +1112,128 @@ export class Forecast {
     }
     else
       this.pressure.css('display', 'none');
+  }
+
+  private getAirQualityColorAndCaption(valueSource: AirQualitySource, option: string, fade = false): [number, string, string, string] {
+    let value: number;
+    let index: number;
+    let iIndex: number;
+    let color: string;
+    let color2: string;
+    let caption: string;
+    const neutral = fade ? 'none' : 'gray';
+
+    if (option === 'E') {
+      value = valueSource.aqiEu;
+
+      if (value == null)
+        return [undefined, neutral, neutral, ''];
+
+      index = min(value / 25, 4);
+      iIndex = floor(index);
+      caption = euAirQualityCaptions[iIndex];
+      color = color2 = euAirQualityColors[iIndex];
+    }
+    else {
+      value = valueSource.aqiUs;
+
+      if (value == null)
+        return [undefined, neutral, neutral, ''];
+
+      index = min(max((value - 1) / 50, 0), 9);
+      iIndex = floor(index);
+      caption = airQualityCaptions[iIndex];
+      color = color2 = airQualityColors[iIndex];
+
+      const diff = mod2(index, 1);
+
+      if (option === 'UM' && abs(diff) < 0.25) {
+        let color2: string;
+        let proportion = (diff + 0.25) * 2;
+
+        if (diff < 0)
+          color2 = airQualityColors[iIndex + 1];
+        else {
+          color2 = airQualityColors[iIndex - 1];
+          proportion = 1 - proportion;
+        }
+
+        color = blendColors(color2, color, proportion);
+      }
+    }
+
+    if (fade) {
+      color = blendColors(color, 'white', 0.4);
+      color2 = blendColors(color2, 'white', 0.4);
+    }
+
+    return [value, color, color2, caption];
+  }
+
+  private displayAirQuality(forecast: ForecastData): void {
+    const option = this.appService.getAirQualityOption() || '';
+
+    if (option !== 'E' && !option.startsWith('U')) {
+      this.pressure.attr('y', '39');
+      this.airQuality.css('display', 'none');
+
+      for (let i = 0; i < this.dayBackgrounds.length; ++i) {
+        this.dayBackgrounds[i].setAttribute('fill', 'none');
+        this.dayHeaders[i].setAttribute('fill', 'white');
+      }
+
+      return;
+    }
+
+    this.airQuality.css('display', 'block');
+    this.pressure.attr('y', '35');
+
+    const current = forecast.currently;
+
+    if (option === 'E' && current.aqiEu == null || option.startsWith('U') && current.aqiUs == null) {
+      this.airQualityColor.css('fill', 'gray');
+      this.airQualityValue.text('--');
+      this.airQualityText.css('fill', 'black');
+
+      return;
+    }
+
+    const [value, color, color2, caption] = this.getAirQualityColorAndCaption(current, option);
+
+    this.airQualityValue.text(value.toString());
+    this.airQualityColor.css('fill', color);
+    this.airQualityColor2.css('fill', color2);
+    this.airQualityText.css('fill', matchingTextColor(color2));
+
+    if (caption.includes('\n')) {
+      const [line1, line2] = caption.split('\n');
+
+      this.airQualityCaption.text('');
+      this.airQualityCaption1.text(line1);
+      this.airQualityCaption2.text(line2);
+    }
+    else {
+      this.airQualityCaption.text(caption);
+      this.airQualityCaption1.text('');
+      this.airQualityCaption2.text('');
+    }
+
+    const daily = forecast.daily?.data.slice(this.todayIndex) ?? [];
+
+    for (let i = 0; i < this.dayBackgrounds.length; ++i) {
+      const background = this.dayBackgrounds[i];
+      const header = this.dayHeaders[i];
+      const [value, color, color2] = this.getAirQualityColorAndCaption(daily[i], option);
+
+      if (i < daily.length && value != null) {
+        background.setAttribute('fill', color);
+        header.setAttribute('fill', matchingTextColor(color2));
+      }
+      else {
+        background.setAttribute('fill', 'none');
+        header.setAttribute('fill', 'white');
+      }
+    }
   }
 
   refreshAlerts(forecastData = this.lastForecastData): void {
@@ -1391,7 +1559,12 @@ export class Forecast {
 
     const tempUnit = this.lastForecastData.isMetric ? 'C' : 'F';
     let text = '¬b¬' + localDateString(day.time * 1000, this.timezone) +
-      `¬b; • ${day.temperatureHigh}°${tempUnit} / ${day.temperatureLow}°${tempUnit}\n\n`;
+      `¬b; • ${day.temperatureHigh}°${tempUnit} / ${day.temperatureLow}°${tempUnit}`;
+
+    if (day.aqiUs)
+      text += `, AQI: ${day.aqiUs}`;
+
+    text += '\n\n';
 
     if (narrativeDay && narrativeEvening)
       text += `${narrativeDay}\n\nEvening: ${narrativeEvening}`;
@@ -1434,5 +1607,98 @@ export class Forecast {
     iconElems.toggleClass('hour-info-hide', !this.showingHourTemps).toggleClass('hour-info-show', this.showingHourTemps);
     popElems.toggleClass('hour-info-show', !this.showingHourTemps).toggleClass('hour-info-hide', this.showingHourTemps);
     tempElems.toggleClass('hour-info-hide', !this.showingHourTemps).toggleClass('hour-info-show', this.showingHourTemps);
+  }
+
+  private createAqiTableRow(source: CurrentConditions | HourlyConditions | DailyConditions,
+                            showDate: boolean, showOnlyDate = false): string {
+    let row = '';
+    const am = this.appService.getTimeFormat() === TimeFormat.AMPM;
+    const aqiOption = this.appService.getAirQualityOption();
+
+    const time = floor(source.time, 3600) * 1000;
+    const timeStamp = showOnlyDate ? localShortDate(time, this.timezone) :
+      showDate ? localShortDateTime(time, this.timezone, am) : localShortTime(time, this.timezone, am);
+    const [aqi, color, color2] = this.getAirQualityColorAndCaption(source, aqiOption);
+    const aqiStyle = `background-color: ${color2}; color: ${matchingTextColor(color2)}`;
+    const aqiStyle2 = `background-color: ${color}; color: ${matchingTextColor(color2)}`;
+    const createCell = (pollutant: string, digits: number): string => {
+      const data = source.aqComps[pollutant] as AirQualityValues;
+
+      if (data?.raw == null)
+        return '<td>???</td>';
+
+      const [pAqi, pColor, pColor2] = this.getAirQualityColorAndCaption(data, aqiOption, true);
+      let cell = `<td style="background-color: ${pColor2}"><span style="background-color: ${pColor}`;
+
+      if (pAqi === aqi)
+        cell += '; font-weight: bold';
+
+      cell += `">${data.raw.toFixed(digits)}</span></td>`;
+
+      return cell;
+    };
+
+    row += '  <tr>\n';
+    row += `    <td${showOnlyDate ? ' style="text-align: left"' : ''}>${timeStamp}</td>\n`;
+    row += `    <td style="${aqiStyle}"><span style="${aqiStyle2}">${aqi}</span></td>\n`;
+    row += `    ${createCell('o3', 0)}\n`;
+    row += `    ${createCell('pm10', 0)}\n`;
+    row += `    ${createCell('pm2_5', 1)}</td>\n`;
+    row += `    ${createCell('co', 0)}\n`;
+    row += `    ${createCell('so2', 1)}\n`;
+    row += `    ${createCell('no2', 1)}\n`;
+    row += '  </tr>\n';
+
+    return row;
+  }
+
+  private showAirQualityDetails(): void {
+    let html = '';
+    let lastDay: number;
+    let lastTime = -1;
+    const hours = this.lastForecastData?.hourly;
+    const days = this.lastForecastData?.daily?.data;
+
+    html += '<div class="table-wrapper"><table>\n';
+    html += '  <tr><th class="title" colspan=8>Air Quality Details</th></tr>\n';
+    html += '  <tr>\n';
+    html += '    <th class="subtitle"></th><th class="subtitle"></th>\n';
+    html += '    <th class="subtitle" colspan=6>Pollutant values in μg/m³, key pollutants in bold</th>\n';
+    html += '  </tr>\n';
+    html += '  <tr>\n';
+    html += '    <th>Date/time</th>\n';
+    html += '    <th>AQI</th>\n';
+    html += '    <th>O<sub>3</sub></th>\n';
+    html += '    <th>PM<sub>10</sub></th>\n';
+    html += '    <th>PM<sub>2.5</sub>\n';
+    html += '    <th>CO</th>\n';
+    html += '    <th>SO<sub>2</sub>\n';
+    html += '    <th>NO<sub>2</sub>\n';
+    html += '  </tr>\n';
+
+    html += this.createAqiTableRow(this.lastForecastData?.currently, true);
+    lastDay = new DateTime(this.lastForecastData?.currently.time * 1000, this.timezone).wallTime.d;
+
+    for (const hour of hours) {
+      if (hour.time < this.lastForecastData?.currently.time || !hour.aqComps)
+        continue;
+
+      const wallTime = new DateTime(hour.time * 1000, this.timezone).wallTime;
+
+      html += this.createAqiTableRow(hour, lastDay !== wallTime.d);
+      lastDay = wallTime.d;
+      lastTime = hour.time;
+    }
+
+    for (const day of days) {
+      if (day.time < lastTime || !day.aqComps)
+        continue;
+
+      html += this.createAqiTableRow(day, true, true);
+      lastTime = day.time;
+    }
+
+    html += '</table></div>\n';
+    displayHtml('air-quality-details', html, 'white');
   }
 }

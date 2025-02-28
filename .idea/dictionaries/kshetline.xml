@@ -15,6 +15,7 @@
       <w>chrony</w>
       <w>clickish</w>
       <w>contenthash</w>
+      <w>coord</w>
       <w>copyfiles</w>
       <w>couldn</w>
       <w>cpuinfo</w>
@@ -44,6 +45,7 @@
       <w>gpiopin</w>
       <w>gpsdctl</w>
       <w>gpspipe</w>
+      <w>gradiated</w>
       <w>hadn</w>
       <w>hidep</w>
       <w>hrome</w>
@@ -61,7 +63,9 @@
       <w>lxpanel</w>
       <w>lxsession</w>
       <w>lxterminal</w>
+      <w>markdownlint</w>
       <w>maxarg</w>
+      <w>meteo</w>
       <w>miso</w>
       <w>moonset</w>
       <w>mosi</w>
@@ -117,6 +121,7 @@
       <w>xexternal</w>
       <w>xhost</w>
       <w>xscreensaver</w>
+      <w>zstd</w>
       <w>δtai</w>
     </words>
   </dictionary>

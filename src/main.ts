@@ -90,10 +90,12 @@ class AwClockApp implements AppService {
   private lastCursorMove = 0;
   private lastForecast = 0;
   private lastHour = -1;
+  private lastHumidity: number;
   private lastMouseDown = Number.MIN_SAFE_INTEGER;
   private lastMouseDownTimer: any;
   private lastRiseTime: string;
   private lastSetTime: string;
+  private lastTemp: number;
   private lastTimezone: Timezone;
   private latestDefaults: AwcDefaults;
   private proxyStatus: boolean | Promise<boolean> = undefined;
@@ -345,6 +347,10 @@ class AwClockApp implements AppService {
     return apiServer;
   }
 
+  getAirQualityOption(): string {
+    return this.settings.airQuality;
+  }
+
   isTimeAccelerated(): boolean {
     return (!!debugTime && debugTimeRate > 1);
   }
@@ -501,7 +507,7 @@ class AwClockApp implements AppService {
     }
   }
 
-  forecastHasBeenUpdated(): void {
+  forecastHasBeenUpdated(lastTemp?: number, lastHumidity?: number): void {
     const currentZone = this.forecast.getTimezone();
 
     if (this.lastTimezone !== currentZone) {
@@ -512,6 +518,12 @@ class AwClockApp implements AppService {
 
     this.frequent = this.forecast.getFrequent();
     this.lastForecast = this.getCurrentTime();
+    this.lastTemp = lastTemp;
+    this.lastHumidity = lastHumidity;
+  }
+
+  getLastTAndH(): [number, number] {
+    return [this.lastTemp, this.lastHumidity];
   }
 
   updateSettings(newSettings = this.settings): void {
