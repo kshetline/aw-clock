@@ -64,7 +64,7 @@ Respond `Y` to the prompt “Allow user to reboot, shutdown, update, etc.?” if
 
 ### Weather
 
-By default weather data is acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
+By default, weather data is acquired by “page scraping” [Weather Underground](https://www.wunderground.com/), not via a guaranteed stable API.
 
 Having a back-up weather data source is not required, but it might be a good idea. For that there are three options:
 
@@ -76,7 +76,7 @@ Having a back-up weather data source is not required, but it might be a good ide
 
 ### Time keeping
 
-By default, this application uses GPS-synced system time, if available, or uses a default pool of NTP time servers (keeping its own time via NTP, rather than using the system clock). You can configure the use of different time servers, however, you should not choose Google or Facebook time servers, or any other NTP server that implements “leap second smearing“, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
+By default, this application uses GPS-synced system time, if available, or uses a default pool of NTP time servers (keeping its own time via NTP, rather than using the system clock). You can configure the use of different time servers, however, you should not choose Google or Facebook time servers, or any other NTP server that implements “leap second smearing”, if you want the Astronomy/Weather Clock to be able to accurately display leap seconds as shown below:
 
 ![Hypothetical leap second](https://shetline.com/readme/aw-clock/3.8.0/moment_of_leap_second.jpg)
 
@@ -84,7 +84,7 @@ By default, this application uses GPS-synced system time, if available, or uses 
 
 Leap seconds have possibly become a moot point. There hasn’t been a new leap second introduced since the tail end of 2016. The need for leap seconds is irregular, but before 2016 they were added about once every year and a half on average, starting in 1972, so it has been a strangely long stretch of time since the last one.
 
-The Earth’s rotation simply has not been running as slowly as it had been, and has even sped up at times over the last several years. It’s currently possible that a previously merely hypothetical “negative leap second“ could happen by as soon as 2029.
+The Earth’s rotation simply has not been running as slowly as it had been, and has even sped up at times over the last several years. It’s currently possible that a previously merely hypothetical “negative leap second” could happen by as soon as 2029.
 
 If that negative leap second doesn’t happen, however, but the Earth also keeps up it’s unusual speed for a while longer so the need for a normal leap second is delayed beyond the year 2035, then, by international agreement, there will be no more leap seconds at all, at least for the foreseeable future.
 
@@ -96,7 +96,7 @@ For the US AQI system, you can use an alternative color coding system that gradu
 
 ![AQ modes](https://shetline.com/readme/aw-clock/3.8.0/us_aqi_standard_v_mod.jpg)
 
-In the Air Quality Details view the standard colors border each measurement while the gradiated colors are used around each numeric value.
+In the Air Quality Details view, the standard colors border each measurement while the gradiated colors are used around each numeric value.
 
 ![AQ details](https://shetline.com/readme/aw-clock/3.8.0/air-quality-details.jpg)
 
