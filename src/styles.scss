@@ -1463,7 +1463,7 @@ ul.my-tabs > li.tab-active {
         flex-direction: row;
         gap: 0.5rem;
         justify-content: center;
-        min-height: 55px;
+        min-height: 82px;
 
         > div {
           align-items: center;
@@ -1476,13 +1476,13 @@ ul.my-tabs > li.tab-active {
         display: none; // Updated to flex when active
         flex-direction: column;
         gap: 0.5em;
+        min-height: 82px;
 
         > .date {
           display: flex;
           flex-direction: row;
           gap: 0.5rem;
           justify-content: center;
-          min-height: 55px;
 
           input, select, option {
             font-size: 2rem;

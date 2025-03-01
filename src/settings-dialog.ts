@@ -478,6 +478,8 @@ export class SettingsDialog {
       this.dailyAlarm = true;
       this.alarmEditing = true;
       this.addAlarm.prop('disabled', true);
+      this.datePanel.css('display', 'none');
+      this.dayOfWeekPanel.css('display', 'flex');
       this.alarmSetPanel.css('opacity', '1');
       this.alarmSetPanel.css('pointer-events', 'all');
     });
