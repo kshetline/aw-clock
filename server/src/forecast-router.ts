@@ -91,7 +91,7 @@ router.get('/', async (req: Request, res: Response) => {
   else
     visualCrossingIndex = 0;
 
-  sources += ',OW';
+  sources += ',OM';
   promises.push(getOwmForecast(req));
 
   const forecasts = await Promise.all(promises);

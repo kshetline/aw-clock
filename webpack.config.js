@@ -40,6 +40,9 @@ module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-va
       main: [
         './src/main.ts'
       ],
+      html: [
+        './src/index.html'
+      ],
       styles: [
         './src/styles.css'
       ]

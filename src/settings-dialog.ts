@@ -8,7 +8,7 @@ import {
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, getJson, getText, incrementDialogCounter,
+  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, findRepeatTime, getJson, getText, incrementDialogCounter,
   popKeydownListener, pushKeydownListener, safeCompareVersions
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
@@ -155,10 +155,6 @@ function formatAlarmTime(time: number, amPm: boolean): string {
   return p2(hour) + ':' + p2(minute) + suffix;
 }
 
-function formatAlarmDate(time: number): string {
-  return new DateTime(time * 60000, 'UTC').format('DD MMM yyyy');
-}
-
 function soundName(fileName: string): string {
   return (fileName || '???').replace(/^user\//, '✭').replace(/\.[^.]+$/, '').replace(/_/g, ' ');
 }
@@ -199,8 +195,6 @@ export class SettingsDialog {
   private readonly updateButton: JQuery;
 
   private addAlarm: JQuery;
-  private advancedAlarmBtn: JQuery;
-  private advancedDatePanel: JQuery;
   private airQuality: JQuery;
   private alarmAudio: JQuery;
   private alarmCancel: JQuery;
@@ -213,6 +207,7 @@ export class SettingsDialog {
   private alarmMeridiem: JQuery;
   private alarmMinute: JQuery;
   private alarmMonth: JQuery;
+  private alarmRepeat: JQuery;
   private alarmSave: JQuery;
   private alarmSetPanel: JQuery;
   private alarmYear: JQuery;
@@ -315,8 +310,6 @@ export class SettingsDialog {
   constructor(private appService: AppService) {
     this.keyboard = new Keyboard();
 
-    this.advancedAlarmBtn = $('#advanced-alarm');
-    this.advancedDatePanel = $('#advanced-date-panel');
     this.airQuality = $('#air-quality-option');
     this.alarmCancel = $('#alarm-cancel');
     this.alarmDay = $('#alarm-day');
@@ -328,6 +321,7 @@ export class SettingsDialog {
     this.alarmMessage = $('#alarm-message');
     this.alarmMinute = $('#alarm-minute');
     this.alarmMonth = $('#alarm-month');
+    this.alarmRepeat = $('#alarm-repeat');
     this.alarmSave = $('#alarm-save');
     this.alarmSetPanel = $('#alarm-set-panel');
     this.alarmYear = $('#alarm-year');
@@ -490,32 +484,18 @@ export class SettingsDialog {
 
     this.dailyAlarmBtn.on('click', () => {
       this.dailyAlarm = true;
-      this.advancedDatePanel.css('display', 'none');
       this.datePanel.css('display', 'none');
       this.dayOfWeekPanel.css('display', 'flex');
-      this.advancedAlarmBtn.prop('checked', false);
       this.dailyAlarmBtn.prop('checked', true);
       this.oneTimeAlarmBtn.prop('checked', false);
     });
 
     this.oneTimeAlarmBtn.on('click', () => {
       this.dailyAlarm = false;
-      this.advancedDatePanel.css('display', 'none');
       this.datePanel.css('display', 'flex');
       this.dayOfWeekPanel.css('display', 'none');
-      this.advancedAlarmBtn.prop('checked', false);
       this.dailyAlarmBtn.prop('checked', false);
       this.oneTimeAlarmBtn.prop('checked', true);
-    });
-
-    this.advancedAlarmBtn.on('click', () => {
-      this.dailyAlarm = false;
-      this.advancedDatePanel.css('display', 'flex');
-      this.datePanel.css('display', 'none');
-      this.dayOfWeekPanel.css('display', 'none');
-      this.advancedAlarmBtn.prop('checked', true);
-      this.dailyAlarmBtn.prop('checked', false);
-      this.oneTimeAlarmBtn.prop('checked', false);
     });
 
     const self = this;
@@ -674,6 +654,7 @@ export class SettingsDialog {
       }
 
       newAlarm.time += new DateTime([year, month, day], 'UTC').wallTime.n * 1440;
+      newAlarm.repeat = this.alarmRepeat.val().toString();
     }
 
     if (this.editAlarm < 0) {
@@ -690,13 +671,22 @@ export class SettingsDialog {
     this.clearAlarmTime();
   }
 
+  private formatAlarmDate(time: number, repeat?: string): string {
+    time = findRepeatTime(time, repeat, this.appService.getAlarmTime());
+
+    return new DateTime(time * 60000, 'UTC').format('DD MMM yyyy');
+  }
+
   private renderAlarmList(list: AlarmInfo[]): void {
     let alarmHtml = '';
 
     for (let i = 0; i < list.length; ++i) {
       const alarm = list[i];
       const time = formatAlarmTime(alarm.time, this.alarmAmPm);
-      const days = alarm.time < 1440 ? alarm.days : formatAlarmDate(alarm.time);
+      let days = alarm.time < 1440 ? alarm.days : this.formatAlarmDate(alarm.time, alarm.repeat);
+
+      if (alarm.repeat)
+        days += ', ' + { W: 'weekly', BW: 'biweekly', M: 'monthly', Y: 'yearly' }[alarm.repeat];
 
       alarmHtml += `
 <div class="alarm-item" data-index="${i}">
@@ -907,7 +897,8 @@ export class SettingsDialog {
   private editSelectedAlarm(): void {
     if (this.selectedAlarm >= 0) {
       const alarm = this.newAlarms[this.selectedAlarm];
-      const time = formatAlarmTime(alarm.time, this.alarmAmPm);
+      const alarmTime = findRepeatTime(alarm.time, alarm.repeat, this.appService.getAlarmTime());
+      const time = formatAlarmTime(alarmTime, this.alarmAmPm);
       const daily = (alarm.time < 1440);
 
       this.clearAlarmTime(daily);
@@ -937,6 +928,7 @@ export class SettingsDialog {
         this.alarmDay.val(p2(date.day));
         this.alarmMonth.val(date.month);
         this.alarmYear.val(date.year);
+        this.alarmRepeat.val(alarm.repeat || '');
       }
     }
   }

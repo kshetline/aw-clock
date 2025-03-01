@@ -1474,29 +1474,37 @@ ul.my-tabs > li.tab-active {
 
       #date-panel {
         display: none; // Updated to flex when active
-        flex-direction: row;
-        gap: 0.5rem;
-        justify-content: center;
-        min-height: 55px;
+        flex-direction: column;
+        gap: 0.5em;
 
-        input, select, option {
-          font-size: 2rem;
-          text-align: center;
+        > .date {
+          display: flex;
+          flex-direction: row;
+          gap: 0.5rem;
+          justify-content: center;
+          min-height: 55px;
+
+          input, select, option {
+            font-size: 2rem;
+            text-align: center;
+          }
+
+          .day {
+            width: 2.2ch;
+          }
+
+          .year {
+            width: 4.4ch;
+          }
         }
 
-        .day {
-          width: 2.2ch;
+        > .repeat {
+          align-items: center;
+          display: flex;
+          flex-direction: row;
+          gap: 0.25rem;
+          justify-content: center;
         }
-
-        .year {
-          width: 4.4ch;
-        }
-      }
-
-      #advanced-date-panel {
-        display: none; // Updated to flex when active
-        flex-direction: row;
-        min-height: 55px;
       }
 
       .audio-selection {
@@ -1520,6 +1528,7 @@ ul.my-tabs > li.tab-active {
         flex-direction: column;
         gap: 0.25rem;
         justify-content: center;
+        margin-top: -1em;
       }
     }
   }
