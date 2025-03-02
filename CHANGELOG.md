@@ -1,3 +1,7 @@
+## 3.9.0
+
+* Alarms can now be created that repeat biweekly, monthly, or yearly.
+
 ## 3.8.0
 
 * Major new feature: Air quality current conditions and forecast.

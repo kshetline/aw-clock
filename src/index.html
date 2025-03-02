@@ -614,11 +614,8 @@
                   <input type="radio" id='daily-alarm' checked>
                   <label for="daily-alarm">Daily</label>
                   <span>&nbsp;</span>
-                  <input type="radio" id='one-time-alarm'>
-                  <label for="one-time-alarm">One time</label>
-                  <!-- <span>&nbsp;</span>
-                  <input type="radio" id='advanced-alarm'>
-                  <label for="advanced-alarm">Advanced</label> -->
+                  <input type="radio" id='by-date-alarm'>
+                  <label for="by-date-alarm">By date</label>
                 </div>
                 <div class="hour-minute-panel">
                   <input id="alarm-hour" type="text">
@@ -631,39 +628,34 @@
                 </div>
                 <div id="day-of-week-panel"></div>
                 <div id="date-panel">
-                  <input id="alarm-day" type="text" class="day">
-                  <select id="alarm-month">
-                    <option value="1">Jan</option>
-                    <option value="2">Feb</option>
-                    <option value="3">Mar</option>
-                    <option value="4">Apr</option>
-                    <option value="5">May</option>
-                    <option value="6">Jun</option>
-                    <option value="7">Jul</option>
-                    <option value="8">Aug</option>
-                    <option value="9">Sep</option>
-                    <option value="10">Oct</option>
-                    <option value="11">Nov</option>
-                    <option value="12">Dec</option>
-                  </select>
-                  <input id="alarm-year" type="text" class="year">
-                </div>
-                <div id="advanced-date-panel">
-                  <select id="date-frequency">
-                    <option value="1">Biweekly</option>
-                    <option value="2">Triweekly</option>
-                    <option value="3">Monthly</option>
-                    <option value="4">Bimonthly</option>
-                    <option value="5">Trimonthly</option>
-                    <option value="6">Triannually</option>
-                    <option value="7">Semiannually</option>
-                    <option value="8">Yearly</option>
-                    <option value="9">Bienially</option>
-                    <option value="10">Trienially</option>
-                    <option value="11">Quadrennially</option>
-                    <option value="12">Quinquennially</option>
-                    <option value="13">Sexennially</option>
-                  </select>
+                  <div class="date">
+                    <input id="alarm-day" type="text" class="day">
+                    <select id="alarm-month">
+                      <option value="1">Jan</option>
+                      <option value="2">Feb</option>
+                      <option value="3">Mar</option>
+                      <option value="4">Apr</option>
+                      <option value="5">May</option>
+                      <option value="6">Jun</option>
+                      <option value="7">Jul</option>
+                      <option value="8">Aug</option>
+                      <option value="9">Sep</option>
+                      <option value="10">Oct</option>
+                      <option value="11">Nov</option>
+                      <option value="12">Dec</option>
+                    </select>
+                    <input id="alarm-year" type="text" class="year">
+                  </div>
+                  <div class="repeat">
+                    <label for="alarm-repeat">Repeat:</label>
+                    <select id="alarm-repeat">
+                      <option value="">No repeats</option>
+                      <option value="W">Weekly</option>
+                      <option value="BW">Biweekly</option>
+                      <option value="M">Monthly</option>
+                      <option value="Y">Yearly</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="audio-selection">
                   <select></select>

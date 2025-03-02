@@ -1370,7 +1370,7 @@ ul.my-tabs > li.tab-active::after {
   flex-direction: row;
   gap: 0.5rem;
   justify-content: center;
-  min-height: 55px;
+  min-height: 82px;
 }
 .alarm-section .alarm-entry-panel #alarm-set-panel #day-of-week-panel > div {
   align-items: center;
@@ -1379,25 +1379,32 @@ ul.my-tabs > li.tab-active::after {
 }
 .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel {
   display: none;
+  flex-direction: column;
+  gap: 0.5em;
+  min-height: 82px;
+}
+.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel > .date {
+  display: flex;
   flex-direction: row;
   gap: 0.5rem;
   justify-content: center;
-  min-height: 55px;
 }
-.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel input, .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel select, .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel option {
+.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel > .date input, .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel > .date select, .alarm-section .alarm-entry-panel #alarm-set-panel #date-panel > .date option {
   font-size: 2rem;
   text-align: center;
 }
-.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel .day {
+.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel > .date .day {
   width: 2.2ch;
 }
-.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel .year {
+.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel > .date .year {
   width: 4.4ch;
 }
-.alarm-section .alarm-entry-panel #alarm-set-panel #advanced-date-panel {
-  display: none;
+.alarm-section .alarm-entry-panel #alarm-set-panel #date-panel > .repeat {
+  align-items: center;
+  display: flex;
   flex-direction: row;
-  min-height: 55px;
+  gap: 0.25rem;
+  justify-content: center;
 }
 .alarm-section .alarm-entry-panel #alarm-set-panel .audio-selection {
   align-items: center;
@@ -1418,6 +1425,7 @@ ul.my-tabs > li.tab-active::after {
   flex-direction: column;
   gap: 0.25rem;
   justify-content: center;
+  margin-top: -1em;
 }
 .alarm-section .alarm-list-panel {
   align-items: center;

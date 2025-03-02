@@ -2,7 +2,7 @@
 // The Typescript typedefs for JQuery aren't working very well.
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
-import { cos_deg, floor, mod, Point, sin_deg } from '@tubular/math';
+import { ceil, cos_deg, floor, min, mod, Point, sin_deg } from '@tubular/math';
 import {
   asLines, htmlEscape, isEdge, isFunction, isObject, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
@@ -216,6 +216,12 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   confirmOk.one('click', (evt) => doCallback(true, evt));
   confirmCancel.one('click', (evt) => doCallback(false, evt));
   confirmDialog.show();
+}
+
+export function domConfirmP(message: string): Promise<boolean>;
+export function domConfirmP(message: string, optionsHtml: string | ConfirmOptions): Promise<boolean>;
+export function domConfirmP(message: string, callbackOrOptions?: OkCallback | string | ConfirmOptions): Promise<boolean> {
+  return new Promise<boolean>(resolve => domConfirm(message, callbackOrOptions as any, ok => resolve(ok)));
 }
 
 export function setSvgHref(elem: JQuery, href: string): void {
@@ -546,4 +552,39 @@ export function getDayClasses(qlass: string): HTMLElement[] {
 
 export function fToC(f: number): number {
   return (f - 32) / 1.8;
+}
+
+export function findRepeatTime(baseTime: number, repeat: string, currTime): number {
+  currTime = floor(currTime / 60000); // Convert to minutes
+
+  if (baseTime > 1440 && baseTime < currTime + 60) {
+    if (repeat === 'W')
+      return baseTime + ceil(currTime - baseTime, 1440 * 7);
+    else if (repeat === 'BW')
+      return baseTime + ceil(currTime - baseTime, 1440 * 14);
+    else if (repeat === 'M' || repeat === 'Y') {
+      const base = new DateTime(baseTime * 60000, 'UTC').wallTime;
+      const currDate = new DateTime(currTime * 60000, 'UTC');
+      const curr = { y: currDate.wallTime.y, m: currDate.wallTime.m, d: currDate.wallTime.d,
+                     hrs:  currDate.wallTime.hrs, min: currDate.wallTime.min };
+
+      if (repeat === 'M' && (curr.y > base.y || curr.y === base.y && curr.m > base.m))
+        curr.d = min(base.d, currDate.getLastDateInMonth(curr.y, curr.m));
+      else if (repeat === 'Y') {
+        curr.m = base.m;
+        curr.d = min(base.d, currDate.getLastDateInMonth(curr.y, base.m));
+
+        if (new DateTime(curr, 'UTC').utcTimeMillis < currDate.utcTimeMillis) {
+          ++curr.y;
+          curr.d = min(base.d, currDate.getLastDateInMonth(curr.y, base.m));
+        }
+      }
+      else
+        return baseTime;
+
+      return floor(new DateTime(curr, 'UTC').utcTimeMillis / 60000);
+    }
+  }
+
+  return baseTime;
 }

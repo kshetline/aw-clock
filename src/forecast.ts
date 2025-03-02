@@ -78,7 +78,7 @@ const euAirQualityCaptions = ['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'];
 
 function matchingTextColor(color: string): string {
   const [r, g, b] = color.split('') // Break into individual characters
-    .map((c, i, a) => i % 2 === 1 ? c + a[i + 1] : '') // Create pairs and empty strings
+    .map((c, i, a) => i % 2 ? c + a[i + 1] : '') // Create pairs and empty strings
     .filter(p => !!p) // Filter out empty string
     .map(p => parseInt(p, 16));
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
@@ -1619,6 +1619,8 @@ export class Forecast {
     const timeStamp = showOnlyDate ? localShortDate(time, this.timezone) :
       showDate ? localShortDateTime(time, this.timezone, am) : localShortTime(time, this.timezone, am);
     const [aqi, color, color2] = this.getAirQualityColorAndCaption(source, aqiOption);
+    const pAqiMax = max(...Object.values(source.aqComps)
+      .map(value => (aqiOption === 'E' ? value.aqiEu : value.aqiUs) ?? -1));
     const aqiStyle = `background-color: ${color2}; color: ${matchingTextColor(color2)}`;
     const aqiStyle2 = `background-color: ${color}; color: ${matchingTextColor(color2)}`;
     const createCell = (pollutant: string, digits: number): string => {
@@ -1630,7 +1632,7 @@ export class Forecast {
       const [pAqi, pColor, pColor2] = this.getAirQualityColorAndCaption(data, aqiOption, true);
       let cell = `<td style="background-color: ${pColor2}"><span style="background-color: ${pColor}`;
 
-      if (pAqi === aqi)
+      if (pAqi >= pAqiMax)
         cell += '; font-weight: bold';
 
       cell += `">${data.raw.toFixed(digits)}</span></td>`;

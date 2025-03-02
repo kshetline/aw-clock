@@ -36,6 +36,7 @@ export class AlarmInfo {
   enabled: boolean;
   message: string;
   sound: string;
+  repeat?: string;
   time: number;
 }
 

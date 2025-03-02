@@ -4,7 +4,7 @@ import { AlarmInfo, Settings } from './settings';
 import { beep, htmlEscape, isEqual, noop, processMillis } from '@tubular/util';
 import { DateTime } from '@tubular/time';
 import { floor, min } from '@tubular/math';
-import { domAlert } from './awc-util';
+import { domAlert, findRepeatTime } from './awc-util';
 import { TimeFormat } from './shared-types';
 
 const FALLBACK_AUDIO = 'Beep-beep-beep-beep.mp3';
@@ -66,7 +66,7 @@ export class AlarmMonitor {
     for (let i = alarms.length - 1; i >= 0; --i) {
       const alarm = alarms[i];
       const isDaily = alarm.time < 1440;
-      let alarmTime = alarm.time;
+      let alarmTime = findRepeatTime(alarm.time, alarm.repeat, alarmCheckTime);
       let canAddAlarm = true;
 
       if (this.activeAlarms.find(a => isEqual(a, alarm)) || this.silencedAlarms.find(sa => isEqual(sa.alarm, alarm)))
@@ -90,7 +90,7 @@ export class AlarmMonitor {
       }
 
       if (!snoozed) {
-        if (!isDaily && alarmTime < nowMinutes - 65 && processMillis() > this.startTime + 60000) { // Expired alarm?
+        if (!isDaily && !alarm.repeat && alarmTime < nowMinutes - 65 && processMillis() > this.startTime + 60000) { // Expired alarm?
           updatePrefs = true;
           alarms.splice(i, 1);
           continue;
