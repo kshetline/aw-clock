@@ -218,6 +218,12 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   confirmDialog.show();
 }
 
+export function domConfirmP(message: string): Promise<boolean>;
+export function domConfirmP(message: string, optionsHtml: string | ConfirmOptions): Promise<boolean>;
+export function domConfirmP(message: string, callbackOrOptions?: OkCallback | string | ConfirmOptions): Promise<boolean> {
+  return new Promise<boolean>(resolve => domConfirm(message, callbackOrOptions as any, ok => resolve(ok)));
+}
+
 export function setSvgHref(elem: JQuery, href: string): void {
   elem.attr('href', href);
 

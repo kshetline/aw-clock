@@ -8,8 +8,8 @@ import {
 } from './settings';
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
-  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, findRepeatTime, getJson, getText, incrementDialogCounter,
-  popKeydownListener, pushKeydownListener, safeCompareVersions
+  adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, domConfirmP, findRepeatTime, getJson,
+  getText, incrementDialogCounter, popKeydownListener, pushKeydownListener, safeCompareVersions
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
 import { beep, clone, eventToKey, htmlEscape, isEqual, isFirefox, noop, toBoolean, toNumber } from '@tubular/util';
@@ -238,7 +238,7 @@ export class SettingsDialog {
   private latitude: JQuery;
   private longitude: JQuery;
   private okButton: JQuery;
-  private oneTimeAlarmBtn: JQuery;
+  private byDateAlarmBtn: JQuery;
   private onscreenKB: JQuery;
   private outdoor: JQuery;
   private planets: JQuery;
@@ -472,7 +472,7 @@ export class SettingsDialog {
 
     this.addAlarm = $('#add-alarm');
     this.dailyAlarmBtn = $('#daily-alarm');
-    this.oneTimeAlarmBtn = $('#one-time-alarm');
+    this.byDateAlarmBtn = $('#by-date-alarm');
 
     this.addAlarm.on('click', () => {
       this.dailyAlarm = true;
@@ -489,15 +489,15 @@ export class SettingsDialog {
       this.datePanel.css('display', 'none');
       this.dayOfWeekPanel.css('display', 'flex');
       this.dailyAlarmBtn.prop('checked', true);
-      this.oneTimeAlarmBtn.prop('checked', false);
+      this.byDateAlarmBtn.prop('checked', false);
     });
 
-    this.oneTimeAlarmBtn.on('click', () => {
+    this.byDateAlarmBtn.on('click', () => {
       this.dailyAlarm = false;
       this.datePanel.css('display', 'flex');
       this.dayOfWeekPanel.css('display', 'none');
       this.dailyAlarmBtn.prop('checked', false);
-      this.oneTimeAlarmBtn.prop('checked', true);
+      this.byDateAlarmBtn.prop('checked', true);
     });
 
     const self = this;
@@ -606,7 +606,7 @@ export class SettingsDialog {
     }).catch(err => console.error('Retrieving alarm tone list failed:', err));
   }
 
-  private saveAlarm(): void {
+  private async saveAlarm(): Promise<void> {
     let hour = toNumber(this.alarmHour.val());
     const minute = toNumber(this.alarmMinute.val());
     const newAlarm = {
@@ -644,19 +644,27 @@ export class SettingsDialog {
       const day = toNumber(this.alarmDay.val());
       const month = toNumber(this.alarmMonth.val());
       const year = toNumber(this.alarmYear.val());
+      const repeat = this.alarmRepeat.val().toString();
 
       if (year <= 0 || day <= 0 || !isValidDate_SGC(year, month, day)) {
         this.alert('Invalid date.');
         return;
       }
 
-      if (new DateTime([year, month, day, hour, minute], this.appService.timezone).utcMillis < Date.now()) {
+      if (repeat === 'M' && day > 28 || repeat === 'Y' && month === 2 && day === 29) {
+        const ok = await domConfirmP('This date will sometimes be replaced with the last day of the month. Continue?');
+
+        if (!ok)
+          return;
+      }
+
+      if (!repeat && new DateTime([year, month, day, hour, minute], this.appService.timezone).utcMillis < Date.now()) {
         this.alert('The date/time of this alarm has already passed.');
         return;
       }
 
       newAlarm.time += new DateTime([year, month, day], 'UTC').wallTime.n * 1440;
-      newAlarm.repeat = this.alarmRepeat.val().toString();
+      newAlarm.repeat = repeat;
     }
 
     if (this.editAlarm < 0) {
@@ -899,14 +907,13 @@ export class SettingsDialog {
   private editSelectedAlarm(): void {
     if (this.selectedAlarm >= 0) {
       const alarm = this.newAlarms[this.selectedAlarm];
-      const alarmTime = findRepeatTime(alarm.time, alarm.repeat, this.appService.getAlarmTime());
-      const time = formatAlarmTime(alarmTime, this.alarmAmPm);
+      const time = formatAlarmTime(alarm.time, this.alarmAmPm);
       const daily = (alarm.time < 1440);
 
       this.clearAlarmTime(daily);
       this.dailyAlarm = daily;
       this.dailyAlarmBtn.prop('checked', daily);
-      this.oneTimeAlarmBtn.prop('checked', !daily);
+      this.byDateAlarmBtn.prop('checked', !daily);
       this.alarmEditing = true;
       this.addAlarm.prop('disabled', true);
       this.editAlarm = this.selectedAlarm;
@@ -1182,7 +1189,7 @@ export class SettingsDialog {
     this.addAlarm.prop('disabled', false);
     this.dailyAlarm = true;
     this.dailyAlarmBtn.prop('checked', true);
-    this.oneTimeAlarmBtn.prop('checked', false);
+    this.byDateAlarmBtn.prop('checked', false);
     this.alarmSetPanel.css('opacity', '0.33');
     this.alarmSetPanel.css('pointer-events', 'none');
     this.alarmHour.val('06');
