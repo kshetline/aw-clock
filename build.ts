@@ -1168,7 +1168,7 @@ async function doServiceDeployment(): Promise<void> {
   let serviceScript = fs.readFileSync(serviceSrc).toString().replace(/\/pi\//g, `/${user}/`);
 
   if (usingNvm)
-    serviceScript = serviceScript.replace(/^NODE_BIN_DIR=".*"/, `NODE_BIN_DIR="${nodePath.slice(0, -5)}"`);
+    serviceScript = serviceScript.replace(/^NODE_BIN_DIR=".*"/m, `NODE_BIN_DIR="${nodePath}"`);
 
   fs.writeFileSync(serviceDst, serviceScript);
   await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
@@ -1461,7 +1461,8 @@ async function doServiceDeployment(): Promise<void> {
       await monitorProcess(spawn('mv', ['dist/*', userHome + '/weather'], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
       if (usingNvm)
-        await monitorProcess(spawn('sed', ['-i', `'1s#!/usr/bin/env node#!/usr/bin/env ${nodePath}#'`, userHome + '/weather/app.js'],
+        await monitorProcess(spawn('sed',
+          ['-i', `'1s#!/usr/bin/env node#!/usr/bin/env ${nodePath}/node#'`, userHome + '/weather/app.js'],
           { shell: true }), spin, ErrorMode.ANY_ERROR);
 
       stepDone();
