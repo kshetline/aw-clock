@@ -32,5 +32,5 @@ if [ -f "node_path.txt" ]; then
 fi
 
 echo "Starting main installer..."
-# shellcheck disable=SC2086
-"$path0/node" build.js -p $path --bash "$*"
+# shellcheck disable=SC2048,SC2086
+"$path0/node" build.js -p $path --bash $*
