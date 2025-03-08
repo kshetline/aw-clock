@@ -15,7 +15,7 @@
 #
 
 NAME="weatherService"
-NODE_BIN_DIR="/usr/local/bin"
+NODE_BIN_DIR="/usr/bin"
 APPLICATION_PATH="/home/pi/weather/app.js"
 PIDFILE="/var/run/weatherService.pid"
 LOGFILE="/var/log/weatherService.log"
@@ -27,7 +27,7 @@ if [[ "$PATH" != *"$NODE_BIN_DIR"* ]]; then
   PATH="$NODE_BIN_DIR:$PATH"
 fi
 
-if [[ "$NODE_BIN_DIR" != *"/.nvm/"* ]]; then
+if [[ "$NODE_BIN_DIR" == *"/.nvm/"* ]]; then
   FOREVER_PATH="$NODE_BIN_DIR/forever"
 fi
 
