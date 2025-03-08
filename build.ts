@@ -88,7 +88,7 @@ chalk.paleYellow = chalk.hex('#FFFFAA');
 let backspace = '\x08';
 let sol = '\x1B[1G';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 2;
+let totalSteps = 3;
 let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
@@ -1341,7 +1341,6 @@ async function doServiceDeployment(): Promise<void> {
     process.stdin.setRawMode(false);
 
     if (!settingsOnly) {
-      totalSteps += hasFirefox ? 1 : 0;
       totalSteps += noStop ? 0 : 1;
       totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
       totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
