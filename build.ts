@@ -1461,7 +1461,7 @@ async function doServiceDeployment(): Promise<void> {
       await monitorProcess(spawn('mv', ['dist/*', userHome + '/weather'], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
       if (usingNvm)
-        await monitorProcess(spawn('sed', ['-i', `1s#!/usr/bin/env node#!/usr/bin/env ${nodePath}#`, userHome + '/weather/app.js'],
+        await monitorProcess(spawn('sed', ['-i', `'1s#!/usr/bin/env node#!/usr/bin/env ${nodePath}#'`, userHome + '/weather/app.js'],
           { shell: true }), spin, ErrorMode.ANY_ERROR);
 
       stepDone();
