@@ -270,7 +270,7 @@ export class Clock {
     else if (this._timeFormat === TimeFormat.UTC)
       fontSize = 6.5;
 
-    this.timeCaption.style['font-size'] = fontSize.toString();
+    this.timeCaption.style.fontSize = fontSize.toString();
     this.utcDate.style.display = this._timeFormat === TimeFormat.UTC ? 'block' : 'none';
     this.dut1PositionAdjustmentNeeded = true;
   }

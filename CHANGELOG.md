@@ -1,6 +1,7 @@
 ## 3.9.1
 
 * I let compatibility with the Raspberry Pi 3B+ lapse. Installation on a Raspberry Pi 3B+ should now work once again.
+* Firefox fix for format of 24-hour UTC time mode.
 
 ## 3.9.0
 
