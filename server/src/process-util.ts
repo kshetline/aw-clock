@@ -2,7 +2,9 @@ import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
 import * as readline from 'readline';
 import { asLines, isNumber } from '@tubular/util';
 
+// noinspection JSDeprecatedSymbols
 const isMacOS = (process.platform === 'darwin');
+// noinspection JSDeprecatedSymbols
 const isWindows = (process.platform === 'win32');
 const sudoUser = process.env.SUDO_USER || process.env.USER || 'pi';
 let userHome = '/home/pi';

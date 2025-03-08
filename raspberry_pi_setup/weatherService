@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #/etc/init.d/weatherService
 #
 # Based on: https://www.exratione.com/2013/02/nodejs-and-forever-as-a-service-simple-upstart-and-init-scripts-for-ubuntu/
@@ -15,19 +15,28 @@
 #
 
 NAME="weatherService"
-NODE_BIN_DIR="/usr/bin/node"
-NODE_PATH="/usr/lib/node_modules"
+NODE_BIN_DIR="/usr/local/bin"
 APPLICATION_PATH="/home/pi/weather/app.js"
 PIDFILE="/var/run/weatherService.pid"
 LOGFILE="/var/log/weatherService.log"
 MIN_UPTIME="5000"
 SPIN_SLEEP_TIME="2000"
+FOREVER_PATH="forever"
 
-# Define AWC_WEATHERBIT_API_KEY, AWC_WIRED_TH_GPIO, AWC_NTP_SERVER, etc., in the file below:
+if [[ "$PATH" != *"$NODE_BIN_DIR"* ]]; then
+  PATH="$NODE_BIN_DIR:$PATH"
+fi
+
+if [[ "$NODE_BIN_DIR" != *"/.nvm/"* ]]; then
+  FOREVER_PATH="$NODE_BIN_DIR/forever"
+fi
+
+export PATH="$PATH"
+
+# Get user settings
 [ -f /etc/default/weatherService ] && . /etc/default/weatherService
 
-PATH=$NODE_BIN_DIR:$PATH
-export NODE_PATH=$NODE_PATH
+# Define AWC_WEATHERBIT_API_KEY, AWC_WIRED_TH_GPIO, AWC_NTP_SERVER, etc., in the file below:
 export AWC_ALLOW_ADMIN="$AWC_ALLOW_ADMIN"
 export AWC_ALLOW_CORS="$AWC_ALLOW_CORS"
 export AWC_ALT_DEV_SERVER="$AWC_ALT_DEV_SERVER"
@@ -50,7 +59,7 @@ export AWC_WIRELESS_TH_GPIO="$AWC_WIRELESS_TH_GPIO"
 
 start() {
   echo "Starting $NAME"
-  forever \
+  "$FOREVER_PATH" \
     --pidFile $PIDFILE \
     -a \
     -l $LOGFILE \
