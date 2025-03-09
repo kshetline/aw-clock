@@ -12,7 +12,7 @@ let userHome = '/home/' + sudoUser;
 try {
   userHome = (isMacOS ? process.env.HOME :
     (isWindows ? process.env.USERPROFILE : execSync(`grep ${sudoUser} /etc/passwd`).toString()
-      .split(':')[5])) || userHome;
+      .split(':')[5])).trim() || userHome;
 }
 catch (err) {
   console.error(err);
