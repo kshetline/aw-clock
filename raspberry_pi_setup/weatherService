@@ -57,6 +57,16 @@ export AWC_WEATHERBIT_API_KEY="$AWC_WEATHERBIT_API_KEY"
 export AWC_WIRED_TH_GPIO="$AWC_WIRED_TH_GPIO"
 export AWC_WIRELESS_TH_GPIO="$AWC_WIRELESS_TH_GPIO"
 
+checkForever() {
+  sleep 5
+  proc=$(ps -ax | grep -E "node.+weather.app.js$")
+
+  if [ -z "$proc" ]; then
+    $APPLICATION_PATH 2>%1 >> $LOGFILE &
+    echo "$!;" > $PIDFILE
+  fi
+}
+
 start() {
   echo "Starting $NAME"
   "$FOREVER_PATH" \
@@ -67,14 +77,24 @@ start() {
     --minUptime $MIN_UPTIME \
     --spinSleepTime $SPIN_SLEEP_TIME \
      --killSignal=SIGTERM \
-    start $APPLICATION_PATH 2>%1 > /dev/null &
+    start "$APPLICATION_PATH" 2>%1 > /dev/null &
+    checkForever &
   RETVAL=$?
 }
 
 stop() {
   if [ -f $PIDFILE ]; then
     echo "Shutting down $NAME"
-    forever stop $APPLICATION_PATH > /dev/null 2>&1
+    pid=$(cat $PIDFILE)
+    lastCh="${pid: -1}"
+
+    if [[ "$lastCh" == ";" ]]; then
+      pid="${pid:0: -1}"
+      kill "$pid" 2>%1 >> $LOGFILE
+    else
+      "$FOREVER_PATH" stop $APPLICATION_PATH > /dev/null 2>&1
+    fi
+
     rm -f $PIDFILE
     RETVAL=$?
   else

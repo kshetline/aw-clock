@@ -7,7 +7,7 @@ const isMacOS = (process.platform === 'darwin');
 // noinspection JSDeprecatedSymbols
 const isWindows = (process.platform === 'win32');
 const sudoUser = process.env.SUDO_USER || process.env.USER || 'pi';
-let userHome = '/home/pi';
+let userHome = '/home/' + sudoUser;
 
 try {
   userHome = (isMacOS ? process.env.HOME :
