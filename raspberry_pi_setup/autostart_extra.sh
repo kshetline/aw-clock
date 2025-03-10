@@ -13,7 +13,7 @@ else
 fi
 
 (( n = 0 ))
-(( max = 30 ))
+(( max = 45 ))
 
 until (curl --head --silent --fail http://localhost:8080/ 1> /dev/null 2>&1) || [[ n -ge max ]]; do
   (( n = n + 1 ))

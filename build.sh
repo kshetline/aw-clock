@@ -18,6 +18,8 @@ fi
 
 sudo -u "$SUDO_USER" bash -c ./build_node_check.sh
 
+nodeCmd="node"
+
 if [ -f "node_path.txt" ]; then
   path="$(cat node_path.txt)"
   rm node_path.txt
@@ -25,11 +27,12 @@ if [ -f "node_path.txt" ]; then
   if [ "$path" == "failed" ]; then
     exit;
   elif [ -n "$path" ]; then
+    nodeCmd="$path/node"
     args=(--path \""$path"\")
     path="${args[*]}"
   fi
 fi
 
 echo "Starting main installer..."
-# shellcheck disable=SC2090,SC2048,SC2086
-node build.js -p $path --bash $*
+# shellcheck disable=SC2048,SC2086
+"$nodeCmd" build.js -p $path --bash $*

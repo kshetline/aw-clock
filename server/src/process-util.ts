@@ -2,15 +2,17 @@ import { ChildProcess, execSync, spawn as nodeSpawn } from 'child_process';
 import * as readline from 'readline';
 import { asLines, isNumber } from '@tubular/util';
 
+// noinspection JSDeprecatedSymbols
 const isMacOS = (process.platform === 'darwin');
+// noinspection JSDeprecatedSymbols
 const isWindows = (process.platform === 'win32');
 const sudoUser = process.env.SUDO_USER || process.env.USER || 'pi';
-let userHome = '/home/pi';
+let userHome = '/home/' + sudoUser;
 
 try {
   userHome = (isMacOS ? process.env.HOME :
     (isWindows ? process.env.USERPROFILE : execSync(`grep ${sudoUser} /etc/passwd`).toString()
-      .split(':')[5] || userHome));
+      .split(':')[5])) || userHome;
 }
 catch (err) {
   console.error(err);
