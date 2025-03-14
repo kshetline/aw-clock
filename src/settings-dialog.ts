@@ -682,7 +682,11 @@ export class SettingsDialog {
   }
 
   private formatAlarmDate(time: number, repeat?: string): string {
-    time = findRepeatTime(time, repeat, this.appService.getAlarmTime());
+    let alarmCheckTime = this.appService.getAlarmTime();
+    const now = new DateTime(alarmCheckTime, this.appService.timezone);
+
+    alarmCheckTime += now.utcOffsetSeconds * 1000;
+    time = findRepeatTime(time, repeat, alarmCheckTime);
 
     return new DateTime(time * 60000, 'UTC').format('DD MMM yyyy');
   }
