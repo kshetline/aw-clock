@@ -62,6 +62,7 @@ export class AlarmMonitor {
     let next24Hours = NOTHING_PENDING;
 
     this.silencedAlarms = this.silencedAlarms.filter(sa => sa.stoppedAt > nowMinutes - 65);
+    alarmCheckTime += now.utcOffsetSeconds * 1000;
 
     for (let i = alarms.length - 1; i >= 0; --i) {
       const alarm = alarms[i];
