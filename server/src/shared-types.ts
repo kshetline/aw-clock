@@ -1,6 +1,5 @@
-import * as p from '../package.json';
-
-const { version } = p;
+// Using `import` instead causes webpack to fail, at least with some older versions of Node.js.
+const { version } = require('../package.json');
 
 // It's annoying that TypeScript doesn't itself provide a way to create a runtime list of
 // the allowed keys for an interface, so for now, I'll have to settle for repeating things.

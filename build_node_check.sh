@@ -82,11 +82,11 @@ pattern='([0-9]+)'
 [[ $free =~ $pattern ]]
 free="${BASH_REMATCH[1]}"
 
-# If less than 2G RAM, go with Node 12 instead
+# If less than 2G RAM, go with Node 16 instead
 if (( free < 1500000 )); then
-  minVersion=12
-  maxVersion=12
-  absMaxVersion=12
+  minVersion=16
+  maxVersion=16
+  absMaxVersion=18
 elif (( free > 8000000 )); then
   minVersion=20
   maxVersion=24
@@ -100,7 +100,7 @@ if (( version > absMaxVersion )) && [ ! -s "$NVM_DIR/nvm.sh" ]; then
   install_nvm
 fi
 
-if (( version < maxVersion )) && [ -s "$NVM_DIR/nvm.sh" ] && [ $(nvm version-remote $maxVersion) != "N/A" ]; then
+if (( version < maxVersion )) && [ -s "$NVM_DIR/nvm.sh" ] && [ "$(nvm version-remote $maxVersion)" != "N/A" ]; then
   if [ "$(nvm use "v$maxVersion")" ]; then
     nvm use "v$maxVersion"
     nvm alias default "$maxVersion"
@@ -175,7 +175,7 @@ if [ ! -f ".first-time-install" ] || [ ! -d "node_modules/@tubular/util" ] || [ 
     cd server
     rm package-lock.json
     rm -rf node_modules
-    npm i
+    npm i --omit=optional
     # shellcheck disable=SC2103
     cd ..
     rm package-lock.json
@@ -190,7 +190,7 @@ npm_version="$(current_npm_version)"
 
 if (( npm_version < 7 )); then
   echo "Updating npm to at least version 7"
-  sudo npm i -g "npm@>=7"
+  npm i -g "npm@>=7"
 fi
 
 pattern='^(.*\/\.nvm\/[^:]*):'

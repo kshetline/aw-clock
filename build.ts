@@ -60,6 +60,8 @@ let treatAsRaspberryPi = process.argv.includes('--tarp');
 let isRaspberryPi = false;
 let isRaspberryPi5OrLater = false;
 let settingsOnly = false;
+let nodePath = '';
+let usingNvm = false;
 
 let spin = (): void => {
   const now = processMillis();
@@ -86,7 +88,7 @@ chalk.paleYellow = chalk.hex('#FFFFAA');
 let backspace = '\x08';
 let sol = '\x1B[1G';
 let trailingSpace = '  '; // Two spaces
-let totalSteps = 2;
+let totalSteps = 3;
 let currentStep = 0;
 const settings: Record<string, string> = {
   AWC_ALLOW_ADMIN: 'false',
@@ -117,7 +119,6 @@ let chromium = 'chromium';
 let autostartDst = '.config/lxsession/LXDE';
 const lxdePiCheck = '.config/lxpanel/LXDE-pi';
 const wayfireIni = '.config/wayfire.ini';
-let nodePath = process.env.PATH;
 
 if (process.platform === 'linux') {
   try {
@@ -181,9 +182,13 @@ let getPathArg = false;
 
 process.argv.forEach(arg => {
   if (getPathArg) {
-    process.env.NODE_PATH = arg.trim();
-    process.env.PATH = nodePath = arg.trim() + (nodePath ? ':' + nodePath : nodePath);
+    const path = process.env.PATH;
+
+    nodePath = arg.trim().replace(/^"|"$/g, '');
+    process.env.NODE_PATH = nodePath;
+    process.env.PATH = nodePath + (path ? ':' + path : '');
     getPathArg = false;
+    usingNvm = nodePath.includes('/.nvm/');
 
     return;
   }
@@ -1160,7 +1165,10 @@ async function doServiceDeployment(): Promise<void> {
   showStep();
   write('Create or redeploy weatherService' + trailingSpace);
 
-  const serviceScript = fs.readFileSync(serviceSrc).toString().replace(/\/pi\//g, `/${user}/`);
+  let serviceScript = fs.readFileSync(serviceSrc).toString().replace(/\/pi\//g, `/${user}/`);
+
+  if (usingNvm)
+    serviceScript = serviceScript.replace(/^NODE_BIN_DIR=".*"/m, `NODE_BIN_DIR="${nodePath}"`);
 
   fs.writeFileSync(serviceDst, serviceScript);
   await monitorProcess(spawn('chmod', ['+x', serviceDst], { shell: true }), spin, ErrorMode.ANY_ERROR);
@@ -1333,7 +1341,6 @@ async function doServiceDeployment(): Promise<void> {
     process.stdin.setRawMode(false);
 
     if (!settingsOnly) {
-      totalSteps += hasFirefox ? 1 : 0;
       totalSteps += noStop ? 0 : 1;
       totalSteps += (doNpmI || !fs.existsSync('node_modules') || !fs.existsSync('package-lock.json')) ? 1 : 0;
       totalSteps += (doNpmI || !fs.existsSync('server/node_modules') || !fs.existsSync('server/package-lock.json')) ? 1 : 0;
@@ -1451,6 +1458,12 @@ async function doServiceDeployment(): Promise<void> {
         await monitorProcess(spawn('rm', ['-Rf', userHome + '/weather/*'], { shell: true }), spin, ErrorMode.ANY_ERROR);
 
       await monitorProcess(spawn('mv', ['dist/*', userHome + '/weather'], { shell: true }), spin, ErrorMode.ANY_ERROR);
+
+      if (usingNvm)
+        await monitorProcess(spawn('sed',
+          ['-i', `'1s#!/usr/bin/env node#!/usr/bin/env ${nodePath}/node#'`, userHome + '/weather/app.js'],
+          { shell: true }), spin, ErrorMode.ANY_ERROR);
+
       stepDone();
     }
 

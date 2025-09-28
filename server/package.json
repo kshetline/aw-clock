@@ -1,6 +1,6 @@
 {
   "name": "aw-clock-server",
-  "version": "3.9.1",
+  "version": "3.9.2",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "private": true,
@@ -51,8 +51,5 @@
     "webpack": "^5.73.0",
     "webpack-cli": "^6.0.1",
     "webpack-node-externals": "^3.0.0"
-  },
-  "optionalDependencies": {
-    "rpi-acu-rite-temperature": "^3.0.1"
   }
 }

@@ -1,3 +1,12 @@
+## 3.9.2
+
+* Fixed timezone-related bug in new repeating alarms feature.
+
+## 3.9.1
+
+* I let compatibility with the Raspberry Pi 3B+ lapse. Installation on a Raspberry Pi 3B+ should now work once again.
+* Firefox fix for format of 24-hour UTC time mode.
+
 ## 3.9.0
 
 * Alarms can now be created that repeat biweekly, monthly, or yearly.
