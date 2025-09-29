@@ -6,38 +6,38 @@ import { forEach } from '@tubular/util';
 
 interface AirQualityRaw {
   current: {
-    time: string,
-    european_aqi: number,
-    us_aqi: number,
-    pm10: number,
-    pm2_5: number,
-    carbon_monoxide: number,
-    nitrogen_dioxide: number,
-    sulphur_dioxide: number,
-    ozone: number
-  },
+    time: string;
+    european_aqi: number;
+    us_aqi: number;
+    pm10: number;
+    pm2_5: number;
+    carbon_monoxide: number;
+    nitrogen_dioxide: number;
+    sulphur_dioxide: number;
+    ozone: number;
+  };
   hourly: {
-    time: string[],
-    pm10: number[],
-    pm2_5: number[],
-    carbon_monoxide: number[],
-    nitrogen_dioxide: number[],
-    sulphur_dioxide: number[],
-    ozone: number[],
-    european_aqi: number[],
-    european_aqi_pm2_5: number[],
-    european_aqi_pm10: number[],
-    european_aqi_nitrogen_dioxide: number[],
-    european_aqi_ozone: number[],
-    european_aqi_sulphur_dioxide: number[],
-    us_aqi: number[],
-    us_aqi_aqi_pm2_5: number[],
-    us_aqi_aqi_pm10: number[],
-    us_aqi_aqi_nitrogen_dioxide: number[],
-    us_aqi_aqi_carbon_monoxide: number[],
-    us_aqi_aqi_ozone: number[],
-    us_aqi_sulphur_dioxide: number[]
-  }
+    time: string[];
+    pm10: number[];
+    pm2_5: number[];
+    carbon_monoxide: number[];
+    nitrogen_dioxide: number[];
+    sulphur_dioxide: number[];
+    ozone: number[];
+    european_aqi: number[];
+    european_aqi_pm2_5: number[];
+    european_aqi_pm10: number[];
+    european_aqi_nitrogen_dioxide: number[];
+    european_aqi_ozone: number[];
+    european_aqi_sulphur_dioxide: number[];
+    us_aqi: number[];
+    us_aqi_aqi_pm2_5: number[];
+    us_aqi_aqi_pm10: number[];
+    us_aqi_aqi_nitrogen_dioxide: number[];
+    us_aqi_aqi_carbon_monoxide: number[];
+    us_aqi_aqi_ozone: number[];
+    us_aqi_sulphur_dioxide: number[];
+  };
 }
 
 const nameMap: Record<string, string> = {

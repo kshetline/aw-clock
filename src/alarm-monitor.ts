@@ -25,8 +25,8 @@ export class AlarmMonitor {
   private disableStartTime = 0;
   private fallbackBeep: any;
   private nowPlaying: HTMLAudioElement;
-  private silencedAlarms: { stoppedAt: number, alarm: AlarmInfo }[] = [];
-  private snoozedAlarms: { restartAt: number, alarm: AlarmInfo }[] = [];
+  private silencedAlarms: { stoppedAt: number; alarm: AlarmInfo }[] = [];
+  private snoozedAlarms: { restartAt: number; alarm: AlarmInfo }[] = [];
   private readonly startTime: number;
 
   constructor(private appService: AppService) {
@@ -213,7 +213,7 @@ export class AlarmMonitor {
       this.nowPlaying.play().catch(() => {
         if (!this.cantPlayAlertShown) {
           this.cantPlayAlertShown = true;
-          domAlert('Click OK to allow alarm audio to play', () => this.nowPlaying.play().catch(noop));
+          domAlert('Click OK to allow alarm audio to play', (): any => this.nowPlaying.play().catch(noop));
         }
       });
     }

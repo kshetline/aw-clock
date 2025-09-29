@@ -64,9 +64,9 @@ export class NtpPoolPoller extends TimePoller {
         const firstSuccess = results.find(result => result.status === 'fulfilled');
 
         if (firstSuccess)
-          resolve((firstSuccess as PromiseFulfilledResult<NtpData>).value);
+          resolve(firstSuccess.value);
         else
-          reject((results[0] as PromiseRejectedResult).reason);
+          reject((results[0] as unknown as PromiseRejectedResult).reason);
       });
     });
   }

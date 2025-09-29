@@ -174,7 +174,7 @@ class AwClockApp implements AppService {
       else
         this.timeDelta = 0;
     });
-    this.testTime[0].addEventListener('keypress', (evt) => this.keyHandler(evt, true));
+    this.testTime[0].addEventListener('keypress', evt => this.keyHandler(evt, true));
 
     const settingsButton = $('#settings-btn');
 

@@ -1,4 +1,3 @@
-/// <reference path="./ambient.d.ts" />
 import Chalk from 'chalk';
 import { exec } from 'child_process';
 import * as fs from 'fs';
@@ -147,7 +146,7 @@ if (process.platform === 'linux') {
       }
     }
   }
-  catch (err) {
+  catch {
     console.error(chalk.redBright('Raspberry Pi check failed'));
   }
 }
@@ -416,7 +415,7 @@ if (treatAsRaspberryPi) {
       settings.AWC_USE_FIREFOX = doFirefox.toString();
     }
   }
-  catch (err) {
+  catch {
     console.warn(chalk.yellow('Existing settings check failed. Defaults will be used.'));
   }
 }
@@ -492,7 +491,6 @@ async function isInstalled(command: string): Promise<boolean> {
     return !!(await monitorProcess(spawn('command', ['-v', command], { shell: true }), null, ErrorMode.ANY_ERROR))?.trim();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function install(cmdPkg: string, viaNpm = false, realOnly = false, quiet = false): Promise<boolean> {
   const packageArgs = [cmdPkg];
   let name = cmdPkg;
@@ -647,7 +645,7 @@ async function checkForGps(): Promise<void> {
 
     for (const line of gpsInfo) {
       try {
-        const obj = JSON.parse(line) as { lat: number, lon: number };
+        const obj = JSON.parse(line) as { lat: number; lon: number };
 
         if (isObject(obj) && isNumber(obj.lat) && isNumber(obj.lon)) {
           gpsLocationIsWorking = true;
@@ -1181,10 +1179,8 @@ async function doServiceDeployment(): Promise<void> {
   let launchCmd = doFirefox ? launchFirefox : launchChromium;
 
   if (doFullscreen && !doFirefox)
-    // eslint-disable-next-line no-template-curly-in-string
     launchCmd = launchCmd.replace(/\s+/, ' --new-window --start-fullscreen "${maxarg}" --autoplay-policy=no-user-gesture-required ');
   else if (doKiosk && !doFirefox)
-    // eslint-disable-next-line no-template-curly-in-string
     launchCmd = launchCmd.replace(/\s+/, ' --kiosk "${maxarg}" --autoplay-policy=no-user-gesture-required ');
   else if ((doKiosk || doFullscreen) && doFirefox)
     launchCmd = launchCmd.replace('-new-window', '--kiosk');
@@ -1206,7 +1202,7 @@ async function doServiceDeployment(): Promise<void> {
   try {
     lines = asLines(fs.readFileSync(autostartPath).toString()).filter(line => !!line.trim());
   }
-  catch (err) {
+  catch {
     if (isRaspberryPi || morePi_ish) {
       update = true;
       lines = [
@@ -1438,7 +1434,7 @@ async function doServiceDeployment(): Promise<void> {
 
       showStep();
       write('Copying server to top-level dist directory' + trailingSpace);
-      await (promisify(copyfiles) as any)(['server/dist/**/*', 'dist/'], { up: 2 });
+      await (promisify(copyfiles))(['server/dist/**/*', 'dist/'], { up: 2 });
       await monitorProcess(spawn('chown', ['-R', sudoUser, 'dist'], { shell: true }), spin, ErrorMode.ANY_ERROR);
       stepDone();
     }

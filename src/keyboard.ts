@@ -167,7 +167,7 @@ export class Keyboard {
     this.keyboard.addButtonTheme('{rarr}', 'arrow-key');
     this.keyboardElem = $('.keyboard')[0];
 
-    $('#keyboard-close').on('click', (evt) => {
+    $('#keyboard-close').on('click', evt => {
       this.hide();
       evt.stopPropagation();
 

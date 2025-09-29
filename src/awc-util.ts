@@ -1,5 +1,5 @@
 // noinspection TypeScriptValidateJSTypes
-// The Typescript typedefs for JQuery aren't working very well.
+// The TypeScript typedefs for JQuery aren't working very well.
 import $ from 'jquery';
 import { DateTime, Timezone } from '@tubular/time';
 import { ceil, cos_deg, floor, min, mod, Point, sin_deg } from '@tubular/math';
@@ -7,10 +7,9 @@ import {
   asLines, htmlEscape, isEdge, isFunction, isObject, isSafari, isString, last, padLeft, parseColor,
   processMillis, toNumber
 } from '@tubular/util';
-import compareVersions, { CompareOperator } from 'compare-versions';
 
 export type KeyListener = (event: KeyboardEvent) => void;
-export type ClickishEvent = JQuery.ClickEvent | MouseEvent
+export type ClickishEvent = JQuery.ClickEvent | MouseEvent;
 
 export interface JsonOptions {
   jsonp?: boolean;
@@ -213,8 +212,8 @@ export function domConfirm(message: string, callbackOrOptions: OkCallback | stri
   else
     $('#confirm-message').text(message);
 
-  confirmOk.one('click', (evt) => doCallback(true, evt));
-  confirmCancel.one('click', (evt) => doCallback(false, evt));
+  confirmOk.one('click', evt => doCallback(true, evt));
+  confirmCancel.one('click', evt => doCallback(false, evt));
   confirmDialog.show();
 }
 
@@ -523,25 +522,6 @@ export function localShortTime(time: number, zone: Timezone, amPm: boolean): str
     options.hourCycle = 'h23';
 
   return new Date(wallTime.y, wallTime.m - 1, wallTime.d, wallTime.hrs, wallTime.min).toLocaleTimeString(undefined, options);
-}
-
-export function safeCompareVersions(firstVersion: string, secondVersion: string, defValue?: number): number;
-export function safeCompareVersions(firstVersion: string, secondVersion: string, operator?: CompareOperator, defValue?: boolean): boolean;
-export function safeCompareVersions(firstVersion: string, secondVersion: string,
-                                    operatorOrDefValue: CompareOperator | number, defValue = false): number | boolean {
-  try {
-    if (isString(operatorOrDefValue))
-      return compareVersions.compare(firstVersion, secondVersion, operatorOrDefValue);
-    else {
-      /* false inspection alarm */ // noinspection JSUnusedAssignment
-      operatorOrDefValue = operatorOrDefValue ?? -1;
-
-      return compareVersions(firstVersion, secondVersion);
-    }
-  }
-  catch {}
-
-  return isString(operatorOrDefValue) ? defValue : operatorOrDefValue;
 }
 
 export function getDayClasses(qlass: string): HTMLElement[] {

@@ -30,7 +30,7 @@ export function updateSvgFlowItems(): void {
   });
 }
 
-interface GeneralRect { x: number, y: number, width: number, height: number }
+interface GeneralRect { x: number; y: number; width: number; height: number }
 
 function getBBox(elem: SVGGraphicsElement): GeneralRect {
   if (elem.localName !== 'tspan')
@@ -46,7 +46,7 @@ function getBBox(elem: SVGGraphicsElement): GeneralRect {
 
 export function reflow(): void {
   svgFlowItems.forEach(item => {
-    const anchor = document.querySelector('#' + item.anchorId) as SVGGraphicsElement;
+    const anchor = document.querySelector('#' + item.anchorId) as unknown as SVGGraphicsElement;
 
     if (anchor) {
       const r1 = getBBox(anchor);

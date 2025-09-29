@@ -27,7 +27,7 @@ interface WeatherBitCurrent {
       icon: string;
       code: string;
       description: string;
-    },
+    };
     datetime: string;
     ts: number;
   }[];
@@ -44,7 +44,7 @@ interface WeatherBitHourly {
       icon: string;
       code: string;
       description: string;
-    },
+    };
     precip: number;
     slp: number;
     snow: number;
@@ -83,7 +83,7 @@ interface WeatherBitDaily {
       icon: string;
       code: string;
       description: string;
-    },
+    };
     precip: number;
     valid_date: string;
     temp: number;
@@ -105,7 +105,7 @@ interface WeatherBitAlert {
   effective_local: string;
   expires_utc: string;
   expires_local: string;
-  uri: string
+  uri: string;
   regions: string[];
 }
 
@@ -119,7 +119,6 @@ interface WeatherBitAlerts {
   time_zone: string;
 }
 
-/* eslint-disable object-property-newline */
 const icons: Record<string, string> = {
   t01d: '37;38', t01n: '47;38', t02d: '37;38', t02n: '47;38', t03d: '37;38', t03n: '47;38',
   t04d: '37;38', t04n: '47;38', t05d: '37;38', t05n: '47;38',
@@ -142,7 +141,6 @@ const icons: Record<string, string> = {
 
   u00d: '40', u00n: '40',
 };
-/* eslint-enable object-property-newline */
 
 export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const isMetric = (req.query.du === 'c');

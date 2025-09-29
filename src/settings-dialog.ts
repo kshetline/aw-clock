@@ -9,10 +9,10 @@ import {
 import { AWC_VERSION, AwcDefaults } from '../server/src/shared-types';
 import {
   adjustCityName, ClickishEvent, decrementDialogCounter, domAlert, domConfirm, domConfirmP, findRepeatTime, getJson,
-  getText, incrementDialogCounter, popKeydownListener, pushKeydownListener, safeCompareVersions
+  getText, incrementDialogCounter, popKeydownListener, pushKeydownListener
 } from './awc-util';
 import { abs, floor, mod } from '@tubular/math';
-import { beep, clone, eventToKey, htmlEscape, isEqual, isFirefox, noop, toBoolean, toNumber } from '@tubular/util';
+import { beep, clone, compareDottedValues, eventToKey, htmlEscape, isEqual, isFirefox, noop, toBoolean, toNumber } from '@tubular/util';
 import ttime, { DateTime, isValidDate_SGC } from '@tubular/time';
 
 const ERROR_BACKGROUND = '#FCC';
@@ -268,7 +268,7 @@ export class SettingsDialog {
   private nowPlaying: HTMLAudioElement;
   private previousSettings: Settings;
   private recentLocations: RecentLocation[] = [];
-  private savedLocation: { name: string, lat: string, lon: string };
+  private savedLocation: { name: string; lat: string; lon: string };
   private searchFieldFocused = false;
   private searchButtonFocused = false;
   private serviceSetting = '';
@@ -383,7 +383,7 @@ export class SettingsDialog {
     this.updateButton.on('focus', () => this.updateFocused = true);
     this.updateButton.on('blur', () => this.updateFocused = false);
     this.getGps.on('click', () => this.fillInGpsLocation());
-    this.tabs.on('click', (evt) => this.tabClicked(evt));
+    this.tabs.on('click', evt => this.tabClicked(evt));
     this.searchUndo.on('click', () => this.restoreSavedLocation());
 
     this.dimming.on('change', () => {
@@ -769,6 +769,7 @@ export class SettingsDialog {
 
         response.matches.forEach((city, index) => {
           rows +=
+// eslint-disable-next-line @stylistic/indent
 `<tr data-lat="${city.latitude}"
     data-lon="${city.longitude}"${response.matches.length > 6 && Math.floor(index / 3) % 2 === 0 ? '\n    class=rowguide' : ''}>
   <td>${city.rank}</td>
@@ -999,11 +1000,11 @@ export class SettingsDialog {
 
   private abortForUnsavedAlarmOrBadRegex(callback: (abort: boolean) => void): void {
     if (!this.getAlertFilters()) {
-      callback(true); // eslint-disable-line n/no-callback-literal
+      callback(true);
       return;
     }
     else if (!this.alarmEditing) {
-      callback(false); // eslint-disable-line n/no-callback-literal
+      callback(false);
       return;
     }
 
@@ -1012,7 +1013,7 @@ export class SettingsDialog {
       if (yesGoOn)
         this.clearAlarmTime();
 
-      callback(!yesGoOn); // eslint-disable-line n/no-callback-literal
+      callback(!yesGoOn);
     });
   }
 
@@ -1179,7 +1180,7 @@ export class SettingsDialog {
     // noinspection TypeScriptValidateJSTypes
     updateVersionInfo.html(defaults?.latestVersionInfo || '');
     $('#hide-update-panel').css('display',
-      safeCompareVersions(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
+      compareDottedValues(AWC_VERSION, defaults?.latestVersion) < 0 ? 'flex' : 'none');
     this.hideUpdate = $('#hide-update');
     this.hideUpdate.prop('checked', previousSettings.updateToHide === defaults?.latestVersion);
     this.checkSensorWarnings();
@@ -1355,8 +1356,8 @@ export class SettingsDialog {
     let badRegex = false;
 
     this.filterList.find('select').each(function () {
-      const checkDescription = (this.parentElement.querySelector('input[type="checkbox"]') as HTMLInputElement).checked;
-      const input = this.parentElement.querySelector('input[type="text"]') as HTMLInputElement;
+      const checkDescription = (this.parentElement.querySelector('input[type="checkbox"]') as unknown as HTMLInputElement).checked;
+      const input = this.parentElement.querySelector('input[type="text"]') as unknown as HTMLInputElement;
       const content = input.value.trim();
 
       if (validate && input.style.color === 'red') {
