@@ -310,7 +310,7 @@ export class AlarmMonitor {
       if (this.alarmsPending === NOTHING_PENDING)
         this.alarmDisableCountdown.text('');
       else
-        this.alarmDisableCountdown.html(`<tspan x="25" dy="-1em" dx="1">next:</tspan><tspan x="25" dy="1em">` +
+        this.alarmDisableCountdown.html('<tspan x="25" dy="-1em" dx="1">next:</tspan><tspan x="25" dy="1em">' +
           new DateTime(this.alarmsPending * 60000, this.appService.timezone).format(format) + '</tspan>');
 
       if (this.disableStartTime !== 0) {
@@ -328,7 +328,7 @@ export class AlarmMonitor {
 
       const endTime = (this.disableStartTime + this.disableDuration) * 60000;
 
-      this.alarmDisableCountdown.html(`<tspan x="25" dy="-1em">until</tspan><tspan x="25" dy="1em">` +
+      this.alarmDisableCountdown.html('<tspan x="25" dy="-1em">until</tspan><tspan x="25" dy="1em">' +
         new DateTime(endTime, this.appService.timezone).format(format) + '</tspan>');
     }
   }

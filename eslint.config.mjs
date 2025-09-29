@@ -12,20 +12,6 @@ export default [
     },
     rules: {
       ...stylistic.configs.recommended.rules,
-      ...tsPlugin.configs.recommended.rules,
-      ...tsPlugin.configs['recommended-requiring-type-checking'].rules,
-
-      '@typescript-eslint/ban-ts-comment': 'off',
-      '@typescript-eslint/no-base-to-string': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-function-type': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/restrict-template-expressions': 'off',
 
       '@stylistic/arrow-parens': ['error', 'as-needed'],
       '@stylistic/brace-style': [
@@ -74,7 +60,6 @@ export default [
       '@stylistic/no-control-regex': 'off',
       '@stylistic/no-empty': 'off',
       '@stylistic/no-labels': 'off',
-      '@typescript-eslint/no-misused-promises': ['error', { checksConditionals: false, checksVoidReturn: false }],
       '@stylistic/no-mixed-operators': 'off',
       '@stylistic/no-multi-spaces': ['error', {
         ignoreEOLComments: true,
@@ -84,27 +69,14 @@ export default [
         }
       }],
       '@stylistic/no-new': 'off',
-      '@typescript-eslint/no-require-imports': 'off',
       '@stylistic/no-return-assign': 'off',
-      '@typescript-eslint/no-this-alias': ['error', { allowedNames: ['self'] }],
       '@stylistic/no-useless-constructor': 'off',
       '@/no-useless-constructor': 'error',
       '@stylistic/no-unused-expressions': 'off',
-      '@typescript-eslint/no-unused-expressions': 'off',
       'chai-friendly/no-unused-expressions': 'error',
       '@/no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          args: 'after-used',
-          argsIgnorePattern: '^_',
-          ignoreRestSiblings: false,
-          vars: 'all'
-        }
-      ],
       'one-var': 'off',
       '@stylistic/operator-linebreak': 'off',
-      '@typescript-eslint/prefer-promise-reject-errors': 'off',
       '@stylistic/semi': [
         'error',
         'always'
@@ -121,11 +93,10 @@ export default [
         'error',
         'single',
         {
-          allowTemplateLiterals: true,
+          allowTemplateLiterals: 'avoidEscape',
           avoidEscape: true
         }
       ],
-      '@typescript-eslint/restrict-plus-operands': 'off',
       'yoda': [
         'error',
         'never',
@@ -133,7 +104,10 @@ export default [
           exceptRange: true
         }
       ]
-    },
+    }
+  },
+
+  {
     files: ['**/*.ts'],
     languageOptions: {
       parser: tsParser,
@@ -142,6 +116,46 @@ export default [
         sourceType: 'module',
         project: './tsconfig.eslint.json'
       }
+    },
+    rules: {
+      ...tsPlugin.configs.recommended.rules,
+      ...tsPlugin.configs['recommended-requiring-type-checking'].rules,
+
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-base-to-string': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-function-type': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+
+      '@typescript-eslint/no-misused-promises': ['error', { checksConditionals: false, checksVoidReturn: false }],
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-this-alias': ['error', { allowedNames: ['self'] }],
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+          ignoreRestSiblings: false,
+          vars: 'all'
+        }
+      ],
+      '@typescript-eslint/prefer-promise-reject-errors': 'off',
+      '@typescript-eslint/restrict-plus-operands': 'off',
     }
+  },
+
+  {
+    files: ['**/*.js', '**/*.mjs']
+  },
+
+  {
+    ignores: ['node_modules/', '**/dist/', 'build.js'],
   }
 ];
