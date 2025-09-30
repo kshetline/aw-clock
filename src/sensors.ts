@@ -20,8 +20,8 @@ export class Sensors {
   private readonly outdoorMeter: JQuery;
   private readonly outdoorMeter2: JQuery;
   private readonly outdoorMeter3: JQuery;
-  private readonly thSensor: JQuery;
-  private readonly thSensorSlash: JQuery;
+  private readonly wiredSensor: JQuery;
+  private readonly wiredSensorSlash: JQuery;
 
   private indoorAvailable: boolean;
   private wiredAvailable = false;
@@ -34,8 +34,8 @@ export class Sensors {
     this.outdoorMeter = $('#outdoor-meter');
     this.outdoorMeter2 = $('#outdoor-meter-2');
     this.outdoorMeter3 = $('#outdoor-meter-3');
-    this.thSensor = $('#th-sensor');
-    this.thSensorSlash = $('#th-sensor-slash');
+    this.wiredSensor = $('#wired-sensor');
+    this.wiredSensorSlash = $('#wired-sensor-slash');
 
     if (localServer)
       this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = true;
@@ -45,7 +45,7 @@ export class Sensors {
       this.outdoorMeter.css('display', 'none');
       this.outdoorMeter2.css('display', 'none');
       this.outdoorMeter3.css('display', 'none');
-      this.thSensor.css('display', 'none');
+      this.wiredSensor.css('display', 'none');
 
       appService.proxySensorUpdate().then(available =>
         this.indoorAvailable = this.wiredAvailable = this.wirelessAvailable = available);
@@ -60,11 +60,12 @@ export class Sensors {
     const wirelessUrl = `${apiServer}/wireless-th`;
     const indoorOption = this.appService.getIndoorOption();
     const outdoorOption = this.appService.getOutdoorOption();
+    const indoorWired = indoorOption.includes('D');
 
     this.configureDisplay(indoorOption, outdoorOption);
 
     const promises = [
-      this.wiredAvailable && indoorOption.includes('D') ? getJson(wiredUrl) : Promise.resolve(null),
+      this.wiredAvailable && indoorWired ? getJson(wiredUrl) : Promise.resolve(null),
       this.wirelessAvailable ? getJson(wirelessUrl) : Promise.resolve(null)
     ];
 
@@ -83,7 +84,6 @@ export class Sensors {
         let err: string;
         const sensorDetail: string[] = [];
         const [forecastT, forecastH] = this.appService.getLastTAndH();
-        const indoorTH = indoorOption.includes('D');
         let hasWiredIndoor = false;
 
         if (fakeSensors && forecastT != null && forecastH != null) {
@@ -110,23 +110,23 @@ export class Sensors {
           };
         }
 
-        this.thSensor.css('display', indoorTH ? 'block' : 'none');
+        this.wiredSensor.css('display', indoorWired ? 'block' : 'none');
 
         if (wired && !(wired instanceof Error) && wired.error === 'n/a') {
           this.wiredAvailable = false;
-          this.thSensorSlash.css('display', 'block');
+          this.wiredSensor.toggleClass('offline', true);
         }
         else if (wired instanceof Error || wired?.error) {
           err = errorText(wired);
           console.error('Error reading wired temp/humidity: ' + err);
           this.wiredAvailable = !(/not found/i.test(err));
-          this.thSensorSlash.css('display', 'block');
+          this.wiredSensor.toggleClass('offline', true);
         }
-        else if (wired && indoorTH) {
+        else if (wired && indoorWired) {
           hasWiredIndoor = true;
           cth.indoorTemp = adjustTemp(wired.temperature);
           cth.indoorHumidity = wired.humidity;
-          this.thSensorSlash.css('display', 'none');
+          this.wiredSensor.toggleClass('offline', false);
         }
 
         if (wireless && !(wireless instanceof Error) && wireless.error === 'n/a') {
@@ -149,7 +149,7 @@ export class Sensors {
         else if (wireless) {
           this.appService.sensorDeadAir(!!wireless.deadAir);
 
-          if ((thd = wireless[indoorOption])) {
+          if ((thd = wireless[indoorOption.charAt(0)])) {
             if (thd.reliable) {
               const indoorTemp = adjustTemp(thd.temperature);
               const indoorHumidity = thd.humidity;

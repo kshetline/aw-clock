@@ -77,6 +77,7 @@ export default [
       '@/no-unused-vars': 'off',
       'one-var': 'off',
       '@stylistic/operator-linebreak': 'off',
+      'prefer-const': ['error', { destructuring: 'all' }],
       '@stylistic/semi': [
         'error',
         'always'
@@ -156,6 +157,6 @@ export default [
   },
 
   {
-    ignores: ['node_modules/', '**/dist/', 'build.js'],
+    ignores: ['node_modules/', '**/dist/', '**/tsc-out/', 'build.js'],
   }
 ];
