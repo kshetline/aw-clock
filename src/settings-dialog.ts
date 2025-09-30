@@ -1461,7 +1461,7 @@ export class SettingsDialog {
 
   private checkSensorWarnings(): void {
     const indoor = this.indoor.val().toString();
-    const conflict = this.outdoor.val().toString().includes(indoor);
+    const conflict = this.outdoor.val().toString().includes(indoor.charAt(0));
 
     this.chanWarning.children('span').text(indoor);
     this.chanWarning.css('display', conflict ? 'block' : 'none');

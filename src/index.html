@@ -40,7 +40,7 @@
               <rect x="408" y= "96" width="80" height="416" class="signal-bar-4"/>
               <rect x="536" y=  "0" width="80" height="512" class="signal-bar-5"/>
               <line style="display: none; stroke-width: 40px; stroke: rgb(255, 0, 0);"
-                class="no-signal" x1="64" y1="40" x2="576" y2="424"/>
+                class="no-signal" x1="64" y1="80" x2="576" y2="424"/>
             </svg>
           </g>
 
@@ -210,8 +210,16 @@
           <svg id="outdoor-meter-3" class="svg-flow" svg-flow="current-temp,dx=-0.7,dy=-3.5" width="2" height="1.6">
             <use href="#signal-meter"/>
           </svg>
-          <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-3.5,dy=-2" width="2" height="1.6">
+          <svg id="indoor-meter" class="svg-flow" svg-flow="indoor-temp,dx=-4.5,dy=-2" width="2" height="1.6">
             <use href="#signal-meter"/>
+          </svg>
+          <!-- TODO -->
+          <svg id="th-sensor" class="svg-flow" svg-flow="indoor-temp,dx=-2,dy=-1.9" width="1.5" height="2">
+            <image href="assets/th-sensor.png" width="1.5" height="2"/>
+            <svg viewBox="0 0 640 512" width="2" height="1.6" x="-0.4" y="0.4">
+              <line id="th-sensor-slash" style="display: none; stroke-width: 80px; stroke: rgb(255, 0, 0);"
+                class="no-signal" x1="64" y1="40" x2="576" y2="424"/>
+            </svg>
           </svg>
 
           <g transform="translate(111.5, 24.25)">
@@ -469,6 +477,9 @@
               <option value="A">Wireless channel A</option>
               <option value="B">Wireless channel B</option>
               <option value="C">Wireless channel C</option>
+              <option value="AD">Wireless channel A & wired sensor</option>
+              <option value="BD">Wireless channel B & wired sensor</option>
+              <option value="CD">Wireless channel C & wired sensor</option>
             </select>
             <span id="color-options" class="rowspan">
               <input id="app-background" name="app-background" type=color>
