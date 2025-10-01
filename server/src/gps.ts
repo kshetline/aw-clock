@@ -37,7 +37,7 @@ export class Gps extends TimePoller {
   private systemTimeIsGps = false;
   private weatherbitKey: string;
 
-  constructor(private taiUtc : TaiUtc) {
+  constructor(private taiUtc: TaiUtc) {
     super();
     this.monitorGps();
     // noinspection JSIgnoredPromiseFromCall

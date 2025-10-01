@@ -1,3 +1,7 @@
+## 3.10.0
+
+* Allow indoor temperature/humidity reading to use a averaged combination of both a wired and a wireless sensor.
+
 ## 3.9.2
 
 * Fixed timezone-related bug in new repeating alarms feature.

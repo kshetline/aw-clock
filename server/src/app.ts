@@ -30,14 +30,14 @@ import { router as forecastRouter } from './forecast-router';
 import fs from 'fs';
 import * as http from 'http';
 import os from 'os';
-import { asLines, htmlEscape, isString, noop, processMillis, push, toBoolean, toNumber } from '@tubular/util';
+import { asLines, compareDottedValues, htmlEscape, isString, noop, processMillis, push, toBoolean, toNumber } from '@tubular/util';
 import logger from 'morgan';
 import * as path from 'path';
 import * as requestIp from 'request-ip';
 import { DEFAULT_LEAP_SECOND_URLS, TaiUtc } from './tai-utc';
 import { router as tempHumidityRouter, cleanUp, defaultOutdoorChannel, getTempHumidityData } from './temp-humidity-router';
 import { router as changelogRouter } from './changelog-router';
-import { hasGps, jsonOrJsonp, noCache, normalizePort, safeCompareVersions, timeStamp, unref } from './awcs-util';
+import { hasGps, jsonOrJsonp, noCache, normalizePort, timeStamp, unref } from './awcs-util';
 import { Gps } from './gps';
 import { AWC_VERSION, AwcDefaults, ForecastData, GpsData } from './shared-types';
 import { NtpPoolPoller } from './ntp-pool-poller';
@@ -63,7 +63,7 @@ try {
     }
   }
 }
-catch (err) {
+catch {
   console.error('Failed check for environment file.');
 }
 
@@ -181,7 +181,7 @@ process.on('unhandledRejection', err => console.error(`${timeStamp()} -- Unhandl
 
 createAndStartServer();
 
-// Convert old default (pool.ntp.org) to new default, otherwise use old AWC_NTP_SERVER if specified and if AWC_NTP_SERVERS is undefined.
+// Convert old default (pool.ntp.org) to new default, otherwise use old AWC_NTP_SERVER if specified, and if AWC_NTP_SERVERS is undefined.
 const ntpServer = process.env.AWC_NTP_SERVERS || (process.env.AWC_NTP_SERVER === 'pool.ntp.org' ? '' : process.env.AWC_NTP_SERVER);
 const ntpPoller = ntpServer ? new NtpPoolPoller(ntpServer.split(',').map(p => p.trim())) : new NtpPoolPoller();
 const daytimeServer = process.env.AWC_DAYTIME_SERVER || DEFAULT_DAYTIME_SERVER;
@@ -251,8 +251,6 @@ function onError(error: any): void {
       console.error(bind + ' requires elevated privileges');
       process.exit(1);
 
-    // There really is no chance of fallthrough, but a break statement produces an unreachable code warning.
-    // eslint-disable-next-line no-fallthrough
     case 'EADDRINUSE':
       console.error(bind + ' is already in use');
 
@@ -308,7 +306,7 @@ function shutdown(signal?: string): void {
     clearTimeout(updatePollTimer);
 
   console.log(`\n*** ${signal ? signal + ': ' : ''}closing server at ${timeStamp()} ***`);
-  // Make sure that if the orderly clean-up gets stuck, shutdown still happens.
+  // Make sure that if the orderly cleanup gets stuck, shutdown still happens.
   unref(setTimeout(() => process.exit(0), 5000));
   httpServer.close(() => process.exit(0));
   cleanUp();
@@ -425,7 +423,7 @@ function getApp(): Express {
       latestVersionInfo,
       outdoorOption: (process.env.AWC_WIRELESS_TH_GPIO || process.env.AWC_ALT_DEV_SERVER ? defaultOutdoorChannel : 'F'),
       services: 'wu' + (process.env.AWC_WEATHERBIT_API_KEY ? ',we' : '') + (process.env.AWC_VISUAL_CROSSING_API_KEY ? ',vc' : ''),
-      updateAvailable: fakeUpdate || /^\d+\.\d+\.\d+$/.test(latestVersion) && safeCompareVersions(latestVersion, AWC_VERSION, '>', false)
+      updateAvailable: fakeUpdate || /^\d+\.\d+\.\d+$/.test(latestVersion) && compareDottedValues(latestVersion, AWC_VERSION) > 0
     };
 
     if (gps) {
@@ -485,7 +483,7 @@ function getApp(): Express {
     jsonOrJsonp(req, res, await taiUtc.getLeapSecondHistory());
   });
 
-  theApp.get('/gps', async (req, res) => {
+  theApp.get('/gps', (req, res) => {
     noCache(res);
 
     let result: GpsData = { error: 'n/a', fix: 0, signalQuality: 0 };
@@ -502,7 +500,7 @@ function getApp(): Express {
     jsonOrJsonp(req, res, result);
   });
 
-  theApp.get('/latest-version', async (req, res) => {
+  theApp.get('/latest-version', (req, res) => {
     noCache(res);
     jsonOrJsonp(req, res, latestVersion);
   });

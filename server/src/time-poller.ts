@@ -93,7 +93,7 @@ export abstract class TimePoller {
       const nd = this.getNtpData(timeRequested);
       ntpData = (nd instanceof Promise ? await nd : nd);
     }
-    catch (err) {
+    catch {
       if (++this.errorCount > MAX_ERRORS) {
         console.error('Time polling failing');
         this.timeAcquired = false;

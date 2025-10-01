@@ -307,6 +307,13 @@ select:not([disabled]), button:not([disabled]), input:not([disabled])[type=submi
   font-size: 3px;
 }
 
+#wired-sensor.offline image {
+  opacity: 0.5;
+}
+#wired-sensor.offline line {
+  display: block !important;
+}
+
 .small-caption {
   font-size: 2.5px;
 }

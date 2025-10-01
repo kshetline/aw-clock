@@ -12,7 +12,7 @@ const entryPoints = ['inline', 'sw-register', 'styles', 'vendor', 'main'];
 const projectRoot = process.cwd();
 
 // noinspection JSUnusedGlobalSymbols
-module.exports = env => { // eslint-disable-line @typescript-eslint/no-unused-vars
+module.exports = env => {
   return {
     mode: (env && env.mode) === 'prod' ? 'production' : 'development',
     performance: { hints: false },

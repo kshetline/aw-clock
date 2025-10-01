@@ -51,11 +51,10 @@ const ELEMENTS = 'aqieur,aqius,cloudcover,conditions,datetimeEpoch,description,f
                  'precipcover,precipprob,preciptype,pressure,snow,snowdepth,temp,tempmax,tempmin,visibility,winddir,windgust,windspeed'
                    .replace(/,/g, '%2C');
 
-interface VCHourlyConditions extends VCCommonConditions {
-}
+type VCHourlyConditions = VCCommonConditions;
 
 interface VCDailyConditions extends VCCommonConditions {
-  hours: VCHourlyConditions[],
+  hours: VCCommonConditions[];
   tempmax: number;
   tempmin: number;
 }
@@ -122,7 +121,6 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   }
 }
 
-/* eslint-disable quote-props */
 const iconMap: Record<string, string> = {
   'clear-day': '32',
   'clear-night': '31',
@@ -141,7 +139,6 @@ const iconMap: Record<string, string> = {
   'thunder-showers-night': '47',
   'wind': '19'
 };
-/* eslint-enable quote-props */
 
 function getIcon(conditions: VCCommonConditions): string {
   let icon = iconMap[conditions.icon] || '';
@@ -250,7 +247,7 @@ function convertForecast(vcForecast: VisualCrossingForecast, isMetric: boolean):
   return forecast;
 }
 
-function convertConditions(vcConditions: VCCommonConditions | VCCurrentConditions | VCDailyConditions | VCHourlyConditions,
+function convertConditions(vcConditions: VCCommonConditions | VCCurrentConditions | VCDailyConditions,
                            keys: string[], timeSpan: number, isMetric: boolean, root?: ForecastData): CommonConditions {
   const conditions: CommonConditions = {} as CommonConditions;
 
@@ -259,7 +256,6 @@ function convertConditions(vcConditions: VCCommonConditions | VCCurrentCondition
 
     if (key === 'hours' && root && root.hourly && root.hourly.length < 48)
       root.hourly.push(...convertHourly((vcConditions as VCDailyConditions).hours, isMetric));
-    // eslint-disable-next-line no-prototype-builtins
     else if (vcKey !== '-' && vcConditions.hasOwnProperty(vcKey)) {
       if (key === 'precipType') {
         conditions.precipType = vcConditions.preciptype?.sort().join();

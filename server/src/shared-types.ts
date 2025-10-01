@@ -27,7 +27,7 @@ export enum PressureTrend { FALLING = -1, STEADY, RISING }
 
 export interface AirQualitySource {
   aqiEu?: number;
-  aqiUs?: number
+  aqiUs?: number;
 }
 
 export interface AirQualityValues extends AirQualitySource {
@@ -53,17 +53,17 @@ export interface AirQualityComponents {
 }
 
 export interface AirQualityItem extends AirQualitySource {
-  aqComps?: AirQualityComponents,
-  time: number
+  aqComps?: AirQualityComponents;
+  time: number;
 }
 
 export interface AirQualityForecast {
   current: {
     aqiEu?: number;
     aqiUs?: number;
-    aqComps?: AirQualityRawComponents,
-    time: number
-  },
+    aqComps?: AirQualityRawComponents;
+    time: number;
+  };
   hours: AirQualityItem[];
   unavailable?: boolean;
 }
@@ -74,13 +74,13 @@ export interface CommonConditions extends AirQualitySource {
   icon: string;
   humidity: number;               // 0-1
   cloudCover: number;             // 0-1
-  precipIntensity?: number        // In inch/hour or cm/hour
+  precipIntensity?: number;       // In inch/hour or cm/hour
   precipIntensityMax?: number;    // In inch/hour or cm/hour
   precipProbability?: number;     // 0-1
   precipType?: string;            // 'mixed', 'rain', 'sleet', 'snow'
   precipTypeFromHour?: boolean;
   pressure?: number;              // inHg or Hectopascals (millibars), at sea level
-  pressureTrend?: PressureTrend,
+  pressureTrend?: PressureTrend;
   windDirection?: number;         // 0-360 degrees, N = 0. E = 90, S = 180, W = 270
   temperature?: number;           // °C or °F
   windGust?: number;              // In kph or mph

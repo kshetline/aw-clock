@@ -7,7 +7,7 @@ module.exports = {
   entry: './build.ts',
   output: {
     path: __dirname,
-    filename: `build.js`
+    filename: 'build.js'
   },
   node: {
     __dirname: false,
