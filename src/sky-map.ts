@@ -64,9 +64,9 @@ const BRIGHTEST_3x3_STAR_IMAGE_INDEX        = 1500;
 const DEFAULT_SKY_RESOLUTION = 5;
 
 const planetColors = [
-  'yellow',  '#C0C0C0', '#EEEEFF', /* eslint-disable-line no-multi-spaces */ // Sun, Mercury, Venus */
-  '#00CCCC', 'red',     'orange',  /* eslint-disable-line no-multi-spaces */ // Earth, Mars, Jupiter
-  'yellow', '', '', '', '#EEEEFF'  /* eslint-disable-line no-multi-spaces */ // Saturn, Moon
+  'yellow',  '#C0C0C0', '#EEEEFF', /* eslint-disable-line @stylistic/no-multi-spaces */ // Sun, Mercury, Venus */
+  '#00CCCC', 'red',     'orange',  /* eslint-disable-line @stylistic/no-multi-spaces */ // Earth, Mars, Jupiter
+  'yellow', '', '', '', '#EEEEFF'  /* eslint-disable-line @stylistic/no-multi-spaces */ // Saturn, Moon
 ];
 
 // These color specifications are left incomplete so that the alpha value can be varied.

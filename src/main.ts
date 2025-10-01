@@ -1,6 +1,6 @@
 import { AppService } from './app.service';
 /*
-  Copyright © 2018-2023 Kerry Shetline, kerry@shetline.com
+  Copyright © 2018-2025 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -174,7 +174,7 @@ class AwClockApp implements AppService {
       else
         this.timeDelta = 0;
     });
-    this.testTime[0].addEventListener('keypress', (evt) => this.keyHandler(evt, true));
+    this.testTime[0].addEventListener('keypress', evt => this.keyHandler(evt, true));
 
     const settingsButton = $('#settings-btn');
 

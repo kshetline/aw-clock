@@ -1,5 +1,5 @@
-/* eslint @typescript-eslint/indent: 0 */
-/* eslint no-multi-spaces: 0 */
+/* eslint @stylistic/indent: off */
+/* eslint @stylistic/no-multi-spaces: off */
 import fs from 'fs';
 import { asLines, isString } from '@tubular/util';
 
@@ -45,7 +45,7 @@ let wpiToGpio = wpiToGpioR2;
 // physToGpio:
 //  Take a physical pin (1 through 26/40) and re-map it to the BCM_GPIO pin
 //  Cope for 2 different board revisions here.
-//  For P5 connector, P5 pin numbers are offset by 50, i.e. 3, 4, 5, 6 => 53, 54, 55, 56
+//  For P5 connector, P5 pin numbers are offset by 50, i.e., 3, 4, 5, 6 => 53, 54, 55, 56
 
 const physToGpioR1 = [
   -1,     // 0
@@ -268,7 +268,7 @@ export function convertPin(pin: number | string, pinSystem0: PinSystem, pinSyste
 
 export function convertPinToGpio(pinNumber: number | string, pinSys = PinSystem.GPIO): number {
   if (isString(pinNumber))
-    return convertPin(pinNumber as string, PinSystem.GPIO);
+    return convertPin(pinNumber, PinSystem.GPIO);
 
-  return convertPin(pinNumber as number, pinSys, PinSystem.GPIO);
+  return convertPin(pinNumber, pinSys, PinSystem.GPIO);
 }

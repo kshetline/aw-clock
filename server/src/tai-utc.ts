@@ -96,7 +96,7 @@ export class TaiUtc {
   private async updateTaiUtc(): Promise<void> {
     if (!this.pendingPromise) {
       this.pendingPromise = this.updateTaiUtcAux();
-      (this.pendingPromise).then(() => this.pendingPromise = undefined);
+      (this.pendingPromise).then((): void => this.pendingPromise = undefined);
     }
 
     return this.pendingPromise;

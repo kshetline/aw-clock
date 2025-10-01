@@ -129,6 +129,8 @@ Also for the Raspberry Pi you have the option to provide wireless indoor conditi
 
 You can use one wireless sensor in lieu of a wired DHT22/AM2302 for indoor temperature and humidity, and you can use one, two, or three wireless sensors for outdoor temperature and humidity. (When using multiple sensors, each must be set to a different channel — A, B, or C. No more than two wireless sensors can be used for outdoor readings if one is used for indoor readings.)
 
+You can also combine the use of a wired sensor for indoor temperature and humidity with one wireless sensor, resulting in a display of values averaged from the two sources.
+
 An outdoor multiple-sensor set-up is useful when it’s difficult to find a single location for a sensor that isn’t overly warmed by sunlight for at least part of the day. When you have multiple sensors values from the coolest-reading sensor will be displayed.
 
 With one or more outdoor sensors the temperature displayed (in the largest text) will be pinned to be within ±2°C (±4°F) of the temperature supplied by the online weather service (a yellow tint of the temperature value indicates pinning is in effect). The “Feels like” temperature always comes from the weather service, not from your wireless sensors.

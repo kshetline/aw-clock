@@ -275,7 +275,7 @@ function convertDaily(forecast: ForecastData, wc: any, wd: any): void {
 }
 
 function combineWindPhrases(day: string, night: string): string {
-  // eslint-disable-next-line eqeqeq
+  // eslint-disable-next-line @/eqeqeq
   if (day == night)
     return day;
   else if (!night)

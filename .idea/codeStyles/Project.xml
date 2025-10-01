@@ -1,5 +1,11 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
+    <option name="OTHER_INDENT_OPTIONS">
+      <value>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </value>
+    </option>
     <JSCodeStyleSettings version="0">
       <option name="FORCE_SEMICOLON_STYLE" value="true" />
       <option name="SPACE_BEFORE_GENERATOR_MULT" value="true" />
@@ -21,16 +27,93 @@
       <option name="SPACES_WITHIN_IMPORTS" value="true" />
       <option name="BLACKLIST_IMPORTS" value="rxjs/Rx,rxjs" />
     </TypeScriptCodeStyleSettings>
+    <codeStyleSettings language="CSS">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="Groovy">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="HTML">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="HTTP Request">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="CONTINUATION_INDENT_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="JAVA">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="JSON">
+      <indentOptions>
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
     <codeStyleSettings language="JavaScript">
       <option name="BLOCK_COMMENT_ADD_SPACE" value="true" />
       <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
       <option name="ELSE_ON_NEW_LINE" value="true" />
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="SASS">
+      <indentOptions>
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="SCSS">
+      <indentOptions>
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="SQL">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
     </codeStyleSettings>
     <codeStyleSettings language="TypeScript">
       <option name="RIGHT_MARGIN" value="140" />
       <option name="BLOCK_COMMENT_ADD_SPACE" value="true" />
       <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
       <option name="ELSE_ON_NEW_LINE" value="true" />
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="XML">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="kotlin">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </indentOptions>
     </codeStyleSettings>
   </code_scheme>
 </component>

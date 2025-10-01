@@ -87,8 +87,7 @@ function matchingTextColor(color: string): string {
 }
 
 try {
-  // Firefox fails on this pattern.
-  // eslint-disable-next-line prefer-regex-literals
+  // Browser might fail on this pattern.
   SUBJECT_INTRO_PATTERN = regex`^((• )?\p{Lu}{4,}[ \p{Lu}]*)\.\.\.(?!\.)${'gmu'}`;
 }
 catch {
@@ -117,7 +116,7 @@ function eventInside(event: MouseEvent | Touch, elem: HTMLElement): boolean {
 }
 
 function concatenateAlerts(alerts: Alert[] | DisplayedAlert[], forDialog = false, dropped = false): string {
-  return (alerts ?? []).map((a : Alert & DisplayedAlert) => {
+  return (alerts ?? []).map((a: Alert & DisplayedAlert) => {
     if (a.acknowledged && !forDialog)
       return null;
 
@@ -228,7 +227,7 @@ export class Forecast {
 
   private marqueeDialogText = '';
   private marqueeBackground = DEFAULT_BACKGROUND;
-  private currentAlerts: { alerts?: DisplayedAlert[], droppedAlerts?: Alert[] };
+  private currentAlerts: { alerts?: DisplayedAlert[]; droppedAlerts?: Alert[] };
   private animationStart: number;
   private animationWidth: number;
   private animationRequestId = 0;
@@ -297,9 +296,9 @@ export class Forecast {
 
     const dragStartThreshold = 3;
     const swipeThreshold = width * 1.5 / 7; // Distance across 1.5 viewable days
-    const animateToStart = (document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus);
-    const animateToEnd = (document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus);
-    const animateWeekDrag = (document.getElementById('drag-week') as unknown as SVGAnimationElementPlus);
+    const animateToStart = document.getElementById('start-of-week') as unknown as SVGAnimationElementPlus;
+    const animateToEnd = document.getElementById('end-of-week') as unknown as SVGAnimationElementPlus;
+    const animateWeekDrag = document.getElementById('drag-week') as unknown as SVGAnimationElementPlus;
     const skipToStart = document.getElementById('week-backward');
     const disabledSkipColor = skipToStart.getAttribute('fill');
     const skipToEnd = document.getElementById('week-forward');
@@ -331,7 +330,7 @@ export class Forecast {
     $('#sunrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#moonrise-set').on('click', () => this.appService.toggleSunMoon());
     $('#sun-moon-clicker').on('click', () => this.appService.toggleSunMoon());
-    $('.hour-temps, .hour-pops, .hour-icon, .hour-wind').on('click', (evt) => stopPropagation(evt, () => this.toggleHourInfo()));
+    $('.hour-temps, .hour-pops, .hour-icon, .hour-wind').on('click', evt => stopPropagation(evt, () => this.toggleHourInfo()));
 
     const self = this;
 
@@ -1445,7 +1444,7 @@ export class Forecast {
   private acknowledgeAlert(id: string, state?: boolean): void {
     const alerts = this.appService.getHiddenAlerts();
     const acknowledged = this.isAlertAcknowledged(id);
-    const wrapper = document.querySelector(`#X${id}_aw`) as HTMLElement;
+    const wrapper = document.querySelector(`#X${id}_aw`) as unknown as HTMLElement;
 
     if (state == null)
       state = !acknowledged;
@@ -1485,7 +1484,7 @@ export class Forecast {
       for (const alert of this.currentAlerts?.alerts ?? []) {
         if (alert.alert?.id) {
           const id = alert.alert.id;
-          const cb = document.querySelector(`#X${id}_cb`) as HTMLInputElement;
+          const cb = document.querySelector(`#X${id}_cb`) as unknown as HTMLInputElement;
 
           ++needed;
 
@@ -1533,11 +1532,11 @@ export class Forecast {
   };
 
   private alertAcknowledgeClick = (evt: MouseEvent): void => {
-    const target = (evt.target as HTMLElement);
+    const target = evt.target as HTMLElement;
     const id = target.id?.slice(1, -3);
 
     if (id && target.localName !== 'input')
-      (document.querySelector(`#X${id}_cb`) as HTMLInputElement)?.click();
+      (document.querySelector(`#X${id}_cb`) as unknown as HTMLInputElement)?.click();
     else {
       const checked = $(target).prop('checked');
 
