@@ -22,7 +22,7 @@
     "by-request": "^1.4.1",
     "cookie-parser": "^1.4.7",
     "debug": "~4.4.3",
-    "express": "~5.1.0",
+    "express": "~5.2.0",
     "fortissimo-html": "^1.0.0-alpha.3",
     "http-errors": "~2.0.0",
     "morgan": "~1.10.1",
