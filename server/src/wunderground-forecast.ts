@@ -9,7 +9,7 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   const url = `https://www.wunderground.com/forecast/${req.query.lat},${req.query.lon}`;
 
   try {
-    const items = await getContent(req, url);
+    const items = await getContent(req, url, { wu_prefer_legacy: 'true' });
 
     if (!items) {
       purgeCache(url);
@@ -53,13 +53,17 @@ export async function getForecast(req: Request): Promise<ForecastData | Error> {
   }
 }
 
-async function getContent(req: Request, url: string): Promise<any> {
+async function getContent(req: Request, url: string, cookies: Record<string, string> = {}): Promise<any> {
   let result: any = null;
+  const cookieHeader = Object.entries(cookies)
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ');
   const content = await requestText(240, url, {
     followRedirects: true,
     headers: {
       'Accept-Language': 'en-US,en;q=0.5',
-      'User-Agent': req.headers['user-agent']
+      'User-Agent': req.headers['user-agent'],
+      ...(cookieHeader ? { Cookie: cookieHeader } : {})
     }
   });
   const $ = /<script\b.+\bid="app-root-state"[^>]*>(.+?)<\/script>/is.exec(content);

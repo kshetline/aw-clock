@@ -163,9 +163,12 @@ module.exports = env => {
     },
     devServer: {
       historyApiFallback: true,
-      proxy: {
-        '/assets/audio/': 'http://localhost:4201'
-      }
+      proxy: [
+        {
+          context: ['/assets/audio/'],
+          target: 'http://localhost:4201'
+        }
+      ]
     },
     ignoreWarnings: [{ message: /require function is used in a way/ }]
   };
