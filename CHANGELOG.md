@@ -1,3 +1,7 @@
+## 3.10.1
+
+* Fix retrieval of default weather data.
+
 ## 3.10.0
 
 * Allow indoor temperature/humidity reading to use an averaged combination of both a wired and a wireless sensor.

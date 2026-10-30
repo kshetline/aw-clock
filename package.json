@@ -1,6 +1,6 @@
 {
   "name": "aw-clock",
-  "version": "3.10.0",
+  "version": "3.10.1",
   "license": "MIT",
   "author": "Kerry Shetline <kerry@shetline.com>",
   "scripts": {
@@ -39,7 +39,7 @@
     "autoprefixer": "^10.4.7",
     "chalk": "^4.1.2",
     "circular-dependency-plugin": "^5.2.2",
-    "copy-webpack-plugin": "^6.4.1",
+    "copy-webpack-plugin": "^14.0.0",
     "copyfiles": "^2.4.1",
     "css-loader": "^5.2.7",
     "eslint": "^9.36.0",
@@ -50,14 +50,14 @@
     "raw-loader": "^4.0.2",
     "source-map-loader": "^3.0.2",
     "style-loader": "^3.3.4",
-    "terser-webpack-plugin": "^5.3.14",
+    "terser-webpack-plugin": "^5.6.1",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
     "url-loader": "^4.1.1",
     "webpack": "^5.101.3",
-    "webpack-cli": "^4.10.0",
-    "webpack-dev-server": "^4.15.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.7",
     "webpack-node-externals": "^3.0.0"
   }
 }
